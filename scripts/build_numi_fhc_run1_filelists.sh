@@ -16,17 +16,17 @@ write_list() {
     local list="${OUTPUT_DIR}/${stage}.list"
 
     if [[ ! -d "${dir}" ]]
-    {
+    then
         echo "Missing output directory: ${dir}" >&2
         return 1
-    }
+    fi
 
     find "${dir}" -maxdepth 1 -type f -name "*.root" | sort > "${list}"
 
     if [[ ! -s "${list}" ]]
-    {
+    then
         echo "Warning: no ROOT files found in ${dir}" >&2
-    }
+    fi
 }
 
 write_list "beam_s0" "${BASE}/beam/s0/out"

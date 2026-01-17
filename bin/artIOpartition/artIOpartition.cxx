@@ -62,48 +62,6 @@ std::vector<std::string> ReadFileList(const std::string &filelistPath)
     return files;
 }
 
-std::vector<std::string> ReadArgsFile(const std::string &argsPath)
-{
-    std::ifstream fin(argsPath);
-    if (!fin)
-    {
-        throw std::runtime_error("Failed to open args file: " + argsPath +
-                                 " (errno=" + std::to_string(errno) + " " + std::strerror(errno) + ")");
-    }
-    std::vector<std::string> args;
-    std::string line;
-    while (std::getline(fin, line))
-    {
-        line = Trim(line);
-        if (line.empty() || line[0] == '#')
-            continue;
-        std::istringstream iss(line);
-        std::string tok;
-        while (iss >> tok)
-            args.push_back(tok);
-    }
-    return args;
-}
-
-std::vector<std::string> ExpandArgs(int argc, char **argv)
-{
-    std::vector<std::string> expanded;
-    expanded.reserve(static_cast<size_t>(argc));
-    for (int i = 0; i < argc; ++i)
-    {
-        if (i > 0 && std::string(argv[i]) == "--args")
-        {
-            if (i + 1 >= argc)
-                throw std::runtime_error("Missing value for --args");
-            const auto fileArgs = ReadArgsFile(argv[++i]);
-            expanded.insert(expanded.end(), fileArgs.begin(), fileArgs.end());
-            continue;
-        }
-        expanded.emplace_back(argv[i]);
-    }
-    return expanded;
-}
-
 struct FilePeek
 {
     std::optional<bool> isData;
@@ -153,61 +111,20 @@ struct StageSpec
     nuio::StageCfg cfg;
 };
 
-struct CLI
+StageSpec ParseStageSpec(const std::string &spec)
 {
-    std::string artio_path = "./ArtIO.root";
-    std::vector<StageSpec> stages;
-};
+    const auto pos = spec.find(':');
+    if (pos == std::string::npos)
+        throw std::runtime_error("Bad stage spec (expected NAME:FILELIST): " + spec);
 
-CLI ParseArgs(const std::vector<std::string> &args)
-{
-    CLI cli;
+    StageSpec st;
+    st.cfg.stage_name = Trim(spec.substr(0, pos));
+    st.cfg.filelist_path = Trim(spec.substr(pos + 1));
 
-    for (size_t i = 1; i < args.size(); ++i)
-    {
-        const std::string &a = args[i];
+    if (st.cfg.stage_name.empty() || st.cfg.filelist_path.empty())
+        throw std::runtime_error("Bad stage spec: " + spec);
 
-        auto need = [&](const char *opt) -> std::string
-        {
-            if (i + 1 >= args.size())
-                throw std::runtime_error(std::string("Missing value for ") + opt);
-            return args[++i];
-        };
-
-        if (a == "--args")
-        {
-            throw std::runtime_error("Unexpected --args");
-        }
-        else if (a == "--artio")
-        {
-            cli.artio_path = need("--artio");
-        }
-        else if (a == "--stage")
-        {
-            const std::string spec = need("--stage");
-            const auto pos = spec.find(':');
-            if (pos == std::string::npos)
-                throw std::runtime_error("Bad --stage spec (expected NAME:FILELIST): " + spec);
-
-            StageSpec st;
-            st.cfg.stage_name = Trim(spec.substr(0, pos));
-            st.cfg.filelist_path = Trim(spec.substr(pos + 1));
-
-            if (st.cfg.stage_name.empty() || st.cfg.filelist_path.empty())
-                throw std::runtime_error("Bad --stage spec: " + spec);
-
-            cli.stages.push_back(std::move(st));
-        }
-        else
-        {
-            throw std::runtime_error("Unknown argument: " + a);
-        }
-    }
-
-    if (cli.stages.empty())
-        throw std::runtime_error("No --stage specified.");
-
-    return cli;
+    return st;
 }
 
 bool HasStageName(const std::vector<std::string> &sorted_names, const std::string &name)
@@ -226,51 +143,51 @@ int main(int argc, char **argv)
         const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
         const double pot_scale = 1e12;
 
-        const auto args = ExpandArgs(argc, argv);
-        const CLI cli = ParseArgs(args);
+        if (argc != 2)
+            throw std::runtime_error("Usage: artIOpartition STAGE:FILELIST");
 
-        std::vector<std::string> existing = ArtIOManifestIO::ListStages(cli.artio_path);
+        const StageSpec stage = ParseStageSpec(argv[1]);
+        const std::string artio_path = stage.cfg.stage_name + ".root";
+
+        std::vector<std::string> existing = ArtIOManifestIO::ListStages(artio_path);
         std::sort(existing.begin(), existing.end());
 
         RunInfoDB db(db_path);
 
         std::vector<ArtIOStage> out;
-        out.reserve(cli.stages.size());
+        out.reserve(1);
 
-        for (const auto &st : cli.stages)
+        if (HasStageName(existing, stage.cfg.stage_name))
         {
-            if (HasStageName(existing, st.cfg.stage_name))
-            {
-                std::cerr << "[artIOpartition] exists stage=" << st.cfg.stage_name << "\n";
-                continue;
-            }
-
-            const auto files = ReadFileList(st.cfg.filelist_path);
-
-            ArtIOStage rec;
-            rec.cfg = st.cfg;
-            rec.n_input_files = static_cast<long long>(files.size());
-
-            const auto peek = PeekEventFlags(files.front());
-            if (peek.isNuMI.has_value())
-                rec.beam = (*peek.isNuMI ? BeamMode::kNuMI : BeamMode::kBNB);
-            if (peek.isData.has_value())
-                rec.kind = (*peek.isData ? SampleKind::kData : SampleKind::kUnknown);
-
-            rec.subrun = ScanSubRunTree(files);
-            rec.runinfo = db.SumRuninfoForSelection(rec.subrun.unique_pairs);
-
-            std::cerr << "[artIOpartition] add stage=" << rec.cfg.stage_name
-                      << " files=" << rec.n_input_files
-                      << " pairs=" << rec.subrun.unique_pairs.size()
-                      << " pot_sum=" << rec.subrun.pot_sum
-                      << " tortgt=" << rec.runinfo.tortgt_sum * pot_scale
-                      << "\n";
-
-            out.push_back(std::move(rec));
+            std::cerr << "[artIOpartition] exists stage=" << stage.cfg.stage_name << "\n";
+            return 0;
         }
 
-        ArtIOManifestIO::AppendStages(cli.artio_path, db_path, pot_scale, out);
+        const auto files = ReadFileList(stage.cfg.filelist_path);
+
+        ArtIOStage rec;
+        rec.cfg = stage.cfg;
+        rec.n_input_files = static_cast<long long>(files.size());
+
+        const auto peek = PeekEventFlags(files.front());
+        if (peek.isNuMI.has_value())
+            rec.beam = (*peek.isNuMI ? BeamMode::kNuMI : BeamMode::kBNB);
+        if (peek.isData.has_value())
+            rec.kind = (*peek.isData ? SampleKind::kData : SampleKind::kUnknown);
+
+        rec.subrun = ScanSubRunTree(files);
+        rec.runinfo = db.SumRuninfoForSelection(rec.subrun.unique_pairs);
+
+        std::cerr << "[artIOpartition] add stage=" << rec.cfg.stage_name
+                  << " files=" << rec.n_input_files
+                  << " pairs=" << rec.subrun.unique_pairs.size()
+                  << " pot_sum=" << rec.subrun.pot_sum
+                  << " tortgt=" << rec.runinfo.tortgt_sum * pot_scale
+                  << "\n";
+
+        out.push_back(std::move(rec));
+
+        ArtIOManifestIO::AppendStages(artio_path, db_path, pot_scale, out);
 
         return 0;
     }

@@ -6,8 +6,8 @@ LIB_NAME = build/lib/libNuIO.so
 LIB_SRC = src/lib/NuIO/src/StageResultIO.cxx
 LIB_OBJ = $(LIB_SRC:.cxx=.o)
 
-BIN_NAME = build/bin/nuIOcondenser.exe
-BIN_SRC = src/bin/nuIOcondenser/nuIOcondenser.cxx
+BIN_NAME = build/bin/nuIOaggregator.exe
+BIN_SRC = src/bin/nuIOaggregator/nuIOaggregator.cxx
 BIN_OBJ = $(BIN_SRC:.cxx=.o)
 
 INCLUDES = -I./src/lib/NuIO/include

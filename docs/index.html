@@ -1,1 +1,185 @@
-<html><meta http-equiv="refresh" content="0; URL='output/html/index.html'"/></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NuxSec Documentation</title>
+    <style>
+        :root
+        {
+            color-scheme: light dark;
+        }
+
+        body
+        {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b 45%, #312e81);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        main
+        {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 24px 64px;
+        }
+
+        .pill
+        {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.18);
+            font-size: 0.85rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        h1
+        {
+            font-size: clamp(2.6rem, 6vw, 3.6rem);
+            margin: 20px 0 16px;
+        }
+
+        p
+        {
+            line-height: 1.7;
+            color: rgba(248, 250, 252, 0.82);
+            margin: 0 0 24px;
+            font-size: 1.05rem;
+        }
+
+        .actions
+        {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin: 32px 0 48px;
+        }
+
+        .button
+        {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            color: #0f172a;
+            background: #38bdf8;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .button.secondary
+        {
+            background: transparent;
+            color: #e2e8f0;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+        }
+
+        .button:hover,
+        .button:focus-visible
+        {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.35);
+        }
+
+        .grid
+        {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .card
+        {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        .card h2
+        {
+            margin: 0 0 8px;
+            font-size: 1.1rem;
+        }
+
+        .card p
+        {
+            margin: 0;
+            font-size: 0.98rem;
+        }
+
+        footer
+        {
+            margin-top: 48px;
+            font-size: 0.9rem;
+            color: rgba(226, 232, 240, 0.7);
+        }
+
+        @media (prefers-color-scheme: light)
+        {
+            body
+            {
+                background: linear-gradient(135deg, #f8fafc, #e2e8f0 45%, #c7d2fe);
+                color: #0f172a;
+            }
+
+            p
+            {
+                color: rgba(15, 23, 42, 0.75);
+            }
+
+            .card
+            {
+                background: rgba(255, 255, 255, 0.8);
+                border-color: rgba(15, 23, 42, 0.15);
+            }
+
+            .button.secondary
+            {
+                color: #0f172a;
+                border-color: rgba(15, 23, 42, 0.25);
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <span class="pill">Doxygen · NuxSec</span>
+        <h1>Explore the NuxSec documentation.</h1>
+        <p>
+            The Doxygen output highlights how the NuxSec cryptographic pipeline, CLI, and
+            analysis components fit together. Use the links below to jump into the API
+            reference or review the project layout before diving into the code.
+        </p>
+        <div class="actions">
+            <a class="button" href="output/html/index.html">Open API Reference</a>
+            <a class="button secondary" href="output/html/files.html">Browse File Index</a>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h2>Architecture overview</h2>
+                <p>Understand the roles of collectors, analyzers, and export layers.</p>
+            </div>
+            <div class="card">
+                <h2>Security focus</h2>
+                <p>Review how NuxSec encodes risk levels and threat metadata.</p>
+            </div>
+            <div class="card">
+                <h2>Get productive</h2>
+                <p>Find the right classes fast with the navigation tree and search.</p>
+            </div>
+        </div>
+        <footer>
+            Tip: run <code>make docs</code> to regenerate the latest Doxygen output.
+        </footer>
+    </main>
+</body>
+</html>

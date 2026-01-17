@@ -27,18 +27,14 @@
 #include <utility>
 #include <vector>
 
+#include "stage_result_io.h"
+
 namespace nucond {
 
 static inline std::string Trim(std::string s) {
   auto notspace = [](unsigned char c){ return !std::isspace(c); };
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
   s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
-  return s;
-}
-
-static inline std::string ToLower(std::string s) {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c){ return std::tolower(c); });
   return s;
 }
 
@@ -68,40 +64,6 @@ static inline std::vector<std::string> ReadFileList(const std::string& filelistP
     throw std::runtime_error("Filelist is empty: " + filelistPath);
   }
   return files;
-}
-
-enum class SampleKind {
-  kUnknown = 0,
-  kData,
-  kEXT,
-  kMCOverlay,
-  kMCDirt,
-  kMCStrangeness
-};
-
-static inline const char* SampleKindName(SampleKind k) {
-  switch (k) {
-    case SampleKind::kData:          return "data";
-    case SampleKind::kEXT:           return "ext";
-    case SampleKind::kMCOverlay:     return "mc_overlay";
-    case SampleKind::kMCDirt:        return "mc_dirt";
-    case SampleKind::kMCStrangeness: return "mc_strangeness";
-    default:                         return "unknown";
-  }
-}
-
-enum class BeamMode {
-  kUnknown = 0,
-  kNuMI,
-  kBNB
-};
-
-static inline const char* BeamModeName(BeamMode b) {
-  switch (b) {
-    case BeamMode::kNuMI: return "numi";
-    case BeamMode::kBNB:  return "bnb";
-    default:              return "unknown";
-  }
 }
 
 static inline SampleKind InferSampleKind(const std::string& stageName) {
@@ -154,21 +116,10 @@ static inline FilePeek PeekEventFlags(const std::string& rootFile) {
   return out;
 }
 
-struct RunSubrun {
-  int run = 0;
-  int subrun = 0;
-};
-
 static inline uint64_t PackRunSubrun(int run, int subrun) {
   return (static_cast<uint64_t>(static_cast<uint32_t>(run)) << 32) |
          (static_cast<uint64_t>(static_cast<uint32_t>(subrun)));
 }
-
-struct SubRunSummary {
-  double pot_sum = 0.0;
-  long long n_entries = 0;
-  std::vector<RunSubrun> unique_pairs;
-};
 
 static inline SubRunSummary ScanSubRunTree(const std::vector<std::string>& files) {
   SubRunSummary out;
@@ -212,21 +163,6 @@ static inline SubRunSummary ScanSubRunTree(const std::vector<std::string>& files
 
   return out;
 }
-
-struct DBSums {
-  double tortgt_sum = 0.0;
-  double tor101_sum = 0.0;
-  double tor860_sum = 0.0;
-  double tor875_sum = 0.0;
-
-  long long EA9CNT_sum   = 0;
-  long long E1DCNT_sum   = 0;
-  long long EXTTrig_sum  = 0;
-  long long Gate1Trig_sum = 0;
-  long long Gate2Trig_sum = 0;
-
-  long long n_pairs_loaded = 0;
-};
 
 class BeamRunDB {
 public:
@@ -342,27 +278,6 @@ private:
   sqlite3* db_ = nullptr;
 };
 
-struct StageConfig {
-  std::string stage_name;
-  std::string filelist_path;
-};
-
-struct StageResult {
-  StageConfig cfg;
-  SampleKind kind = SampleKind::kUnknown;
-  BeamMode beam = BeamMode::kUnknown;
-
-  std::vector<std::string> input_files;
-
-  SubRunSummary subrun;
-  DBSums dbsums;
-
-  double scale = 1.0;
-
-  double db_tortgt_pot = 0.0;
-  double db_tor101_pot = 0.0;
-};
-
 static inline bool MergeRootFiles(const std::vector<std::string>& files,
                                  const std::string& outFile)
 {
@@ -379,67 +294,6 @@ static inline bool MergeRootFiles(const std::vector<std::string>& files,
     }
   }
   return merger.Merge();
-}
-
-static inline void WriteStageMetadata(const StageResult& r,
-                                      const std::string& outFile)
-{
-  std::unique_ptr<TFile> f(TFile::Open(outFile.c_str(), "UPDATE"));
-  if (!f || f->IsZombie()) {
-    throw std::runtime_error("Failed to open merged output file for UPDATE: " + outFile);
-  }
-
-  TDirectory* d = f->GetDirectory("NuCondenser");
-  if (!d) d = f->mkdir("NuCondenser");
-  d->cd();
-
-  TNamed("stage_name", r.cfg.stage_name.c_str()).Write("stage_name", TObject::kOverwrite);
-  TNamed("sample_kind", SampleKindName(r.kind)).Write("sample_kind", TObject::kOverwrite);
-  TNamed("beam_mode", BeamModeName(r.beam)).Write("beam_mode", TObject::kOverwrite);
-
-  TParameter<double>("subrun_pot_sum", r.subrun.pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);
-  TParameter<long long>("subrun_entries", r.subrun.n_entries).Write("subrun_entries", TObject::kOverwrite);
-  TParameter<long long>("unique_run_subrun_pairs", static_cast<long long>(r.subrun.unique_pairs.size()))
-    .Write("unique_run_subrun_pairs", TObject::kOverwrite);
-
-  TParameter<double>("db_tortgt_sum_raw", r.dbsums.tortgt_sum).Write("db_tortgt_sum_raw", TObject::kOverwrite);
-  TParameter<double>("db_tor101_sum_raw", r.dbsums.tor101_sum).Write("db_tor101_sum_raw", TObject::kOverwrite);
-
-  TParameter<double>("db_tortgt_pot", r.db_tortgt_pot).Write("db_tortgt_pot", TObject::kOverwrite);
-  TParameter<double>("db_tor101_pot", r.db_tor101_pot).Write("db_tor101_pot", TObject::kOverwrite);
-
-  TParameter<long long>("db_ea9cnt_sum", r.dbsums.EA9CNT_sum).Write("db_ea9cnt_sum", TObject::kOverwrite);
-  TParameter<long long>("db_exttrig_sum", r.dbsums.EXTTrig_sum).Write("db_exttrig_sum", TObject::kOverwrite);
-  TParameter<long long>("db_gate1trig_sum", r.dbsums.Gate1Trig_sum).Write("db_gate1trig_sum", TObject::kOverwrite);
-  TParameter<long long>("db_gate2trig_sum", r.dbsums.Gate2Trig_sum).Write("db_gate2trig_sum", TObject::kOverwrite);
-
-  TParameter<double>("scale_factor", r.scale).Write("scale_factor", TObject::kOverwrite);
-
-  {
-    TObjArray arr;
-    arr.SetOwner(true);
-    for (const auto& in : r.input_files) {
-      arr.Add(new TObjString(in.c_str()));
-    }
-    arr.Write("input_files", TObject::kSingleKey | TObject::kOverwrite);
-  }
-
-  {
-    TTree rs("run_subrun", "Unique (run,subrun) pairs used for DB sums");
-    Int_t run = 0;
-    Int_t subrun = 0;
-    rs.Branch("run", &run, "run/I");
-    rs.Branch("subrun", &subrun, "subrun/I");
-    for (const auto& p : r.subrun.unique_pairs) {
-      run = p.run;
-      subrun = p.subrun;
-      rs.Fill();
-    }
-    rs.Write("run_subrun", TObject::kOverwrite);
-  }
-
-  f->Write();
-  f->Close();
 }
 
 struct CLI {
@@ -586,7 +440,7 @@ static inline StageResult ProcessStage(const StageConfig& cfg,
     if (!ok) {
       throw std::runtime_error("ROOT merge failed for stage " + cfg.stage_name + " -> " + outFile);
     }
-    WriteStageMetadata(r, outFile);
+    StageResultIO::Write(r, outFile);
   }
 
   return r;

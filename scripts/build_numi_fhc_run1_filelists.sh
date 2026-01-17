@@ -7,6 +7,7 @@ NAME="${NAME:-numi_fhc_run1}"
 
 BASE="/pnfs/uboone/scratch/users/${USER_NAME}/ntuples/${RELEASE}/${NAME}"
 OUTPUT_DIR="inputs/numi_fhc_run1/filelists"
+FILE_PATTERN="${FILE_PATTERN:-nu_selection.root}"
 
 mkdir -p "${OUTPUT_DIR}"
 
@@ -28,7 +29,7 @@ write_list() {
         return 0
     fi
 
-    find "${dir}" -type f -name "*.root" | sort > "${tmp_list}"
+    find "${dir}" -type f -name "${FILE_PATTERN}" | sort > "${tmp_list}"
 
     if [[ ! -s "${tmp_list}" ]]
     then

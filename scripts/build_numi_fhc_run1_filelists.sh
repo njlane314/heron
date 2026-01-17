@@ -17,8 +17,9 @@ write_list() {
 
     if [[ ! -d "${dir}" ]]
     then
-        echo "Missing output directory: ${dir}" >&2
-        return 1
+        echo "Warning: missing output directory: ${dir}" >&2
+        : > "${list}"
+        return 0
     fi
 
     find "${dir}" -maxdepth 1 -type f -name "*.root" | sort > "${list}"

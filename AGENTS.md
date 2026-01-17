@@ -1,6 +1,6 @@
 # Repository Formatting Rules
 
-All source files in this repository must follow the formatting shown in `nucondenser.cxx` and the example below.
+All source files in this repository must follow the formatting shown in `nuaggregator.cxx` and the example below.
 
 ## Required style
 

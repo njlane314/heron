@@ -1,7 +1,7 @@
 /**
  *  @file  lib/NuIO/src/ArtProvenanceIO.cxx
  *
- *  @brief Implementation for NuIO condenser stage provenance IO
+ *  @brief Implementation for NuIO aggregator stage provenance IO
  */
 
 #include "NuIO/ArtProvenanceIO.h"
@@ -75,9 +75,9 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
         throw std::runtime_error("Failed to open merged output file for UPDATE: " + outFile);
     }
 
-    TDirectory* d = f->GetDirectory("NuCondenser");
+    TDirectory* d = f->GetDirectory("NuAggregator");
     if (!d)
-        d = f->mkdir("NuCondenser");
+        d = f->mkdir("NuAggregator");
     d->cd();
 
     TNamed("stage_name", r.cfg.stage_name.c_str()).Write("stage_name", TObject::kOverwrite);

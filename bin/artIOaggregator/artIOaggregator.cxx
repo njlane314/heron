@@ -421,8 +421,8 @@ class RunInfoDB
 struct CLI
 {
     std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
-    std::string outdir = "./condensed";
-    std::string manifest_path = "./condensed/manifest.root";
+    std::string outdir = "./aggregated";
+    std::string manifest_path = "./aggregated/manifest.root";
     double pot_scale = 1e12;
     std::string ext_denom = "EXTTrig";
 
@@ -437,8 +437,8 @@ static void PrintUsage(const char* argv0)
                           "Options:\n"
                           "  --args FILE         Read additional CLI arguments from FILE\n"
                           "  --db PATH           Path to run.db (default: /exp/uboone/data/uboonebeam/beamdb/run.db)\n"
-                          "  --outdir DIR        Output directory (default: ./condensed)\n"
-                          "  --manifest PATH     Manifest ROOT file (default: ./condensed/manifest.root)\n"
+                          "  --outdir DIR        Output directory (default: ./aggregated)\n"
+                          "  --manifest PATH     Manifest ROOT file (default: ./aggregated/manifest.root)\n"
                           "  --pot-scale X       Multiply tortgt/tor101 sums by X to get POT (default: 1e12)\n"
                           "  --ext-denom COL     EXT denominator column (EXTTrig|Gate1Trig|Gate2Trig...) (default: EXTTrig)\n"
                           "  --help              Print this message\n";
@@ -621,7 +621,7 @@ static ArtProvenance ProcessStage(const StageCfg& cfg,
         r.scale = 1.0;
     }
 
-    const std::string outFile = outdir + "/" + cfg.stage_name + ".condensed.root";
+    const std::string outFile = outdir + "/" + cfg.stage_name + ".aggregated.root";
 
     ArtProvenanceIO::Write(r, outFile);
 
@@ -673,11 +673,11 @@ int main(int argc, char** argv)
                 throw std::runtime_error("Failed to create manifest file: " + cli.manifest_path);
             }
 
-            TTree t("Stages", "Condenser stage summary");
+            TTree t("Stages", "Aggregator stage summary");
             std::string stage_name;
             std::string kind;
             std::string beam;
-            std::string condensed_file;
+            std::string aggregated_file;
             double subrun_pot_sum = 0.0;
             double db_tortgt_pot = 0.0;
             long long ea9cnt_sum = 0;
@@ -689,7 +689,7 @@ int main(int argc, char** argv)
             t.Branch("stage_name", &stage_name);
             t.Branch("kind", &kind);
             t.Branch("beam", &beam);
-            t.Branch("condensed_file", &condensed_file);
+            t.Branch("aggregated_file", &aggregated_file);
             t.Branch("subrun_pot_sum", &subrun_pot_sum);
             t.Branch("db_tortgt_pot", &db_tortgt_pot);
             t.Branch("ea9cnt_sum", &ea9cnt_sum);
@@ -703,7 +703,7 @@ int main(int argc, char** argv)
                 stage_name = r.cfg.stage_name;
                 kind = SampleKindName(r.kind);
                 beam = BeamModeName(r.beam);
-                condensed_file = cli.outdir + "/" + r.cfg.stage_name + ".condensed.root";
+                aggregated_file = cli.outdir + "/" + r.cfg.stage_name + ".aggregated.root";
                 subrun_pot_sum = r.subrun.pot_sum;
                 db_tortgt_pot = r.db_tortgt_pot;
                 ea9cnt_sum = r.runinfo.EA9CNT_sum;
@@ -717,7 +717,7 @@ int main(int argc, char** argv)
             mf->cd();
             t.Write();
 
-            TDirectory* d = mf->mkdir("NuCondenser");
+            TDirectory* d = mf->mkdir("NuAggregator");
             d->cd();
             TNamed("db_path", cli.db_path.c_str()).Write("db_path", TObject::kOverwrite);
             TParameter<double>("pot_scale", cli.pot_scale).Write("pot_scale", TObject::kOverwrite);

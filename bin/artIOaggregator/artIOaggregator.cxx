@@ -359,7 +359,6 @@ struct CLI
     std::string outdir = "./condensed";
     std::string manifest_path = "./condensed/manifest.root";
     double pot_scale = 1e12;
-    bool do_merge = true;
     std::string ext_denom = "EXTTrig";
 
     std::vector<StageCfg> stages;
@@ -375,7 +374,6 @@ static void PrintUsage(const char* argv0)
                           "  --outdir DIR        Output directory (default: ./condensed)\n"
                           "  --manifest PATH     Manifest ROOT file (default: ./condensed/manifest.root)\n"
                           "  --pot-scale X       Multiply tortgt/tor101 sums by X to get POT (default: 1e12)\n"
-                          "  --no-merge          Do not merge ROOT files; only write manifest (still scans SubRun + DB)\n"
                           "  --ext-denom COL     EXT denominator column (EXTTrig|Gate1Trig|Gate2Trig...) (default: EXTTrig)\n"
                           "  --help              Print this message\n";
 }
@@ -413,10 +411,6 @@ static CLI ParseArgs(int argc, char** argv)
         else if (a == "--pot-scale")
         {
             cli.pot_scale = std::stod(need("--pot-scale"));
-        }
-        else if (a == "--no-merge")
-        {
-            cli.do_merge = false;
         }
         else if (a == "--ext-denom")
         {
@@ -470,8 +464,7 @@ static ArtProvenance ProcessStage(const StageCfg& cfg,
                                   const RunInfoDB& db,
                                   double pot_scale,
                                   const std::string& ext_denom_col,
-                                  const std::string& outdir,
-                                  bool do_merge)
+                                  const std::string& outdir)
 {
     ArtProvenance r;
     r.cfg = cfg;
@@ -539,15 +532,12 @@ static ArtProvenance ProcessStage(const StageCfg& cfg,
 
     const std::string outFile = outdir + "/" + cfg.stage_name + ".condensed.root";
 
-    if (do_merge)
+    const bool ok = MergeRootFiles(r.input_files, outFile);
+    if (!ok)
     {
-        const bool ok = MergeRootFiles(r.input_files, outFile);
-        if (!ok)
-        {
-            throw std::runtime_error("ROOT merge failed for stage " + cfg.stage_name + " -> " + outFile);
-        }
-        ArtProvenanceIO::Write(r, outFile);
+        throw std::runtime_error("ROOT merge failed for stage " + cfg.stage_name + " -> " + outFile);
     }
+    ArtProvenanceIO::Write(r, outFile);
 
     return r;
 }
@@ -573,7 +563,7 @@ int main(int argc, char** argv)
         {
             std::cerr << "[artIOaggregator] stage=" << st.stage_name
                       << " filelist=" << st.filelist_path << "\n";
-            ArtProvenance r = ProcessStage(st, db, cli.pot_scale, cli.ext_denom, cli.outdir, cli.do_merge);
+            ArtProvenance r = ProcessStage(st, db, cli.pot_scale, cli.ext_denom, cli.outdir);
 
             std::cerr << "  kind=" << SampleKindName(r.kind)
                       << " beam=" << BeamModeName(r.beam)
@@ -645,7 +635,6 @@ int main(int argc, char** argv)
             TNamed("db_path", cli.db_path.c_str()).Write("db_path", TObject::kOverwrite);
             TParameter<double>("pot_scale", cli.pot_scale).Write("pot_scale", TObject::kOverwrite);
             TNamed("ext_denom_column", cli.ext_denom.c_str()).Write("ext_denom_column", TObject::kOverwrite);
-            TParameter<int>("did_merge", cli.do_merge ? 1 : 0).Write("did_merge", TObject::kOverwrite);
 
             mf->Write();
             mf->Close();

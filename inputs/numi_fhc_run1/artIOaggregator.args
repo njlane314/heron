@@ -1,6 +1,6 @@
 # artIOaggregator CLI arguments for numi_fhc_run1
 # Example usage:
-#   artIOaggregator $(cat inputs/numi_fhc_run1/artIOaggregator.args)
+#   artIOaggregator --args inputs/numi_fhc_run1/artIOaggregator.args
 
 --stage beam_s0:inputs/numi_fhc_run1/filelists/beam_s0.list
 --stage beam_s1:inputs/numi_fhc_run1/filelists/beam_s1.list

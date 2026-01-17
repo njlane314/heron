@@ -79,6 +79,33 @@ static std::vector<std::string> ReadFileList(const std::string& filelistPath)
     return files;
 }
 
+static std::vector<std::string> ReadArgsFile(const std::string& argsPath)
+{
+    std::ifstream fin(argsPath);
+    if (!fin)
+    {
+        throw std::runtime_error("Failed to open args file: " + argsPath +
+                                 " (errno=" + std::to_string(errno) + " " + std::strerror(errno) + ")");
+    }
+    std::vector<std::string> args;
+    std::string line;
+    while (std::getline(fin, line))
+    {
+        line = Trim(line);
+        if (line.empty())
+            continue;
+        if (!line.empty() && line[0] == '#')
+            continue;
+        std::istringstream iss(line);
+        std::string tok;
+        while (iss >> tok)
+        {
+            args.push_back(tok);
+        }
+    }
+    return args;
+}
+
 static SampleKind InferSampleKind(const std::string& stageName)
 {
     const std::string s = ToLower(stageName);
@@ -371,6 +398,7 @@ static void PrintUsage(const char* argv0)
                  "  "
               << argv0 << " [options] --stage NAME:FILELIST [--stage NAME:FILELIST ...]\n\n"
                           "Options:\n"
+                          "  --args FILE         Read additional CLI arguments from FILE\n"
                           "  --db PATH           Path to run.db (default: /exp/uboone/data/uboonebeam/beamdb/run.db)\n"
                           "  --outdir DIR        Output directory (default: ./condensed)\n"
                           "  --manifest PATH     Manifest ROOT file (default: ./condensed/manifest.root)\n"
@@ -380,23 +408,48 @@ static void PrintUsage(const char* argv0)
                           "  --help              Print this message\n";
 }
 
-static CLI ParseArgs(int argc, char** argv)
+static std::vector<std::string> ExpandArgs(int argc, char** argv)
 {
-    CLI cli;
-    for (int i = 1; i < argc; ++i)
+    std::vector<std::string> expanded;
+    expanded.reserve(static_cast<size_t>(argc));
+    for (int i = 0; i < argc; ++i)
     {
-        const std::string a = argv[i];
-        auto need = [&](const std::string& opt) -> std::string
+        if (i > 0 && std::string(argv[i]) == "--args")
         {
             if (i + 1 >= argc)
+            {
+                throw std::runtime_error("Missing value for --args");
+            }
+            const std::vector<std::string> fileArgs = ReadArgsFile(argv[++i]);
+            expanded.insert(expanded.end(), fileArgs.begin(), fileArgs.end());
+            continue;
+        }
+        expanded.emplace_back(argv[i]);
+    }
+    return expanded;
+}
+
+static CLI ParseArgs(const std::vector<std::string>& args)
+{
+    CLI cli;
+    for (size_t i = 1; i < args.size(); ++i)
+    {
+        const std::string& a = args[i];
+        auto need = [&](const std::string& opt) -> std::string
+        {
+            if (i + 1 >= args.size())
                 throw std::runtime_error("Missing value for " + opt);
-            return argv[++i];
+            return args[++i];
         };
 
         if (a == "--help" || a == "-h")
         {
-            PrintUsage(argv[0]);
+            PrintUsage(args[0].c_str());
             std::exit(0);
+        }
+        else if (a == "--args")
+        {
+            throw std::runtime_error("Unexpected --args: use --args only on the command line.");
         }
         else if (a == "--db")
         {
@@ -560,7 +613,8 @@ int main(int argc, char** argv)
 
     try
     {
-        const CLI cli = ParseArgs(argc, argv);
+        const std::vector<std::string> expandedArgs = ExpandArgs(argc, argv);
+        const CLI cli = ParseArgs(expandedArgs);
 
         EnsureDirLike(cli.outdir);
 

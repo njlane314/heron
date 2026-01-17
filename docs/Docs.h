@@ -1,5 +1,5 @@
 /**
- *  @file  Docs.h
+ *  @file  docs/Docs.h
  *
  *  @brief  Extra doxygen documentation
  */

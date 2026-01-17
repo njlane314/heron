@@ -1,17 +1,18 @@
 #!/bin/bash
 
-if [[ -z "${MRB_SOURCE}" ]]; then
-    echo "MRB_SOURCE was not set!"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+if [ ! -f "${SCRIPT_DIR}/Doxyfile" ]; then
+    echo "Can't find ${SCRIPT_DIR}/Doxyfile"
     exit 1
 fi
 
-DOCS_PATH=$MRB_SOURCE/ubcc1pi/docs/
-if [ ! -d $DOCS_PATH ]; then
-    echo "Can't find the documentation directory: ${DOCS_PATH}"
-    exit 2
-fi
+echo "Checking documentation for issues in ${REPO_ROOT}"
 
-echo "Checking documentation for issues"
+cd "${SCRIPT_DIR}"
 
 # Run doxygen in a "strict mode" to ensure that everything is documented, this will put any issues in warnings.txt
 doxygen Doxyfile &> /dev/null

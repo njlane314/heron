@@ -1,7 +1,7 @@
 /**
- *  @file  src/bin/nuIOcondenser/nuIOcondenser.cxx
+ *  @file  src/bin/nuIOaggregator/nuIOaggregator.cxx
  *
- *  @brief Main implementation for the nuIOcondenser executable
+ *  @brief Main implementation for the nuIOaggregator executable
  */
 
 #include <TChain.h>
@@ -571,7 +571,7 @@ int main(int argc, char** argv)
 
         for (const auto& st : cli.stages)
         {
-            std::cerr << "[nuIOcondenser] stage=" << st.stage_name
+            std::cerr << "[nuIOaggregator] stage=" << st.stage_name
                       << " filelist=" << st.filelist_path << "\n";
             StageResult r = ProcessStage(st, db, cli.pot_scale, cli.ext_denom, cli.outdir, cli.do_merge);
 

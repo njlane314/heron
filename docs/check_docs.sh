@@ -5,20 +5,20 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-if [ ! -f "${SCRIPT_DIR}/Doxyfile" ]; then
-    echo "Can't find ${SCRIPT_DIR}/Doxyfile"
+if [ ! -f "${REPO_ROOT}/Doxyfile" ]; then
+    echo "Can't find ${REPO_ROOT}/Doxyfile"
     exit 1
 fi
 
 echo "Checking documentation for issues in ${REPO_ROOT}"
 
-cd "${SCRIPT_DIR}"
+cd "${REPO_ROOT}"
 
 # Run doxygen in a "strict mode" to ensure that everything is documented, this will put any issues in warnings.txt
 doxygen Doxyfile &> /dev/null
 
 # Check for issues
-N_ISSUES=`wc -l warnings.txt | cut -d ' ' -f 1`
+N_ISSUES=`wc -l docs/warnings.txt | cut -d ' ' -f 1`
 if [ $N_ISSUES -eq 0 ]; then
     echo; echo "No issues found! Safe to push :)"
     exit 0
@@ -28,7 +28,7 @@ echo "Press any key for more details..."
 read -n 1
 
 echo; echo "Raw warnings -----------------------------"
-cat warnings.txt
+cat docs/warnings.txt
 
 echo; echo "Interpreted warnings (may be garbled) ----"
 
@@ -43,6 +43,6 @@ while read LINE; do
     echo "vim +$NUM $FILE"
 
     COUNTER=$(($COUNTER + 1))
-done < warnings.txt
+done < docs/warnings.txt
 
 echo; echo "^^^ Please fix the above issues before pushing code ^^^"

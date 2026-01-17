@@ -4,9 +4,6 @@
  *  @brief Main entrypoint for ArtIO partition manifest generation
  */
 
-#include <TFile.h>
-#include <TTree.h>
-
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
@@ -85,6 +82,13 @@ std::vector<std::string> ReadArgsFile(const std::string &argsPath)
     return args;
 }
 
+bool IsNuSelectionDataFile(const std::string &path)
+{
+    const auto pos = path.find_last_of("/\\");
+    const std::string name = (pos == std::string::npos) ? path : path.substr(pos + 1);
+    return name == "nuselection_data.root";
+}
+
 std::vector<std::string> ExpandArgs(int argc, char **argv)
 {
     std::vector<std::string> expanded;
@@ -102,50 +106,6 @@ std::vector<std::string> ExpandArgs(int argc, char **argv)
         expanded.emplace_back(argv[i]);
     }
     return expanded;
-}
-
-struct FilePeek
-{
-    std::optional<bool> isData;
-    std::optional<bool> isNuMI;
-};
-
-FilePeek PeekEventFlags(const std::string &rootFile)
-{
-    FilePeek out;
-
-    std::unique_ptr<TFile> f(TFile::Open(rootFile.c_str(), "READ"));
-    if (!f || f->IsZombie())
-        return out;
-
-    TTree *t = dynamic_cast<TTree *>(f->Get("EventSelectionFilter"));
-    if (!t)
-        return out;
-
-    const bool has_is_data = (t->GetBranch("is_data") != nullptr);
-    const bool has_is_numi = (t->GetBranch("is_numi") != nullptr);
-
-    if (!has_is_data && !has_is_numi)
-        return out;
-    if (t->GetEntries() <= 0)
-        return out;
-
-    Bool_t is_data = false;
-    Bool_t is_numi = false;
-
-    if (has_is_data)
-        t->SetBranchAddress("is_data", &is_data);
-    if (has_is_numi)
-        t->SetBranchAddress("is_numi", &is_numi);
-
-    t->GetEntry(0);
-
-    if (has_is_data)
-        out.isData = static_cast<bool>(is_data);
-    if (has_is_numi)
-        out.isNuMI = static_cast<bool>(is_numi);
-
-    return out;
 }
 
 struct StageSpec
@@ -251,11 +211,8 @@ int main(int argc, char **argv)
             rec.cfg = st.cfg;
             rec.n_input_files = static_cast<long long>(files.size());
 
-            const auto peek = PeekEventFlags(files.front());
-            if (peek.isNuMI.has_value())
-                rec.beam = (*peek.isNuMI ? BeamMode::kNuMI : BeamMode::kBNB);
-            if (peek.isData.has_value())
-                rec.kind = (*peek.isData ? SampleKind::kData : SampleKind::kUnknown);
+            if (IsNuSelectionDataFile(files.front()))
+                rec.kind = SampleKind::kData;
 
             rec.subrun = ScanSubRunTree(files);
             rec.runinfo = db.SumRuninfoForSelection(rec.subrun.unique_pairs);

@@ -79,8 +79,7 @@
  *    <p>Focused C++ toolkit for building secure, auditable software systems.</p>
  *
  *    <div class="nux-actions">
- *      <a class="nux-primary" href="annotated.html">API (Classes)</a>
- *      <a href="namespaces.html">Namespaces</a>
+ *      <a class="nux-primary" href="classes.html">API (Classes)</a>
  *    </div>
  *
  *    <p class="nux-note">Use the search box to jump to symbols quickly.</p>

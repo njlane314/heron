@@ -1,5 +1,5 @@
 /**
- *  @file  Executables/nuIOcondenser/nuIOcondenser.cxx
+ *  @file  src/bin/nuIOcondenser/nuIOcondenser.cxx
  *
  *  @brief Main implementation for the nuIOcondenser executable
  */

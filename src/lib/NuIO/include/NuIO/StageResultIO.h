@@ -1,5 +1,5 @@
 /**
- *  @file  Libraries/NuIO/include/NuIO/StageResultIO.h
+ *  @file  src/lib/NuIO/include/NuIO/StageResultIO.h
  *
  *  @brief Data structures and IO helpers for NuIO condenser stage results
  */

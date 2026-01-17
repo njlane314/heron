@@ -1,5 +1,5 @@
 /**
- *  @file  Libraries/NuIO/src/StageResultIO.cxx
+ *  @file  src/lib/NuIO/src/StageResultIO.cxx
  *
  *  @brief Implementation for NuIO condenser stage result IO
  */

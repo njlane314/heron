@@ -3,14 +3,14 @@ CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell root-config --cflags)
 LDFLAGS ?= $(shell root-config --libs) -lsqlite3
 
 LIB_NAME = libNuIO.so
-LIB_SRC = Libraries/NuIO/src/StageResultIO.cxx
+LIB_SRC = src/lib/NuIO/src/StageResultIO.cxx
 LIB_OBJ = $(LIB_SRC:.cxx=.o)
 
 BIN_NAME = nuIOcondenser.exe
-BIN_SRC = Executables/nuIOcondenser/nuIOcondenser.cxx
+BIN_SRC = src/bin/nuIOcondenser/nuIOcondenser.cxx
 BIN_OBJ = $(BIN_SRC:.cxx=.o)
 
-INCLUDES = -I./Libraries/NuIO/include
+INCLUDES = -I./src/lib/NuIO/include
 
 all: $(LIB_NAME) $(BIN_NAME)
 

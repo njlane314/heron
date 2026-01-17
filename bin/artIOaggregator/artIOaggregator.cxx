@@ -7,7 +7,6 @@
 #include <TChain.h>
 #include <TDirectory.h>
 #include <TFile.h>
-#include <TFileMerger.h>
 #include <TNamed.h>
 #include <TObjArray.h>
 #include <TObjString.h>
@@ -419,27 +418,6 @@ class RunInfoDB
     sqlite3* db_ = nullptr;
 };
 
-static bool MergeRootFiles(const std::vector<std::string>& files,
-                           const std::string& outFile)
-{
-    TFileMerger merger(false);
-    merger.SetFastMethod(true);
-    if (!merger.OutputFile(outFile.c_str(), "RECREATE"))
-    {
-        std::cerr << "ERROR: failed to open merger output file: " << outFile << "\n";
-        return false;
-    }
-    for (const auto& f : files)
-    {
-        if (!merger.AddFile(f.c_str()))
-        {
-            std::cerr << "ERROR: failed to add file to merger: " << f << "\n";
-            return false;
-        }
-    }
-    return merger.Merge();
-}
-
 struct CLI
 {
     std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
@@ -645,11 +623,6 @@ static ArtProvenance ProcessStage(const StageCfg& cfg,
 
     const std::string outFile = outdir + "/" + cfg.stage_name + ".condensed.root";
 
-    const bool ok = MergeRootFiles(r.input_files, outFile);
-    if (!ok)
-    {
-        throw std::runtime_error("ROOT merge failed for stage " + cfg.stage_name + " -> " + outFile);
-    }
     ArtProvenanceIO::Write(r, outFile);
 
     return r;

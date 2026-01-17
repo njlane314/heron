@@ -1,0 +1,14 @@
+# nuIOaggregator CLI arguments for numi_fhc_run1
+# Example usage:
+#   nuIOaggregator $(cat inputs/numi_fhc_run1/nuIOaggregator.args)
+
+--stage beam_s0:inputs/numi_fhc_run1/filelists/beam_s0.list
+--stage beam_s1:inputs/numi_fhc_run1/filelists/beam_s1.list
+--stage beam_s2:inputs/numi_fhc_run1/filelists/beam_s2.list
+--stage beam_s3:inputs/numi_fhc_run1/filelists/beam_s3.list
+--stage dirt_s0:inputs/numi_fhc_run1/filelists/dirt_s0.list
+--stage dirt_s1:inputs/numi_fhc_run1/filelists/dirt_s1.list
+--stage strangeness_run1_fhc:inputs/numi_fhc_run1/filelists/strangeness_run1_fhc.list
+--stage ext_p0:inputs/numi_fhc_run1/filelists/ext_p0.list
+--stage ext_p1:inputs/numi_fhc_run1/filelists/ext_p1.list
+--stage ext_p2:inputs/numi_fhc_run1/filelists/ext_p2.list

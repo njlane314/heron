@@ -24,6 +24,7 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -186,18 +187,77 @@ static SubRunInfo ScanSubRunTree(const std::vector<std::string>& files)
 {
     SubRunInfo out;
 
-    TChain chain("SubRun");
+    const std::vector<std::string> candidates = {"nuselection/SubRun", "SubRun"};
+    std::string tree_path;
+    std::vector<std::string> missing;
+    long long added = 0;
+
     for (const auto& f : files)
+    {
+        std::unique_ptr<TFile> file(TFile::Open(f.c_str(), "READ"));
+        if (!file || file->IsZombie())
+        {
+            throw std::runtime_error("Failed to open input ROOT file: " + f);
+        }
+
+        for (const auto& name : candidates)
+        {
+            TTree* tree = dynamic_cast<TTree*>(file->Get(name.c_str()));
+            if (tree)
+            {
+                tree_path = name;
+                break;
+            }
+        }
+
+        if (!tree_path.empty())
+            break;
+    }
+
+    if (tree_path.empty())
+    {
+        throw std::runtime_error("No input files contained a SubRun tree.");
+    }
+
+    TChain chain(tree_path.c_str());
+    for (const auto& f : files)
+    {
+        std::unique_ptr<TFile> file(TFile::Open(f.c_str(), "READ"));
+        if (!file || file->IsZombie())
+        {
+            throw std::runtime_error("Failed to open input ROOT file: " + f);
+        }
+
+        TTree* tree = dynamic_cast<TTree*>(file->Get(tree_path.c_str()));
+        if (!tree)
+        {
+            missing.push_back(f);
+            continue;
+        }
+
+        if (tree->GetBranch("run") == nullptr || tree->GetBranch("subRun") == nullptr || tree->GetBranch("pot") == nullptr)
+        {
+            throw std::runtime_error("SubRun tree missing required branches (run, subRun, pot) in file: " + f);
+        }
+
         chain.Add(f.c_str());
+        ++added;
+    }
+
+    if (!missing.empty())
+    {
+        std::cerr << "[artIOaggregator] warning: missing SubRun tree in " << missing.size()
+                  << " input file(s); skipping.\n";
+    }
+
+    if (added == 0)
+    {
+        throw std::runtime_error("No input files contained a SubRun tree.");
+    }
 
     Int_t run = 0;
     Int_t subRun = 0;
     Double_t pot = 0.0;
-
-    if (chain.GetBranch("run") == nullptr || chain.GetBranch("subRun") == nullptr || chain.GetBranch("pot") == nullptr)
-    {
-        throw std::runtime_error("SubRun tree missing required branches (run, subRun, pot).");
-    }
 
     chain.SetBranchAddress("run", &run);
     chain.SetBranchAddress("subRun", &subRun);

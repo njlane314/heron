@@ -1,7 +1,8 @@
+/* -- C++ -- */
 /**
- *  @file  bin/artIOaggregator/artIOaggregator.cxx
+ *  @file  apps/src/artIOaggregator.cc
  *
- *  @brief Main entrypoint for ArtIO provenance generation
+ *  @brief Main entrypoint for ArtIO provenance generation.
  */
 
 #include <algorithm>
@@ -15,9 +16,9 @@
 #include <string>
 #include <vector>
 
-#include "NuIO/ArtProvenanceIO.h"
-#include "NuIO/RunInfoDB.h"
-#include "NuIO/SubRunScanner.h"
+#include "ArtProvenanceIO.hh"
+#include "RunInfoDB.hh"
+#include "SubRunScanner.hh"
 
 namespace
 {
@@ -69,7 +70,7 @@ bool is_selection_data_file(const std::string &path)
 struct Args
 {
     std::string artio_path;
-    nuio::StageCfg stage_cfg;
+    nuxsec::StageCfg stage_cfg;
 };
 
 Args parse_args(int argc, char **argv)
@@ -104,7 +105,7 @@ Args parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    using namespace nuio;
+    using namespace nuxsec;
 
     try
     {

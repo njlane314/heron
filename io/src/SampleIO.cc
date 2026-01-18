@@ -1,16 +1,17 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/src/SampleIO.cxx
+ *  @file  io/src/SampleIO.cc
  *
- *  @brief Implementation for SampleIO aggregation helpers
+ *  @brief Implementation for SampleIO aggregation helpers.
  */
 
-#include "NuIO/SampleIO.h"
+#include "SampleIO.hh"
 
 #include <memory>
 #include <stdexcept>
 #include <utility>
 
-namespace nuio
+namespace nuxsec
 {
 
 Sample SampleIO::aggregate(const std::string &sample_name, const std::vector<std::string> &artio_files)
@@ -253,4 +254,4 @@ SampleStage SampleIO::make_stage(const ArtProvenance &prov, const std::string &a
     return stage;
 }
 
-} // namespace nuio
+} // namespace nuxsec

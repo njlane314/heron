@@ -1,20 +1,20 @@
 /* -- C++ -- */
 /**
- *  @file  lib/NuAna/include/NuAna/NuAnalysisProcessor.hh
+ *  @file  ana/include/AnalysisProcessor.hh
  *
  *  @brief Variable definitions for analysis RDataFrame processing
  */
 
-#ifndef Nu_ANALYSIS_PROCESSOR_H_INCLUDED
-#define Nu_ANALYSIS_PROCESSOR_H_INCLUDED
+#ifndef Nuxsec_ANA_ANALYSIS_PROCESSOR_H_INCLUDED
+#define Nuxsec_ANA_ANALYSIS_PROCESSOR_H_INCLUDED
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 
-namespace nuana
+namespace nuxsec
 {
 
-enum class NuSource
+enum class SourceKind
 {
     kUnknown = 0,
     kData,
@@ -22,7 +22,7 @@ enum class NuSource
     kMC
 };
 
-enum class NuChannel
+enum class Channel
 {
     Unknown = 0,
     OutFV,
@@ -39,9 +39,9 @@ enum class NuChannel
     DataInclusive
 };
 
-struct NuProcessorEntry
+struct ProcessorEntry
 {
-    NuSource source = NuSource::kUnknown;
+    SourceKind source = SourceKind::kUnknown;
     double pot_nom = 0.0;
     double pot_eqv = 0.0;
     double trig_nom = 0.0;
@@ -49,11 +49,11 @@ struct NuProcessorEntry
 };
 
 /** \brief Apply analysis variable definitions to an RDataFrame. */
-class NuAnalysisProcessor
+class AnalysisProcessor
 {
   public:
-    ROOT::RDF::RNode Run(ROOT::RDF::RNode node, const NuProcessorEntry &rec) const;
-    static const NuAnalysisProcessor &Processor();
+    ROOT::RDF::RNode Run(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
+    static const AnalysisProcessor &Processor();
 
   private:
     static constexpr double kRecognisedPurityMin;
@@ -66,6 +66,6 @@ class NuAnalysisProcessor
     static bool IsInRecoVolume(float x, float y, float z) noexcept;
 };
 
-} // namespace nuana
+} // namespace nuxsec
 
-#endif // Nu_ANALYSIS_PROCESSOR_H_INCLUDED
+#endif // Nuxsec_ANA_ANALYSIS_PROCESSOR_H_INCLUDED

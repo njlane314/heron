@@ -1,10 +1,11 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/src/SubRunScanner.cxx
+ *  @file  io/src/SubRunScanner.cc
  *
- *  @brief Implementation for SubRun tree scanning
+ *  @brief Implementation for SubRun tree scanning.
  */
 
-#include "NuIO/SubRunScanner.h"
+#include "SubRunScanner.hh"
 
 #include <TChain.h>
 #include <TFile.h>
@@ -16,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace nuio
+namespace nuxsec
 {
 
 SubRunInfo scan_subrun_tree(const std::vector<std::string> &files)
@@ -104,6 +105,6 @@ SubRunInfo scan_subrun_tree(const std::vector<std::string> &files)
 
     out.unique_pairs = std::move(pairs);
     return out;
-}
+} // namespace nuxsec
 
 }

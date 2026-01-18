@@ -1,16 +1,17 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuAna/src/NuAnalysisProcessor.cc
+ *  @file  ana/src/AnalysisProcessor.cc
  *
- *  @brief Variable definitions for analysis RDataFrame processing
+ *  @brief Variable definitions for analysis RDataFrame processing.
  */
 
-#include "NuAna/NuAnalysisProcessor.hh"
+#include "AnalysisProcessor.hh"
 
 #include <algorithm>
 #include <cmath>
 #include <string>
 
-namespace nuana
+namespace nuxsec
 {
 
 namespace
@@ -54,28 +55,28 @@ inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z)
 
 }
 
-constexpr double NuAnalysisProcessor::kRecognisedPurityMin = 0.5;
-constexpr double NuAnalysisProcessor::kRecognisedCompletenessMin = 0.1;
+constexpr double AnalysisProcessor::kRecognisedPurityMin = 0.5;
+constexpr double AnalysisProcessor::kRecognisedCompletenessMin = 0.1;
 
-constexpr float NuAnalysisProcessor::kTrainingFraction = 0.10f;
-constexpr bool NuAnalysisProcessor::kTrainingIncludeExt = true;
+constexpr float AnalysisProcessor::kTrainingFraction = 0.10f;
+constexpr bool AnalysisProcessor::kTrainingIncludeExt = true;
 
-bool NuAnalysisProcessor::IsInTruthVolume(float x, float y, float z) noexcept
+bool AnalysisProcessor::IsInTruthVolume(float x, float y, float z) noexcept
 {
     return is_in_truth_volume(x, y, z);
 }
 
-bool NuAnalysisProcessor::IsInRecoVolume(float x, float y, float z) noexcept
+bool AnalysisProcessor::IsInRecoVolume(float x, float y, float z) noexcept
 {
     return is_in_reco_volume(x, y, z);
 }
 
 //____________________________________________________________________________
-ROOT::RDF::RNode NuAnalysisProcessor::Run(ROOT::RDF::RNode node, const NuProcessorEntry &rec) const
+ROOT::RDF::RNode AnalysisProcessor::Run(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
 {
-    const bool is_data = (rec.source == NuSource::kData);
-    const bool is_ext = (rec.source == NuSource::kExt);
-    const bool is_mc = (rec.source == NuSource::kMC);
+    const bool is_data = (rec.source == SourceKind::kData);
+    const bool is_ext = (rec.source == SourceKind::kExt);
+    const bool is_mc = (rec.source == SourceKind::kMC);
 
     const double scale_mc =
         (is_mc && rec.pot_nom > 0.0 && rec.pot_eqv > 0.0) ? (rec.pot_nom / rec.pot_eqv) : 1.0;
@@ -208,32 +209,32 @@ ROOT::RDF::RNode NuAnalysisProcessor::Run(ROOT::RDF::RNode node, const NuProcess
                 if (!fv)
                 {
                     if (nu == 0)
-                        return static_cast<int>(NuChannel::OutFV);
-                    return static_cast<int>(NuChannel::External);
+                        return static_cast<int>(Channel::OutFV);
+                    return static_cast<int>(Channel::External);
                 }
                 if (ccnc == 1)
-                    return static_cast<int>(NuChannel::NC);
+                    return static_cast<int>(Channel::NC);
                 if (ccnc == 0 && s > 0)
                 {
                     if (s == 1)
-                        return static_cast<int>(NuChannel::CCS1);
-                    return static_cast<int>(NuChannel::CCSgt1);
+                        return static_cast<int>(Channel::CCS1);
+                    return static_cast<int>(Channel::CCSgt1);
                 }
                 if (std::abs(nu) == 12 && ccnc == 0)
-                    return static_cast<int>(NuChannel::ECCC);
+                    return static_cast<int>(Channel::ECCC);
                 if (std::abs(nu) == 14 && ccnc == 0)
                 {
                     if (npi == 0 && np > 0)
-                        return static_cast<int>(NuChannel::MuCC0pi_ge1p);
+                        return static_cast<int>(Channel::MuCC0pi_ge1p);
                     if (npi == 1 && npi0 == 0)
-                        return static_cast<int>(NuChannel::MuCC1pi);
+                        return static_cast<int>(Channel::MuCC1pi);
                     if (npi0 > 0 || ngamma >= 2)
-                        return static_cast<int>(NuChannel::MuCCPi0OrGamma);
+                        return static_cast<int>(Channel::MuCCPi0OrGamma);
                     if (npi > 1)
-                        return static_cast<int>(NuChannel::MuCCNpi);
-                    return static_cast<int>(NuChannel::MuCCOther);
+                        return static_cast<int>(Channel::MuCCNpi);
+                    return static_cast<int>(Channel::MuCCOther);
                 }
-                return static_cast<int>(NuChannel::Unknown);
+                return static_cast<int>(Channel::Unknown);
             },
             {"in_fiducial", "nu_pdg", "int_ccnc", "count_strange",
              "n_p", "n_pi_minus", "n_pi_plus", "n_pi0", "n_gamma"});
@@ -261,9 +262,9 @@ ROOT::RDF::RNode NuAnalysisProcessor::Run(ROOT::RDF::RNode node, const NuProcess
     else
     {
         const int nonmc_channel =
-            is_ext ? static_cast<int>(NuChannel::External)
-                   : (is_data ? static_cast<int>(NuChannel::DataInclusive)
-                              : static_cast<int>(NuChannel::Unknown));
+            is_ext ? static_cast<int>(Channel::External)
+                   : (is_data ? static_cast<int>(Channel::DataInclusive)
+                              : static_cast<int>(Channel::Unknown));
 
         node = node.Define("in_fiducial", [] { return false; });
         node = node.Define("is_strange", [] { return false; });
@@ -285,11 +286,11 @@ ROOT::RDF::RNode NuAnalysisProcessor::Run(ROOT::RDF::RNode node, const NuProcess
 //____________________________________________________________________________
 
 //____________________________________________________________________________
-const NuAnalysisProcessor &NuAnalysisProcessor::Processor()
+const AnalysisProcessor &AnalysisProcessor::Processor()
 {
-    static const NuAnalysisProcessor ep{};
+    static const AnalysisProcessor ep{};
     return ep;
 }
 //____________________________________________________________________________
 
-} // namespace nuana
+} // namespace nuxsec

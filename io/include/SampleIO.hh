@@ -1,11 +1,12 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/include/NuIO/SampleIO.h
+ *  @file  io/include/SampleIO.hh
  *
- *  @brief Data structures and IO helpers for sample aggregation
+ *  @brief Data structures and IO helpers for sample aggregation.
  */
 
-#ifndef NUIO_SAMPLE_IO_H
-#define NUIO_SAMPLE_IO_H
+#ifndef Nuxsec_IO_SAMPLE_IO_H_INCLUDED
+#define Nuxsec_IO_SAMPLE_IO_H_INCLUDED
 
 #include <TDirectory.h>
 #include <TFile.h>
@@ -16,9 +17,9 @@
 #include <string>
 #include <vector>
 
-#include "NuIO/ArtProvenanceIO.h"
+#include "ArtProvenanceIO.hh"
 
-namespace nuio
+namespace nuxsec
 {
 
 struct SampleStage
@@ -62,6 +63,6 @@ class SampleIO
     static SampleStage make_stage(const ArtProvenance &prov, const std::string &artio_path);
 };
 
-} // namespace nuio
+} // namespace nuxsec
 
-#endif // NUIO_SAMPLE_IO_H
+#endif // Nuxsec_IO_SAMPLE_IO_H_INCLUDED

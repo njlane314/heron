@@ -1,6 +1,29 @@
 # Nuxsec
 
-ROOT-based provenance aggregation utilities for NuIO samples.
+ROOT-based utilities for a neutrino cross-section analysis pipeline built around explicit analysis entities
+(Fragment → Sample → Dataset → Channel/Category → Selection → Product).
+
+## Core concepts (pipeline map)
+
+- **LArSoft job outputs** (partitions / shards)
+- **Logical samples** (collection of shards + merged view)
+- **Exposure / POT accounting** (per shard, per logical sample, target POT scaling)
+- **RDataFrame construction** (source trees, friend trees, derived columns, weights)
+- **Channels / categories** (analysis topology, truth categories, control regions)
+- **Selections and products** (cutflow, histograms, response matrices, xsec outputs)
+
+## Repository structure
+
+This is a COLLIE-like module layout. Each module is built as its own shared library.
+
+```
+nuxsec/
+  io/      # LArSoft output discovery, file manifests, provenance extraction
+  rdf/     # ROOT::RDataFrame sources + derived columns
+  ana/     # analysis-level definitions and output products
+  apps/    # small CLIs (aggregators, RDF builders)
+  scripts/ # environment helpers
+```
 
 ## Requirements
 
@@ -8,7 +31,7 @@ ROOT-based provenance aggregation utilities for NuIO samples.
 - ROOT (for `root-config` and runtime I/O)
 - sqlite3 development headers/libs
 
-## Build the shared libraries
+## Build
 
 ```bash
 make
@@ -16,12 +39,16 @@ make
 
 This produces:
 
-- `build/lib/libNuIO.so`
-- `build/lib/libNuAna.so`
+- `build/lib/libNuxsecIO.so`
+- `build/lib/libNuxsecRDF.so`
+- `build/lib/libNuxsecAna.so`
+- `build/bin/artIOaggregator`
+- `build/bin/sampleIOaggregator`
+- `build/bin/sampleRDFbuilder`
 
 ## Analysis processing
 
-The NuAna library provides `nuana::NuAnalysisProcessor` for defining analysis-level
+The `libNuxsecAna` library provides `nuxsec::AnalysisProcessor` for defining analysis-level
 columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`
 instances used by `sampleRDFbuilder`.
 
@@ -29,26 +56,6 @@ instances used by `sampleRDFbuilder`.
 
 ```bash
 source scripts/setup.sh
-```
-
-## Build the command-line tools
-
-```bash
-g++ -std=c++17 -O2 -Wall -Wextra \
-  $(root-config --cflags) \
-  -I./lib/NuIO/include \
-  -L./build/lib -lNuIO \
-  -lsqlite3 $(root-config --libs) \
-  -o artIOaggregator \
-  bin/artIOaggregator/artIOaggregator.cxx
-
-g++ -std=c++17 -O2 -Wall -Wextra \
-  $(root-config --cflags) \
-  -I./lib/NuIO/include \
-  -L./build/lib -lNuIO \
-  -lsqlite3 $(root-config --libs) \
-  -o sampleIOaggregator \
-  bin/sampleIOaggregator/sampleIOaggregator.cxx
 ```
 
 ## Prepare file lists
@@ -66,12 +73,12 @@ LIST
 ## Run the aggregators
 
 ```bash
-./artIOaggregator my_stage:data.list
+build/bin/artIOaggregator my_stage:data.list
 # writes ./ArtIO_my_stage.root
 ```
 
 ```bash
-./sampleIOaggregator my_sample:data.list
+build/bin/sampleIOaggregator my_sample:data.list
 # writes ./SampleIO_my_sample.root
 # updates ./SampleIO_samples.tsv
 ```

@@ -1,7 +1,8 @@
+/* -- C++ -- */
 /**
- *  @file  bin/sampleIOaggregator/sampleIOaggregator.cxx
+ *  @file  apps/src/sampleIOaggregator.cc
  *
- *  @brief Main entrypoint for SampleIO provenance aggregation
+ *  @brief Main entrypoint for SampleIO provenance aggregation.
  */
 
 #include <algorithm>
@@ -16,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include "NuIO/SampleIO.h"
+#include "SampleIO.hh"
 
 namespace
 {
@@ -183,11 +184,12 @@ void write_sample_list(const std::string &list_path, std::vector<SampleListEntry
     }
 }
 
-void update_sample_list(const std::string &list_path, const nuio::Sample &sample, const std::string &output_path)
+void update_sample_list(const std::string &list_path, const nuxsec::Sample &sample,
+                        const std::string &output_path)
 {
     auto entries = read_sample_list(list_path);
-    const std::string kind_name = nuio::sample_kind_name(sample.kind);
-    const std::string beam_name = nuio::beam_mode_name(sample.beam);
+    const std::string kind_name = nuxsec::sample_kind_name(sample.kind);
+    const std::string beam_name = nuxsec::beam_mode_name(sample.beam);
 
     bool updated = false;
     for (auto &entry : entries)
@@ -218,7 +220,7 @@ void update_sample_list(const std::string &list_path, const nuio::Sample &sample
 
 int main(int argc, char **argv)
 {
-    using namespace nuio;
+    using namespace nuxsec;
 
     try
     {

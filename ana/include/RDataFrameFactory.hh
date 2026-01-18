@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  rdf/include/RDataFrameFactory.hh
+ *  @file  ana/include/RDataFrameFactory.hh
  *
  *  @brief Sample loading and variable definitions for ROOT RDataFrame.
  */
 
-#ifndef Nuxsec_RDF_RDATA_FRAME_FACTORY_H_INCLUDED
-#define Nuxsec_RDF_RDATA_FRAME_FACTORY_H_INCLUDED
+#ifndef Nuxsec_ANA_RDATA_FRAME_FACTORY_H_INCLUDED
+#define Nuxsec_ANA_RDATA_FRAME_FACTORY_H_INCLUDED
 
 #include <ROOT/RDataFrame.hxx>
 
@@ -36,4 +36,4 @@ class RDataFrameFactory
 
 } // namespace nuxsec
 
-#endif // Nuxsec_RDF_RDATA_FRAME_FACTORY_H_INCLUDED
+#endif // Nuxsec_ANA_RDATA_FRAME_FACTORY_H_INCLUDED

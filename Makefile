@@ -23,7 +23,7 @@ ART_AGGREGATOR_SRC = apps/src/artIOaggregator.cc
 SAMPLE_AGGREGATOR_NAME = build/bin/sampleIOaggregator
 SAMPLE_AGGREGATOR_SRC = apps/src/sampleIOaggregator.cc
 
-INCLUDES = -I./io/include -I./ana/include
+INCLUDES = -I./io/include -I./ana/include -I./apps/include
 
 all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(RDF_BUILDER_NAME) $(ART_AGGREGATOR_NAME) \
 	 $(SAMPLE_AGGREGATOR_NAME)

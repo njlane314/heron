@@ -6,7 +6,6 @@
  */
 
 #include <algorithm>
-#include <cctype>
 #include <cerrno>
 #include <cstring>
 #include <exception>
@@ -17,41 +16,13 @@
 #include <string>
 #include <vector>
 
+#include "AppUtils.hh"
 #include "AnalysisProcessor.hh"
 #include "RDFBuilder.hh"
 #include "SampleIO.hh"
 
 namespace
 {
-
-std::string trim(std::string s)
-{
-    auto notspace = [](unsigned char c)
-    {
-        return std::isspace(c) == 0;
-    };
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
-    s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
-    return s;
-}
-
-std::vector<std::string> split_tabs(const std::string &line)
-{
-    std::vector<std::string> out;
-    size_t start = 0;
-    while (start <= line.size())
-    {
-        const size_t pos = line.find('\t', start);
-        if (pos == std::string::npos)
-        {
-            out.push_back(line.substr(start));
-            break;
-        }
-        out.push_back(line.substr(start, pos - start));
-        start = pos + 1;
-    }
-    return out;
-}
 
 struct SampleListEntry
 {
@@ -74,12 +45,12 @@ std::vector<SampleListEntry> read_sample_list(const std::string &list_path)
     std::string line;
     while (std::getline(fin, line))
     {
-        line = trim(line);
+        line = nuxsec::app::trim(line);
         if (line.empty() || line[0] == '#')
         {
             continue;
         }
-        const auto fields = split_tabs(line);
+        const auto fields = nuxsec::app::split_tabs(line);
         if (fields.size() < 4)
         {
             throw std::runtime_error("Malformed sample list entry: " + line);
@@ -109,9 +80,9 @@ Args parse_args(int argc, char **argv)
     }
 
     Args args;
-    args.list_path = trim(argv[1]);
-    args.tree_name = trim(argv[2]);
-    args.output_dir = (argc == 4) ? trim(argv[3]) : ".";
+    args.list_path = nuxsec::app::trim(argv[1]);
+    args.tree_name = nuxsec::app::trim(argv[2]);
+    args.output_dir = (argc == 4) ? nuxsec::app::trim(argv[3]) : ".";
 
     if (args.list_path.empty() || args.tree_name.empty() || args.output_dir.empty())
     {

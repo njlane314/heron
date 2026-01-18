@@ -5,60 +5,18 @@
  *  @brief Main entrypoint for ArtIO provenance generation.
  */
 
-#include <algorithm>
-#include <cctype>
-#include <cerrno>
-#include <cstring>
 #include <exception>
-#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
+#include "AppUtils.hh"
 #include "ArtProvenanceIO.hh"
 #include "RunInfoDB.hh"
 #include "SubRunScanner.hh"
 
 namespace
 {
-
-std::string trim(std::string s)
-{
-    auto notspace = [](unsigned char c)
-    {
-        return std::isspace(c) == 0;
-    };
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
-    s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
-    return s;
-}
-
-std::vector<std::string> read_file_list(const std::string &filelist_path)
-{
-    std::ifstream fin(filelist_path);
-    if (!fin)
-    {
-        throw std::runtime_error("Failed to open filelist: " + filelist_path +
-                                 " (errno=" + std::to_string(errno) + " " + std::strerror(errno) + ")");
-    }
-    std::vector<std::string> files;
-    std::string line;
-    while (std::getline(fin, line))
-    {
-        line = trim(line);
-        if (line.empty() || line[0] == '#')
-        {
-            continue;
-        }
-        files.push_back(line);
-    }
-    if (files.empty())
-    {
-        throw std::runtime_error("Filelist is empty: " + filelist_path);
-    }
-    return files;
-}
 
 bool is_selection_data_file(const std::string &path)
 {
@@ -88,8 +46,8 @@ Args parse_args(int argc, char **argv)
     }
 
     Args args;
-    args.stage_cfg.stage_name = trim(spec.substr(0, pos));
-    args.stage_cfg.filelist_path = trim(spec.substr(pos + 1));
+    args.stage_cfg.stage_name = nuxsec::app::trim(spec.substr(0, pos));
+    args.stage_cfg.filelist_path = nuxsec::app::trim(spec.substr(pos + 1));
 
     if (args.stage_cfg.stage_name.empty() || args.stage_cfg.filelist_path.empty())
     {
@@ -116,7 +74,7 @@ int main(int argc, char **argv)
 
         RunInfoDB db(db_path);
 
-        const auto files = read_file_list(args.stage_cfg.filelist_path);
+        const auto files = nuxsec::app::read_file_list(args.stage_cfg.filelist_path);
 
         ArtProvenance rec;
         rec.cfg = args.stage_cfg;

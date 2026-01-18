@@ -6,7 +6,6 @@
  */
 
 #include <algorithm>
-#include <cctype>
 #include <cerrno>
 #include <cstring>
 #include <exception>
@@ -17,47 +16,11 @@
 #include <string>
 #include <vector>
 
+#include "AppUtils.hh"
 #include "SampleIO.hh"
 
 namespace
 {
-
-std::string trim(std::string s)
-{
-    auto notspace = [](unsigned char c)
-    {
-        return std::isspace(c) == 0;
-    };
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
-    s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
-    return s;
-}
-
-std::vector<std::string> read_file_list(const std::string &filelist_path)
-{
-    std::ifstream fin(filelist_path);
-    if (!fin)
-    {
-        throw std::runtime_error("Failed to open filelist: " + filelist_path +
-                                 " (errno=" + std::to_string(errno) + " " + std::strerror(errno) + ")");
-    }
-    std::vector<std::string> files;
-    std::string line;
-    while (std::getline(fin, line))
-    {
-        line = trim(line);
-        if (line.empty() || line[0] == '#')
-        {
-            continue;
-        }
-        files.push_back(line);
-    }
-    if (files.empty())
-    {
-        throw std::runtime_error("Filelist is empty: " + filelist_path);
-    }
-    return files;
-}
 
 struct Args
 {
@@ -82,8 +45,8 @@ Args parse_args(int argc, char **argv)
     }
 
     Args args;
-    args.sample_name = trim(spec.substr(0, pos));
-    args.filelist_path = trim(spec.substr(pos + 1));
+    args.sample_name = nuxsec::app::trim(spec.substr(0, pos));
+    args.filelist_path = nuxsec::app::trim(spec.substr(pos + 1));
 
     if (args.sample_name.empty() || args.filelist_path.empty())
     {
@@ -104,24 +67,6 @@ struct SampleListEntry
     std::string output_path;
 };
 
-std::vector<std::string> split_tabs(const std::string &line)
-{
-    std::vector<std::string> out;
-    size_t start = 0;
-    while (start <= line.size())
-    {
-        const size_t pos = line.find('\t', start);
-        if (pos == std::string::npos)
-        {
-            out.push_back(line.substr(start));
-            break;
-        }
-        out.push_back(line.substr(start, pos - start));
-        start = pos + 1;
-    }
-    return out;
-}
-
 std::vector<SampleListEntry> read_sample_list(const std::string &list_path)
 {
     std::ifstream fin(list_path);
@@ -139,12 +84,12 @@ std::vector<SampleListEntry> read_sample_list(const std::string &list_path)
     std::string line;
     while (std::getline(fin, line))
     {
-        line = trim(line);
+        line = nuxsec::app::trim(line);
         if (line.empty() || line[0] == '#')
         {
             continue;
         }
-        const auto fields = split_tabs(line);
+        const auto fields = nuxsec::app::split_tabs(line);
         if (fields.size() < 4)
         {
             throw std::runtime_error("Malformed sample list entry: " + line);
@@ -225,7 +170,7 @@ int main(int argc, char **argv)
     try
     {
         const Args args = parse_args(argc, argv);
-        const auto files = read_file_list(args.filelist_path);
+        const auto files = nuxsec::app::read_file_list(args.filelist_path);
 
         Sample sample = SampleIO::aggregate(args.sample_name, files);
         SampleIO::write(sample, args.output_path);

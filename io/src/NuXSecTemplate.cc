@@ -7,9 +7,7 @@
 
 #include "NuXSecTemplate.hh"
 
-#include <TClass.h>
 #include <TError.h>
-#include <TGenericClassInfo.h>
 #include <TH1.h>
 #include <TH2.h>
 
@@ -19,8 +17,6 @@
 
 namespace nuxsec
 {
-
-ClassImp(NuXSecTemplate);
 
 const double NuXSecTemplate::kIgnoreExposureScale = 1.0e3;
 

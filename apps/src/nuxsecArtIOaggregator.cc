@@ -90,7 +90,7 @@ Args parse_args(int argc, char **argv)
         throw std::runtime_error("Bad stage spec (expected NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]): " + spec);
     }
 
-    args.artio_path = "build/artio/ArtFileProvenance_" + args.stage_cfg.stage_name + ".root";
+    args.artio_path = "build/out/art/art_prov_" + args.stage_cfg.stage_name + ".root";
 
     return args;
 }

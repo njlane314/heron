@@ -55,8 +55,8 @@ Args parse_args(int argc, char **argv)
         throw std::runtime_error("Bad sample spec: " + spec);
     }
 
-    args.output_path = "build/samples/SampleRootIO_" + args.sample_name + ".root";
-    args.sample_list_path = "build/samples/SampleRootIO_samples.tsv";
+    args.output_path = "build/out/sample/sample_root_" + args.sample_name + ".root";
+    args.sample_list_path = "build/out/sample/SampleRootIO_samples.tsv";
 
     return args;
 }

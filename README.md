@@ -24,6 +24,26 @@ nuxsec/
   scripts/ # environment helpers
 ```
 
+## Macros and executables
+
+### What the macros are used for
+
+Macro folders (for example, `io/macro/` and `ana/macro/`) are reserved for interactive ROOT
+scripts that perform post-processing and visualisation of outputs produced by the compiled
+applications. Empty `.keep` placeholders are committed so the macro directories stay tracked
+in the repository. These macros are intended for quick inspection and plotting workflows, such
+as reading output ROOT files, dumping diagnostic values, and generating plots for systematic
+variations or fit-response checks.
+
+### How they differ from applications
+
+Applications are compiled executables built by the `Makefile` that perform the core Nuxsec
+workflows: aggregating inputs, building RDF datasets, and producing the ROOT outputs used by
+downstream analysis. Macros, in contrast, are not standalone executables—they are run
+interactively inside ROOT (for example, `root -l` followed by `.L myMacro.C`) to inspect or
+visualise those outputs. In short, applications do the heavy calculations, while macros focus
+on analysis and plotting of the results.
+
 ## Requirements
 
 - C++17 compiler (e.g. `g++`)

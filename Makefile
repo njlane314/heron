@@ -16,10 +16,13 @@ INCLUDES = -I./lib/NuIO/include -I./lib/NuAna/include
 
 BIN_DIR = build/bin
 NU_IO_MAKER = $(BIN_DIR)/nuIOmaker
+SAMPLE_RDF_MAKER = $(BIN_DIR)/sampleRDFmaker
 BIN_SRC = bin/nuIOmaker/nuIOmaker.cxx
+BIN_SAMPLE_RDF_SRC = bin/sampleRDFmaker/sampleRDFmaker.cxx
 BIN_OBJ = $(BIN_SRC:.cxx=.o)
+BIN_SAMPLE_RDF_OBJ = $(BIN_SAMPLE_RDF_SRC:.cxx=.o)
 
-all: $(LIB_NAME) $(LIB_NUANA_NAME) $(NU_IO_MAKER)
+all: $(LIB_NAME) $(LIB_NUANA_NAME) $(NU_IO_MAKER) $(SAMPLE_RDF_MAKER)
 
 $(LIB_NAME): $(LIB_OBJ)
 	mkdir -p $(dir $(LIB_NAME))
@@ -35,6 +38,10 @@ $(LIB_NUANA_NAME): $(LIB_NUANA_OBJ)
 $(NU_IO_MAKER): $(BIN_OBJ) $(LIB_OBJ)
 	mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $(BIN_OBJ) $(LIB_OBJ) $(LDFLAGS) -o $(NU_IO_MAKER)
+
+$(SAMPLE_RDF_MAKER): $(BIN_SAMPLE_RDF_OBJ) $(LIB_OBJ) $(LIB_NUANA_OBJ)
+	mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(BIN_SAMPLE_RDF_OBJ) $(LIB_OBJ) $(LIB_NUANA_OBJ) $(LDFLAGS) -o $(SAMPLE_RDF_MAKER)
 
 clean:
 	rm -rf build

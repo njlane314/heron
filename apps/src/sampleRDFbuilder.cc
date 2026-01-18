@@ -129,9 +129,9 @@ int main(int argc, char **argv)
                 proc_entry.trig_nom = sample.db_tor101_pot_sum;
                 proc_entry.trig_eqv = sample.subrun_pot_sum;
                 break;
-            case nuxsec::SampleKind::kMCOverlay:
-            case nuxsec::SampleKind::kMCDirt:
-            case nuxsec::SampleKind::kMCStrangeness:
+            case nuxsec::SampleKind::kOverlay:
+            case nuxsec::SampleKind::kDirt:
+            case nuxsec::SampleKind::kStrangeness:
                 proc_entry.source = nuxsec::SourceKind::kMC;
                 proc_entry.pot_nom = sample.db_tortgt_pot_sum;
                 proc_entry.pot_eqv = sample.subrun_pot_sum;

@@ -49,15 +49,15 @@ SampleKind parse_sample_kind(const std::string &name)
     {
         return SampleKind::kEXT;
     }
-    if (lowered == "mc_overlay")
+    if (lowered == "overlay")
     {
         return SampleKind::kOverlay;
     }
-    if (lowered == "mc_dirt")
+    if (lowered == "dirt")
     {
         return SampleKind::kDirt;
     }
-    if (lowered == "mc_strangeness")
+    if (lowered == "strangeness")
     {
         return SampleKind::kStrangeness;
     }

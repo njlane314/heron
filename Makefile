@@ -8,7 +8,8 @@ LIB_SRC = lib/NuIO/src/ArtProvenanceIO.cxx \
 LIB_OBJ = $(LIB_SRC:.cxx=.o)
 
 LIB_NUANA_NAME = build/lib/libNuAna.so
-LIB_NUANA_SRC = lib/NuAna/src/SampleRDF.cxx
+LIB_NUANA_SRC = lib/NuAna/src/SampleRDF.cxx \
+                lib/NuAna/src/NuAnalysisProcessor.cc
 LIB_NUANA_OBJ = $(LIB_NUANA_SRC:.cxx=.o)
 
 RDF_BUILDER_NAME = build/bin/sampleRDFbuilder

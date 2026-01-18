@@ -40,7 +40,6 @@ This produces:
 
 - `build/lib/libNuxsecIO.so`
 - `build/lib/libNuxsecSample.so`
-- `build/lib/libNuxsecRdf.so`
 - `build/lib/libNuxsecAna.so`
 - `build/bin/artIOaggregator`
 - `build/bin/sampleIOaggregator`
@@ -48,8 +47,8 @@ This produces:
 
 ## Analysis processing
 
-The `libNuxsecAna` library provides `nuxsec::AnalysisRdfDefinitions` for defining analysis-level
-columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`
+The `libNuxsecAna` library provides `nuxsec::AnalysisRdfDefinitions` and RDF construction helpers
+for defining analysis-level columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`
 instances used by `sampleRDFbuilder`.
 
 ## Runtime environment

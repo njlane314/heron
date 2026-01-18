@@ -18,7 +18,6 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace nuio
@@ -77,7 +76,6 @@ struct RunInfoSums
 struct StageCfg
 {
     std::string stage_name;
-    std::string filelist_path;
 };
 
 struct ArtProvenance

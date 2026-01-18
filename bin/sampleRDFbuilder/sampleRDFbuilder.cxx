@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "NuAna/NuAnalysisProcessor.hh"
 #include "NuAna/SampleRDF.h"
 #include "NuIO/SampleIO.h"
 
@@ -145,8 +146,33 @@ int main(int argc, char **argv)
         {
             const nuio::Sample sample = nuio::SampleIO::read(entry.output_path);
             ROOT::RDataFrame rdf = nuana::SampleRDF::load_sample(sample, args.tree_name);
+            nuana::NuProcessorEntry proc_entry;
+            switch (sample.kind)
+            {
+            case nuio::SampleKind::kData:
+                proc_entry.source = nuana::NuSource::kData;
+                break;
+            case nuio::SampleKind::kEXT:
+                proc_entry.source = nuana::NuSource::kExt;
+                proc_entry.trig_nom = sample.db_tor101_pot_sum;
+                proc_entry.trig_eqv = sample.subrun_pot_sum;
+                break;
+            case nuio::SampleKind::kMCOverlay:
+            case nuio::SampleKind::kMCDirt:
+            case nuio::SampleKind::kMCStrangeness:
+                proc_entry.source = nuana::NuSource::kMC;
+                proc_entry.pot_nom = sample.db_tortgt_pot_sum;
+                proc_entry.pot_eqv = sample.subrun_pot_sum;
+                break;
+            default:
+                proc_entry.source = nuana::NuSource::kUnknown;
+                break;
+            }
+
+            const auto &processor = nuana::NuAnalysisProcessor::Processor();
+            ROOT::RDF::RNode updated = processor.Run(rdf, proc_entry);
             const std::string output_path = make_output_path(args.output_dir, sample.sample_name);
-            auto written = rdf.Snapshot(args.tree_name, output_path);
+            auto written = updated.Snapshot(args.tree_name, output_path);
 
             std::cerr << "[sampleRDFbuilder] sample=" << sample.sample_name
                       << " kind=" << entry.sample_kind

@@ -19,6 +19,12 @@ This produces:
 - `build/lib/libNuIO.so`
 - `build/lib/libNuAna.so`
 
+## Analysis processing
+
+The NuAna library provides `nuana::NuAnalysisProcessor` for defining analysis-level
+columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`
+instances used by `sampleRDFbuilder`.
+
 ## Runtime environment
 
 ```bash

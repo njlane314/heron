@@ -1,7 +1,7 @@
 /**
- *  @file  bin/artIOpartition/artIOpartition.cxx
+ *  @file  bin/artIOaggregator/artIOaggregator.cxx
  *
- *  @brief Main entrypoint for ArtIO partition manifest generation
+ *  @brief Main entrypoint for ArtIO manifest generation
  */
 
 #include <algorithm>
@@ -47,11 +47,15 @@ std::vector<std::string> ReadFileList(const std::string &filelistPath)
     {
         line = Trim(line);
         if (line.empty() || line[0] == '#')
+        {
             continue;
+        }
         files.push_back(line);
     }
     if (files.empty())
+    {
         throw std::runtime_error("Filelist is empty: " + filelistPath);
+    }
     return files;
 }
 
@@ -71,19 +75,25 @@ struct CLI
 CLI ParseArgs(int argc, char **argv)
 {
     if (argc != 2)
-        throw std::runtime_error("Usage: artIOpartition NAME:FILELIST");
+    {
+        throw std::runtime_error("Usage: artIOaggregator NAME:FILELIST");
+    }
 
     const std::string spec = argv[1];
     const auto pos = spec.find(':');
     if (pos == std::string::npos)
+    {
         throw std::runtime_error("Bad stage spec (expected NAME:FILELIST): " + spec);
+    }
 
     CLI cli;
     cli.stage_cfg.stage_name = Trim(spec.substr(0, pos));
     cli.stage_cfg.filelist_path = Trim(spec.substr(pos + 1));
 
     if (cli.stage_cfg.stage_name.empty() || cli.stage_cfg.filelist_path.empty())
+    {
         throw std::runtime_error("Bad stage spec: " + spec);
+    }
 
     return cli;
 }
@@ -108,30 +118,32 @@ int main(int argc, char **argv)
 
         if (std::binary_search(existing.begin(), existing.end(), cli.stage_cfg.stage_name))
         {
-            std::cerr << "[artIOpartition] exists stage=" << cli.stage_cfg.stage_name << "\n";
+            std::cerr << "[artIOaggregator] exists stage=" << cli.stage_cfg.stage_name << "\n";
             return 0;
         }
 
         const auto files = ReadFileList(cli.stage_cfg.filelist_path);
 
-        ArtIOStage rec;
+        ArtProvenance rec;
         rec.cfg = cli.stage_cfg;
-        rec.n_input_files = static_cast<long long>(files.size());
+        rec.input_files = files;
 
         if (IsNuSelectionDataFile(files.front()))
+        {
             rec.kind = SampleKind::kData;
+        }
 
         rec.subrun = ScanSubRunTree(files);
         rec.runinfo = db.SumRuninfoForSelection(rec.subrun.unique_pairs);
 
-        std::cerr << "[artIOpartition] add stage=" << rec.cfg.stage_name
-                  << " files=" << rec.n_input_files
+        std::cerr << "[artIOaggregator] add stage=" << rec.cfg.stage_name
+                  << " files=" << rec.input_files.size()
                   << " pairs=" << rec.subrun.unique_pairs.size()
                   << " pot_sum=" << rec.subrun.pot_sum
                   << " tortgt=" << rec.runinfo.tortgt_sum * pot_scale
                   << "\n";
 
-        ArtIOManifestIO::AppendStages(cli.artio_path, db_path, pot_scale, {rec});
+        ArtIOManifestIO::WriteStage(cli.artio_path, db_path, pot_scale, rec);
 
         return 0;
     }

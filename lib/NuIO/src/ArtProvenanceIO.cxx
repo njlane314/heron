@@ -1,7 +1,7 @@
 /**
  *  @file  lib/NuIO/src/ArtProvenanceIO.cxx
  *
- *  @brief Implementation for NuIO aggregator stage provenance IO
+ *  @brief Implementation for ArtIO stage provenance IO
  */
 
 #include "NuIO/ArtProvenanceIO.h"
@@ -45,15 +45,25 @@ SampleKind SampleKindFromName(const std::string& name)
 {
     const std::string v = ToLower(name);
     if (v == "data")
+    {
         return SampleKind::kData;
+    }
     if (v == "ext")
+    {
         return SampleKind::kEXT;
+    }
     if (v == "mc_overlay")
+    {
         return SampleKind::kMCOverlay;
+    }
     if (v == "mc_dirt")
+    {
         return SampleKind::kMCDirt;
+    }
     if (v == "mc_strangeness")
+    {
         return SampleKind::kMCStrangeness;
+    }
     return SampleKind::kUnknown;
 }
 
@@ -61,9 +71,13 @@ BeamMode BeamModeFromName(const std::string& name)
 {
     const std::string v = ToLower(name);
     if (v == "numi")
+    {
         return BeamMode::kNuMI;
+    }
     if (v == "bnb")
+    {
         return BeamMode::kBNB;
+    }
     return BeamMode::kUnknown;
 }
 
@@ -75,9 +89,11 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
         throw std::runtime_error("Failed to open merged output file for UPDATE: " + outFile);
     }
 
-    TDirectory* d = f->GetDirectory("NuAggregator");
+    TDirectory* d = f->GetDirectory("ArtIO");
     if (!d)
-        d = f->mkdir("NuAggregator");
+    {
+        d = f->mkdir("ArtIO");
+    }
     d->cd();
 
     TNamed("stage_name", r.cfg.stage_name.c_str()).Write("stage_name", TObject::kOverwrite);
@@ -139,10 +155,10 @@ ArtProvenance ArtProvenanceIO::Read(const std::string& inFile)
         throw std::runtime_error("Failed to open merged output file for READ: " + inFile);
     }
 
-    TDirectory* d = f->GetDirectory("NuCondenser");
+    TDirectory* d = f->GetDirectory("ArtIO");
     if (!d)
     {
-        throw std::runtime_error("Missing NuCondenser directory in file: " + inFile);
+        throw std::runtime_error("Missing ArtIO directory in file: " + inFile);
     }
     d->cd();
 

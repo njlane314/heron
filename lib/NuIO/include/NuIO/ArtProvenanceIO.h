@@ -1,7 +1,7 @@
 /**
  *  @file  lib/NuIO/include/NuIO/ArtProvenanceIO.h
  *
- *  @brief Data structures and IO helpers for NuIO aggregator stage provenance
+ *  @brief Data structures and IO helpers for ArtIO stage provenance
  */
 
 #ifndef NUIO_ART_PROVENANCE_IO_H

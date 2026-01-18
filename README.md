@@ -23,7 +23,7 @@ nuxsec/
   io/      # LArSoft output discovery, file manifests, provenance extraction
   ana/     # analysis-level definitions and ROOT::RDataFrame sources + derived columns
   plot/    # plotting utilities for stacked histograms and diagnostic outputs
-  apps/    # small CLIs (aggregators, template makers)
+  apps/    # unified CLI (aggregators, template makers)
   scripts/ # environment helpers
 ```
 
@@ -65,16 +65,14 @@ This produces:
 - `build/lib/libNuXsecSample.so`
 - `build/lib/libNuXsecAna.so`
 - `build/lib/libNuXsecPlot.so`
-- `build/bin/nuxsecArtIOaggregator`
-- `build/bin/nuxsecSampleIOaggregator`
-- `build/bin/nuxsecTemplateMaker`
+- `build/bin/nuxsec`
 
 ## Analysis processing
 
 The `libNuXsecAna` library provides `nuxsec::AnalysisRdfDefinitions` and RDF construction helpers
 for defining analysis-level columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`.
 
-The `libNuXsecPlot` library and `nuxsecTemplateMaker` application build binned template histograms from
+The `libNuXsecPlot` library and `nuxsec` CLI build binned template histograms from
 aggregated samples and a compiled analysis definition, serving as the inputs to plotting and downstream
 cross-section fits.
 
@@ -102,12 +100,12 @@ LIST
 ## Run the aggregators
 
 ```bash
-build/bin/nuxsecArtIOaggregator my_stage:data.list
+build/bin/nuxsec artio-aggregate my_stage:data.list
 # writes build/artio/ArtFileProvenance_my_stage.root
 ```
 
 ```bash
-build/bin/nuxsecSampleIOaggregator my_sample:data.list
+build/bin/nuxsec sample-aggregate my_sample:data.list
 # writes build/samples/SampleRootIO_my_sample.root
 # updates build/samples/SampleRootIO_samples.tsv
 ```
@@ -115,5 +113,5 @@ build/bin/nuxsecSampleIOaggregator my_sample:data.list
 ## Produce templates
 
 ```bash
-build/bin/nuxsecTemplateMaker build/samples/SampleRootIO_samples.tsv OutputTemplates.root 4
+build/bin/nuxsec template-make build/samples/SampleRootIO_samples.tsv OutputTemplates.root 4
 ```

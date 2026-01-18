@@ -1,4 +1,4 @@
-# Arguments for build/bin/nuxsecArtIOaggregator
+# Arguments for build/bin/nuxsec artio-aggregate
 # Format: STAGE_NAME:FILELIST_PATH:SAMPLE_KIND:BEAM_MODE
 beam_s0:inputs/numi_fhc_run1/filelists/beam_s0.list:overlay:numi
 beam_s1:inputs/numi_fhc_run1/filelists/beam_s1.list:overlay:numi

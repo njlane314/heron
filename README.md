@@ -1,34 +1,71 @@
 # Nuxsec
 
-## Planned features
+ROOT-based provenance aggregation utilities for NuIO samples.
 
-### Shared libraries
+## Requirements
 
-- `libArtIO.so`
-  - ArtIO.root data model + ROOT dictionaries + I/O helpers (e.g. ArtProvenance, ArtProvenanceIO).
-- `libNuIO.so`
-  - NuIO bank schemas + dictionaries + manifest/loader helpers (friend-tree assembly).
-- `libNuSel.so`
-  - Selection definitions evaluated on NuIO.Evt variables; produces/consumes NuIO.Sel.
-- `libNuWgt.so`
-  - Weight-pack extraction/standardisation; produces/consumes NuIO.Wgt.
-- `libNuAna.so`
-  - Histogram definitions and filling utilities used by calculators (nominal and systematics share identical channel/bin definitions).
-- `libNuSyst.so`
-  - Universe loops, error bands, covariance builders.
-- `libNuPlot.so`
-  - Plotting style and rendering helpers.
+- C++17 compiler (e.g. `g++`)
+- ROOT (for `root-config` and runtime I/O)
+- sqlite3 development headers/libs
 
-### Typical workflow
+## Build the shared libraries
 
-1. Aggregate LArSoft outputs.
-   - Run `artIOaggregator` to create `ArtIO.root`.
-2. Build the event store.
-   - Run `nuIOcondenser.exe` to assemble `NuIO.*.root` banks.
-3. Run nominal analysis.
-   - Run `nuAnaCalc.exe` to write/update `NuResults.root` (`Nominal/`).
-4. Run systematics later (optional).
-   - If not already present, generate `NuIO.Wgt` via `nuIOcondenser.exe`.
-   - Run `nuSystCalc.exe` to append `Syst/` products into the existing `NuResults.root`.
-5. Plot.
-   - Run `nuPlot.exe` from `NuResults.root`.
+```bash
+make
+```
+
+This produces:
+
+- `build/lib/libNuIO.so`
+- `build/lib/libNuAna.so`
+
+## Runtime environment
+
+```bash
+source scripts/setup.sh
+```
+
+## Build the command-line tools
+
+```bash
+g++ -std=c++17 -O2 -Wall -Wextra \
+  $(root-config --cflags) \
+  -I./lib/NuIO/include \
+  -L./build/lib -lNuIO \
+  -lsqlite3 $(root-config --libs) \
+  -o artIOaggregator \
+  bin/artIOaggregator/artIOaggregator.cxx
+
+g++ -std=c++17 -O2 -Wall -Wextra \
+  $(root-config --cflags) \
+  -I./lib/NuIO/include \
+  -L./build/lib -lNuIO \
+  -lsqlite3 $(root-config --libs) \
+  -o sampleIOaggregator \
+  bin/sampleIOaggregator/sampleIOaggregator.cxx
+```
+
+## Prepare file lists
+
+File lists are newline-delimited paths to ROOT files (blank lines and `#` comments are ignored).
+
+```bash
+cat > data.list <<'LIST'
+# stage input files
+/path/to/input1.root
+/path/to/input2.root
+LIST
+```
+
+## Run the aggregators
+
+```bash
+./artIOaggregator my_stage:data.list
+# writes ./ArtIO_my_stage.root
+```
+
+```bash
+./sampleIOaggregator my_sample:data.list
+# writes ./SampleIO_my_sample.root
+# updates ./SampleIO_samples.tsv
+```

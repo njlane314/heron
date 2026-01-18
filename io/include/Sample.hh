@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/Sample.hh
+ *  @file  io/include/Sample.hh
  *
  *  @brief Data structures for sample aggregation.
  */

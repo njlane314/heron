@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  sample/src/SampleRootIO.cc
+ *  @file  io/src/SampleRootIO.cc
  *
  *  @brief Implementation for SampleRootIO helpers.
  */

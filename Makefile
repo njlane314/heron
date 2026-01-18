@@ -6,12 +6,12 @@ IO_LIB_NAME = build/lib/libNuXsecIO.so
 IO_SRC = io/src/ArtFileProvenanceRootIO.cc \
          io/src/SubrunTreeScanner.cc \
          io/src/RunInfoSqliteReader.cc \
-         sample/src/SampleTypes.cc
+         io/src/SampleTypes.cc
 IO_OBJ = $(IO_SRC:.cc=.o)
 
 SAMPLE_LIB_NAME = build/lib/libNuXsecSample.so
-SAMPLE_SRC = sample/src/SampleAggregator.cc \
-             sample/src/SampleRootIO.cc
+SAMPLE_SRC = io/src/SampleAggregator.cc \
+             io/src/SampleRootIO.cc
 SAMPLE_OBJ = $(SAMPLE_SRC:.cc=.o)
 
 ANA_LIB_NAME = build/lib/libNuXsecAna.so
@@ -28,7 +28,7 @@ ART_AGGREGATOR_SRC = apps/src/artIOaggregator.cc
 SAMPLE_AGGREGATOR_NAME = build/bin/nuxsecSampleIOaggregator
 SAMPLE_AGGREGATOR_SRC = apps/src/sampleIOaggregator.cc
 
-INCLUDES = -I./io/include -I./ana/include -I./apps/include -I./sample/include
+INCLUDES = -I./io/include -I./ana/include -I./apps/include
 
 all: $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME) $(RDF_BUILDER_NAME) \
 	 $(ART_AGGREGATOR_NAME) $(SAMPLE_AGGREGATOR_NAME)

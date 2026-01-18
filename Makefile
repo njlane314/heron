@@ -20,13 +20,13 @@ ANA_SRC = ana/src/AnalysisRdfDefinitions.cc \
 ANA_OBJ = $(ANA_SRC:.cc=.o)
 
 RDF_BUILDER_NAME = build/bin/nuxsecSampleRDFbuilder
-RDF_BUILDER_SRC = apps/src/sampleRDFbuilder.cc
+RDF_BUILDER_SRC = apps/src/nuxsecSampleRDFbuilder.cc
 
 ART_AGGREGATOR_NAME = build/bin/nuxsecArtIOaggregator
-ART_AGGREGATOR_SRC = apps/src/artIOaggregator.cc
+ART_AGGREGATOR_SRC = apps/src/nuxsecArtIOaggregator.cc
 
 SAMPLE_AGGREGATOR_NAME = build/bin/nuxsecSampleIOaggregator
-SAMPLE_AGGREGATOR_SRC = apps/src/sampleIOaggregator.cc
+SAMPLE_AGGREGATOR_SRC = apps/src/nuxsecSampleIOaggregator.cc
 
 INCLUDES = -I./io/include -I./ana/include -I./apps/include -I./sample/include
 

@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/artIOaggregator.cc
+ *  @file  apps/src/nuxsecArtIOaggregator.cc
  *
  *  @brief Main entrypoint for Art file provenance generation.
  */

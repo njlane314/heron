@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/sampleRDFbuilder.cc
+ *  @file  apps/src/nuxsecSampleRDFbuilder.cc
  *
  *  @brief Build ROOT RDataFrame snapshots from SampleRootIO sample lists.
  */

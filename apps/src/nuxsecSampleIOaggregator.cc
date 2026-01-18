@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/sampleIOaggregator.cc
+ *  @file  apps/src/nuxsecSampleIOaggregator.cc
  *
  *  @brief Main entrypoint for Sample aggregation.
  */

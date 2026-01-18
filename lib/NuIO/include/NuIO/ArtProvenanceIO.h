@@ -15,8 +15,6 @@
 #include <TParameter.h>
 #include <TTree.h>
 
-#include <algorithm>
-#include <cctype>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -25,14 +23,6 @@
 
 namespace nuio
 {
-
-inline std::string to_lower(std::string s)
-{
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c)
-                   { return static_cast<char>(std::tolower(c)); });
-    return s;
-}
 
 enum class SampleKind
 {
@@ -107,14 +97,11 @@ struct ArtProvenance
     double db_tor101_pot = 0.0;
 };
 
-SampleKind sample_kind_from_name(const std::string &name);
-BeamMode beam_mode_from_name(const std::string &name);
-
 class ArtProvenanceIO
 {
   public:
     static void write(const ArtProvenance &r, const std::string &out_file);
-    static ArtProvenance read(const std::string &in_file);
+    static ArtProvenance read(const std::string &in_file, SampleKind kind, BeamMode beam);
 
   private:
     static std::string read_named_string(TDirectory *d, const char *key);

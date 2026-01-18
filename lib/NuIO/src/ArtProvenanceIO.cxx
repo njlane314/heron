@@ -41,46 +41,6 @@ const char *beam_mode_name(BeamMode b)
     }
 }
 
-SampleKind sample_kind_from_name(const std::string &name)
-{
-    const std::string v = to_lower(name);
-    if (v == "data")
-    {
-        return SampleKind::kData;
-    }
-    if (v == "ext")
-    {
-        return SampleKind::kEXT;
-    }
-    if (v == "mc_overlay")
-    {
-        return SampleKind::kMCOverlay;
-    }
-    if (v == "mc_dirt")
-    {
-        return SampleKind::kMCDirt;
-    }
-    if (v == "mc_strangeness")
-    {
-        return SampleKind::kMCStrangeness;
-    }
-    return SampleKind::kUnknown;
-}
-
-BeamMode beam_mode_from_name(const std::string &name)
-{
-    const std::string v = to_lower(name);
-    if (v == "numi")
-    {
-        return BeamMode::kNuMI;
-    }
-    if (v == "bnb")
-    {
-        return BeamMode::kBNB;
-    }
-    return BeamMode::kUnknown;
-}
-
 void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(out_file.c_str(), "UPDATE"));
@@ -150,7 +110,7 @@ void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
     f->Close();
 }
 
-ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
+ArtProvenance ArtProvenanceIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -167,8 +127,8 @@ ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
 
     ArtProvenance r;
     r.cfg.stage_name = read_named_string(d, "stage_name");
-    r.kind = sample_kind_from_name(read_named_string(d, "sample_kind"));
-    r.beam = beam_mode_from_name(read_named_string(d, "beam_mode"));
+    r.kind = kind;
+    r.beam = beam;
 
     r.subrun.pot_sum = read_param<double>(d, "subrun_pot_sum");
     r.subrun.n_entries = read_param<long long>(d, "subrun_entries");

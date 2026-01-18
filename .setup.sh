@@ -9,5 +9,9 @@ setup tbb v2021_9_0 -q e20
 setup libtorch v1_13_1b -q e20:prof
 setup eigen v3_4_0
 
-export LD_LIBRARY_PATH=$(pwd)/build/framework:$LD_LIBRARY_PATH
-export ROOT_INCLUDE_PATH=$(pwd)/build/framework:$ROOT_INCLUDE_PATH
+NUXSEC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export NUXSEC_ROOT
+
+export PATH="${NUXSEC_ROOT}/build/bin:${PATH}"
+export LD_LIBRARY_PATH="${NUXSEC_ROOT}/build/lib:${NUXSEC_ROOT}/build/framework:${LD_LIBRARY_PATH}"
+export ROOT_INCLUDE_PATH="${NUXSEC_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"

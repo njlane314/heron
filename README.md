@@ -61,10 +61,10 @@ make
 
 This produces:
 
-- `build/lib/libNuxsecIO.so`
-- `build/lib/libNuxsecSample.so`
-- `build/lib/libNuxsecAna.so`
-- `build/lib/libNuxsecPlot.so`
+- `build/lib/libNuXsecIO.so`
+- `build/lib/libNuXsecSample.so`
+- `build/lib/libNuXsecAna.so`
+- `build/lib/libNuXsecPlot.so`
 - `build/bin/nuxsecArtIOaggregator`
 - `build/bin/nuxsecSampleIOaggregator`
 - `build/bin/nuxsecTemplateMaker`
@@ -81,8 +81,11 @@ fits.
 ## Runtime environment
 
 ```bash
-source scripts/setup.sh
+source .setup.sh
 ```
+
+This adds `build/bin` to your `PATH` and `build/lib` to your `LD_LIBRARY_PATH` so the
+executables can locate the shared libraries at runtime.
 
 ## Prepare file lists
 

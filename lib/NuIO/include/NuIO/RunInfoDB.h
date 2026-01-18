@@ -26,7 +26,7 @@ class RunInfoDB
     RunInfoDB(const RunInfoDB &) = delete;
     RunInfoDB &operator=(const RunInfoDB &) = delete;
 
-    RunInfoSums SumRuninfoForSelection(const std::vector<RunSubrun> &pairs) const;
+    RunInfoSums SumRuninfo(const std::vector<RunSubrun> &pairs) const;
 
   private:
     void Exec(const std::string &sql) const;

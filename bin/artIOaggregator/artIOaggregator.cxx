@@ -134,7 +134,7 @@ int main(int argc, char **argv)
         }
 
         rec.subrun = ScanSubRunTree(files);
-        rec.runinfo = db.SumRuninfoForSelection(rec.subrun.unique_pairs);
+        rec.runinfo = db.SumRuninfo(rec.subrun.unique_pairs);
 
         std::cerr << "[artIOaggregator] add stage=" << rec.cfg.stage_name
                   << " files=" << rec.input_files.size()

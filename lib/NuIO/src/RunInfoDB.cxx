@@ -52,7 +52,7 @@ void RunInfoDB::Prepare(const std::string &sql, sqlite3_stmt **stmt) const
         throw std::runtime_error("SQLite prepare failed: " + std::string(sqlite3_errmsg(db_)));
 }
 
-RunInfoSums RunInfoDB::SumRuninfoForSelection(const std::vector<RunSubrun> &pairs) const
+RunInfoSums RunInfoDB::SumRuninfo(const std::vector<RunSubrun> &pairs) const
 {
     if (pairs.empty())
         throw std::runtime_error("DB selection is empty (no run/subrun pairs).");

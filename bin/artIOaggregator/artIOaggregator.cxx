@@ -68,7 +68,7 @@ bool is_nu_selection_data_file(const std::string &path)
 
 struct Args
 {
-    std::string artio_path = "./ArtIO.root";
+    std::string artio_path;
     nuio::StageCfg stage_cfg;
 };
 
@@ -94,6 +94,8 @@ Args parse_args(int argc, char **argv)
     {
         throw std::runtime_error("Bad stage spec: " + spec);
     }
+
+    args.artio_path = "./ArtIO_" + args.stage_cfg.stage_name + ".root";
 
     return args;
 }

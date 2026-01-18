@@ -66,13 +66,13 @@ bool IsNuSelectionDataFile(const std::string &path)
     return name == "nuselection_data.root";
 }
 
-struct CLI
+struct Args
 {
     std::string artio_path = "./ArtIO.root";
     nuio::StageCfg stage_cfg;
 };
 
-CLI ParseArgs(int argc, char **argv)
+Args ParseArgs(int argc, char **argv)
 {
     if (argc != 2)
     {
@@ -86,16 +86,16 @@ CLI ParseArgs(int argc, char **argv)
         throw std::runtime_error("Bad stage spec (expected NAME:FILELIST): " + spec);
     }
 
-    CLI cli;
-    cli.stage_cfg.stage_name = Trim(spec.substr(0, pos));
-    cli.stage_cfg.filelist_path = Trim(spec.substr(pos + 1));
+    Args args;
+    args.stage_cfg.stage_name = Trim(spec.substr(0, pos));
+    args.stage_cfg.filelist_path = Trim(spec.substr(pos + 1));
 
-    if (cli.stage_cfg.stage_name.empty() || cli.stage_cfg.filelist_path.empty())
+    if (args.stage_cfg.stage_name.empty() || args.stage_cfg.filelist_path.empty())
     {
         throw std::runtime_error("Bad stage spec: " + spec);
     }
 
-    return cli;
+    return args;
 }
 
 }
@@ -109,23 +109,23 @@ int main(int argc, char **argv)
         const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
         const double pot_scale = 1e12;
 
-        const CLI cli = ParseArgs(argc, argv);
+        const Args args = ParseArgs(argc, argv);
 
-        std::vector<std::string> existing = ArtIOManifestIO::ListStages(cli.artio_path);
+        std::vector<std::string> existing = ArtIOManifestIO::ListStages(args.artio_path);
         std::sort(existing.begin(), existing.end());
 
         RunInfoDB db(db_path);
 
-        if (std::binary_search(existing.begin(), existing.end(), cli.stage_cfg.stage_name))
+        if (std::binary_search(existing.begin(), existing.end(), args.stage_cfg.stage_name))
         {
-            std::cerr << "[artIOaggregator] exists stage=" << cli.stage_cfg.stage_name << "\n";
+            std::cerr << "[artIOaggregator] exists stage=" << args.stage_cfg.stage_name << "\n";
             return 0;
         }
 
-        const auto files = ReadFileList(cli.stage_cfg.filelist_path);
+        const auto files = ReadFileList(args.stage_cfg.filelist_path);
 
         ArtProvenance rec;
-        rec.cfg = cli.stage_cfg;
+        rec.cfg = args.stage_cfg;
         rec.input_files = files;
 
         if (IsNuSelectionDataFile(files.front()))
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
                   << " tortgt=" << rec.runinfo.tortgt_sum * pot_scale
                   << "\n";
 
-        ArtIOManifestIO::WriteStage(cli.artio_path, db_path, pot_scale, rec);
+        ArtIOManifestIO::WriteStage(args.artio_path, db_path, pot_scale, rec);
 
         return 0;
     }

@@ -35,7 +35,7 @@ Args parse_args(int argc, char **argv)
 {
     if (argc != 2)
     {
-        throw std::runtime_error("Usage: sampleIOaggregator NAME:FILELIST");
+        throw std::runtime_error("Usage: nuxsecSampleIOaggregator NAME:FILELIST");
     }
 
     const std::string spec = argv[1];
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
         SampleRootIO::write(sample, args.output_path);
         update_sample_list(args.sample_list_path, sample, args.output_path);
 
-        std::cerr << "[sampleIOaggregator] sample=" << sample.sample_name
+        std::cerr << "[nuxsecSampleIOaggregator] sample=" << sample.sample_name
                   << " fragments=" << sample.fragments.size()
                   << " pot_sum=" << sample.subrun_pot_sum
                   << " db_tortgt_pot_sum=" << sample.db_tortgt_pot_sum

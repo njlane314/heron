@@ -76,7 +76,7 @@ Args parse_args(int argc, char **argv)
 {
     if (argc < 3 || argc > 4)
     {
-        throw std::runtime_error("Usage: sampleRDFbuilder SAMPLE_LIST.tsv TREE_NAME [OUTPUT_DIR]");
+        throw std::runtime_error("Usage: nuxsecSampleRDFbuilder SAMPLE_LIST.tsv TREE_NAME [OUTPUT_DIR]");
     }
 
     Args args;
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
             const std::string output_path = make_output_path(args.output_dir, sample.sample_name);
             auto written = updated.Snapshot(args.tree_name, output_path);
 
-            std::cerr << "[sampleRDFbuilder] sample=" << sample.sample_name
+            std::cerr << "[nuxsecSampleRDFbuilder] sample=" << sample.sample_name
                       << " kind=" << entry.sample_kind
                       << " beam=" << entry.beam_mode
                       << " entries=" << written.GetValue()

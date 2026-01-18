@@ -150,7 +150,7 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
     f->Close();
 }
 
-ArtProvenance ArtProvenanceIO::Read(const std::string& inFile)
+ArtProvenance ArtProvenanceIO::Read(const std::string& inFile, SampleKind kind, BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(inFile.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -167,8 +167,8 @@ ArtProvenance ArtProvenanceIO::Read(const std::string& inFile)
 
     ArtProvenance r;
     r.cfg.stage_name = ReadNamedString(d, "stage_name");
-    r.kind = SampleKindFromName(ReadNamedString(d, "sample_kind"));
-    r.beam = BeamModeFromName(ReadNamedString(d, "beam_mode"));
+    r.kind = kind;
+    r.beam = beam;
 
     r.subrun.pot_sum = ReadParam<double>(d, "subrun_pot_sum");
     r.subrun.n_entries = ReadParam<long long>(d, "subrun_entries");

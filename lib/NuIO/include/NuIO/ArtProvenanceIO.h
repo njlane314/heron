@@ -114,7 +114,7 @@ class ArtProvenanceIO
 {
   public:
     static void Write(const ArtProvenance& r, const std::string& outFile);
-    static ArtProvenance Read(const std::string& inFile);
+    static ArtProvenance Read(const std::string& inFile, SampleKind kind, BeamMode beam);
 
   private:
     static std::string ReadNamedString(TDirectory* d, const char* key);

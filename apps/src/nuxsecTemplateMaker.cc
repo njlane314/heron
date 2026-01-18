@@ -92,15 +92,14 @@ struct Args
     std::string tree_name;
     std::string template_path;
     std::string output_root;
-    int nthreads = 1;
 };
 
 Args parse_args(int argc, char **argv)
 {
-    if (argc < 5 || argc > 6)
+    if (argc != 5)
     {
         throw std::runtime_error("Usage: nuxsecTemplateMaker SAMPLE_LIST.tsv TREE_NAME "
-                                 "TEMPLATES.tsv OUTPUT.root [NTHREADS]");
+                                 "TEMPLATES.tsv OUTPUT.root");
     }
 
     Args args;
@@ -108,20 +107,11 @@ Args parse_args(int argc, char **argv)
     args.tree_name = nuxsec::app::trim(argv[2]);
     args.template_path = nuxsec::app::trim(argv[3]);
     args.output_root = nuxsec::app::trim(argv[4]);
-    if (argc == 6)
-    {
-        args.nthreads = std::stoi(nuxsec::app::trim(argv[5]));
-    }
 
     if (args.list_path.empty() || args.tree_name.empty() || args.template_path.empty() ||
         args.output_root.empty())
     {
         throw std::runtime_error("Invalid arguments (empty path or tree name)");
-    }
-
-    if (args.nthreads < 1)
-    {
-        throw std::runtime_error("Invalid thread count (must be >= 1)");
     }
 
     return args;
@@ -134,10 +124,7 @@ int main(int argc, char **argv)
     try
     {
         const Args args = parse_args(argc, argv);
-        if (args.nthreads > 1)
-        {
-            ROOT::EnableImplicitMT(args.nthreads);
-        }
+        ROOT::EnableImplicitMT();
         TH1::SetDefaultSumw2(true);
 
         const auto entries = read_sample_list(args.list_path);

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "AppUtils.hh"
 #include "ArtFileProvenanceRootIO.hh"
@@ -29,29 +30,63 @@ struct Args
 {
     std::string artio_path;
     nuxsec::StageCfg stage_cfg;
+    nuxsec::SampleKind sample_kind = nuxsec::SampleKind::kUnknown;
+    nuxsec::BeamMode beam_mode = nuxsec::BeamMode::kUnknown;
 };
 
 Args parse_args(int argc, char **argv)
 {
     if (argc != 2)
     {
-        throw std::runtime_error("Usage: nuxsecArtIOaggregator NAME:FILELIST");
+        throw std::runtime_error("Usage: nuxsecArtIOaggregator NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
     }
 
     const std::string spec = argv[1];
-    const auto pos = spec.find(':');
-    if (pos == std::string::npos)
+
+    std::vector<std::string> fields;
+    size_t start = 0;
+    while (start <= spec.size())
+    {
+        const size_t pos = spec.find(':', start);
+        if (pos == std::string::npos)
+        {
+            fields.push_back(nuxsec::app::trim(spec.substr(start)));
+            break;
+        }
+        fields.push_back(nuxsec::app::trim(spec.substr(start, pos - start)));
+        start = pos + 1;
+    }
+
+    if (fields.size() < 2)
     {
         throw std::runtime_error("Bad stage spec (expected NAME:FILELIST): " + spec);
     }
 
     Args args;
-    args.stage_cfg.stage_name = nuxsec::app::trim(spec.substr(0, pos));
-    args.stage_cfg.filelist_path = nuxsec::app::trim(spec.substr(pos + 1));
+    args.stage_cfg.stage_name = fields[0];
+    args.stage_cfg.filelist_path = fields[1];
 
     if (args.stage_cfg.stage_name.empty() || args.stage_cfg.filelist_path.empty())
     {
         throw std::runtime_error("Bad stage spec: " + spec);
+    }
+
+    if (fields.size() >= 4)
+    {
+        args.sample_kind = nuxsec::parse_sample_kind(fields[2]);
+        args.beam_mode = nuxsec::parse_beam_mode(fields[3]);
+        if (args.sample_kind == nuxsec::SampleKind::kUnknown)
+        {
+            throw std::runtime_error("Bad stage sample kind: " + fields[2]);
+        }
+        if (args.beam_mode == nuxsec::BeamMode::kUnknown)
+        {
+            throw std::runtime_error("Bad stage beam mode: " + fields[3]);
+        }
+    }
+    else if (fields.size() != 2)
+    {
+        throw std::runtime_error("Bad stage spec (expected NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]): " + spec);
     }
 
     args.artio_path = "./ArtFileProvenance_" + args.stage_cfg.stage_name + ".root";
@@ -79,8 +114,10 @@ int main(int argc, char **argv)
         ArtFileProvenance rec;
         rec.cfg = args.stage_cfg;
         rec.input_files = files;
+        rec.kind = args.sample_kind;
+        rec.beam = args.beam_mode;
 
-        if (is_selection_data_file(files.front()))
+        if (rec.kind == SampleKind::kUnknown && is_selection_data_file(files.front()))
         {
             rec.kind = SampleKind::kData;
         }

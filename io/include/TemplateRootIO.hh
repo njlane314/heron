@@ -1,0 +1,49 @@
+/* -- C++ -- */
+/**
+ *  @file  io/include/TemplateRootIO.hh
+ *
+ *  @brief ROOT IO helpers for template histogram output.
+ */
+
+#ifndef Nuxsec_IO_TEMPLATE_ROOT_IO_H_INCLUDED
+#define Nuxsec_IO_TEMPLATE_ROOT_IO_H_INCLUDED
+
+#include <string>
+#include <utility>
+#include <vector>
+
+class TH1;
+
+namespace nuxsec
+{
+
+struct TemplateWriteOptions
+{
+    std::string top_dir = "templates";
+    bool overwrite = true;
+};
+
+class TemplateRootIO
+{
+  public:
+    static void write_histograms(const std::string &root_path,
+                                 const std::string &sample_name,
+                                 const std::vector<std::pair<std::string, const TH1 *>> &hists,
+                                 const TemplateWriteOptions &opt = {});
+
+    static void write_string_meta(const std::string &root_path,
+                                  const std::string &sample_name,
+                                  const std::string &key,
+                                  const std::string &value,
+                                  const TemplateWriteOptions &opt = {});
+
+    static void write_double_meta(const std::string &root_path,
+                                  const std::string &sample_name,
+                                  const std::string &key,
+                                  double value,
+                                  const TemplateWriteOptions &opt = {});
+};
+
+} // namespace nuxsec
+
+#endif // Nuxsec_IO_TEMPLATE_ROOT_IO_H_INCLUDED

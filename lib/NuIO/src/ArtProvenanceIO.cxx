@@ -6,6 +6,9 @@
 
 #include "NuIO/ArtProvenanceIO.h"
 
+#include <algorithm>
+#include <cctype>
+
 namespace nuio
 {
 
@@ -28,6 +31,38 @@ const char *sample_kind_name(SampleKind k)
     }
 }
 
+SampleKind parse_sample_kind(const std::string &name)
+{
+    std::string lowered = name;
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+                   [](unsigned char c)
+                   {
+                       return static_cast<char>(std::tolower(c));
+                   });
+
+    if (lowered == "data")
+    {
+        return SampleKind::kData;
+    }
+    if (lowered == "ext")
+    {
+        return SampleKind::kEXT;
+    }
+    if (lowered == "mc_overlay")
+    {
+        return SampleKind::kMCOverlay;
+    }
+    if (lowered == "mc_dirt")
+    {
+        return SampleKind::kMCDirt;
+    }
+    if (lowered == "mc_strangeness")
+    {
+        return SampleKind::kMCStrangeness;
+    }
+    return SampleKind::kUnknown;
+}
+
 const char *beam_mode_name(BeamMode b)
 {
     switch (b)
@@ -39,6 +74,26 @@ const char *beam_mode_name(BeamMode b)
     default:
         return "unknown";
     }
+}
+
+BeamMode parse_beam_mode(const std::string &name)
+{
+    std::string lowered = name;
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+                   [](unsigned char c)
+                   {
+                       return static_cast<char>(std::tolower(c));
+                   });
+
+    if (lowered == "numi")
+    {
+        return BeamMode::kNuMI;
+    }
+    if (lowered == "bnb")
+    {
+        return BeamMode::kBNB;
+    }
+    return BeamMode::kUnknown;
 }
 
 void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
@@ -110,6 +165,27 @@ void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
     f->Close();
 }
 
+ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
+{
+    std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
+    if (!f || f->IsZombie())
+    {
+        throw std::runtime_error("Failed to open merged output file for READ: " + in_file);
+    }
+
+    TDirectory *d = f->GetDirectory("ArtIO");
+    if (!d)
+    {
+        throw std::runtime_error("Missing ArtIO directory in file: " + in_file);
+    }
+    d->cd();
+
+    const SampleKind kind = parse_sample_kind(read_named_string(d, "sample_kind"));
+    const BeamMode beam = parse_beam_mode(read_named_string(d, "beam_mode"));
+
+    return read_directory(d, kind, beam);
+}
+
 ArtProvenance ArtProvenanceIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
@@ -125,6 +201,11 @@ ArtProvenance ArtProvenanceIO::read(const std::string &in_file, SampleKind kind,
     }
     d->cd();
 
+    return read_directory(d, kind, beam);
+}
+
+ArtProvenance ArtProvenanceIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
+{
     ArtProvenance r;
     r.cfg.stage_name = read_named_string(d, "stage_name");
     r.kind = kind;

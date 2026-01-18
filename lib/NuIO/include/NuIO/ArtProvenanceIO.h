@@ -35,6 +35,7 @@ enum class SampleKind
 };
 
 const char *sample_kind_name(SampleKind k);
+SampleKind parse_sample_kind(const std::string &name);
 
 enum class BeamMode
 {
@@ -44,6 +45,7 @@ enum class BeamMode
 };
 
 const char *beam_mode_name(BeamMode b);
+BeamMode parse_beam_mode(const std::string &name);
 
 struct RunSubrun
 {
@@ -101,6 +103,7 @@ class ArtProvenanceIO
 {
   public:
     static void write(const ArtProvenance &r, const std::string &out_file);
+    static ArtProvenance read(const std::string &in_file);
     static ArtProvenance read(const std::string &in_file, SampleKind kind, BeamMode beam);
 
   private:
@@ -120,6 +123,7 @@ class ArtProvenanceIO
 
     static std::vector<std::string> read_input_files(TDirectory *d);
     static std::vector<RunSubrun> read_run_subrun_pairs(TDirectory *d);
+    static ArtProvenance read_directory(TDirectory *d, SampleKind kind, BeamMode beam);
 };
 
 } // namespace nuio

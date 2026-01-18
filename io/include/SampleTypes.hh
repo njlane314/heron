@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/SampleTypes.hh
+ *  @file  io/include/SampleTypes.hh
  *
  *  @brief Sample kind and beam mode helpers.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_TYPES_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_TYPES_H_INCLUDED
+#ifndef Nuxsec_IO_SAMPLE_TYPES_H_INCLUDED
+#define Nuxsec_IO_SAMPLE_TYPES_H_INCLUDED
 
 #include <string>
 
@@ -38,4 +38,4 @@ BeamMode parse_beam_mode(const std::string &name);
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_TYPES_H_INCLUDED
+#endif // Nuxsec_IO_SAMPLE_TYPES_H_INCLUDED

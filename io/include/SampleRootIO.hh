@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/SampleRootIO.hh
+ *  @file  io/include/SampleRootIO.hh
  *
  *  @brief ROOT IO helpers for aggregated samples.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_ROOT_IO_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_ROOT_IO_H_INCLUDED
+#ifndef Nuxsec_IO_SAMPLE_ROOT_IO_H_INCLUDED
+#define Nuxsec_IO_SAMPLE_ROOT_IO_H_INCLUDED
 
 #include <string>
 
@@ -24,4 +24,4 @@ class SampleRootIO
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_ROOT_IO_H_INCLUDED
+#endif // Nuxsec_IO_SAMPLE_ROOT_IO_H_INCLUDED

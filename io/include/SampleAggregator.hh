@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/SampleAggregator.hh
+ *  @file  io/include/SampleAggregator.hh
  *
  *  @brief Sample aggregation helpers.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_AGGREGATOR_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_AGGREGATOR_H_INCLUDED
+#ifndef Nuxsec_IO_SAMPLE_AGGREGATOR_H_INCLUDED
+#define Nuxsec_IO_SAMPLE_AGGREGATOR_H_INCLUDED
 
 #include <string>
 #include <vector>
@@ -29,4 +29,4 @@ class SampleAggregator
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_AGGREGATOR_H_INCLUDED
+#endif // Nuxsec_IO_SAMPLE_AGGREGATOR_H_INCLUDED

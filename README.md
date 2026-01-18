@@ -14,11 +14,12 @@ ROOT-based utilities for a neutrino cross-section analysis pipeline built around
 
 ## Repository structure
 
-This is a COLLIE-like module layout. Each module is built as its own shared library.
+This is a COLLIE-like module layout. Core modules are built as shared libraries, with sample aggregation
+and IO utilities bundled into `libNuxsecIO`.
 
 ```
 nuxsec/
-  io/      # LArSoft output discovery, file manifests, provenance extraction
+  io/      # LArSoft output discovery, file manifests, provenance extraction, sample aggregation
   ana/     # analysis-level definitions and ROOT::RDataFrame sources + derived columns
   apps/    # small CLIs (aggregators, RDF builders)
   scripts/ # environment helpers
@@ -39,7 +40,6 @@ make
 This produces:
 
 - `build/lib/libNuxsecIO.so`
-- `build/lib/libNuxsecSample.so`
 - `build/lib/libNuxsecAna.so`
 - `build/bin/nuxsecArtIOaggregator`
 - `build/bin/nuxsecSampleIOaggregator`

@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/Sample.hh
+ *  @file  io/include/Sample.hh
  *
  *  @brief Data structures for sample aggregation.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_H_INCLUDED
+#ifndef Nuxsec_IO_SAMPLE_H_INCLUDED
+#define Nuxsec_IO_SAMPLE_H_INCLUDED
 
 #include <string>
 #include <vector>
@@ -47,4 +47,4 @@ struct Sample
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_H_INCLUDED
+#endif // Nuxsec_IO_SAMPLE_H_INCLUDED

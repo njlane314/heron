@@ -7,6 +7,7 @@
 
 #include "NuXSecTemplate.hh"
 
+#include <TClass.h>
 #include <TError.h>
 #include <TGenericClassInfo.h>
 #include <TH1.h>

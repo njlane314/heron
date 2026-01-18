@@ -24,12 +24,11 @@
 1. Aggregate LArSoft outputs.
    - Run `artIOaggregator` to create `ArtIO.root`.
 2. Build the event store.
-   - Run `nuIOmaker.exe` to produce `NuIO.Evt` (and usually `NuIO.Sel`) shards.
    - Run `nuIOcondenser.exe` to assemble `NuIO.*.root` banks.
 3. Run nominal analysis.
    - Run `nuAnaCalc.exe` to write/update `NuResults.root` (`Nominal/`).
 4. Run systematics later (optional).
-   - If not already present, generate `NuIO.Wgt` via `nuIOmaker.exe` and `nuIOcondenser.exe`.
+   - If not already present, generate `NuIO.Wgt` via `nuIOcondenser.exe`.
    - Run `nuSystCalc.exe` to append `Syst/` products into the existing `NuResults.root`.
 5. Plot.
    - Run `nuPlot.exe` from `NuResults.root`.

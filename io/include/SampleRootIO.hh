@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/SampleRootIO.hh
+ *  @file  io/include/SampleRootIO.hh
  *
  *  @brief ROOT IO helpers for aggregated samples.
  */

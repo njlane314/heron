@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/SampleAggregator.hh
+ *  @file  io/include/SampleAggregator.hh
  *
  *  @brief Sample aggregation helpers.
  */

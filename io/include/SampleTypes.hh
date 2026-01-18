@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  sample/include/SampleTypes.hh
+ *  @file  io/include/SampleTypes.hh
  *
  *  @brief Sample kind and beam mode helpers.
  */

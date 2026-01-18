@@ -38,12 +38,12 @@ make
 
 This produces:
 
-- `build/lib/libNuXsecIO.so`
-- `build/lib/libNuXsecSample.so`
-- `build/lib/libNuXsecAna.so`
-- `build/bin/artIOaggregator`
-- `build/bin/sampleIOaggregator`
-- `build/bin/sampleRDFbuilder`
+- `build/lib/libNuxsecIO.so`
+- `build/lib/libNuxsecSample.so`
+- `build/lib/libNuxsecAna.so`
+- `build/bin/nuxsecArtIOaggregator`
+- `build/bin/nuxsecSampleIOaggregator`
+- `build/bin/nuxsecSampleRDFbuilder`
 
 ## Analysis processing
 
@@ -72,12 +72,12 @@ LIST
 ## Run the aggregators
 
 ```bash
-build/bin/artIOaggregator my_stage:data.list
+build/bin/nuxsecArtIOaggregator my_stage:data.list
 # writes ./ArtFileProvenance_my_stage.root
 ```
 
 ```bash
-build/bin/sampleIOaggregator my_sample:data.list
+build/bin/nuxsecSampleIOaggregator my_sample:data.list
 # writes ./SampleRootIO_my_sample.root
 # updates ./SampleRootIO_samples.tsv
 ```

@@ -35,7 +35,7 @@ Args parse_args(int argc, char **argv)
 {
     if (argc != 2)
     {
-        throw std::runtime_error("Usage: artIOaggregator NAME:FILELIST");
+        throw std::runtime_error("Usage: nuxsecArtIOaggregator NAME:FILELIST");
     }
 
     const std::string spec = argv[1];
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         rec.db_tor101_pot = rec.runinfo.tor101_sum;
         rec.scale = pot_scale;
 
-        std::cerr << "[artIOaggregator] add stage=" << rec.cfg.stage_name
+        std::cerr << "[nuxsecArtIOaggregator] add stage=" << rec.cfg.stage_name
                   << " files=" << rec.input_files.size()
                   << " pairs=" << rec.subrun.unique_pairs.size()
                   << " pot_sum=" << rec.subrun.pot_sum

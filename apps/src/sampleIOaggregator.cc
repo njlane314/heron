@@ -180,8 +180,8 @@ int main(int argc, char **argv)
                   << " stages=" << sample.stages.size()
                   << " pot_sum=" << sample.subrun_pot_sum
                   << " db_tortgt_pot_sum=" << sample.db_tortgt_pot_sum
-                  << " normalization=" << sample.normalization
-                  << " normalized_pot_sum=" << sample.normalized_pot_sum
+                  << " normalisation=" << sample.normalisation
+                  << " normalised_pot_sum=" << sample.normalised_pot_sum
                   << " output=" << args.output_path
                   << " sample_list=" << args.sample_list_path
                   << "\n";

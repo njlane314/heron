@@ -31,6 +31,7 @@ This file captures the coding conventions and structural patterns used in the Nu
 - Indentation mixes two spaces and tabs; preserve existing indentation style in the file being edited.
 - Inline methods are commonly defined in headers.
 - Prefer explicit NULL checks and early returns in implementation code.
+- Use British-English spelling in code, comments, and documentation (e.g., normalisation).
 
 ## Naming conventions
 - Member variables frequently use prefixes:

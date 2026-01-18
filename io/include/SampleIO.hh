@@ -31,8 +31,8 @@ struct SampleStage
     double db_tortgt_pot = 0.0;
     double db_tor101_pot = 0.0;
 
-    double normalization = 1.0;
-    double normalized_pot_sum = 0.0;
+    double normalisation = 1.0;
+    double normalised_pot_sum = 0.0;
 };
 
 struct Sample
@@ -47,8 +47,8 @@ struct Sample
     double db_tortgt_pot_sum = 0.0;
     double db_tor101_pot_sum = 0.0;
 
-    double normalization = 1.0;
-    double normalized_pot_sum = 0.0;
+    double normalisation = 1.0;
+    double normalised_pot_sum = 0.0;
 };
 
 class SampleIO
@@ -59,7 +59,7 @@ class SampleIO
     static Sample read(const std::string &in_file);
 
   private:
-    static double compute_normalization(double subrun_pot_sum, double db_tortgt_pot);
+    static double compute_normalisation(double subrun_pot_sum, double db_tortgt_pot);
     static SampleStage make_stage(const ArtProvenance &prov, const std::string &artio_path);
 };
 

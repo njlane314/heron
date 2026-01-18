@@ -51,8 +51,8 @@ Sample SampleIO::aggregate(const std::string &sample_name, const std::vector<std
         out.stages.push_back(std::move(stage));
     }
 
-    out.normalization = compute_normalization(out.subrun_pot_sum, out.db_tortgt_pot_sum);
-    out.normalized_pot_sum = out.subrun_pot_sum * out.normalization;
+    out.normalisation = compute_normalisation(out.subrun_pot_sum, out.db_tortgt_pot_sum);
+    out.normalised_pot_sum = out.subrun_pot_sum * out.normalisation;
 
     return out;
 }
@@ -81,9 +81,9 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         .Write("db_tortgt_pot_sum", TObject::kOverwrite);
     TParameter<double>("db_tor101_pot_sum", sample.db_tor101_pot_sum)
         .Write("db_tor101_pot_sum", TObject::kOverwrite);
-    TParameter<double>("normalization", sample.normalization).Write("normalization", TObject::kOverwrite);
-    TParameter<double>("normalized_pot_sum", sample.normalized_pot_sum)
-        .Write("normalized_pot_sum", TObject::kOverwrite);
+    TParameter<double>("normalisation", sample.normalisation).Write("normalisation", TObject::kOverwrite);
+    TParameter<double>("normalised_pot_sum", sample.normalised_pot_sum)
+        .Write("normalised_pot_sum", TObject::kOverwrite);
 
     {
         TTree stages("stages", "ArtIO stages included in sample aggregation");
@@ -93,16 +93,16 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot = 0.0;
         double db_tor101_pot = 0.0;
-        double normalization = 1.0;
-        double normalized_pot_sum = 0.0;
+        double normalisation = 1.0;
+        double normalised_pot_sum = 0.0;
 
         stages.Branch("stage_name", &stage_name);
         stages.Branch("artio_path", &artio_path);
         stages.Branch("subrun_pot_sum", &subrun_pot_sum);
         stages.Branch("db_tortgt_pot", &db_tortgt_pot);
         stages.Branch("db_tor101_pot", &db_tor101_pot);
-        stages.Branch("normalization", &normalization);
-        stages.Branch("normalized_pot_sum", &normalized_pot_sum);
+        stages.Branch("normalisation", &normalisation);
+        stages.Branch("normalised_pot_sum", &normalised_pot_sum);
 
         for (const auto &stage : sample.stages)
         {
@@ -111,8 +111,8 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
             subrun_pot_sum = stage.subrun_pot_sum;
             db_tortgt_pot = stage.db_tortgt_pot;
             db_tor101_pot = stage.db_tor101_pot;
-            normalization = stage.normalization;
-            normalized_pot_sum = stage.normalized_pot_sum;
+            normalisation = stage.normalisation;
+            normalised_pot_sum = stage.normalised_pot_sum;
             stages.Fill();
         }
 
@@ -183,8 +183,8 @@ Sample SampleIO::read(const std::string &in_file)
     out.subrun_pot_sum = read_param_double("subrun_pot_sum");
     out.db_tortgt_pot_sum = read_param_double("db_tortgt_pot_sum");
     out.db_tor101_pot_sum = read_param_double("db_tor101_pot_sum");
-    out.normalization = read_param_double("normalization");
-    out.normalized_pot_sum = read_param_double("normalized_pot_sum");
+    out.normalisation = read_param_double("normalisation");
+    out.normalised_pot_sum = read_param_double("normalised_pot_sum");
 
     TObject *obj = d->Get("stages");
     auto *tree = dynamic_cast<TTree *>(obj);
@@ -198,16 +198,16 @@ Sample SampleIO::read(const std::string &in_file)
     double subrun_pot_sum = 0.0;
     double db_tortgt_pot = 0.0;
     double db_tor101_pot = 0.0;
-    double normalization = 1.0;
-    double normalized_pot_sum = 0.0;
+    double normalisation = 1.0;
+    double normalised_pot_sum = 0.0;
 
     tree->SetBranchAddress("stage_name", &stage_name);
     tree->SetBranchAddress("artio_path", &artio_path);
     tree->SetBranchAddress("subrun_pot_sum", &subrun_pot_sum);
     tree->SetBranchAddress("db_tortgt_pot", &db_tortgt_pot);
     tree->SetBranchAddress("db_tor101_pot", &db_tor101_pot);
-    tree->SetBranchAddress("normalization", &normalization);
-    tree->SetBranchAddress("normalized_pot_sum", &normalized_pot_sum);
+    tree->SetBranchAddress("normalisation", &normalisation);
+    tree->SetBranchAddress("normalised_pot_sum", &normalised_pot_sum);
 
     const Long64_t n = tree->GetEntries();
     out.stages.reserve(static_cast<size_t>(n));
@@ -220,15 +220,15 @@ Sample SampleIO::read(const std::string &in_file)
         stage.subrun_pot_sum = subrun_pot_sum;
         stage.db_tortgt_pot = db_tortgt_pot;
         stage.db_tor101_pot = db_tor101_pot;
-        stage.normalization = normalization;
-        stage.normalized_pot_sum = normalized_pot_sum;
+        stage.normalisation = normalisation;
+        stage.normalised_pot_sum = normalised_pot_sum;
         out.stages.push_back(std::move(stage));
     }
 
     return out;
 }
 
-double SampleIO::compute_normalization(double subrun_pot_sum, double db_tortgt_pot)
+double SampleIO::compute_normalisation(double subrun_pot_sum, double db_tortgt_pot)
 {
     if (subrun_pot_sum <= 0.0)
     {
@@ -249,8 +249,8 @@ SampleStage SampleIO::make_stage(const ArtProvenance &prov, const std::string &a
     stage.subrun_pot_sum = prov.subrun.pot_sum;
     stage.db_tortgt_pot = prov.db_tortgt_pot;
     stage.db_tor101_pot = prov.db_tor101_pot;
-    stage.normalization = compute_normalization(stage.subrun_pot_sum, stage.db_tortgt_pot);
-    stage.normalized_pot_sum = stage.subrun_pot_sum * stage.normalization;
+    stage.normalisation = compute_normalisation(stage.subrun_pot_sum, stage.db_tortgt_pot);
+    stage.normalised_pot_sum = stage.subrun_pot_sum * stage.normalisation;
     return stage;
 }
 

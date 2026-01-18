@@ -9,7 +9,7 @@
 namespace nuio
 {
 
-const char* SampleKindName(SampleKind k)
+const char *sample_kind_name(SampleKind k)
 {
     switch (k)
     {
@@ -28,7 +28,7 @@ const char* SampleKindName(SampleKind k)
     }
 }
 
-const char* BeamModeName(BeamMode b)
+const char *beam_mode_name(BeamMode b)
 {
     switch (b)
     {
@@ -41,9 +41,9 @@ const char* BeamModeName(BeamMode b)
     }
 }
 
-SampleKind SampleKindFromName(const std::string& name)
+SampleKind sample_kind_from_name(const std::string &name)
 {
-    const std::string v = ToLower(name);
+    const std::string v = to_lower(name);
     if (v == "data")
     {
         return SampleKind::kData;
@@ -67,9 +67,9 @@ SampleKind SampleKindFromName(const std::string& name)
     return SampleKind::kUnknown;
 }
 
-BeamMode BeamModeFromName(const std::string& name)
+BeamMode beam_mode_from_name(const std::string &name)
 {
-    const std::string v = ToLower(name);
+    const std::string v = to_lower(name);
     if (v == "numi")
     {
         return BeamMode::kNuMI;
@@ -81,15 +81,15 @@ BeamMode BeamModeFromName(const std::string& name)
     return BeamMode::kUnknown;
 }
 
-void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
+void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
 {
-    std::unique_ptr<TFile> f(TFile::Open(outFile.c_str(), "UPDATE"));
+    std::unique_ptr<TFile> f(TFile::Open(out_file.c_str(), "UPDATE"));
     if (!f || f->IsZombie())
     {
-        throw std::runtime_error("Failed to open merged output file for UPDATE: " + outFile);
+        throw std::runtime_error("Failed to open merged output file for UPDATE: " + out_file);
     }
 
-    TDirectory* d = f->GetDirectory("ArtIO");
+    TDirectory *d = f->GetDirectory("ArtIO");
     if (!d)
     {
         d = f->mkdir("ArtIO");
@@ -97,8 +97,8 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
     d->cd();
 
     TNamed("stage_name", r.cfg.stage_name.c_str()).Write("stage_name", TObject::kOverwrite);
-    TNamed("sample_kind", SampleKindName(r.kind)).Write("sample_kind", TObject::kOverwrite);
-    TNamed("beam_mode", BeamModeName(r.beam)).Write("beam_mode", TObject::kOverwrite);
+    TNamed("sample_kind", sample_kind_name(r.kind)).Write("sample_kind", TObject::kOverwrite);
+    TNamed("beam_mode", beam_mode_name(r.beam)).Write("beam_mode", TObject::kOverwrite);
 
     TParameter<double>("subrun_pot_sum", r.subrun.pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);
     TParameter<long long>("subrun_entries", r.subrun.n_entries).Write("subrun_entries", TObject::kOverwrite);
@@ -124,7 +124,7 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
     {
         TObjArray arr;
         arr.SetOwner(true);
-        for (const auto& in : r.input_files)
+        for (const auto &in : r.input_files)
         {
             arr.Add(new TObjString(in.c_str()));
         }
@@ -137,7 +137,7 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
         Int_t subrun = 0;
         rs.Branch("run", &run, "run/I");
         rs.Branch("subrun", &subrun, "subrun/I");
-        for (const auto& p : r.subrun.unique_pairs)
+        for (const auto &p : r.subrun.unique_pairs)
         {
             run = p.run;
             subrun = p.subrun;
@@ -150,52 +150,52 @@ void ArtProvenanceIO::Write(const ArtProvenance& r, const std::string& outFile)
     f->Close();
 }
 
-ArtProvenance ArtProvenanceIO::Read(const std::string& inFile)
+ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
 {
-    std::unique_ptr<TFile> f(TFile::Open(inFile.c_str(), "READ"));
+    std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
     {
-        throw std::runtime_error("Failed to open merged output file for READ: " + inFile);
+        throw std::runtime_error("Failed to open merged output file for READ: " + in_file);
     }
 
-    TDirectory* d = f->GetDirectory("ArtIO");
+    TDirectory *d = f->GetDirectory("ArtIO");
     if (!d)
     {
-        throw std::runtime_error("Missing ArtIO directory in file: " + inFile);
+        throw std::runtime_error("Missing ArtIO directory in file: " + in_file);
     }
     d->cd();
 
     ArtProvenance r;
-    r.cfg.stage_name = ReadNamedString(d, "stage_name");
-    r.kind = SampleKindFromName(ReadNamedString(d, "sample_kind"));
-    r.beam = BeamModeFromName(ReadNamedString(d, "beam_mode"));
+    r.cfg.stage_name = read_named_string(d, "stage_name");
+    r.kind = sample_kind_from_name(read_named_string(d, "sample_kind"));
+    r.beam = beam_mode_from_name(read_named_string(d, "beam_mode"));
 
-    r.subrun.pot_sum = ReadParam<double>(d, "subrun_pot_sum");
-    r.subrun.n_entries = ReadParam<long long>(d, "subrun_entries");
+    r.subrun.pot_sum = read_param<double>(d, "subrun_pot_sum");
+    r.subrun.n_entries = read_param<long long>(d, "subrun_entries");
 
-    r.runinfo.tortgt_sum = ReadParam<double>(d, "db_tortgt_sum_raw");
-    r.runinfo.tor101_sum = ReadParam<double>(d, "db_tor101_sum_raw");
-    r.runinfo.tor860_sum = ReadParam<double>(d, "db_tor860_sum");
-    r.runinfo.tor875_sum = ReadParam<double>(d, "db_tor875_sum");
-    r.db_tortgt_pot = ReadParam<double>(d, "db_tortgt_pot");
-    r.db_tor101_pot = ReadParam<double>(d, "db_tor101_pot");
+    r.runinfo.tortgt_sum = read_param<double>(d, "db_tortgt_sum_raw");
+    r.runinfo.tor101_sum = read_param<double>(d, "db_tor101_sum_raw");
+    r.runinfo.tor860_sum = read_param<double>(d, "db_tor860_sum");
+    r.runinfo.tor875_sum = read_param<double>(d, "db_tor875_sum");
+    r.db_tortgt_pot = read_param<double>(d, "db_tortgt_pot");
+    r.db_tor101_pot = read_param<double>(d, "db_tor101_pot");
 
-    r.runinfo.EA9CNT_sum = ReadParam<long long>(d, "db_ea9cnt_sum");
-    r.runinfo.E1DCNT_sum = ReadParam<long long>(d, "db_e1dcnt_sum");
-    r.runinfo.EXTTrig_sum = ReadParam<long long>(d, "db_exttrig_sum");
-    r.runinfo.Gate1Trig_sum = ReadParam<long long>(d, "db_gate1trig_sum");
-    r.runinfo.Gate2Trig_sum = ReadParam<long long>(d, "db_gate2trig_sum");
-    r.scale = ReadParam<double>(d, "scale_factor");
+    r.runinfo.EA9CNT_sum = read_param<long long>(d, "db_ea9cnt_sum");
+    r.runinfo.E1DCNT_sum = read_param<long long>(d, "db_e1dcnt_sum");
+    r.runinfo.EXTTrig_sum = read_param<long long>(d, "db_exttrig_sum");
+    r.runinfo.Gate1Trig_sum = read_param<long long>(d, "db_gate1trig_sum");
+    r.runinfo.Gate2Trig_sum = read_param<long long>(d, "db_gate2trig_sum");
+    r.scale = read_param<double>(d, "scale_factor");
 
-    r.input_files = ReadInputFiles(d);
-    r.subrun.unique_pairs = ReadRunSubrunPairs(d);
+    r.input_files = read_input_files(d);
+    r.subrun.unique_pairs = read_run_subrun_pairs(d);
     return r;
 }
 
-std::string ArtProvenanceIO::ReadNamedString(TDirectory* d, const char* key)
+std::string ArtProvenanceIO::read_named_string(TDirectory *d, const char *key)
 {
-    TObject* obj = d->Get(key);
-    auto* named = dynamic_cast<TNamed*>(obj);
+    TObject *obj = d->Get(key);
+    auto *named = dynamic_cast<TNamed *>(obj);
     if (!named)
     {
         throw std::runtime_error("Missing TNamed for key: " + std::string(key));
@@ -203,11 +203,11 @@ std::string ArtProvenanceIO::ReadNamedString(TDirectory* d, const char* key)
     return std::string(named->GetTitle());
 }
 
-std::vector<std::string> ArtProvenanceIO::ReadInputFiles(TDirectory* d)
+std::vector<std::string> ArtProvenanceIO::read_input_files(TDirectory *d)
 {
     std::vector<std::string> files;
-    TObject* obj = d->Get("input_files");
-    auto* arr = dynamic_cast<TObjArray*>(obj);
+    TObject *obj = d->Get("input_files");
+    auto *arr = dynamic_cast<TObjArray *>(obj);
     if (!arr)
     {
         throw std::runtime_error("Missing input_files array");
@@ -216,7 +216,7 @@ std::vector<std::string> ArtProvenanceIO::ReadInputFiles(TDirectory* d)
     files.reserve(static_cast<size_t>(n));
     for (int i = 0; i < n; ++i)
     {
-        auto* entry = dynamic_cast<TObjString*>(arr->At(i));
+        auto *entry = dynamic_cast<TObjString *>(arr->At(i));
         if (!entry)
         {
             throw std::runtime_error("Invalid entry in input_files array");
@@ -226,10 +226,10 @@ std::vector<std::string> ArtProvenanceIO::ReadInputFiles(TDirectory* d)
     return files;
 }
 
-std::vector<RunSubrun> ArtProvenanceIO::ReadRunSubrunPairs(TDirectory* d)
+std::vector<RunSubrun> ArtProvenanceIO::read_run_subrun_pairs(TDirectory *d)
 {
-    TObject* obj = d->Get("run_subrun");
-    auto* tree = dynamic_cast<TTree*>(obj);
+    TObject *obj = d->Get("run_subrun");
+    auto *tree = dynamic_cast<TTree *>(obj);
     if (!tree)
     {
         throw std::runtime_error("Missing run_subrun tree");

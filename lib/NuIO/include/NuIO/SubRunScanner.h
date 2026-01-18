@@ -14,7 +14,7 @@
 
 namespace nuio
 {
-SubRunInfo ScanSubRunTree(const std::vector<std::string> &files);
+SubRunInfo scan_subrun_tree(const std::vector<std::string> &files);
 }
 
 #endif

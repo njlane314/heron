@@ -17,6 +17,7 @@ All source files in this repository must follow the formatting shown in `nuaggre
 - Keep namespace braces on their own lines.
 - Align pointer and reference symbols to the left (e.g., `const std::string &name`).
 - Prefer one statement per line and avoid compacting blocks into single-line statements.
+- Function names must be lowercase with words separated by underscores.
 
 ## Suggested clang-format
 

@@ -28,7 +28,6 @@ struct NuXSecSystBin
     double base_delta_efficiency = 0.0;
     double exclusion_sum = 0.0;
 
-    ClassDefNV(NuXSecSystBin, 1);
 };
 
 /** \brief CollieDistribution-like template representation for NuXSec. */
@@ -132,7 +131,6 @@ class NuXSecTemplate : public TNamed
     std::vector<double> m_lin_bin_stat;
     std::vector<double> m_efficiency_sums;
 
-    ClassDef(NuXSecTemplate, 1);
 };
 
 } // namespace nuxsec

@@ -122,22 +122,22 @@ int main(int argc, char **argv)
             switch (sample.kind)
             {
             case nuxsec::SampleKind::kData:
-                proc_entry.source = nuxsec::SourceKind::kData;
+                proc_entry.source = nuxsec::Source::Data;
                 break;
             case nuxsec::SampleKind::kEXT:
-                proc_entry.source = nuxsec::SourceKind::kExt;
+                proc_entry.source = nuxsec::Source::Ext;
                 proc_entry.trig_nom = sample.db_tor101_pot_sum;
                 proc_entry.trig_eqv = sample.subrun_pot_sum;
                 break;
             case nuxsec::SampleKind::kMCOverlay:
             case nuxsec::SampleKind::kMCDirt:
             case nuxsec::SampleKind::kMCStrangeness:
-                proc_entry.source = nuxsec::SourceKind::kMC;
+                proc_entry.source = nuxsec::Source::MC;
                 proc_entry.pot_nom = sample.db_tortgt_pot_sum;
                 proc_entry.pot_eqv = sample.subrun_pot_sum;
                 break;
             default:
-                proc_entry.source = nuxsec::SourceKind::kUnknown;
+                proc_entry.source = nuxsec::Source::Unknown;
                 break;
             }
 

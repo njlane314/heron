@@ -20,6 +20,11 @@ ANA_SRC = ana/src/AnalysisRdfDefinitions.cc \
           ana/src/RDataFrameFactory.cc
 ANA_OBJ = $(ANA_SRC:.cc=.o)
 
+PLOT_LIB_NAME = build/lib/libNuXsecPlot.so
+PLOT_SRC = plot/src/Plotter.cc \
+           plot/src/StackedHist.cc
+PLOT_OBJ = $(PLOT_SRC:.cc=.o)
+
 RDF_BUILDER_NAME = build/bin/nuxsecSampleRDFbuilder
 RDF_BUILDER_SRC = apps/src/nuxsecSampleRDFbuilder.cc
 
@@ -29,9 +34,9 @@ ART_AGGREGATOR_SRC = apps/src/nuxsecArtIOaggregator.cc
 SAMPLE_AGGREGATOR_NAME = build/bin/nuxsecSampleIOaggregator
 SAMPLE_AGGREGATOR_SRC = apps/src/nuxsecSampleIOaggregator.cc
 
-INCLUDES = -I./io/include -I./ana/include -I./apps/include
+INCLUDES = -I./io/include -I./ana/include -I./plot/include -I./apps/include
 
-all: $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME) $(RDF_BUILDER_NAME) \
+all: $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(RDF_BUILDER_NAME) \
 	 $(ART_AGGREGATOR_NAME) $(SAMPLE_AGGREGATOR_NAME)
 
 $(IO_LIB_NAME): $(IO_OBJ)
@@ -45,6 +50,10 @@ $(SAMPLE_LIB_NAME): $(SAMPLE_OBJ) $(IO_LIB_NAME)
 $(ANA_LIB_NAME): $(ANA_OBJ)
 	mkdir -p $(dir $(ANA_LIB_NAME))
 	$(CXX) -shared $(CXXFLAGS) $(ANA_OBJ) $(LDFLAGS) -o $(ANA_LIB_NAME)
+
+$(PLOT_LIB_NAME): $(PLOT_OBJ)
+	mkdir -p $(dir $(PLOT_LIB_NAME))
+	$(CXX) -shared $(CXXFLAGS) $(PLOT_OBJ) $(LDFLAGS) -o $(PLOT_LIB_NAME)
 
 $(RDF_BUILDER_NAME): $(RDF_BUILDER_SRC) $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME)
 	mkdir -p $(dir $(RDF_BUILDER_NAME))

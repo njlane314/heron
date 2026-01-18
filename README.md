@@ -1,16 +1,18 @@
 # Nuxsec
 
 ROOT-based utilities for a neutrino cross-section analysis pipeline built around explicit analysis entities
-(Fragment → Sample → Dataset → Channel/Category → Selection → Product).
+(Fragment → Sample → Dataset/RDF → Channel/Category → Selection → Template/Plot).
 
 ## Core concepts (pipeline map)
 
 - **LArSoft job outputs** (partitions / shards)
+- **Art provenance aggregation** (stage-level manifests)
 - **Logical samples** (collection of shards + merged view)
 - **Exposure / POT accounting** (per shard, per logical sample, target POT scaling)
 - **RDataFrame construction** (source trees, friend trees, derived columns, weights)
 - **Channels / categories** (analysis topology, truth categories, control regions)
-- **Selections and products** (cutflow, histograms, response matrices, xsec outputs)
+- **Selections and template specs** (cutflow, histograms, response matrices, xsec outputs)
+- **Template production and plotting** (binned templates, stacked plots)
 
 ## Repository structure
 
@@ -20,6 +22,7 @@ This is a COLLIE-like module layout. Each module is built as its own shared libr
 nuxsec/
   io/      # LArSoft output discovery, file manifests, provenance extraction
   ana/     # analysis-level definitions and ROOT::RDataFrame sources + derived columns
+  plot/    # plotting utilities for stacked histograms and diagnostic outputs
   apps/    # small CLIs (aggregators, RDF builders)
   scripts/ # environment helpers
 ```
@@ -61,15 +64,21 @@ This produces:
 - `build/lib/libNuxsecIO.so`
 - `build/lib/libNuxsecSample.so`
 - `build/lib/libNuxsecAna.so`
+- `build/lib/libNuxsecPlot.so`
 - `build/bin/nuxsecArtIOaggregator`
 - `build/bin/nuxsecSampleIOaggregator`
 - `build/bin/nuxsecSampleRDFbuilder`
+- `build/bin/nuxsecTemplateMaker`
 
 ## Analysis processing
 
 The `libNuXsecAna` library provides `nuxsec::AnalysisRdfDefinitions` and RDF construction helpers
 for defining analysis-level columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`
 instances used by `nuxsecSampleRDFbuilder`.
+
+The `libNuXsecPlot` library and `nuxsecTemplateMaker` application build binned template histograms from
+aggregated samples and template specifications, serving as the inputs to plotting and downstream cross-section
+fits.
 
 ## Runtime environment
 
@@ -100,4 +109,17 @@ build/bin/nuxsecArtIOaggregator my_stage:data.list
 build/bin/nuxsecSampleIOaggregator my_sample:data.list
 # writes ./SampleRootIO_my_sample.root
 # updates ./SampleRootIO_samples.tsv
+```
+
+## Build analysis RDFs
+
+```bash
+build/bin/nuxsecSampleRDFbuilder my_sample:MyTree
+# writes ./SampleRDF_my_sample.root
+```
+
+## Produce templates
+
+```bash
+build/bin/nuxsecTemplateMaker SampleRootIO_samples.tsv MyTree templates.tsv OutputTemplates.root
 ```

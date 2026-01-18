@@ -1,11 +1,17 @@
-CXX ?= g++
+CXX ?= $(shell $(ROOT_CONFIG) --cxx)
 ROOT_CONFIG ?= root-config
 
 ifeq ($(shell command -v $(ROOT_CONFIG) 2>/dev/null),)
 $(error ROOT not found. Please set up ROOT so that 'root-config' is on your PATH.)
 endif
 
-CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell $(ROOT_CONFIG) --cflags)
+NLOHMANN_JSON_INC ?=
+NLOHMANN_JSON_CFLAGS ?=
+ifneq ($(strip $(NLOHMANN_JSON_INC)),)
+NLOHMANN_JSON_CFLAGS := -isystem $(NLOHMANN_JSON_INC)
+endif
+
+CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell $(ROOT_CONFIG) --cflags) $(NLOHMANN_JSON_CFLAGS)
 LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -lsqlite3
 
 IO_LIB_NAME = build/lib/libNuXsecIO.so

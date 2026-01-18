@@ -1,103 +1,21 @@
 /* -- C++ -- */
 /**
- *  @file  io/src/ArtProvenanceIO.cc
+ *  @file  io/src/ArtFileProvenanceRootIO.cc
  *
- *  @brief Implementation for ArtIO stage provenance IO.
+ *  @brief Implementation for art file provenance ROOT IO.
  */
 
-#include "ArtProvenanceIO.hh"
-
-#include <algorithm>
-#include <cctype>
+#include "ArtFileProvenanceRootIO.hh"
 
 namespace nuxsec
 {
 
-const char *sample_kind_name(SampleKind k)
+namespace
 {
-    switch (k)
-    {
-    case SampleKind::kData:
-        return "data";
-    case SampleKind::kEXT:
-        return "ext";
-    case SampleKind::kOverlay:
-        return "mc_overlay";
-    case SampleKind::kDirt:
-        return "mc_dirt";
-    case SampleKind::kStrangeness:
-        return "mc_strangeness";
-    default:
-        return "unknown";
-    }
+constexpr const char *kArtProvenanceDir = "nuxsec_art_provenance";
 }
 
-SampleKind parse_sample_kind(const std::string &name)
-{
-    std::string lowered = name;
-    std::transform(lowered.begin(), lowered.end(), lowered.begin(),
-                   [](unsigned char c)
-                   {
-                       return static_cast<char>(std::tolower(c));
-                   });
-
-    if (lowered == "data")
-    {
-        return SampleKind::kData;
-    }
-    if (lowered == "ext")
-    {
-        return SampleKind::kEXT;
-    }
-    if (lowered == "mc_overlay")
-    {
-        return SampleKind::kOverlay;
-    }
-    if (lowered == "mc_dirt")
-    {
-        return SampleKind::kDirt;
-    }
-    if (lowered == "mc_strangeness")
-    {
-        return SampleKind::kStrangeness;
-    }
-    return SampleKind::kUnknown;
-}
-
-const char *beam_mode_name(BeamMode b)
-{
-    switch (b)
-    {
-    case BeamMode::kNuMI:
-        return "numi";
-    case BeamMode::kBNB:
-        return "bnb";
-    default:
-        return "unknown";
-    }
-}
-
-BeamMode parse_beam_mode(const std::string &name)
-{
-    std::string lowered = name;
-    std::transform(lowered.begin(), lowered.end(), lowered.begin(),
-                   [](unsigned char c)
-                   {
-                       return static_cast<char>(std::tolower(c));
-                   });
-
-    if (lowered == "numi")
-    {
-        return BeamMode::kNuMI;
-    }
-    if (lowered == "bnb")
-    {
-        return BeamMode::kBNB;
-    }
-    return BeamMode::kUnknown;
-}
-
-void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
+void ArtFileProvenanceRootIO::write(const ArtFileProvenance &r, const std::string &out_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(out_file.c_str(), "UPDATE"));
     if (!f || f->IsZombie())
@@ -105,10 +23,10 @@ void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
         throw std::runtime_error("Failed to open merged output file for UPDATE: " + out_file);
     }
 
-    TDirectory *d = f->GetDirectory("ArtIO");
+    TDirectory *d = f->GetDirectory(kArtProvenanceDir);
     if (!d)
     {
-        d = f->mkdir("ArtIO");
+        d = f->mkdir(kArtProvenanceDir);
     }
     d->cd();
 
@@ -166,7 +84,7 @@ void ArtProvenanceIO::write(const ArtProvenance &r, const std::string &out_file)
     f->Close();
 }
 
-ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
+ArtFileProvenance ArtFileProvenanceRootIO::read(const std::string &in_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -174,10 +92,10 @@ ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
         throw std::runtime_error("Failed to open merged output file for READ: " + in_file);
     }
 
-    TDirectory *d = f->GetDirectory("ArtIO");
+    TDirectory *d = f->GetDirectory(kArtProvenanceDir);
     if (!d)
     {
-        throw std::runtime_error("Missing ArtIO directory in file: " + in_file);
+        throw std::runtime_error("Missing art provenance directory in file: " + in_file);
     }
     d->cd();
 
@@ -187,7 +105,7 @@ ArtProvenance ArtProvenanceIO::read(const std::string &in_file)
     return read_directory(d, kind, beam);
 }
 
-ArtProvenance ArtProvenanceIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
+ArtFileProvenance ArtFileProvenanceRootIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -195,19 +113,19 @@ ArtProvenance ArtProvenanceIO::read(const std::string &in_file, SampleKind kind,
         throw std::runtime_error("Failed to open merged output file for READ: " + in_file);
     }
 
-    TDirectory *d = f->GetDirectory("ArtIO");
+    TDirectory *d = f->GetDirectory(kArtProvenanceDir);
     if (!d)
     {
-        throw std::runtime_error("Missing ArtIO directory in file: " + in_file);
+        throw std::runtime_error("Missing art provenance directory in file: " + in_file);
     }
     d->cd();
 
     return read_directory(d, kind, beam);
 }
 
-ArtProvenance ArtProvenanceIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
+ArtFileProvenance ArtFileProvenanceRootIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
 {
-    ArtProvenance r;
+    ArtFileProvenance r;
     r.cfg.stage_name = read_named_string(d, "stage_name");
     r.kind = kind;
     r.beam = beam;
@@ -234,7 +152,7 @@ ArtProvenance ArtProvenanceIO::read_directory(TDirectory *d, SampleKind kind, Be
     return r;
 }
 
-std::string ArtProvenanceIO::read_named_string(TDirectory *d, const char *key)
+std::string ArtFileProvenanceRootIO::read_named_string(TDirectory *d, const char *key)
 {
     TObject *obj = d->Get(key);
     auto *named = dynamic_cast<TNamed *>(obj);
@@ -245,7 +163,7 @@ std::string ArtProvenanceIO::read_named_string(TDirectory *d, const char *key)
     return std::string(named->GetTitle());
 }
 
-std::vector<std::string> ArtProvenanceIO::read_input_files(TDirectory *d)
+std::vector<std::string> ArtFileProvenanceRootIO::read_input_files(TDirectory *d)
 {
     std::vector<std::string> files;
     TObject *obj = d->Get("input_files");
@@ -268,7 +186,7 @@ std::vector<std::string> ArtProvenanceIO::read_input_files(TDirectory *d)
     return files;
 }
 
-std::vector<RunSubrun> ArtProvenanceIO::read_run_subrun_pairs(TDirectory *d)
+std::vector<RunSubrun> ArtFileProvenanceRootIO::read_run_subrun_pairs(TDirectory *d)
 {
     TObject *obj = d->Get("run_subrun");
     auto *tree = dynamic_cast<TTree *>(obj);

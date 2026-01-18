@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/AnalysisProcessor.cc
+ *  @file  ana/src/AnalysisRdfDefinitions.cc
  *
  *  @brief Variable definitions for analysis RDataFrame processing.
  */
 
-#include "AnalysisProcessor.hh"
+#include "AnalysisRdfDefinitions.hh"
 
 #include <algorithm>
 #include <cmath>
@@ -55,24 +55,24 @@ inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z)
 
 }
 
-constexpr double AnalysisProcessor::kRecognisedPurityMin = 0.5;
-constexpr double AnalysisProcessor::kRecognisedCompletenessMin = 0.1;
+constexpr double AnalysisRdfDefinitions::kRecognisedPurityMin = 0.5;
+constexpr double AnalysisRdfDefinitions::kRecognisedCompletenessMin = 0.1;
 
-constexpr float AnalysisProcessor::kTrainingFraction = 0.10f;
-constexpr bool AnalysisProcessor::kTrainingIncludeExt = true;
+constexpr float AnalysisRdfDefinitions::kTrainingFraction = 0.10f;
+constexpr bool AnalysisRdfDefinitions::kTrainingIncludeExt = true;
 
-bool AnalysisProcessor::IsInTruthVolume(float x, float y, float z) noexcept
+bool AnalysisRdfDefinitions::IsInTruthVolume(float x, float y, float z) noexcept
 {
     return is_in_truth_volume(x, y, z);
 }
 
-bool AnalysisProcessor::IsInRecoVolume(float x, float y, float z) noexcept
+bool AnalysisRdfDefinitions::IsInRecoVolume(float x, float y, float z) noexcept
 {
     return is_in_reco_volume(x, y, z);
 }
 
 //____________________________________________________________________________
-ROOT::RDF::RNode AnalysisProcessor::Run(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
+ROOT::RDF::RNode AnalysisRdfDefinitions::Define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
 {
     const bool is_data = (rec.source == SourceKind::kData);
     const bool is_ext = (rec.source == SourceKind::kExt);
@@ -200,97 +200,156 @@ ROOT::RDF::RNode AnalysisProcessor::Run(ROOT::RDF::RNode node, const ProcessorEn
                     return -1;
                 }
             },
-            {"int_mode"});
+            {"simb_mode"});
+
+        node = node.Define(
+            "is_cc",
+            [](int interaction) {
+                return interaction == 0;
+            },
+            {"simb_interaction"});
+
+        node = node.Define(
+            "is_nc",
+            [](int interaction) {
+                return interaction != 0;
+            },
+            {"simb_interaction"});
+
+        node = node.Define(
+            "is_ccnu",
+            [](int interaction, int parent) {
+                return interaction == 0 && parent == 0;
+            },
+            {"simb_interaction", "simb_mother"});
+
+        node = node.Define(
+            "is_ccnubar",
+            [](int interaction, int parent) {
+                return interaction == 0 && parent != 0;
+            },
+            {"simb_interaction", "simb_mother"});
 
         node = node.Define(
             "analysis_channels",
-            [](bool fv, int nu, int ccnc, int s, int np, int npim, int npip, int npi0, int ngamma) {
-                const int npi = npim + npip;
-                if (!fv)
+            [](int interaction,
+               int mode,
+               int parent,
+               float x,
+               float y,
+               float z,
+               int n_pi0,
+               int n_piplus,
+               int n_piminus,
+               int n_photon,
+               int n_proton,
+               int n_muon,
+               int n_electron,
+               int n_neutron,
+               int n_kaon,
+               int n_other,
+               float purity,
+               float completeness,
+               float vtx_x,
+               float vtx_y,
+               float vtx_z,
+               int vtx_type,
+               float slice_score,
+               float cluster_fraction) {
+                if (interaction != 0)
                 {
-                    if (nu == 0)
-                        return static_cast<int>(Channel::OutFV);
-                    return static_cast<int>(Channel::External);
+                    return Channel::NC;
                 }
-                if (ccnc == 1)
-                    return static_cast<int>(Channel::NC);
-                if (ccnc == 0 && s > 0)
-                {
-                    if (s == 1)
-                        return static_cast<int>(Channel::CCS1);
-                    return static_cast<int>(Channel::CCSgt1);
-                }
-                if (std::abs(nu) == 12 && ccnc == 0)
-                    return static_cast<int>(Channel::ECCC);
-                if (std::abs(nu) == 14 && ccnc == 0)
-                {
-                    if (npi == 0 && np > 0)
-                        return static_cast<int>(Channel::MuCC0pi_ge1p);
-                    if (npi == 1 && npi0 == 0)
-                        return static_cast<int>(Channel::MuCC1pi);
-                    if (npi0 > 0 || ngamma >= 2)
-                        return static_cast<int>(Channel::MuCCPi0OrGamma);
-                    if (npi > 1)
-                        return static_cast<int>(Channel::MuCCNpi);
-                    return static_cast<int>(Channel::MuCCOther);
-                }
-                return static_cast<int>(Channel::Unknown);
-            },
-            {"in_fiducial", "nu_pdg", "int_ccnc", "count_strange",
-             "n_p", "n_pi_minus", "n_pi_plus", "n_pi0", "n_gamma"});
 
-        node = node.Define(
-            "is_signal",
-            [](bool is_nu_mu_cc, const ROOT::RVec<int> &lambda_decay_in_fid) {
-                if (!is_nu_mu_cc)
-                    return false;
-                for (auto v : lambda_decay_in_fid)
-                    if (v)
-                        return true;
-                return false;
-            },
-            {"is_nu_mu_cc", "lambda_decay_in_fid"});
+                if (!is_in_truth_volume(x, y, z))
+                {
+                    return Channel::OutFV;
+                }
 
-        node = node.Define(
-            "recognised_signal",
-            [](bool is_sig, float purity, float completeness) {
-                return is_sig && purity > static_cast<float>(kRecognisedPurityMin) &&
-                       completeness > static_cast<float>(kRecognisedCompletenessMin);
+                if (purity < kRecognisedPurityMin || completeness < kRecognisedCompletenessMin)
+                {
+                    return Channel::External;
+                }
+
+                const int n_pi = n_piplus + n_piminus + n_pi0;
+                if (n_muon > 0)
+                {
+                    if (n_pi == 0)
+                    {
+                        return Channel::MuCC0pi_ge1p;
+                    }
+                    if (n_pi == 1)
+                    {
+                        return Channel::MuCC1pi;
+                    }
+                    if (n_pi > 1)
+                    {
+                        return Channel::MuCCNpi;
+                    }
+                    if (n_pi0 > 0 || n_photon > 0)
+                    {
+                        return Channel::MuCCPi0OrGamma;
+                    }
+                    return Channel::MuCCOther;
+                }
+
+                if (n_electron > 0)
+                {
+                    return Channel::ECCC;
+                }
+
+                if (n_pi == 0)
+                {
+                    return Channel::CCS1;
+                }
+                if (n_pi > 1)
+                {
+                    return Channel::CCSgt1;
+                }
+
+                return Channel::DataInclusive;
             },
-            {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
+            {"simb_interaction",
+             "simb_mode",
+             "simb_mother",
+             "nu_vtx_x",
+             "nu_vtx_y",
+             "nu_vtx_z",
+             "n_pi0",
+             "n_piplus",
+             "n_piminus",
+             "n_photon",
+             "n_proton",
+             "n_muon",
+             "n_electron",
+             "n_neutron",
+             "n_kaon",
+             "n_other",
+             "slice_purity",
+             "slice_completeness",
+             "reco_vtx_x",
+             "reco_vtx_y",
+             "reco_vtx_z",
+             "reco_vtx_type",
+             "topological_score",
+             "slice_cluster_fraction"});
     }
     else
     {
-        const int nonmc_channel =
-            is_ext ? static_cast<int>(Channel::External)
-                   : (is_data ? static_cast<int>(Channel::DataInclusive)
-                              : static_cast<int>(Channel::Unknown));
-
-        node = node.Define("in_fiducial", [] { return false; });
-        node = node.Define("is_strange", [] { return false; });
-        node = node.Define("scattering_mode", [] { return -1; });
-        node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
-        node = node.Define("is_signal", [] { return false; });
-        node = node.Define("recognised_signal", [] { return false; });
+        node = node.Define(
+            "analysis_channels",
+            []() {
+                return Channel::DataInclusive;
+            });
     }
-
-    node = node.Define(
-        "in_reco_fiducial",
-        [](float x, float y, float z) {
-            return IsInRecoVolume(x, y, z);
-        },
-        {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
     return node;
 }
-//____________________________________________________________________________
 
-//____________________________________________________________________________
-const AnalysisProcessor &AnalysisProcessor::Processor()
+const AnalysisRdfDefinitions &AnalysisRdfDefinitions::Instance()
 {
-    static const AnalysisProcessor ep{};
+    static const AnalysisRdfDefinitions ep{};
     return ep;
 }
-//____________________________________________________________________________
 
-} // namespace nuxsec
+}

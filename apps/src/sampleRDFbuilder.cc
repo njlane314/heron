@@ -2,7 +2,7 @@
 /**
  *  @file  apps/src/sampleRDFbuilder.cc
  *
- *  @brief Build ROOT RDataFrame snapshots from SampleIO sample lists.
+ *  @brief Build ROOT RDataFrame snapshots from sample lists.
  */
 
 #include <algorithm>
@@ -17,9 +17,9 @@
 #include <vector>
 
 #include "AppUtils.hh"
-#include "AnalysisProcessor.hh"
-#include "RDFBuilder.hh"
-#include "SampleIO.hh"
+#include "AnalysisRdfDefinitions.hh"
+#include "RDataFrameFactory.hh"
+#include "SampleRootIO.hh"
 
 namespace
 {
@@ -116,8 +116,8 @@ int main(int argc, char **argv)
 
         for (const auto &entry : entries)
         {
-            const nuxsec::Sample sample = nuxsec::SampleIO::read(entry.output_path);
-            ROOT::RDataFrame rdf = nuxsec::RDFBuilder::load_sample(sample, args.tree_name);
+            const nuxsec::Sample sample = nuxsec::SampleRootIO::read(entry.output_path);
+            ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::LoadSample(sample, args.tree_name);
             nuxsec::ProcessorEntry proc_entry;
             switch (sample.kind)
             {
@@ -141,8 +141,8 @@ int main(int argc, char **argv)
                 break;
             }
 
-            const auto &processor = nuxsec::AnalysisProcessor::Processor();
-            ROOT::RDF::RNode updated = processor.Run(rdf, proc_entry);
+            const auto &processor = nuxsec::AnalysisRdfDefinitions::Instance();
+            ROOT::RDF::RNode updated = processor.Define(rdf, proc_entry);
             const std::string output_path = make_output_path(args.output_dir, sample.sample_name);
             auto written = updated.Snapshot(args.tree_name, output_path);
 

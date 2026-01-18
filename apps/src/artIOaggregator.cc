@@ -2,7 +2,7 @@
 /**
  *  @file  apps/src/artIOaggregator.cc
  *
- *  @brief Main entrypoint for ArtIO provenance generation.
+ *  @brief Main entrypoint for art provenance generation.
  */
 
 #include <exception>
@@ -11,9 +11,9 @@
 #include <string>
 
 #include "AppUtils.hh"
-#include "ArtProvenanceIO.hh"
-#include "RunInfoDB.hh"
-#include "SubRunScanner.hh"
+#include "ArtFileProvenanceRootIO.hh"
+#include "RunInfoSqliteReader.hh"
+#include "SubrunTreeScanner.hh"
 
 namespace
 {
@@ -54,7 +54,7 @@ Args parse_args(int argc, char **argv)
         throw std::runtime_error("Bad stage spec: " + spec);
     }
 
-    args.artio_path = "./ArtIO_" + args.stage_cfg.stage_name + ".root";
+    args.artio_path = "./ArtFileProvenance_" + args.stage_cfg.stage_name + ".root";
 
     return args;
 }
@@ -72,11 +72,11 @@ int main(int argc, char **argv)
 
         const Args args = parse_args(argc, argv);
 
-        RunInfoDB db(db_path);
+        RunInfoSqliteReader db(db_path);
 
         const auto files = nuxsec::app::read_file_list(args.stage_cfg.filelist_path);
 
-        ArtProvenance rec;
+        ArtFileProvenance rec;
         rec.cfg = args.stage_cfg;
         rec.input_files = files;
 
@@ -85,8 +85,8 @@ int main(int argc, char **argv)
             rec.kind = SampleKind::kData;
         }
 
-        rec.subrun = scan_subrun_tree(files);
-        rec.runinfo = db.sum_runinfo(rec.subrun.unique_pairs);
+        rec.subrun = summarizeSubrunTree(files);
+        rec.runinfo = db.SumRunInfo(rec.subrun.unique_pairs);
 
         rec.subrun.pot_sum *= pot_scale;
         rec.runinfo.tortgt_sum *= pot_scale;
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
                   << " tortgt=" << rec.runinfo.tortgt_sum
                   << "\n";
 
-        ArtProvenanceIO::write(rec, args.artio_path);
+        ArtFileProvenanceRootIO::write(rec, args.artio_path);
 
         return 0;
     }

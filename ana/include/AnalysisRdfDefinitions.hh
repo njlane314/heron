@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/AnalysisProcessor.hh
+ *  @file  ana/include/AnalysisRdfDefinitions.hh
  *
  *  @brief Variable definitions for analysis RDataFrame processing
  */
 
-#ifndef Nuxsec_ANA_ANALYSIS_PROCESSOR_H_INCLUDED
-#define Nuxsec_ANA_ANALYSIS_PROCESSOR_H_INCLUDED
+#ifndef Nuxsec_ANA_ANALYSIS_RDF_DEFINITIONS_H_INCLUDED
+#define Nuxsec_ANA_ANALYSIS_RDF_DEFINITIONS_H_INCLUDED
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
@@ -49,11 +49,11 @@ struct ProcessorEntry
 };
 
 /** \brief Apply analysis variable definitions to an RDataFrame. */
-class AnalysisProcessor
+class AnalysisRdfDefinitions
 {
   public:
-    ROOT::RDF::RNode Run(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
-    static const AnalysisProcessor &Processor();
+    ROOT::RDF::RNode Define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
+    static const AnalysisRdfDefinitions &Instance();
 
   private:
     static constexpr double kRecognisedPurityMin;
@@ -68,4 +68,4 @@ class AnalysisProcessor
 
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_ANALYSIS_PROCESSOR_H_INCLUDED
+#endif // Nuxsec_ANA_ANALYSIS_RDF_DEFINITIONS_H_INCLUDED

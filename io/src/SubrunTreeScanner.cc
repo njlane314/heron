@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  io/src/SubRunScanner.cc
+ *  @file  io/src/SubrunTreeScanner.cc
  *
- *  @brief Implementation for SubRun tree scanning.
+ *  @brief Implementation for Subrun tree scanning.
  */
 
-#include "SubRunScanner.hh"
+#include "SubrunTreeScanner.hh"
 
 #include <TChain.h>
 #include <TFile.h>
@@ -20,9 +20,9 @@
 namespace nuxsec
 {
 
-SubRunInfo scan_subrun_tree(const std::vector<std::string> &files)
+SubrunTreeSummary summarizeSubrunTree(const std::vector<std::string> &files)
 {
-    SubRunInfo out;
+    SubrunTreeSummary out;
 
     const std::vector<std::string> candidates = {"nuselection/SubRun", "SubRun"};
     std::string tree_path;

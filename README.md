@@ -19,7 +19,9 @@ This is a COLLIE-like module layout. Each module is built as its own shared libr
 ```
 nuxsec/
   io/      # LArSoft output discovery, file manifests, provenance extraction
-  ana/     # analysis-level definitions and ROOT::RDataFrame sources + derived columns
+  sample/  # sample aggregation and ROOT IO helpers
+  rdf/     # ROOT::RDataFrame construction helpers
+  ana/     # analysis-level definitions and derived columns
   apps/    # small CLIs (aggregators, RDF builders)
   scripts/ # environment helpers
 ```
@@ -39,7 +41,8 @@ make
 This produces:
 
 - `build/lib/libNuxsecIO.so`
-- `build/lib/libNuxsecRDF.so`
+- `build/lib/libNuxsecSample.so`
+- `build/lib/libNuxsecRdf.so`
 - `build/lib/libNuxsecAna.so`
 - `build/bin/artIOaggregator`
 - `build/bin/sampleIOaggregator`
@@ -47,7 +50,7 @@ This produces:
 
 ## Analysis processing
 
-The `libNuxsecAna` library provides `nuxsec::AnalysisProcessor` for defining analysis-level
+The `libNuxsecAna` library provides `nuxsec::AnalysisRdfDefinitions` for defining analysis-level
 columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`
 instances used by `sampleRDFbuilder`.
 
@@ -73,11 +76,11 @@ LIST
 
 ```bash
 build/bin/artIOaggregator my_stage:data.list
-# writes ./ArtIO_my_stage.root
+# writes ./ArtFileProvenance_my_stage.root
 ```
 
 ```bash
 build/bin/sampleIOaggregator my_sample:data.list
-# writes ./SampleIO_my_sample.root
-# updates ./SampleIO_samples.tsv
+# writes ./Sample_my_sample.root
+# updates ./Sample_samples.tsv
 ```

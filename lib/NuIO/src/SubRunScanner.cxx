@@ -19,7 +19,7 @@
 namespace nuio
 {
 
-SubRunInfo ScanSubRunTree(const std::vector<std::string> &files)
+SubRunInfo scan_subrun_tree(const std::vector<std::string> &files)
 {
     SubRunInfo out;
 
@@ -30,7 +30,9 @@ SubRunInfo ScanSubRunTree(const std::vector<std::string> &files)
     {
         std::unique_ptr<TFile> file(TFile::Open(f.c_str(), "READ"));
         if (!file || file->IsZombie())
+        {
             throw std::runtime_error("Failed to open input ROOT file: " + f);
+        }
 
         for (const auto &name : candidates)
         {
@@ -41,15 +43,21 @@ SubRunInfo ScanSubRunTree(const std::vector<std::string> &files)
             }
         }
         if (!tree_path.empty())
+        {
             break;
+        }
     }
 
     if (tree_path.empty())
+    {
         throw std::runtime_error("No input files contained a SubRun tree.");
+    }
 
     TChain chain(tree_path.c_str());
     for (const auto &f : files)
+    {
         chain.Add(f.c_str());
+    }
 
     if (!chain.GetBranch("run") || !chain.GetBranch("subRun") || !chain.GetBranch("pot"))
     {
@@ -81,7 +89,9 @@ SubRunInfo ScanSubRunTree(const std::vector<std::string> &files)
               [](const RunSubrun &a, const RunSubrun &b)
               {
                   if (a.run != b.run)
+                  {
                       return a.run < b.run;
+                  }
                   return a.subrun < b.subrun;
               });
 

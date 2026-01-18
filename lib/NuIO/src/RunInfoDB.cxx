@@ -21,7 +21,9 @@ RunInfoDB::RunInfoDB(std::string path)
     {
         std::string msg = (db ? sqlite3_errmsg(db) : "sqlite3_open_v2 failed");
         if (db)
+        {
             sqlite3_close(db);
+        }
         throw std::runtime_error("Failed to open SQLite DB: " + db_path_ + " : " + msg);
     }
     db_ = db;
@@ -30,10 +32,12 @@ RunInfoDB::RunInfoDB(std::string path)
 RunInfoDB::~RunInfoDB()
 {
     if (db_)
+    {
         sqlite3_close(db_);
+    }
 }
 
-void RunInfoDB::Exec(const std::string &sql) const
+void RunInfoDB::exec(const std::string &sql) const
 {
     char *err = nullptr;
     const int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &err);
@@ -45,24 +49,28 @@ void RunInfoDB::Exec(const std::string &sql) const
     }
 }
 
-void RunInfoDB::Prepare(const std::string &sql, sqlite3_stmt **stmt) const
+void RunInfoDB::prepare(const std::string &sql, sqlite3_stmt **stmt) const
 {
     const int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, stmt, nullptr);
     if (rc != SQLITE_OK || !stmt || !(*stmt))
+    {
         throw std::runtime_error("SQLite prepare failed: " + std::string(sqlite3_errmsg(db_)));
+    }
 }
 
-RunInfoSums RunInfoDB::SumRuninfo(const std::vector<RunSubrun> &pairs) const
+RunInfoSums RunInfoDB::sum_runinfo(const std::vector<RunSubrun> &pairs) const
 {
     if (pairs.empty())
+    {
         throw std::runtime_error("DB selection is empty (no run/subrun pairs).");
+    }
 
-    Exec("CREATE TEMP TABLE IF NOT EXISTS sel(run INTEGER, subrun INTEGER);");
-    Exec("DELETE FROM sel;");
-    Exec("BEGIN;");
+    exec("CREATE TEMP TABLE IF NOT EXISTS sel(run INTEGER, subrun INTEGER);");
+    exec("DELETE FROM sel;");
+    exec("BEGIN;");
 
     sqlite3_stmt *ins = nullptr;
-    Prepare("INSERT INTO sel(run, subrun) VALUES(?, ?);", &ins);
+    prepare("INSERT INTO sel(run, subrun) VALUES(?, ?);", &ins);
 
     for (const auto &p : pairs)
     {
@@ -76,16 +84,16 @@ RunInfoSums RunInfoDB::SumRuninfo(const std::vector<RunSubrun> &pairs) const
         {
             const std::string msg = sqlite3_errmsg(db_);
             sqlite3_finalize(ins);
-            Exec("ROLLBACK;");
+            exec("ROLLBACK;");
             throw std::runtime_error("SQLite insert failed: " + msg);
         }
     }
 
     sqlite3_finalize(ins);
-    Exec("COMMIT;");
+    exec("COMMIT;");
 
     sqlite3_stmt *q = nullptr;
-    Prepare(
+    prepare(
         "SELECT "
         "  IFNULL(SUM(r.tortgt), 0.0) AS tortgt_sum, "
         "  IFNULL(SUM(r.tor101), 0.0) AS tor101_sum, "

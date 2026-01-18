@@ -26,7 +26,7 @@
 namespace nuio
 {
 
-inline std::string ToLower(std::string s)
+inline std::string to_lower(std::string s)
 {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c)
@@ -44,7 +44,7 @@ enum class SampleKind
     kMCStrangeness
 };
 
-const char* SampleKindName(SampleKind k);
+const char *sample_kind_name(SampleKind k);
 
 enum class BeamMode
 {
@@ -53,7 +53,7 @@ enum class BeamMode
     kBNB
 };
 
-const char* BeamModeName(BeamMode b);
+const char *beam_mode_name(BeamMode b);
 
 struct RunSubrun
 {
@@ -107,23 +107,23 @@ struct ArtProvenance
     double db_tor101_pot = 0.0;
 };
 
-SampleKind SampleKindFromName(const std::string& name);
-BeamMode BeamModeFromName(const std::string& name);
+SampleKind sample_kind_from_name(const std::string &name);
+BeamMode beam_mode_from_name(const std::string &name);
 
 class ArtProvenanceIO
 {
   public:
-    static void Write(const ArtProvenance& r, const std::string& outFile);
-    static ArtProvenance Read(const std::string& inFile);
+    static void write(const ArtProvenance &r, const std::string &out_file);
+    static ArtProvenance read(const std::string &in_file);
 
   private:
-    static std::string ReadNamedString(TDirectory* d, const char* key);
+    static std::string read_named_string(TDirectory *d, const char *key);
 
     template <typename T>
-    static T ReadParam(TDirectory* d, const char* key)
+    static T read_param(TDirectory *d, const char *key)
     {
-        TObject* obj = d->Get(key);
-        auto* param = dynamic_cast<TParameter<T>*>(obj);
+        TObject *obj = d->Get(key);
+        auto *param = dynamic_cast<TParameter<T> *>(obj);
         if (!param)
         {
             throw std::runtime_error("Missing TParameter for key: " + std::string(key));
@@ -131,8 +131,8 @@ class ArtProvenanceIO
         return param->GetVal();
     }
 
-    static std::vector<std::string> ReadInputFiles(TDirectory* d);
-    static std::vector<RunSubrun> ReadRunSubrunPairs(TDirectory* d);
+    static std::vector<std::string> read_input_files(TDirectory *d);
+    static std::vector<RunSubrun> read_run_subrun_pairs(TDirectory *d);
 };
 
 } // namespace nuio

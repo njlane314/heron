@@ -26,11 +26,11 @@ class RunInfoDB
     RunInfoDB(const RunInfoDB &) = delete;
     RunInfoDB &operator=(const RunInfoDB &) = delete;
 
-    RunInfoSums SumRuninfo(const std::vector<RunSubrun> &pairs) const;
+    RunInfoSums sum_runinfo(const std::vector<RunSubrun> &pairs) const;
 
   private:
-    void Exec(const std::string &sql) const;
-    void Prepare(const std::string &sql, sqlite3_stmt **stmt) const;
+    void exec(const std::string &sql) const;
+    void prepare(const std::string &sql, sqlite3_stmt **stmt) const;
 
     std::string db_path_;
     sqlite3 *db_ = nullptr;

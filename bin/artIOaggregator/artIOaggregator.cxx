@@ -22,7 +22,7 @@
 namespace
 {
 
-std::string Trim(std::string s)
+std::string trim(std::string s)
 {
     auto notspace = [](unsigned char c)
     {
@@ -33,19 +33,19 @@ std::string Trim(std::string s)
     return s;
 }
 
-std::vector<std::string> ReadFileList(const std::string &filelistPath)
+std::vector<std::string> read_file_list(const std::string &filelist_path)
 {
-    std::ifstream fin(filelistPath);
+    std::ifstream fin(filelist_path);
     if (!fin)
     {
-        throw std::runtime_error("Failed to open filelist: " + filelistPath +
+        throw std::runtime_error("Failed to open filelist: " + filelist_path +
                                  " (errno=" + std::to_string(errno) + " " + std::strerror(errno) + ")");
     }
     std::vector<std::string> files;
     std::string line;
     while (std::getline(fin, line))
     {
-        line = Trim(line);
+        line = trim(line);
         if (line.empty() || line[0] == '#')
         {
             continue;
@@ -54,12 +54,12 @@ std::vector<std::string> ReadFileList(const std::string &filelistPath)
     }
     if (files.empty())
     {
-        throw std::runtime_error("Filelist is empty: " + filelistPath);
+        throw std::runtime_error("Filelist is empty: " + filelist_path);
     }
     return files;
 }
 
-bool IsNuSelectionDataFile(const std::string &path)
+bool is_nu_selection_data_file(const std::string &path)
 {
     const auto pos = path.find_last_of("/\\");
     const std::string name = (pos == std::string::npos) ? path : path.substr(pos + 1);
@@ -72,7 +72,7 @@ struct Args
     nuio::StageCfg stage_cfg;
 };
 
-Args ParseArgs(int argc, char **argv)
+Args parse_args(int argc, char **argv)
 {
     if (argc != 2)
     {
@@ -87,8 +87,8 @@ Args ParseArgs(int argc, char **argv)
     }
 
     Args args;
-    args.stage_cfg.stage_name = Trim(spec.substr(0, pos));
-    args.stage_cfg.filelist_path = Trim(spec.substr(pos + 1));
+    args.stage_cfg.stage_name = trim(spec.substr(0, pos));
+    args.stage_cfg.filelist_path = trim(spec.substr(pos + 1));
 
     if (args.stage_cfg.stage_name.empty() || args.stage_cfg.filelist_path.empty())
     {
@@ -109,23 +109,23 @@ int main(int argc, char **argv)
         const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
         const double pot_scale = 1e12;
 
-        const Args args = ParseArgs(argc, argv);
+        const Args args = parse_args(argc, argv);
 
         RunInfoDB db(db_path);
 
-        const auto files = ReadFileList(args.stage_cfg.filelist_path);
+        const auto files = read_file_list(args.stage_cfg.filelist_path);
 
         ArtProvenance rec;
         rec.cfg = args.stage_cfg;
         rec.input_files = files;
 
-        if (IsNuSelectionDataFile(files.front()))
+        if (is_nu_selection_data_file(files.front()))
         {
             rec.kind = SampleKind::kData;
         }
 
-        rec.subrun = ScanSubRunTree(files);
-        rec.runinfo = db.SumRuninfo(rec.subrun.unique_pairs);
+        rec.subrun = scan_subrun_tree(files);
+        rec.runinfo = db.sum_runinfo(rec.subrun.unique_pairs);
 
         rec.subrun.pot_sum *= pot_scale;
         rec.runinfo.tortgt_sum *= pot_scale;
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
                   << " tortgt=" << rec.runinfo.tortgt_sum
                   << "\n";
 
-        ArtProvenanceIO::Write(rec, args.artio_path);
+        ArtProvenanceIO::write(rec, args.artio_path);
 
         return 0;
     }

@@ -21,11 +21,11 @@ const char *sample_kind_name(SampleKind k)
         return "data";
     case SampleKind::kEXT:
         return "ext";
-    case SampleKind::kMCOverlay:
+    case SampleKind::kOverlay:
         return "mc_overlay";
-    case SampleKind::kMCDirt:
+    case SampleKind::kDirt:
         return "mc_dirt";
-    case SampleKind::kMCStrangeness:
+    case SampleKind::kStrangeness:
         return "mc_strangeness";
     default:
         return "unknown";
@@ -51,15 +51,15 @@ SampleKind parse_sample_kind(const std::string &name)
     }
     if (lowered == "mc_overlay")
     {
-        return SampleKind::kMCOverlay;
+        return SampleKind::kOverlay;
     }
     if (lowered == "mc_dirt")
     {
-        return SampleKind::kMCDirt;
+        return SampleKind::kDirt;
     }
     if (lowered == "mc_strangeness")
     {
-        return SampleKind::kMCStrangeness;
+        return SampleKind::kStrangeness;
     }
     return SampleKind::kUnknown;
 }

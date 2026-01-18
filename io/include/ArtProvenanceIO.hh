@@ -30,9 +30,9 @@ enum class SampleKind
     kUnknown = 0,
     kData,
     kEXT,
-    kMCOverlay,
-    kMCDirt,
-    kMCStrangeness
+    kOverlay,
+    kDirt,
+    kStrangeness
 };
 
 const char *sample_kind_name(SampleKind k);

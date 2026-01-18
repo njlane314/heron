@@ -1,11 +1,12 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/include/NuIO/ArtProvenanceIO.h
+ *  @file  io/include/ArtProvenanceIO.hh
  *
- *  @brief Data structures and IO helpers for ArtIO stage provenance
+ *  @brief Data structures and IO helpers for ArtIO stage provenance.
  */
 
-#ifndef NUIO_ART_PROVENANCE_IO_H
-#define NUIO_ART_PROVENANCE_IO_H
+#ifndef Nuxsec_IO_ART_PROVENANCE_IO_H_INCLUDED
+#define Nuxsec_IO_ART_PROVENANCE_IO_H_INCLUDED
 
 #include <TDirectory.h>
 #include <TFile.h>
@@ -21,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace nuio
+namespace nuxsec
 {
 
 enum class SampleKind
@@ -126,6 +127,6 @@ class ArtProvenanceIO
     static ArtProvenance read_directory(TDirectory *d, SampleKind kind, BeamMode beam);
 };
 
-} // namespace nuio
+} // namespace nuxsec
 
-#endif // NUIO_ART_PROVENANCE_IO_H
+#endif // Nuxsec_IO_ART_PROVENANCE_IO_H_INCLUDED

@@ -1,15 +1,16 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/src/RunInfoDB.cxx
+ *  @file  io/src/RunInfoDB.cc
  *
- *  @brief Implementation of SQLite-backed run info summaries
+ *  @brief Implementation of SQLite-backed run info summaries.
  */
 
-#include "NuIO/RunInfoDB.h"
+#include "RunInfoDB.hh"
 
 #include <stdexcept>
 #include <utility>
 
-namespace nuio
+namespace nuxsec
 {
 
 RunInfoDB::RunInfoDB(std::string path)
@@ -27,7 +28,7 @@ RunInfoDB::RunInfoDB(std::string path)
         throw std::runtime_error("Failed to open SQLite DB: " + db_path_ + " : " + msg);
     }
     db_ = db;
-}
+} // namespace nuxsec
 
 RunInfoDB::~RunInfoDB()
 {

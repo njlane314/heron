@@ -1,20 +1,21 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/include/NuIO/RunInfoDB.h
+ *  @file  io/include/RunInfoDB.hh
  *
- *  @brief SQLite wrapper for run/subrun summary queries
+ *  @brief SQLite wrapper for run/subrun summary queries.
  */
 
-#ifndef NUIO_RUNINFODB_H
-#define NUIO_RUNINFODB_H
+#ifndef Nuxsec_IO_RUNINFODB_H_INCLUDED
+#define Nuxsec_IO_RUNINFODB_H_INCLUDED
 
 #include <sqlite3.h>
 
 #include <string>
 #include <vector>
 
-#include "NuIO/ArtProvenanceIO.h"
+#include "ArtProvenanceIO.hh"
 
-namespace nuio
+namespace nuxsec
 {
 
 class RunInfoDB
@@ -36,6 +37,6 @@ class RunInfoDB
     sqlite3 *db_ = nullptr;
 };
 
-}
+} // namespace nuxsec
 
-#endif
+#endif // Nuxsec_IO_RUNINFODB_H_INCLUDED

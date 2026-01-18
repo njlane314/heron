@@ -2,36 +2,63 @@ CXX ?= g++
 CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell root-config --cflags)
 LDFLAGS ?= $(shell root-config --libs) -lsqlite3
 
-LIB_NAME = build/lib/libNuIO.so
-LIB_SRC = lib/NuIO/src/ArtProvenanceIO.cxx \
-          lib/NuIO/src/SampleIO.cxx
-LIB_OBJ = $(LIB_SRC:.cxx=.o)
+IO_LIB_NAME = build/lib/libNuxsecIO.so
+IO_SRC = io/src/ArtProvenanceIO.cc \
+         io/src/SampleIO.cc \
+         io/src/SubRunScanner.cc \
+         io/src/RunInfoDB.cc
+IO_OBJ = $(IO_SRC:.cc=.o)
 
-LIB_NUANA_NAME = build/lib/libNuAna.so
-LIB_NUANA_SRC = lib/NuAna/src/SampleRDF.cxx \
-                lib/NuAna/src/NuAnalysisProcessor.cc
-LIB_NUANA_OBJ = $(LIB_NUANA_SRC:.cxx=.o)
+RDF_LIB_NAME = build/lib/libNuxsecRDF.so
+RDF_SRC = rdf/src/RDFBuilder.cc
+RDF_OBJ = $(RDF_SRC:.cc=.o)
+
+ANA_LIB_NAME = build/lib/libNuxsecAna.so
+ANA_SRC = ana/src/AnalysisProcessor.cc
+ANA_OBJ = $(ANA_SRC:.cc=.o)
 
 RDF_BUILDER_NAME = build/bin/sampleRDFbuilder
-RDF_BUILDER_SRC = bin/sampleRDFbuilder/sampleRDFbuilder.cxx
+RDF_BUILDER_SRC = apps/src/sampleRDFbuilder.cc
 
-INCLUDES = -I./lib/NuIO/include -I./lib/NuAna/include
+ART_AGGREGATOR_NAME = build/bin/artIOaggregator
+ART_AGGREGATOR_SRC = apps/src/artIOaggregator.cc
 
-all: $(LIB_NAME) $(LIB_NUANA_NAME) $(RDF_BUILDER_NAME)
+SAMPLE_AGGREGATOR_NAME = build/bin/sampleIOaggregator
+SAMPLE_AGGREGATOR_SRC = apps/src/sampleIOaggregator.cc
 
-$(LIB_NAME): $(LIB_OBJ)
-	mkdir -p $(dir $(LIB_NAME))
-	$(CXX) -shared $(CXXFLAGS) $(LIB_OBJ) $(LDFLAGS) -o $(LIB_NAME)
+INCLUDES = -I./io/include -I./rdf/include -I./ana/include
 
-$(LIB_NUANA_NAME): $(LIB_NUANA_OBJ)
-	mkdir -p $(dir $(LIB_NUANA_NAME))
-	$(CXX) -shared $(CXXFLAGS) $(LIB_NUANA_OBJ) $(LDFLAGS) -o $(LIB_NUANA_NAME)
+all: $(IO_LIB_NAME) $(RDF_LIB_NAME) $(ANA_LIB_NAME) $(RDF_BUILDER_NAME) $(ART_AGGREGATOR_NAME) \
+	 $(SAMPLE_AGGREGATOR_NAME)
 
-$(RDF_BUILDER_NAME): $(RDF_BUILDER_SRC) $(LIB_NAME) $(LIB_NUANA_NAME)
+$(IO_LIB_NAME): $(IO_OBJ)
+	mkdir -p $(dir $(IO_LIB_NAME))
+	$(CXX) -shared $(CXXFLAGS) $(IO_OBJ) $(LDFLAGS) -o $(IO_LIB_NAME)
+
+$(RDF_LIB_NAME): $(RDF_OBJ)
+	mkdir -p $(dir $(RDF_LIB_NAME))
+	$(CXX) -shared $(CXXFLAGS) $(RDF_OBJ) $(LDFLAGS) -o $(RDF_LIB_NAME)
+
+$(ANA_LIB_NAME): $(ANA_OBJ)
+	mkdir -p $(dir $(ANA_LIB_NAME))
+	$(CXX) -shared $(CXXFLAGS) $(ANA_OBJ) $(LDFLAGS) -o $(ANA_LIB_NAME)
+
+$(RDF_BUILDER_NAME): $(RDF_BUILDER_SRC) $(IO_LIB_NAME) $(RDF_LIB_NAME) $(ANA_LIB_NAME)
 	mkdir -p $(dir $(RDF_BUILDER_NAME))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(RDF_BUILDER_SRC) -Lbuild/lib -lNuIO -lNuAna $(LDFLAGS) -o $(RDF_BUILDER_NAME)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(RDF_BUILDER_SRC) -Lbuild/lib -lNuxsecIO -lNuxsecRDF -lNuxsecAna \
+		$(LDFLAGS) -o $(RDF_BUILDER_NAME)
 
-%.o: %.cxx
+$(ART_AGGREGATOR_NAME): $(ART_AGGREGATOR_SRC) $(IO_LIB_NAME)
+	mkdir -p $(dir $(ART_AGGREGATOR_NAME))
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(ART_AGGREGATOR_SRC) -Lbuild/lib -lNuxsecIO $(LDFLAGS) -o \
+		$(ART_AGGREGATOR_NAME)
+
+$(SAMPLE_AGGREGATOR_NAME): $(SAMPLE_AGGREGATOR_SRC) $(IO_LIB_NAME)
+	mkdir -p $(dir $(SAMPLE_AGGREGATOR_NAME))
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SAMPLE_AGGREGATOR_SRC) -Lbuild/lib -lNuxsecIO $(LDFLAGS) -o \
+		$(SAMPLE_AGGREGATOR_NAME)
+
+%.o: %.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -fPIC -c $< -o $@
 
 clean:

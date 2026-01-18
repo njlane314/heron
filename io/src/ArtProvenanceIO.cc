@@ -1,15 +1,16 @@
+/* -- C++ -- */
 /**
- *  @file  lib/NuIO/src/ArtProvenanceIO.cxx
+ *  @file  io/src/ArtProvenanceIO.cc
  *
- *  @brief Implementation for ArtIO stage provenance IO
+ *  @brief Implementation for ArtIO stage provenance IO.
  */
 
-#include "NuIO/ArtProvenanceIO.h"
+#include "ArtProvenanceIO.hh"
 
 #include <algorithm>
 #include <cctype>
 
-namespace nuio
+namespace nuxsec
 {
 
 const char *sample_kind_name(SampleKind k)
@@ -292,4 +293,4 @@ std::vector<RunSubrun> ArtProvenanceIO::read_run_subrun_pairs(TDirectory *d)
     return pairs;
 }
 
-} // namespace nuio
+} // namespace nuxsec

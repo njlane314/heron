@@ -1,22 +1,30 @@
 # Scope
-This file captures the coding conventions and structural patterns used in the Collie C++ codebase.
+This file captures the coding conventions and structural patterns used in the Nuxsec C++ codebase.
+
+## Directory layout
+- Modules live in top-level folders (io/, sample/, pot/, rdf/, sel/, ana/, syst/, stat/) with include/, src/,
+  and macro/ subfolders.
+- Apps/ contains small executables (apps/src).
+- lib/ is reserved for build outputs (shared libraries).
 
 ## File layout & naming
 - Use .hh for headers and .cc for implementation files.
-- Class and type names use Collie-prefixed PascalCase (e.g., CollieHistogram, CollieHistogramContainer).
+- Use the nuxsec namespace for library code.
+- Class and type names use descriptive PascalCase that keeps entities explicit
+  (e.g., SampleFragment, LogicalSample, Dataset, ChannelDef, Selection, HistDef).
 - Global/static variables and macros are defined in implementation files when appropriate.
 
 ## Header conventions
 - Start headers with /* -- C++ -- */.
-- Use include guards in the form #ifndef Collie_H_INCLUDED / #define Collie_H_INCLUDED.
+- Use include guards in the form #ifndef Nuxsec_<MODULE>_<NAME>_H_INCLUDED / #define Nuxsec_<MODULE>_<NAME>_H_INCLUDED.
 - Forward declare classes when possible, include system/ROOT headers after that.
 - using namespace std; appears in headers and is acceptable in this codebase.
 
 ## Documentation & comments
 - Use Doxygen-style comments:
-- /** \brief … */ for classes.
-- /// for method/field comments and short descriptions.
-- Multi-line class/method docs often include \ingroup tags and detailed text blocks.
+  - /** \brief … */ for classes.
+  - /// for method/field comments and short descriptions.
+  - Multi-line class/method docs often include \ingroup tags and detailed text blocks.
 
 ## Formatting & style
 - Brace style: opening brace on the same line as the declaration.
@@ -26,8 +34,8 @@ This file captures the coding conventions and structural patterns used in the Co
 
 ## Naming conventions
 - Member variables frequently use prefixes:
-- p_ for pointers (e.g., p_histograms, p_container).
-- m_ for member data (e.g., m_hist, m_name).
+  - p_ for pointers (e.g., p_histograms, p_container).
+  - m_ for member data (e.g., m_hist, m_name).
 - Methods use PascalCase with descriptive verbs (e.g., AddHistogram, StoreHistograms, GetUniqueId).
 
 ## Constants & macros

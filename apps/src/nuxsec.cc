@@ -57,10 +57,10 @@ void print_main_help(std::ostream &out)
 {
     out << "Usage: nuxsec <command> [args]\n\n"
         << "Commands:\n"
-        << "  a|art|artio     (artio-aggregate)  Aggregate art provenance for a stage\n"
-        << "  s|samp|sample   (sample-aggregate) Aggregate Sample ROOT files from art provenance\n"
-        << "  t|tpl|template  (template-make)    Build template histograms from sample list\n"
-        << "  macro|m                      Run plot macros\n"
+        << "  art         Aggregate art provenance for a stage\n"
+        << "  samp        Aggregate Sample ROOT files from art provenance\n"
+        << "  tpl         Build template histograms from sample list\n"
+        << "  macro       Run plot macros\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
 

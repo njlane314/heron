@@ -327,6 +327,7 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     legend.SetFillStyle(0);
     legend.SetTextFont(42);
     legend.SetTextSize(0.034);
+    legend.SetNColumns(4);
     legend.AddEntry(&histograms.bnb, "BNB (\\nu)", "f");
     legend.AddEntry(&histograms.fhc, "NuMI-FHC (\\nu)", "f");
     legend.AddEntry(&histograms.rhc, "NuMI-RHC (\\bar{\\nu})", "f");

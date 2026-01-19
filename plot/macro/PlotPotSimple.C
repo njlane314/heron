@@ -188,10 +188,10 @@ struct histogram_bundle
         fhc.SetDirectory(nullptr);
         rhc.SetDirectory(nullptr);
 
-        // Brighter (higher-value) fills: same hues, more "punch".
-        const Int_t col_bnb = TColor::GetColor("#8ce69d");
-        const Int_t col_fhc = TColor::GetColor("#edb961");
-        const Int_t col_rhc = TColor::GetColor("#e55a70");
+        // Brighter, bolder fills for the timeline.
+        const Int_t col_bnb = TColor::GetColor("#00c853");
+        const Int_t col_fhc = TColor::GetColor("#ffb300");
+        const Int_t col_rhc = TColor::GetColor("#ff1744");
 
         bnb.SetFillColor(col_bnb);
         bnb.SetLineColor(kBlack);
@@ -267,7 +267,7 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
 void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, const char *outstem)
 {
     // Aspect and margins closer to the reference figure.
-    TCanvas canvas("c", "POT timeline", 1000, 450);
+    TCanvas canvas("c", "POT timeline", 1200, 700);
     canvas.SetMargin(0.08, 0.12, 0.20, 0.08);
     canvas.SetGridy(false);
     canvas.SetTickx(1);
@@ -289,12 +289,12 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     stack.GetYaxis()->SetNdivisions(507);
     stack.GetYaxis()->SetTitleSize(0.050);
     stack.GetYaxis()->SetLabelSize(0.036);
-    stack.GetYaxis()->SetTitleOffset(0.85);
+    stack.GetYaxis()->SetTitleOffset(0.70);
 
     stack.SetMaximum(data.y_max);
     stack.SetMinimum(0);
 
-    const Int_t col_cumulative = TColor::GetColor("#3b82f6");
+    const Int_t col_cumulative = TColor::GetColor("#2962ff");
     TGraph graph(data.x.size(), data.x.data(), data.scaled.data());
     graph.SetLineColor(col_cumulative);
     graph.SetLineWidth(2);
@@ -310,7 +310,7 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     right_axis.SetTitleFont(42);
     right_axis.SetLabelSize(0.036);
     right_axis.SetTitleSize(0.050);
-    right_axis.SetTitleOffset(0.95);
+    right_axis.SetTitleOffset(0.80);
     right_axis.SetTickSize(0.02);
     right_axis.SetTitle("Cumulative POT (x 10^{20})");
     right_axis.Draw();

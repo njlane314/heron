@@ -43,6 +43,7 @@ const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FI
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
 const char *kUsageMacro =
     "Usage: nuxsec macro run MACRO.C [CALL]\n"
+    "       nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
     "\nEnvironment:\n"
     "  NUXSEC_PLOT_DIR     Output directory (default: <repo>/build/plot)\n"
@@ -496,6 +497,11 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
         {
             return repo_candidate;
         }
+        const auto macro_candidate = repo_root / "plot" / "macro" / candidate;
+        if (std::filesystem::exists(macro_candidate))
+        {
+            return macro_candidate;
+        }
     }
     return candidate;
 }
@@ -616,7 +622,17 @@ int run_macro_command(const std::vector<std::string> &args)
         return run_root_macro_call(repo_root, macro_path, call);
     }
 
-    throw std::runtime_error("Unknown macro command: " + verb + "\n\n" + std::string(kUsageMacro));
+    if (rest.size() > 1)
+    {
+        throw std::runtime_error(kUsageMacro);
+    }
+    const std::string call = rest.empty() ? "" : nuxsec::app::trim(rest[0]);
+    const auto macro_path = resolve_macro_path(repo_root, verb);
+    if (call.empty())
+    {
+        return run_root_macro_exec(repo_root, macro_path);
+    }
+    return run_root_macro_call(repo_root, macro_path, call);
 }
 
 }

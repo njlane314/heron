@@ -322,12 +322,17 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     right_axis.Draw();
 
     legend_pad->cd();
-    TLegend legend(0.16, 0.08, 0.84, 0.92);
+    TLegend legend(0.12, 0.00, 0.95, 0.75);
     legend.SetBorderSize(0);
     legend.SetFillStyle(0);
     legend.SetTextFont(42);
-    legend.SetTextSize(0.034);
-    legend.SetNColumns(4);
+    legend.SetNColumns(2);
+    legend.SetColumnSeparation(0.08);
+    legend.SetEntrySeparation(0.00);
+    legend.SetMargin(0.25);
+    const double s_main = 0.045;
+    const double s_leg = s_main * (split / (1.0 - split));
+    legend.SetTextSize(s_leg);
     legend.AddEntry(&histograms.bnb, "BNB (\\nu)", "f");
     legend.AddEntry(&histograms.fhc, "NuMI-FHC (\\nu)", "f");
     legend.AddEntry(&histograms.rhc, "NuMI-RHC (\\bar{\\nu})", "f");

@@ -16,8 +16,10 @@
 #include "TLine.h"
 #include "TStyle.h"
 #include "TColor.h"
+#include "TSystem.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 namespace phys { // PDG masses [GeV]
   constexpr double mS0 = 1.192642;     // Σ0
@@ -143,24 +145,41 @@ void make_sigma0_lambda_visibility_plot() {
 
   // --------- Optional TEfficiency overlay from a file (if available) ----------
   TEfficiency* eff = nullptr;
-  {
+  if (gSystem->AccessPathName(cfgS::file)) {
+    std::cout << "Warning: MC file '" << cfgS::file
+              << "' not found; skipping MC efficiency overlay.\n";
+  } else {
     TFile f(cfgS::file, "READ");
-    TTree* T = (TTree*) f.Get(cfgS::tree);
-    if (T && T->GetBranch(cfgS::br_pS) && T->GetBranch(cfgS::br_isSig) && T->GetBranch(cfgS::br_isSel)) {
-      double pS=0.0; int isSig=0, isSel=0;
-      T->SetBranchAddress(cfgS::br_pS,    &pS);
-      T->SetBranchAddress(cfgS::br_isSig, &isSig);
-      T->SetBranchAddress(cfgS::br_isSel, &isSel);
+    if (f.IsZombie()) {
+      std::cout << "Warning: MC file '" << cfgS::file
+                << "' could not be opened; skipping MC efficiency overlay.\n";
+    } else {
+      TTree* T = (TTree*) f.Get(cfgS::tree);
+      if (!T) {
+        std::cout << "Warning: tree '" << cfgS::tree
+                  << "' not found in '" << cfgS::file
+                  << "'; skipping MC efficiency overlay.\n";
+      } else if (!T->GetBranch(cfgS::br_pS)
+                 || !T->GetBranch(cfgS::br_isSig)
+                 || !T->GetBranch(cfgS::br_isSel)) {
+        std::cout << "Warning: required branches not found in '" << cfgS::file
+                  << "'; skipping MC efficiency overlay.\n";
+      } else {
+        double pS=0.0; int isSig=0, isSel=0;
+        T->SetBranchAddress(cfgS::br_pS,    &pS);
+        T->SetBranchAddress(cfgS::br_isSig, &isSig);
+        T->SetBranchAddress(cfgS::br_isSel, &isSel);
 
-      eff = new TEfficiency("effS",";p_{#Sigma^{0}} at Nuclear Exit [GeV/c];#varepsilon_{fid} (MC)",
-                            cfgS::nbins, cfgS::xlow, cfgS::xhigh);
-      eff->SetStatisticOption(TEfficiency::kFCP);
+        eff = new TEfficiency("effS",";p_{#Sigma^{0}} at Nuclear Exit [GeV/c];#varepsilon_{fid} (MC)",
+                              cfgS::nbins, cfgS::xlow, cfgS::xhigh);
+        eff->SetStatisticOption(TEfficiency::kFCP);
 
-      const Long64_t n = T->GetEntries();
-      for (Long64_t k=0;k<n;++k) {
-        T->GetEntry(k);
-        if (!isSig) continue;   // denominator: exit-defined Σ0 decays
-        eff->Fill(isSel, pS);   // numerator: selected Λ→pπ events
+        const Long64_t n = T->GetEntries();
+        for (Long64_t k=0;k<n;++k) {
+          T->GetEntry(k);
+          if (!isSig) continue;   // denominator: exit-defined Σ0 decays
+          eff->Fill(isSel, pS);   // numerator: selected Λ→pπ events
+        }
       }
     }
   }

@@ -220,6 +220,7 @@ struct cumulative_data
     std::vector<double> scaled_fhc;
     std::vector<double> scaled_rhc;
     double y_max;
+    double y_scale;
     double max_cumulative_total;
 };
 
@@ -277,6 +278,7 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
         data.y_max = nice * 1.08;
     }
     else data.y_max = 1.0;
+    data.y_scale = (max_stack > 0) ? (data.y_max / max_stack) : 1.0;
     // Scale all cumulative curves to the left-axis range using the TOTAL cumulative maximum.
     const double scale = data.max_cumulative_total > 0 ? data.y_max / data.max_cumulative_total : 1.0;
     for (int i = 0; i < nbins; ++i)
@@ -389,7 +391,9 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     g_rhc.Draw("LP SAME");
 
     const double xhi = stack.GetXaxis()->GetXmax();
-    const double rhs_max = (data.max_cumulative_total > 0) ? (data.max_cumulative_total * 1.03) : 1.0;
+    const double rhs_max = (data.max_cumulative_total > 0)
+                               ? (data.max_cumulative_total * data.y_scale)
+                               : 1.0;
     TGaxis right_axis(xhi, 0, xhi, data.y_max, 0, rhs_max, 507, "+L");
     right_axis.SetLineColor(col_total);
     right_axis.SetLabelColor(col_total);

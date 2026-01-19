@@ -15,6 +15,7 @@
 #include "TSystem.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <ctime>
 #include <iostream>
@@ -68,12 +69,15 @@ void configure_style()
     gStyle->SetOptStat(0);
     gStyle->SetLineWidth(2);
     gStyle->SetFrameLineWidth(2);
+    gStyle->SetHistLineWidth(1);
     gStyle->SetLabelFont(42, "XYZ");
     gStyle->SetTitleFont(42, "XYZ");
-    gStyle->SetLabelSize(0.035, "XYZ");
-    gStyle->SetTitleSize(0.045, "YZ");
+    gStyle->SetLabelSize(0.038, "XYZ");
+    gStyle->SetTitleSize(0.050, "YZ");
+    gStyle->SetTitleOffset(1.10, "Y");
     gStyle->SetPadTickX(1);
-    gStyle->SetPadTickY(1);
+    // We draw a custom (blue) right axis; avoid black RHS ticks.
+    gStyle->SetPadTickY(0);
     TGaxis::SetMaxDigits(3);
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
     gStyle->SetTimeOffset(0, "gmt");
@@ -183,22 +187,27 @@ struct histogram_bundle
         bnb.SetDirectory(nullptr);
         fhc.SetDirectory(nullptr);
         rhc.SetDirectory(nullptr);
-        const Int_t col_bnb = TColor::GetColor("#2ca02c");
-        const Int_t col_fhc = TColor::GetColor("#ff7f0e");
-        const Int_t col_rhc = TColor::GetColor("#d62728");
-        bnb.SetFillColorAlpha(col_bnb, 0.90);
+
+        // Pastel palette to match the reference plot.
+        const Int_t col_bnb = TColor::GetColor("#7ce390");
+        const Int_t col_fhc = TColor::GetColor("#ebb04c");
+        const Int_t col_rhc = TColor::GetColor("#df445d");
+
+        bnb.SetFillColor(col_bnb);
         bnb.SetLineColor(kBlack);
-        bnb.SetLineWidth(2);
+        bnb.SetLineWidth(1);
         bnb.SetBarWidth(1.0);
         bnb.SetBarOffset(0.0);
-        fhc.SetFillColorAlpha(col_fhc, 0.90);
+
+        fhc.SetFillColor(col_fhc);
         fhc.SetLineColor(kBlack);
-        fhc.SetLineWidth(2);
+        fhc.SetLineWidth(1);
         fhc.SetBarWidth(1.0);
         fhc.SetBarOffset(0.0);
-        rhc.SetFillColorAlpha(col_rhc, 0.90);
+
+        rhc.SetFillColor(col_rhc);
         rhc.SetLineColor(kBlack);
-        rhc.SetLineWidth(2);
+        rhc.SetLineWidth(1);
         rhc.SetBarWidth(1.0);
         rhc.SetBarOffset(0.0);
     }
@@ -240,7 +249,13 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
         data.max_cumulative = std::max(data.max_cumulative, cumulative_value);
         data.x[i - 1] = histograms.bnb.GetXaxis()->GetBinCenter(i);
     }
-    data.y_max = max_stack > 0 ? max_stack * 1.18 : 1.0;
+    // "Nice" headroom like the reference (major ticks at 0,5,10,... with minor ticks between).
+    if (max_stack > 0)
+    {
+        const double nice = std::ceil(max_stack / 5.0) * 5.0;
+        data.y_max = nice * 1.02;
+    }
+    else data.y_max = 1.0;
     const double scale = data.max_cumulative > 0 ? data.y_max / data.max_cumulative : 1.0;
     for (int i = 0; i < nbins; ++i)
     {
@@ -251,9 +266,13 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
 
 void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, const char *outstem)
 {
-    TCanvas canvas("c", "POT timeline", 1600, 500);
-    canvas.SetMargin(0.12, 0.10, 0.15, 0.06);
+    // Aspect and margins closer to the reference figure.
+    TCanvas canvas("c", "POT timeline", 1000, 450);
+    canvas.SetMargin(0.08, 0.12, 0.20, 0.08);
     canvas.SetGridy(false);
+    canvas.SetTickx(1);
+    canvas.SetTicky(0);
+
     THStack stack("hs", "");
     stack.Add(const_cast<TH1D *>(&histograms.bnb));
     stack.Add(const_cast<TH1D *>(&histograms.fhc));
@@ -262,38 +281,45 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     stack.GetXaxis()->SetTimeDisplay(1);
     stack.GetXaxis()->SetTimeOffset(0, "gmt");
     stack.GetXaxis()->SetTimeFormat("%d/%b/%Y");
-    stack.GetXaxis()->SetLabelSize(0.035);
-    stack.GetXaxis()->SetLabelOffset(0.02);
-    stack.GetYaxis()->SetTitle("POT per week  (#times 10^{18})");
-    stack.GetYaxis()->SetTitleOffset(0.95);
-    stack.GetYaxis()->SetLabelSize(0.035);
+    stack.GetXaxis()->SetNdivisions(509);
+    stack.GetXaxis()->SetLabelSize(0.032);
+    stack.GetXaxis()->SetLabelOffset(0.018);
+
+    stack.GetYaxis()->SetTitle("POT per week (x 10^{18})");
+    stack.GetYaxis()->SetNdivisions(507);
+    stack.GetYaxis()->SetTitleSize(0.050);
+    stack.GetYaxis()->SetLabelSize(0.036);
+    stack.GetYaxis()->SetTitleOffset(1.10);
+
     stack.SetMaximum(data.y_max);
     stack.SetMinimum(0);
-    const Int_t col_cumulative = TColor::GetColor("#1f77b4");
+
+    const Int_t col_cumulative = TColor::GetColor("#3b82f6");
     TGraph graph(data.x.size(), data.x.data(), data.scaled.data());
     graph.SetLineColor(col_cumulative);
-    graph.SetLineWidth(3);
+    graph.SetLineWidth(2);
     graph.Draw("L SAME");
-    TGaxis right_axis(stack.GetXaxis()->GetXmax(),
-                      0,
-                      stack.GetXaxis()->GetXmax(),
-                      data.y_max,
-                      0,
-                      data.max_cumulative,
-                      510,
-                      "+L");
+
+    const double xhi = stack.GetXaxis()->GetXmax();
+    TGaxis right_axis(xhi, 0, xhi, data.y_max, 0, data.max_cumulative, 507, "+L");
     right_axis.SetLineColor(col_cumulative);
     right_axis.SetLabelColor(col_cumulative);
     right_axis.SetTitleColor(col_cumulative);
-    right_axis.SetLabelSize(0.035);
-    right_axis.SetTitleSize(0.040);
-    right_axis.SetTitleOffset(1.05);
-    right_axis.SetTitle("Cumulative POT  (#times 10^{20})");
+    right_axis.SetLineWidth(2);
+    right_axis.SetLabelFont(42);
+    right_axis.SetTitleFont(42);
+    right_axis.SetLabelSize(0.036);
+    right_axis.SetTitleSize(0.050);
+    right_axis.SetTitleOffset(1.10);
+    right_axis.SetTickSize(0.02);
+    right_axis.SetTitle("Cumulative POT (x 10^{20})");
     right_axis.Draw();
-    TLegend legend(0.16, 0.70, 0.42, 0.90);
+
+    TLegend legend(0.16, 0.68, 0.40, 0.88);
     legend.SetBorderSize(0);
     legend.SetFillStyle(0);
-    legend.SetTextSize(0.032);
+    legend.SetTextFont(42);
+    legend.SetTextSize(0.034);
     legend.AddEntry(&histograms.bnb, "BNB (\\nu)", "f");
     legend.AddEntry(&histograms.fhc, "NuMI-FHC (\\nu)", "f");
     legend.AddEntry(&histograms.rhc, "NuMI-RHC (\\bar{\\nu})", "f");

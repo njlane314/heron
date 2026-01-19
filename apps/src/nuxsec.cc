@@ -40,7 +40,7 @@ namespace
 const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
 const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
-const char *kUsagePlot = "Usage: nuxsec plot [OUTSTEM]";
+const char *kUsagePlot = "Usage: nuxsec plot [OUTSTEM]\n       nuxsec plot visibility lambda|sigma0";
 
 bool is_help_arg(const std::string &arg)
 {
@@ -469,22 +469,31 @@ int run_template(const std::vector<std::string> &args)
 struct PlotArgs
 {
     std::string outstem = "build/out/plot/pot_timeline";
+    std::string visibility_target;
 };
 
 PlotArgs parse_plot_args(const std::vector<std::string> &args)
 {
-    if (args.size() > 1)
+    PlotArgs out;
+    if (args.empty())
     {
-        throw std::runtime_error(kUsagePlot);
+        return out;
     }
 
-    PlotArgs out;
     if (args.size() == 1)
     {
         out.outstem = nuxsec::app::trim(args[0]);
     }
+    else if (args.size() == 2 && nuxsec::app::trim(args[0]) == "visibility")
+    {
+        out.visibility_target = nuxsec::app::trim(args[1]);
+    }
+    else
+    {
+        throw std::runtime_error(kUsagePlot);
+    }
 
-    if (out.outstem.empty())
+    if (out.visibility_target.empty() && out.outstem.empty())
     {
         throw std::runtime_error("Invalid output stem");
     }
@@ -499,13 +508,44 @@ int run_plot(const std::vector<std::string> &args)
         return 0;
     }
 
+    const auto repo_root = find_repo_root();
     const PlotArgs plot_args = parse_plot_args(args);
+    if (!plot_args.visibility_target.empty())
+    {
+        std::filesystem::path macro_path;
+        std::string call_cmd;
+        if (plot_args.visibility_target == "lambda")
+        {
+            macro_path = repo_root / "plot/macro/make_lambda_visibility_plot.C";
+            call_cmd = "make_lambda_visibility_plot();";
+        }
+        else if (plot_args.visibility_target == "sigma0")
+        {
+            macro_path = repo_root / "plot/macro/make_sigma0_lambda_visibility_plot.C";
+            call_cmd = "make_sigma0_lambda_visibility_plot();";
+        }
+        else
+        {
+            throw std::runtime_error("Unknown visibility macro (expected lambda|sigma0): " +
+                                     plot_args.visibility_target);
+        }
+
+        if (!std::filesystem::exists(macro_path))
+        {
+            throw std::runtime_error("Visibility macro not found at " + macro_path.string());
+        }
+
+        const std::string load_cmd = ".L " + macro_path.string();
+        gROOT->ProcessLine(load_cmd.c_str());
+        const long result = gROOT->ProcessLine(call_cmd.c_str());
+        return static_cast<int>(result);
+    }
+
     std::filesystem::path outstem_path(plot_args.outstem);
     if (!outstem_path.parent_path().empty())
     {
         std::filesystem::create_directories(outstem_path.parent_path());
     }
-    const auto repo_root = find_repo_root();
     const auto include_path = repo_root / "plot/include";
     gSystem->AddIncludePath(("-I" + include_path.string()).c_str());
     const auto ana_include_path = repo_root / "ana/include";

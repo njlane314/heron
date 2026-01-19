@@ -87,7 +87,7 @@ std::filesystem::path find_repo_root()
     {
         for (int i = 0; i < 6; ++i)
         {
-            if (std::filesystem::exists(base / "plot/macro/NuxsecPlotDriver.C"))
+            if (std::filesystem::exists(base / "plot/macro/.plot_driver.retired"))
             {
                 return base;
             }

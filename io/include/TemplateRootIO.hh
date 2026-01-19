@@ -42,6 +42,19 @@ class TemplateRootIO
                                   const std::string &key,
                                   double value,
                                   const TemplateWriteOptions &opt = {});
+
+    static void write_syst_histograms(const std::string &root_path,
+                                      const std::string &sample_name,
+                                      const std::string &syst_name,
+                                      const std::string &variation,
+                                      const std::vector<std::pair<std::string, const TH1 *>> &hists,
+                                      const TemplateWriteOptions &opt = {});
+
+    static void write_syst_flag_meta(const std::string &root_path,
+                                     const std::string &syst_name,
+                                     const std::string &key,
+                                     const std::string &value,
+                                     const TemplateWriteOptions &opt = {});
 };
 
 } // namespace nuxsec

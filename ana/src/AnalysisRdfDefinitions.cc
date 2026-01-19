@@ -11,6 +11,8 @@
 #include <cmath>
 #include <string>
 
+#include <ROOT/RVec.hxx>
+
 namespace nuxsec
 {
 
@@ -88,19 +90,39 @@ ROOT::RDF::RNode AnalysisRdfDefinitions::Define(ROOT::RDF::RNode node, const Pro
         return static_cast<float>(scale);
     });
 
+    {
+        const auto cnames = node.GetColumnNames();
+        auto has = [&](const std::string &name) {
+            return std::find(cnames.begin(), cnames.end(), name) != cnames.end();
+        };
+
+        if (!has("ppfx_cv"))
+        {
+            node = node.Define("ppfx_cv", [] { return 1.0f; });
+        }
+        if (!has("RootinoFix"))
+        {
+            node = node.Define("RootinoFix", [] { return 1.0; });
+        }
+    }
+
     if (is_mc)
     {
         node = node.Define(
             "w_nominal",
-            [](float w, float w_spline, float w_tune) {
-                const float out = w * w_spline * w_tune;
+            [](float w_base, float w_spline, float w_tune, float w_flux_cv, double w_root) {
+                const double out = static_cast<double>(w_base) *
+                                   static_cast<double>(w_spline) *
+                                   static_cast<double>(w_tune) *
+                                   static_cast<double>(w_flux_cv) *
+                                   static_cast<double>(w_root);
                 if (!std::isfinite(out))
                     return 0.0f;
-                if (out < 0.0f)
+                if (out < 0.0)
                     return 0.0f;
-                return out;
+                return static_cast<float>(out);
             },
-            {"w_base", "weightSpline", "weightTune"});
+            {"w_base", "weightSpline", "weightTune", "ppfx_cv", "RootinoFix"});
     }
     else
     {

@@ -32,7 +32,9 @@ ANA_LIB_NAME = build/lib/libNuXsecAna.so
 ANA_SRC = ana/src/AnalysisDefinition.cc \
           ana/src/AnalysisRdfDefinitions.cc \
           ana/src/RDataFrameFactory.cc \
-          ana/src/TemplateSpec.cc
+          ana/src/TemplateSpec.cc \
+          ana/src/SystematicsSpec.cc \
+          ana/src/SystematicsBuilder.cc
 ANA_OBJ = $(ANA_SRC:.cc=.o)
 
 PLOT_LIB_NAME = build/lib/libNuXsecPlot.so
@@ -42,11 +44,13 @@ PLOT_OBJ = $(PLOT_SRC:.cc=.o)
 
 NUXSEC_NAME = build/bin/nuxsec
 NUXSEC_SRC = apps/src/nuxsec.cc
+NUXSEC_SYST_NAME = build/bin/nuxsecSystMaker
+NUXSEC_SYST_SRC = apps/src/nuxsecSystMaker.cc
 
 INCLUDES = -I./io/include -I./ana/include -I./plot/include -I./apps/include
 
 all: $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) \
-	 $(NUXSEC_NAME)
+	 $(NUXSEC_NAME) $(NUXSEC_SYST_NAME)
 
 $(IO_LIB_NAME): $(IO_OBJ)
 	mkdir -p $(dir $(IO_LIB_NAME))
@@ -68,6 +72,11 @@ $(NUXSEC_NAME): $(NUXSEC_SRC) $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME)
 	mkdir -p $(dir $(NUXSEC_NAME))
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_SRC) -Lbuild/lib -lNuXsecSample -lNuXsecIO \
 		-lNuXsecAna $(LDFLAGS) -o $(NUXSEC_NAME)
+
+$(NUXSEC_SYST_NAME): $(NUXSEC_SYST_SRC) $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME)
+	mkdir -p $(dir $(NUXSEC_SYST_NAME))
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_SYST_SRC) -Lbuild/lib -lNuXsecSample -lNuXsecIO \
+		-lNuXsecAna $(LDFLAGS) -o $(NUXSEC_SYST_NAME)
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -fPIC -c $< -o $@

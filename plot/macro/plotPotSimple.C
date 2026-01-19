@@ -67,16 +67,6 @@ time_t sunday_after_or_on(time_t t)
 void configure_style()
 {
     nuxsec::plot::Plotter{}.set_global_style();
-    gStyle->SetOptStat(0);
-    gStyle->SetLineWidth(2);
-    gStyle->SetFrameLineWidth(2);
-    gStyle->SetHistLineWidth(1);
-    gStyle->SetLabelFont(42, "XYZ");
-    gStyle->SetTitleFont(42, "XYZ");
-    gStyle->SetLabelSize(0.045, "XYZ");
-    gStyle->SetTitleSize(0.040, "XYZ");
-    gStyle->SetTitleOffset(1.00, "Y");
-    gStyle->SetPadTickX(1);
     // We draw a custom (blue) right axis; avoid black RHS ticks.
     gStyle->SetPadTickY(0);
     TGaxis::SetMaxDigits(3);

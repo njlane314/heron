@@ -42,8 +42,7 @@ const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST
 const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
 const char *kUsageMacro =
-    "Usage: nuxsec macro run MACRO.C [CALL]\n"
-    "       nuxsec macro MACRO.C [CALL]\n"
+    "Usage: nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
     "\nEnvironment:\n"
     "  NUXSEC_PLOT_DIR     Output directory (default: <repo>/build/plot)\n"

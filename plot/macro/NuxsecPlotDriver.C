@@ -1,5 +1,5 @@
 /* -- C++ -- */
 /// \file plot/macro/NuxsecPlotDriver.C
-/// \brief Driver macro that forwards to PlotPotSimple.
+/// \brief Driver macro that forwards to plotPotSimple.
 
-#include "PlotPotSimple.C"
+#include "plotPotSimple.C"

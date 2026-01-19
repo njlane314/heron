@@ -1,5 +1,5 @@
-// make_sigma0_lambda_visibility_plot.C
-// Usage: root -l -q make_sigma0_lambda_visibility_plot.C
+// plotSigma0LambdaVisibility.C
+// Usage: root -l -q plotSigma0LambdaVisibility.C
 //
 // Computes kinematic visibility for the cascade Σ0→Λγ.
 // Now draws TWO analytic curves vs p_Σ:
@@ -49,7 +49,7 @@ static inline double clip(double x, double lo, double hi) {
   return std::max(lo, std::min(hi, x));
 }
 
-void make_sigma0_lambda_visibility_plot() {
+void plotSigma0LambdaVisibility() {
   gStyle->SetOptStat(0);
 
   // --------- Two-body constants ----------

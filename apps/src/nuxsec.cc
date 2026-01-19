@@ -497,6 +497,11 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
         {
             return repo_candidate;
         }
+        const auto macro_candidate = repo_root / "plot" / "macro" / candidate;
+        if (std::filesystem::exists(macro_candidate))
+        {
+            return macro_candidate;
+        }
     }
     return candidate;
 }
@@ -596,6 +601,10 @@ int run_macro_command(const std::vector<std::string> &args)
 
     if (verb == "list")
     {
+        if (!rest.empty())
+        {
+            throw std::runtime_error(kUsageMacro);
+        }
         print_macro_list(std::cout, repo_root);
         return 0;
     }
@@ -622,18 +631,14 @@ int run_macro_command(const std::vector<std::string> &args)
         throw std::runtime_error(kUsageMacro);
     }
 
+    const std::string macro_spec = verb;
+    const std::string call = rest.empty() ? "" : nuxsec::app::trim(rest[0]);
+    const auto macro_path = resolve_macro_path(repo_root, macro_spec);
+    if (call.empty())
     {
-        const std::string macro_spec = verb;
-        const std::string call = rest.empty() ? "" : nuxsec::app::trim(rest[0]);
-        const auto macro_path = resolve_macro_path(repo_root, macro_spec);
-        if (call.empty())
-        {
-            return run_root_macro_exec(repo_root, macro_path);
-        }
-        return run_root_macro_call(repo_root, macro_path, call);
+        return run_root_macro_exec(repo_root, macro_path);
     }
-
-    throw std::runtime_error("Unknown macro command: " + verb + "\n\n" + std::string(kUsageMacro));
+    return run_root_macro_call(repo_root, macro_path, call);
 }
 
 }

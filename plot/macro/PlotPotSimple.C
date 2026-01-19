@@ -394,3 +394,8 @@ int nuxsec_plot(const char *outstem = "build/out/plot/pot_timeline")
     plot_pot_simple(outstem);
     return 0;
 }
+
+void PlotPotSimple(const char *outstem = "build/out/plot/pot_timeline")
+{
+    plot_pot_simple(outstem);
+}

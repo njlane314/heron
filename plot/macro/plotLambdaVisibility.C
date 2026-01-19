@@ -1,5 +1,5 @@
-// make_lambda_visibility_plot.C
-// Usage: root -l -q make_lambda_visibility_plot.C
+// plotLambdaVisibility.C
+// Usage: root -l -q plotLambdaVisibility.C
 
 #include "TFile.h"
 #include "TTree.h"
@@ -34,7 +34,7 @@ namespace cfg {
   constexpr double xlow  = 0.0, xhigh = 3.0; // p_Λ range [GeV/c]
 }
 
-void make_lambda_visibility_plot() {
+void plotLambdaVisibility() {
   gStyle->SetOptStat(0);
 
   // --------- Analytic two-body constants (Λ→pπ) ----------

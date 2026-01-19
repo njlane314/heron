@@ -563,13 +563,13 @@ int run_plot(const std::vector<std::string> &args)
         std::string call_cmd;
         if (plot_args.visibility_target == "lambda")
         {
-            macro_path = repo_root / "plot/macro/make_lambda_visibility_plot.C";
-            call_cmd = "make_lambda_visibility_plot();";
+            macro_path = repo_root / "plot/macro/plotLambdaVisibility.C";
+            call_cmd = "plotLambdaVisibility();";
         }
         else if (plot_args.visibility_target == "sigma0")
         {
-            macro_path = repo_root / "plot/macro/make_sigma0_lambda_visibility_plot.C";
-            call_cmd = "make_sigma0_lambda_visibility_plot();";
+            macro_path = repo_root / "plot/macro/plotSigma0LambdaVisibility.C";
+            call_cmd = "plotSigma0LambdaVisibility();";
         }
         else
         {

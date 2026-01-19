@@ -1,5 +1,5 @@
 /* -- C++ -- */
-/// \file plot/macro/PlotPotSimple.C
+/// \file plot/macro/plotPotSimple.C
 /// \brief POT timeline plotting macro for Nuxsec.
 
 #include "RVersion.h"
@@ -329,7 +329,7 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     canvas.SaveAs(Form("%s.png", outstem));
 }
 
-void plot_pot_simple(const char *outstem = "pot_timeline")
+void plotPotSimpleInternal(const char *outstem = "pot_timeline")
 {
     configure_style();
     const std::string run_db = db_root() + "/run.db";
@@ -391,11 +391,11 @@ void plot_pot_simple(const char *outstem = "pot_timeline")
 
 int nuxsec_plot(const char *outstem = "build/out/plot/pot_timeline")
 {
-    plot_pot_simple(outstem);
+    plotPotSimpleInternal(outstem);
     return 0;
 }
 
-void PlotPotSimple(const char *outstem = "build/out/plot/pot_timeline")
+void plotPotSimple(const char *outstem = "build/out/plot/pot_timeline")
 {
-    plot_pot_simple(outstem);
+    plotPotSimpleInternal(outstem);
 }

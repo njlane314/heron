@@ -72,7 +72,8 @@ void configure_style()
     gStyle->SetTitleFont(42, "XYZ");
     gStyle->SetLabelSize(0.035, "XYZ");
     gStyle->SetTitleSize(0.045, "YZ");
-    gStyle->SetPadTickY(0);
+    gStyle->SetPadTickX(1);
+    gStyle->SetPadTickY(1);
     TGaxis::SetMaxDigits(3);
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
     gStyle->SetTimeOffset(0, "gmt");
@@ -188,12 +189,18 @@ struct histogram_bundle
         bnb.SetFillColorAlpha(col_bnb, 0.90);
         bnb.SetLineColor(kBlack);
         bnb.SetLineWidth(2);
+        bnb.SetBarWidth(1.0);
+        bnb.SetBarOffset(0.0);
         fhc.SetFillColorAlpha(col_fhc, 0.90);
         fhc.SetLineColor(kBlack);
         fhc.SetLineWidth(2);
+        fhc.SetBarWidth(1.0);
+        fhc.SetBarOffset(0.0);
         rhc.SetFillColorAlpha(col_rhc, 0.90);
         rhc.SetLineColor(kBlack);
         rhc.SetLineWidth(2);
+        rhc.SetBarWidth(1.0);
+        rhc.SetBarOffset(0.0);
     }
 };
 
@@ -246,7 +253,7 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
 {
     TCanvas canvas("c", "POT timeline", 1600, 500);
     canvas.SetMargin(0.12, 0.10, 0.15, 0.06);
-    canvas.SetGridy(true);
+    canvas.SetGridy(false);
     THStack stack("hs", "");
     stack.Add(const_cast<TH1D *>(&histograms.bnb));
     stack.Add(const_cast<TH1D *>(&histograms.fhc));
@@ -257,8 +264,8 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     stack.GetXaxis()->SetTimeFormat("%d/%b/%Y");
     stack.GetXaxis()->SetLabelSize(0.035);
     stack.GetXaxis()->SetLabelOffset(0.02);
-    stack.GetYaxis()->SetTitle("Protons per week  (#times 10^{18})");
-    stack.GetYaxis()->SetTitleOffset(0.9);
+    stack.GetYaxis()->SetTitle("POT per week  (#times 10^{18})");
+    stack.GetYaxis()->SetTitleOffset(0.95);
     stack.GetYaxis()->SetLabelSize(0.035);
     stack.SetMaximum(data.y_max);
     stack.SetMinimum(0);
@@ -281,16 +288,16 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     right_axis.SetLabelSize(0.035);
     right_axis.SetTitleSize(0.040);
     right_axis.SetTitleOffset(1.05);
-    right_axis.SetTitle("Total Protons  (#times 10^{20})");
+    right_axis.SetTitle("Cumulative POT  (#times 10^{20})");
     right_axis.Draw();
     TLegend legend(0.16, 0.70, 0.42, 0.90);
     legend.SetBorderSize(0);
     legend.SetFillStyle(0);
     legend.SetTextSize(0.032);
     legend.AddEntry(&histograms.bnb, "BNB (\\nu)", "f");
-    legend.AddEntry(&histograms.fhc, "NuMI FHC (\\nu)", "f");
-    legend.AddEntry(&histograms.rhc, "NuMI RHC (\\bar{\\nu})", "f");
-    legend.AddEntry(&graph, "Total POT (cumulative)", "l");
+    legend.AddEntry(&histograms.fhc, "NuMI-FHC (\\nu)", "f");
+    legend.AddEntry(&histograms.rhc, "NuMI-RHC (\\bar{\\nu})", "f");
+    legend.AddEntry(&graph, "Total POT", "l");
     legend.Draw();
     canvas.RedrawAxis();
     canvas.SaveAs(Form("%s.png", outstem));

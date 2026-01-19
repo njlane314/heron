@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include <TROOT.h>
+
 #include <TH1.h>
 #include <TH1D.h>
 
@@ -42,6 +44,7 @@ namespace
 const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
 const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
+const char *kUsagePlot = "Usage: nuxsec plot [OUTSTEM]";
 
 bool is_help_arg(const std::string &arg)
 {
@@ -55,6 +58,7 @@ void print_main_help(std::ostream &out)
         << "  a|art|artio     (artio-aggregate)  Aggregate art provenance for a stage\n"
         << "  s|samp|sample   (sample-aggregate) Aggregate Sample ROOT files from art provenance\n"
         << "  t|tpl|template  (template-make)    Build template histograms from sample list\n"
+        << "  plot                         Build POT timeline plot via ROOT macro\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
 
@@ -64,6 +68,38 @@ bool is_selection_data_file(const std::string &path)
     const std::string name = (pos == std::string::npos) ? path : path.substr(pos + 1);
     return name == "nuselection_data.root";
 }
+
+std::filesystem::path find_repo_root()
+{
+    std::vector<std::filesystem::path> candidates;
+
+    std::error_code ec;
+    const auto exe = std::filesystem::read_symlink("/proc/self/exe", ec);
+    if (!ec)
+    {
+        candidates.push_back(exe.parent_path());
+    }
+    candidates.push_back(std::filesystem::current_path());
+
+    for (auto base : candidates)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            if (std::filesystem::exists(base / "plot/macro/NuxsecPlotDriver.C"))
+            {
+                return base;
+            }
+            if (!base.has_parent_path())
+            {
+                break;
+            }
+            base = base.parent_path();
+        }
+    }
+
+    return std::filesystem::current_path();
+}
+
 
 struct ArtArgs
 {
@@ -560,6 +596,60 @@ int run_template(const std::vector<std::string> &args)
     return 0;
 }
 
+struct PlotArgs
+{
+    std::string outstem = "build/out/plot/pot_timeline";
+};
+
+PlotArgs parse_plot_args(const std::vector<std::string> &args)
+{
+    if (args.size() > 1)
+    {
+        throw std::runtime_error(kUsagePlot);
+    }
+
+    PlotArgs out;
+    if (args.size() == 1)
+    {
+        out.outstem = nuxsec::app::trim(args[0]);
+    }
+
+    if (out.outstem.empty())
+    {
+        throw std::runtime_error("Invalid output stem");
+    }
+    return out;
+}
+
+int run_plot(const std::vector<std::string> &args)
+{
+    if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
+    {
+        std::cout << kUsagePlot << "\n";
+        return 0;
+    }
+
+    const PlotArgs plot_args = parse_plot_args(args);
+    std::filesystem::path outstem_path(plot_args.outstem);
+    if (!outstem_path.parent_path().empty())
+    {
+        std::filesystem::create_directories(outstem_path.parent_path());
+    }
+    const auto repo_root = find_repo_root();
+    const auto macro_path = repo_root / "plot/macro/NuxsecPlotDriver.C";
+    if (!std::filesystem::exists(macro_path))
+    {
+        throw std::runtime_error("Plot macro not found at " + macro_path.string());
+    }
+
+    const std::string load_cmd = ".L " + macro_path.string();
+    gROOT->ProcessLine(load_cmd.c_str());
+
+    const std::string call_cmd = "nuxsec_plot(\"" + plot_args.outstem + "\")";
+    const long result = gROOT->ProcessLine(call_cmd.c_str());
+    return static_cast<int>(result);
+}
+
 }
 
 int main(int argc, char **argv)
@@ -597,6 +687,10 @@ int main(int argc, char **argv)
         if (command == "template-make" || command == "template" || command == "tpl" || command == "t")
         {
             return run_template(args);
+        }
+        if (command == "plot")
+        {
+            return run_plot(args);
         }
 
         std::cerr << "Unknown command: " << command << "\n";

@@ -181,11 +181,25 @@ nuxsec template-make build/out/sample/samples.tsv \
 
 ### 4) Systematics and plots
 
-The current CLI only implements `a`/`art`/`artio`/`artio-aggregate`,
-`s`/`samp`/`sample`/`sample-aggregate`, and `t`/`tpl`/`template`/`template-make`.
-There is no `systs`, `plots`, or `list-analyses` command in this repository yet. If you need
-systematics or plotting, use the ROOT macros under the module `macro/` directories or extend
-the CLI with a new application.
+The CLI now includes a macro-driven plotting stage. The default plot macro generates a POT
+timeline plot and writes images under `build/out/plot/`.
+
+```bash
+# Plot POT timeline (writes build/out/plot/pot_timeline.png)
+nuxsec plot
+
+# Override the output stem if you want a different filename or directory.
+nuxsec plot build/out/plot/pot_timeline_run1
+```
+
+Fixed outputs (by code convention):
+
+```
+build/out/plot/pot_timeline.png
+```
+
+Systematics still use macros or extensions; there is no `systs` or `list-analyses` command
+in this repository yet.
 
 Shell completion for these commands is available in `scripts/nuxsec-completion.bash` (source it
 in your shell profile or session).
@@ -197,4 +211,4 @@ in your shell profile or session).
 - `samples.tsv` is produced automatically and becomes the stable handoff.
 - After that, users only run:
   - `nuxsec template-make …` (required)
-  - Anything else is currently external to this repo (macros or new applications).
+  - `nuxsec plot …` (optional, macro-driven plotting outputs).

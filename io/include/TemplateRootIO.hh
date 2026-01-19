@@ -19,7 +19,7 @@ namespace nuxsec
 
 struct TemplateWriteOptions
 {
-    std::string top_dir = "templates";
+    std::string top_dir = "nuxsec/results";
     bool overwrite = true;
 };
 

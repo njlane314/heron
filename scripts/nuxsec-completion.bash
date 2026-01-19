@@ -7,7 +7,7 @@ _nuxsec()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  local commands="a art artio artio-aggregate s samp sample sample-aggregate t tpl template template-make help -h --help"
+  local commands="a art artio artio-aggregate s samp sample sample-aggregate t tpl template template-make plot help -h --help"
 
   if [[ ${COMP_CWORD} -le 1 ]]; then
     COMPREPLY=( $(compgen -W "${commands}" -- "${cur}") )

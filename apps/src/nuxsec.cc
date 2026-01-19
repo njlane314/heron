@@ -40,7 +40,10 @@ namespace
 const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
 const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
-const char *kUsagePlot = "Usage: nuxsec plot [OUTSTEM]\n       nuxsec plot visibility lambda|sigma0";
+const char *kUsagePlot = "Usage: nuxsec plot [OUTSTEM]\n"
+                         "       nuxsec plot MACRO.C\n"
+                         "       nuxsec plot macro MACRO.C [CALL]\n"
+                         "       nuxsec plot visibility lambda|sigma0";
 
 bool is_help_arg(const std::string &arg)
 {
@@ -54,7 +57,7 @@ void print_main_help(std::ostream &out)
         << "  a|art|artio     (artio-aggregate)  Aggregate art provenance for a stage\n"
         << "  s|samp|sample   (sample-aggregate) Aggregate Sample ROOT files from art provenance\n"
         << "  t|tpl|template  (template-make)    Build template histograms from sample list\n"
-        << "  plot                         Build POT timeline plot via ROOT macro\n"
+        << "  plot                         Build plots via ROOT macros\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
 
@@ -470,7 +473,31 @@ struct PlotArgs
 {
     std::string outstem = "build/out/plot/pot_timeline";
     std::string visibility_target;
+    std::string macro_path;
+    std::string macro_call;
 };
+
+bool looks_like_macro(const std::string &path)
+{
+    const std::filesystem::path macro_path(path);
+    const std::string ext = macro_path.extension().string();
+    return ext == ".C" || ext == ".cxx" || ext == ".cc";
+}
+
+std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
+                                         const std::string &macro_path)
+{
+    std::filesystem::path candidate(macro_path);
+    if (candidate.is_relative())
+    {
+        const auto repo_candidate = repo_root / candidate;
+        if (std::filesystem::exists(repo_candidate))
+        {
+            return repo_candidate;
+        }
+    }
+    return candidate;
+}
 
 PlotArgs parse_plot_args(const std::vector<std::string> &args)
 {
@@ -482,18 +509,38 @@ PlotArgs parse_plot_args(const std::vector<std::string> &args)
 
     if (args.size() == 1)
     {
-        out.outstem = nuxsec::app::trim(args[0]);
+        const std::string trimmed = nuxsec::app::trim(args[0]);
+        if (looks_like_macro(trimmed))
+        {
+            out.macro_path = trimmed;
+        }
+        else
+        {
+            out.outstem = trimmed;
+        }
     }
     else if (args.size() == 2 && nuxsec::app::trim(args[0]) == "visibility")
     {
         out.visibility_target = nuxsec::app::trim(args[1]);
+    }
+    else if (args.size() >= 2 && nuxsec::app::trim(args[0]) == "macro")
+    {
+        if (args.size() > 3)
+        {
+            throw std::runtime_error(kUsagePlot);
+        }
+        out.macro_path = nuxsec::app::trim(args[1]);
+        if (args.size() == 3)
+        {
+            out.macro_call = nuxsec::app::trim(args[2]);
+        }
     }
     else
     {
         throw std::runtime_error(kUsagePlot);
     }
 
-    if (out.visibility_target.empty() && out.outstem.empty())
+    if (out.visibility_target.empty() && out.outstem.empty() && out.macro_path.empty())
     {
         throw std::runtime_error("Invalid output stem");
     }
@@ -538,6 +585,32 @@ int run_plot(const std::vector<std::string> &args)
         const std::string load_cmd = ".L " + macro_path.string();
         gROOT->ProcessLine(load_cmd.c_str());
         const long result = gROOT->ProcessLine(call_cmd.c_str());
+        return static_cast<int>(result);
+    }
+
+    if (!plot_args.macro_path.empty())
+    {
+        const auto include_path = repo_root / "plot/include";
+        gSystem->AddIncludePath(("-I" + include_path.string()).c_str());
+        const auto ana_include_path = repo_root / "ana/include";
+        gSystem->AddIncludePath(("-I" + ana_include_path.string()).c_str());
+
+        const auto macro_path = resolve_macro_path(repo_root, plot_args.macro_path);
+        if (!std::filesystem::exists(macro_path))
+        {
+            throw std::runtime_error("Macro not found at " + macro_path.string());
+        }
+
+        if (plot_args.macro_call.empty())
+        {
+            const std::string load_cmd = ".x " + macro_path.string();
+            const long result = gROOT->ProcessLine(load_cmd.c_str());
+            return static_cast<int>(result);
+        }
+
+        const std::string load_cmd = ".L " + macro_path.string();
+        gROOT->ProcessLine(load_cmd.c_str());
+        const long result = gROOT->ProcessLine(plot_args.macro_call.c_str());
         return static_cast<int>(result);
     }
 

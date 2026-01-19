@@ -65,6 +65,23 @@ _nuxsec()
 
   _nuxsec_list_macros()
   {
+    local repo_root
+    local macro_dir
+    local macro
+
+    repo_root="$(_nuxsec_find_root 2>/dev/null || true)"
+    if [[ -n "${repo_root}" ]]; then
+      macro_dir="${repo_root}/plot/macro"
+      if [[ -d "${macro_dir}" ]]; then
+        for macro in "${macro_dir}"/*.C; do
+          if [[ -f "${macro}" ]]; then
+            basename "${macro}"
+          fi
+        done
+        return 0
+      fi
+    fi
+
     nuxsec macro list 2>/dev/null | awk '/\.C$/ {print $1}'
   }
 

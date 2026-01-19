@@ -109,7 +109,7 @@ static void print_flux_window_integrals(const char* tag,
   auto pct = [&](double x){ return (i_tot > 0 ? 100.0*x/i_tot : 0.0); };
   const int binwMeV = (int)std::lround(h_numu->GetXaxis()->GetBinWidth(1) * 1000.0);
 
-  printf("[plot_flux_minimal/%s] Energy-window integrals (%.2f–%.2f GeV)\n", tag, xmin, xmax);
+  printf("[plotFluxMinimal/%s] Energy-window integrals (%.2f–%.2f GeV)\n", tag, xmin, xmax);
   printf("  (TH1::Integral(...,\"width\") used: area = sum(content × binWidth).\n");
   printf("   Units: # / (6×10^20 POT) / cm^2; histogram y-axis is per %d MeV.)\n", binwMeV);
 
@@ -271,7 +271,7 @@ static void draw_one(const char* file,const char* tag,const char* out){
   TH1D* b=(TH1D*)f.Get("numubar/Detsmear/numubar_CV_AV_TPC_5MeV_bin"); if(!b) b=(TH1D*)f.Get("numubar/Detsmear/numubar_CV_AV_TPC");
   TH1D* c=(TH1D*)f.Get("nue/Detsmear/nue_CV_AV_TPC_5MeV_bin"); if(!c) c=(TH1D*)f.Get("nue/Detsmear/nue_CV_AV_TPC");
   TH1D* d=(TH1D*)f.Get("nuebar/Detsmear/nuebar_CV_AV_TPC_5MeV_bin"); if(!d) d=(TH1D*)f.Get("nuebar/Detsmear/nuebar_CV_AV_TPC");
-  if(!a||!b||!c||!d){ printf("[plot_flux_minimal/%s] missing *_CV_AV_TPC in Detsmear\n",tag); return; }
+  if(!a||!b||!c||!d){ printf("[plotFluxMinimal/%s] missing *_CV_AV_TPC in Detsmear\n",tag); return; }
   a=(TH1D*)a->Clone("h_numu"); b=(TH1D*)b->Clone("h_anumu"); c=(TH1D*)c->Clone("h_nue"); d=(TH1D*)d->Clone("h_anue");
   a->SetDirectory(0); b->SetDirectory(0); c->SetDirectory(0); d->SetDirectory(0); f.Close();
 
@@ -309,11 +309,11 @@ static void draw_one(const char* file,const char* tag,const char* out){
   L->Draw();
 
   canv.cd(); canv.Update(); canv.Print(out);
-  printf("[plot_flux_minimal] %s | bin width ≈ %.3f GeV (%d MeV)\n", tag, a->GetXaxis()->GetBinWidth(1), binwMeV);
+  printf("[plotFluxMinimal] %s | bin width ≈ %.3f GeV (%d MeV)\n", tag, a->GetXaxis()->GetBinWidth(1), binwMeV);
   delete frame; delete L; delete p_main; delete p_leg; delete a; delete b; delete c; delete d;
 }
 
-void plot_flux_minimal(){
+void plotFluxMinimal(){
   set_global_style();
   draw_one("/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_FHC.root","FHC","uboone_flux_FHC.pdf");
   draw_one("/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root","RHC","uboone_flux_RHC.pdf");

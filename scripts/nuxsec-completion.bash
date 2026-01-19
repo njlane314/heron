@@ -12,10 +12,24 @@ _nuxsec()
   _nuxsec_find_root()
   {
     local dir="${PWD}"
+    local base
+    local parent
     while [[ "${dir}" != "/" ]]; do
       if [[ -d "${dir}/plot/macro" ]]; then
         printf "%s" "${dir}"
         return 0
+      fi
+      base="$(basename "${dir}")"
+      if [[ "${base}" == "plot" && -d "${dir}/macro" ]]; then
+        printf "%s" "$(dirname "${dir}")"
+        return 0
+      fi
+      if [[ "${base}" == "macro" ]]; then
+        parent="$(dirname "${dir}")"
+        if [[ "$(basename "${parent}")" == "plot" ]]; then
+          printf "%s" "$(dirname "${parent}")"
+          return 0
+        fi
       fi
       dir="$(dirname "${dir}")"
     done

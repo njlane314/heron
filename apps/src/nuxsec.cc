@@ -39,9 +39,9 @@
 namespace
 {
 
-const char *kUsageArt = "Usage: nuxsec artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
-const char *kUsageSample = "Usage: nuxsec sample-aggregate NAME:FILELIST";
-const char *kUsageTemplate = "Usage: nuxsec template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
+const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
+const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
+const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
 
 bool is_help_arg(const std::string &arg)
 {
@@ -52,9 +52,9 @@ void print_main_help(std::ostream &out)
 {
     out << "Usage: nuxsec <command> [args]\n\n"
         << "Commands:\n"
-        << "  artio-aggregate  Aggregate art provenance for a stage\n"
-        << "  sample-aggregate Aggregate Sample ROOT files from art provenance\n"
-        << "  template-make    Build template histograms from sample list\n"
+        << "  a|art|artio     (artio-aggregate)  Aggregate art provenance for a stage\n"
+        << "  s|samp|sample   (sample-aggregate) Aggregate Sample ROOT files from art provenance\n"
+        << "  t|tpl|template  (template-make)    Build template histograms from sample list\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
 
@@ -586,15 +586,15 @@ int main(int argc, char **argv)
             return 0;
         }
 
-        if (command == "artio-aggregate" || command == "artio")
+        if (command == "artio-aggregate" || command == "artio" || command == "art" || command == "a")
         {
             return run_artio(args);
         }
-        if (command == "sample-aggregate" || command == "sample")
+        if (command == "sample-aggregate" || command == "sample" || command == "samp" || command == "s")
         {
             return run_sample(args);
         }
-        if (command == "template-make" || command == "template")
+        if (command == "template-make" || command == "template" || command == "tpl" || command == "t")
         {
             return run_template(args);
         }

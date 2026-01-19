@@ -12,6 +12,8 @@ setup eigen v3_4_0
 NUXSEC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export NUXSEC_ROOT
 
+source "${NUXSEC_ROOT}/scripts/nuxsec-completion.bash"
+
 export PATH="${NUXSEC_ROOT}/build/bin:${PATH}"
 export LD_LIBRARY_PATH="${NUXSEC_ROOT}/build/lib:${NUXSEC_ROOT}/build/framework:${LD_LIBRARY_PATH}"
 export ROOT_INCLUDE_PATH="${NUXSEC_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"

@@ -261,10 +261,23 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     TCanvas canvas("c", "POT timeline",
                    nuxsec::plot::kCanvasWidth,
                    nuxsec::plot::kCanvasHeight);
-    canvas.SetMargin(0.08, 0.12, 0.20, 0.08);
-    canvas.SetGridy(false);
-    canvas.SetTickx(1);
-    canvas.SetTicky(0);
+    const double split = 0.82;
+    TPad *main_pad = new TPad("pad_main", "pad_main", 0.0, 0.0, 1.0, split);
+    TPad *legend_pad = new TPad("pad_legend", "pad_legend", 0.0, split, 1.0, 1.0);
+    main_pad->SetTopMargin(0.02);
+    main_pad->SetBottomMargin(0.20);
+    main_pad->SetLeftMargin(0.08);
+    main_pad->SetRightMargin(0.12);
+    legend_pad->SetTopMargin(0.08);
+    legend_pad->SetBottomMargin(0.02);
+    legend_pad->SetLeftMargin(0.02);
+    legend_pad->SetRightMargin(0.02);
+    main_pad->Draw();
+    legend_pad->Draw();
+    main_pad->cd();
+    main_pad->SetGridy(false);
+    main_pad->SetTickx(1);
+    main_pad->SetTicky(0);
 
     THStack stack("hs", "");
     stack.Add(const_cast<TH1D *>(&histograms.bnb));
@@ -308,7 +321,8 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     right_axis.SetTitle("Cumulative POT (x 10^{20})");
     right_axis.Draw();
 
-    TLegend legend(0.16, 0.68, 0.40, 0.88);
+    legend_pad->cd();
+    TLegend legend(0.16, 0.08, 0.84, 0.92);
     legend.SetBorderSize(0);
     legend.SetFillStyle(0);
     legend.SetTextFont(42);
@@ -318,8 +332,11 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     legend.AddEntry(&histograms.rhc, "NuMI-RHC (\\bar{\\nu})", "f");
     legend.AddEntry(&graph, "Total POT", "l");
     legend.Draw();
-    canvas.RedrawAxis();
+    main_pad->cd();
+    main_pad->RedrawAxis();
     canvas.SaveAs(outfile.c_str());
+    delete main_pad;
+    delete legend_pad;
 }
 
 void plotPotSimpleInternal(const char *out = nullptr)

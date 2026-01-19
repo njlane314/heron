@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include "Selection.hh"
+#include "../../ana/include/Selection.hh"
 
 namespace nuxsec
 {

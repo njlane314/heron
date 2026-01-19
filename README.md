@@ -181,10 +181,14 @@ nuxsec template-make build/out/sample/samples.tsv \
 
 ### 4) Systematics and plots
 
-The current CLI only implements `artio-aggregate`, `sample-aggregate`, and `template-make`.
+The current CLI only implements `a`/`art`/`artio`/`artio-aggregate`,
+`s`/`samp`/`sample`/`sample-aggregate`, and `t`/`tpl`/`template`/`template-make`.
 There is no `systs`, `plots`, or `list-analyses` command in this repository yet. If you need
 systematics or plotting, use the ROOT macros under the module `macro/` directories or extend
 the CLI with a new application.
+
+Shell completion for these commands is available in `scripts/nuxsec-completion.bash` (source it
+in your shell profile or session).
 
 ### What the user “touches” in this UX
 

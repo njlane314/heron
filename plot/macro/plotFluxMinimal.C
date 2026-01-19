@@ -266,7 +266,9 @@ static void draw_one(const char* file,const char* tag,const char* out){
   int CR=TColor::GetColor("#e41a1c"), CB=TColor::GetColor("#1f78b4");
   style_line(a,CR,1); style_line(c,CR,2); style_line(b,CB,1); style_line(d,CB,3);
 
-  TCanvas canv(Form("c_%s",tag),Form("%s Mode",tag),1200,700);
+  TCanvas canv(Form("c_%s",tag),Form("%s Mode",tag),
+               nuxsec::plot::kCanvasWidth,
+               nuxsec::plot::kCanvasHeight);
   TPad* p_main=new TPad("pad_main","pad_main",0.,0.00,1.,split);
   TPad* p_leg =new TPad("pad_legend","pad_legend",0.,split,1.,1.00);
   p_main->SetTopMargin(0.01); p_main->SetBottomMargin(0.12); p_main->SetLeftMargin(0.12); p_main->SetRightMargin(0.05); p_main->SetLogy();

@@ -268,7 +268,9 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
 void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, const std::string &outfile)
 {
     // Aspect and margins closer to the reference figure.
-    TCanvas canvas("c", "POT timeline", 1200, 700);
+    TCanvas canvas("c", "POT timeline",
+                   nuxsec::plot::kCanvasWidth,
+                   nuxsec::plot::kCanvasHeight);
     canvas.SetMargin(0.08, 0.12, 0.20, 0.08);
     canvas.SetGridy(false);
     canvas.SetTickx(1);

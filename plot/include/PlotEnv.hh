@@ -28,6 +28,9 @@ namespace nuxsec
 namespace plot
 {
 
+inline constexpr int kCanvasWidth = 1200;
+inline constexpr int kCanvasHeight = 700;
+
 inline const char *getenv_cstr(const char *name) noexcept
 {
     return std::getenv(name);

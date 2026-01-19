@@ -338,9 +338,9 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     stack.SetMinimum(0);
 
     // Cumulative curves (scaled onto the left axis).
-    const Int_t col_total = TColor::GetColor("#2962ff");
-    const Int_t col_bnb = TColor::GetColor("#00c853");
-    const Int_t col_fhc = TColor::GetColor("#ffb300");
+    const Int_t col_total = TColor::GetColor("#2196f3");
+    const Int_t col_bnb = TColor::GetColor("#00e676");
+    const Int_t col_fhc = TColor::GetColor("#ffc400");
     const Int_t col_rhc = TColor::GetColor("#ff1744");
 
     auto style_line = [](TGraph &g, Int_t col, Int_t lstyle, Int_t lwidth,
@@ -361,7 +361,7 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     TGraph g_total(data.x.size(), data.x.data(), data.scaled_total.data());
     TGraph g_total_outline(data.x.size(), data.x.data(), data.scaled_total.data());
     style_line(g_total_outline, kBlack, 1, 5, 20, 0.0, false);
-    style_line(g_total, col_total, 1, 3, 20, 0.0, false);
+    style_line(g_total, col_total, 1, 4, 20, 0.0, false);
     g_total_outline.Draw("L SAME");
     g_total.Draw("L SAME");
 
@@ -369,22 +369,22 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     // (Markers help against filled histograms; outlines avoid low-contrast segments.)
     TGraph g_bnb(data.x.size(), data.x.data(), data.scaled_bnb.data());
     TGraph g_bnb_outline(data.x.size(), data.x.data(), data.scaled_bnb.data());
-    style_line(g_bnb_outline, kBlack, 7, 5, 21, 0.0, false);
-    style_line(g_bnb, col_bnb, 7, 3, 21, 0.55, true);
+    style_line(g_bnb_outline, kBlack, 1, 5, 21, 0.0, false);
+    style_line(g_bnb, col_bnb, 1, 4, 21, 0.55, true);
     g_bnb_outline.Draw("L SAME");
     g_bnb.Draw("LP SAME");
 
     TGraph g_fhc(data.x.size(), data.x.data(), data.scaled_fhc.data());
     TGraph g_fhc_outline(data.x.size(), data.x.data(), data.scaled_fhc.data());
-    style_line(g_fhc_outline, kBlack, 2, 5, 22, 0.0, false);
-    style_line(g_fhc, col_fhc, 2, 3, 22, 0.55, true);
+    style_line(g_fhc_outline, kBlack, 1, 5, 22, 0.0, false);
+    style_line(g_fhc, col_fhc, 1, 4, 22, 0.55, true);
     g_fhc_outline.Draw("L SAME");
     g_fhc.Draw("LP SAME");
 
     TGraph g_rhc(data.x.size(), data.x.data(), data.scaled_rhc.data());
     TGraph g_rhc_outline(data.x.size(), data.x.data(), data.scaled_rhc.data());
-    style_line(g_rhc_outline, kBlack, 9, 5, 23, 0.0, false);
-    style_line(g_rhc, col_rhc, 9, 3, 23, 0.55, true);
+    style_line(g_rhc_outline, kBlack, 1, 5, 23, 0.0, false);
+    style_line(g_rhc, col_rhc, 1, 4, 23, 0.55, true);
     g_rhc_outline.Draw("L SAME");
     g_rhc.Draw("LP SAME");
 

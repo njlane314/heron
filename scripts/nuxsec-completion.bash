@@ -65,15 +65,7 @@ _nuxsec()
 
   _nuxsec_list_macros()
   {
-    local root
-    root="$(_nuxsec_find_root)" || return 0
-    local macro_dir="${root}/plot/macro"
-    local macro
-    shopt -s nullglob
-    for macro in "${macro_dir}"/*.C; do
-      printf "%s " "$(basename "${macro}")"
-    done
-    shopt -u nullglob
+    nuxsec macro list 2>/dev/null | awk '/\.C$/ {print $1}'
   }
 
   if [[ ${COMP_CWORD} -le 1 ]]; then
@@ -87,19 +79,12 @@ _nuxsec()
   fi
 
   if [[ "${COMP_WORDS[1]}" == "macro" || "${COMP_WORDS[1]}" == "m" ]]; then
-    local macro_commands="run list"
     local macros
     macros="$(_nuxsec_list_macros)"
     if [[ ${COMP_CWORD} -eq 2 ]]; then
-      COMPREPLY=( $(compgen -W "${macro_commands} ${macros}" -- "${cur}") )
-      return 0
-    fi
-    if [[ "${prev}" == "run" ]]; then
       COMPREPLY=( $(compgen -W "${macros}" -- "${cur}") )
       return 0
     fi
-    COMPREPLY=( $(compgen -W "${macros}" -- "${cur}") )
-    return 0
   fi
 
   COMPREPLY=()

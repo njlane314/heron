@@ -674,9 +674,8 @@ int main(int argc, char **argv)
         {
             return run_template(args);
         }
-        if (command == "macro" || command == "m" || command == "plot")
+        if (command == "macro" || command == "m")
         {
-            // "plot" is kept as a legacy alias; prefer "macro".
             return run_macro_command(args);
         }
 

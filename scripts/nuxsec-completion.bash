@@ -7,7 +7,7 @@ _nuxsec()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  local commands="a art artio artio-aggregate s samp sample sample-aggregate t tpl template template-make macro m plot help -h --help"
+  local commands="a art artio artio-aggregate s samp sample sample-aggregate t tpl template template-make macro m help -h --help"
 
   _nuxsec_find_root()
   {
@@ -45,7 +45,7 @@ _nuxsec()
     return 0
   fi
 
-  if [[ "${COMP_WORDS[1]}" == "macro" || "${COMP_WORDS[1]}" == "m" || "${COMP_WORDS[1]}" == "plot" ]]; then
+  if [[ "${COMP_WORDS[1]}" == "macro" || "${COMP_WORDS[1]}" == "m" ]]; then
     local macro_commands="run list"
     local macros
     macros="$(_nuxsec_list_macros)"

@@ -17,6 +17,8 @@
 #include "TStyle.h"
 #include "TColor.h"
 #include "TSystem.h"
+#include "../include/PlotEnv.hh"
+#include "../include/Plotter.hh"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -50,6 +52,7 @@ static inline double clip(double x, double lo, double hi) {
 }
 
 void plotSigma0LambdaVisibility() {
+  nuxsec::plot::Plotter{}.set_global_style();
   gStyle->SetOptStat(0);
 
   // --------- Two-body constants ----------
@@ -211,5 +214,7 @@ void plotSigma0LambdaVisibility() {
                     : Form("Reference p_{#Sigma^{0}} = %.3f GeV/c", vline_pS), "l");
   leg.Draw();
 
-  c.SaveAs("sigma0_lambda_gamma_visibility_efficiency.pdf");
+  const std::string out =
+      nuxsec::plot::plot_output_file("sigma0_lambda_gamma_visibility_efficiency").string();
+  c.SaveAs(out.c_str());
 }

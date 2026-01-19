@@ -7,6 +7,7 @@
 
 #include "Plotter.hh"
 
+#include "PlotEnv.hh"
 #include "StackedHist.hh"
 
 #include <TGaxis.h>
@@ -26,16 +27,44 @@ namespace nuxsec
 namespace plot
 {
 
-Plotter::Plotter() = default;
+namespace
+{
+
+void apply_env_defaults(Options &opt)
+{
+    // Keep explicit caller choices; only fill empty fields.
+    if (opt.out_dir.empty())
+    {
+        opt.out_dir = plot_output_dir();
+    }
+    if (opt.image_format.empty())
+    {
+        opt.image_format = plot_image_format();
+    }
+}
+
+} // namespace
+
+Plotter::Plotter()
+{
+    apply_env_defaults(opt_);
+}
 
 Plotter::Plotter(Options opt)
-    : opt_(std::move(opt)) {}
+    : opt_(std::move(opt))
+{
+    apply_env_defaults(opt_);
+}
 
 const Options &Plotter::options() const noexcept { return opt_; }
 
 Options &Plotter::options() noexcept { return opt_; }
 
-void Plotter::set_options(Options opt) { opt_ = std::move(opt); }
+void Plotter::set_options(Options opt)
+{
+    opt_ = std::move(opt);
+    apply_env_defaults(opt_);
+}
 
 void Plotter::draw_stack_by_channel(const TH1DModel &spec, const std::vector<const Entry *> &mc) const
 {

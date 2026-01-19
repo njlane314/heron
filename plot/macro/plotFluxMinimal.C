@@ -10,6 +10,8 @@
 #include "TString.h"
 #include "TColor.h"
 #include "TSystem.h"
+#include "../include/PlotEnv.hh"
+#include "../include/Plotter.hh"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -44,24 +46,7 @@ static inline void scale_flux_to_release_units(TH1* h1, TH1* h2, TH1* h3, TH1* h
 // ---------------------------------------------------------------------------
 
 static void set_global_style(){
-  const int f=42;
-  TStyle* s=new TStyle("PlotterStyle","Plotter Style");
-  s->SetTitleFont(f,"X"); s->SetTitleFont(f,"Y"); s->SetTitleFont(f,"Z");
-  s->SetTitleSize(0.04,"X"); s->SetTitleSize(0.04,"Y"); s->SetTitleSize(0.05,"Z");
-  s->SetLabelFont(f,"X"); s->SetLabelFont(f,"Y"); s->SetLabelFont(f,"Z");
-  s->SetLabelSize(0.045,"X"); s->SetLabelSize(0.045,"Y"); s->SetLabelSize(0.045,"Z");
-  s->SetLabelOffset(0.005,"X"); s->SetLabelOffset(0.005,"Y"); s->SetLabelOffset(0.005,"Z");
-  s->SetTitleOffset(1.10,"X"); s->SetTitleOffset(1.10,"Y");
-  s->SetOptStat(0); s->SetOptTitle(0);
-  s->SetPadTickX(1); s->SetPadTickY(1);
-  TGaxis::SetMaxDigits(4);
-  s->SetPadLeftMargin(0.15); s->SetPadRightMargin(0.05);
-  s->SetPadTopMargin(0.07); s->SetPadBottomMargin(0.12);
-  s->SetMarkerSize(1.0);
-  s->SetCanvasColor(0); s->SetPadColor(0); s->SetFrameFillColor(0);
-  s->SetCanvasBorderMode(0); s->SetPadBorderMode(0); s->SetStatColor(0); s->SetFrameBorderMode(0);
-  s->SetTitleFillColor(0); s->SetTitleBorderSize(0);
-  gROOT->SetStyle("PlotterStyle"); gROOT->ForceStyle();
+  nuxsec::plot::Plotter{}.set_global_style();
 }
 
 static TLegend* build_flux_legend_like_stacked(TPad* p_leg, TH1* h_numu, TH1* h_anumu, TH1* h_nue, TH1* h_anue, double split, double s_numu, double s_anumu, double s_nue, double s_anue, double s_tot){
@@ -313,18 +298,23 @@ static void draw_one(const char* file,const char* tag,const char* out){
   delete frame; delete L; delete p_main; delete p_leg; delete a; delete b; delete c; delete d;
 }
 
-void plotFluxMinimal(){
+void plotFluxMinimal(
+  const char* fhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_FHC.root",
+  const char* rhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root"
+){
   set_global_style();
-  draw_one("/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_FHC.root","FHC","uboone_flux_FHC.pdf");
-  draw_one("/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root","RHC","uboone_flux_RHC.pdf");
+  const std::string out_fhc = nuxsec::plot::plot_output_file("uboone_flux_FHC").string();
+  const std::string out_rhc = nuxsec::plot::plot_output_file("uboone_flux_RHC").string();
+  draw_one(fhc_file,"FHC",out_fhc.c_str());
+  draw_one(rhc_file,"RHC",out_rhc.c_str());
 
   // Informative print for sanity:
   printf("[units] Histograms scaled by kUNIT_SCALE = %.3e to #/(6e20 POT)/cm^2/GeV "
          "(kPOT_TARGET=%.3e, kPOT_IN_FILE=%.3e, m^2->cm^2=%g)\n",
          kUNIT_SCALE, kPOT_TARGET, kPOT_IN_FILE, kM2_TO_CM2);
   // -------- NEW: write machine-readable flux tables for x-sec release --------
-  const char* outdir = "release"; // adjust to your repository root if needed
-  make_tables_one("/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_FHC.root","FHC",outdir);
-  make_tables_one("/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root","RHC",outdir);
-  printf("[tables] Wrote CSVs under %s/{bins,flux}/\n", outdir);
+  const std::string outdir = nuxsec::plot::release_dir_path().string();
+  make_tables_one(fhc_file,"FHC",outdir.c_str());
+  make_tables_one(rhc_file,"RHC",outdir.c_str());
+  printf("[tables] Wrote CSVs under %s/{bins,flux}/\n", outdir.c_str());
 }

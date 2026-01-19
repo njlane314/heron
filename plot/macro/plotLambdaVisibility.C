@@ -11,6 +11,8 @@
 #include "TLine.h"
 #include "TStyle.h"
 #include "TSystem.h"
+#include "../include/PlotEnv.hh"
+#include "../include/Plotter.hh"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -35,6 +37,7 @@ namespace cfg {
 }
 
 void plotLambdaVisibility() {
+  nuxsec::plot::Plotter{}.set_global_style();
   gStyle->SetOptStat(0);
 
   // --------- Analytic two-body constants (Λ→pπ) ----------
@@ -126,5 +129,6 @@ void plotLambdaVisibility() {
   leg.AddEntry(&L,  Form("p^{vis}_{#Lambda} = %.2f GeV/c", pvis), "l");
   leg.Draw();
 
-  c.SaveAs("lambda_visibility_efficiency.pdf");
+  const std::string out = nuxsec::plot::plot_output_file("lambda_visibility_efficiency").string();
+  c.SaveAs(out.c_str());
 }

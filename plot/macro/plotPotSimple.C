@@ -25,6 +25,7 @@
 #include <sqlite3.h>
 
 #include "../include/Plotter.hh"
+#include "../include/PlotEnv.hh"
 
 namespace
 {
@@ -264,7 +265,7 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
     return data;
 }
 
-void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, const char *outstem)
+void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, const std::string &outfile)
 {
     // Aspect and margins closer to the reference figure.
     TCanvas canvas("c", "POT timeline", 1200, 700);
@@ -326,10 +327,10 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     legend.AddEntry(&graph, "Total POT", "l");
     legend.Draw();
     canvas.RedrawAxis();
-    canvas.SaveAs(Form("%s.png", outstem));
+    canvas.SaveAs(outfile.c_str());
 }
 
-void plotPotSimpleInternal(const char *outstem = "pot_timeline")
+void plotPotSimpleInternal(const char *out = nullptr)
 {
     configure_style();
     const std::string run_db = db_root() + "/run.db";
@@ -384,18 +385,20 @@ void plotPotSimpleInternal(const char *outstem = "pot_timeline")
     fill_histogram(fhc_samples, histograms.fhc);
     fill_histogram(rhc_samples, histograms.rhc);
     const cumulative_data data = compute_cumulative_data(histograms, nbins);
-    draw_plot(histograms, data, outstem);
+    const auto out_path = nuxsec::plot::resolve_output_file(out ? out : "", "pot_timeline");
+    const std::string outfile = out_path.string();
+    draw_plot(histograms, data, outfile);
 }
 
 } // namespace
 
-int nuxsec_plot(const char *outstem = "build/out/plot/pot_timeline")
+int nuxsec_plot(const char *out = nullptr)
 {
-    plotPotSimpleInternal(outstem);
+    plotPotSimpleInternal(out);
     return 0;
 }
 
-void plotPotSimple(const char *outstem = "build/out/plot/pot_timeline")
+void plotPotSimple(const char *out = nullptr)
 {
-    plotPotSimpleInternal(outstem);
+    plotPotSimpleInternal(out);
 }

@@ -40,10 +40,17 @@ namespace
 const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
 const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
-const char *kUsagePlot = "Usage: nuxsec plot [OUTSTEM]\n"
-                         "       nuxsec plot MACRO.C\n"
-                         "       nuxsec plot macro MACRO.C [CALL]\n"
-                         "       nuxsec plot visibility lambda|sigma0";
+const char *kUsageMacro =
+    "Usage: nuxsec macro <name> [args...]\n"
+    "       nuxsec macro run MACRO.C [CALL]\n"
+    "       nuxsec macro list\n"
+    "\nBuilt-in plot macros:\n"
+    "  pot [OUT]\n"
+    "  flux [FHC_ROOT [RHC_ROOT]]\n"
+    "  visibility lambda|sigma0\n"
+    "\nEnvironment:\n"
+    "  NUXSEC_PLOT_DIR     Output directory (default: <repo>/build/plot)\n"
+    "  NUXSEC_PLOT_FORMAT  Output extension (default: pdf)\n";
 
 bool is_help_arg(const std::string &arg)
 {
@@ -57,7 +64,7 @@ void print_main_help(std::ostream &out)
         << "  a|art|artio     (artio-aggregate)  Aggregate art provenance for a stage\n"
         << "  s|samp|sample   (sample-aggregate) Aggregate Sample ROOT files from art provenance\n"
         << "  t|tpl|template  (template-make)    Build template histograms from sample list\n"
-        << "  plot                         Build plots via ROOT macros\n"
+        << "  macro|m                      Run plot macros (or call a built-in macro directly)\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
 
@@ -97,6 +104,19 @@ std::filesystem::path find_repo_root()
     }
 
     return std::filesystem::current_path();
+}
+
+void ensure_plot_env(const std::filesystem::path &repo_root)
+{
+    if (!gSystem->Getenv("NUXSEC_REPO_ROOT"))
+    {
+        gSystem->Setenv("NUXSEC_REPO_ROOT", repo_root.string().c_str());
+    }
+    if (!gSystem->Getenv("NUXSEC_PLOT_DIR"))
+    {
+        const auto out = (repo_root / "build" / "plot").string();
+        gSystem->Setenv("NUXSEC_PLOT_DIR", out.c_str());
+    }
 }
 
 
@@ -469,21 +489,6 @@ int run_template(const std::vector<std::string> &args)
     return 0;
 }
 
-struct PlotArgs
-{
-    std::string outstem = "build/out/plot/pot_timeline";
-    std::string visibility_target;
-    std::string macro_path;
-    std::string macro_call;
-};
-
-bool looks_like_macro(const std::string &path)
-{
-    const std::filesystem::path macro_path(path);
-    const std::string ext = macro_path.extension().string();
-    return ext == ".C" || ext == ".cxx" || ext == ".cc";
-}
-
 std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
                                          const std::string &macro_path)
 {
@@ -499,142 +504,192 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
     return candidate;
 }
 
-PlotArgs parse_plot_args(const std::vector<std::string> &args)
+void add_plot_include_paths(const std::filesystem::path &repo_root)
 {
-    PlotArgs out;
-    if (args.empty())
-    {
-        return out;
-    }
-
-    if (args.size() == 1)
-    {
-        const std::string trimmed = nuxsec::app::trim(args[0]);
-        if (looks_like_macro(trimmed))
-        {
-            out.macro_path = trimmed;
-        }
-        else
-        {
-            out.outstem = trimmed;
-        }
-    }
-    else if (args.size() == 2 && nuxsec::app::trim(args[0]) == "visibility")
-    {
-        out.visibility_target = nuxsec::app::trim(args[1]);
-    }
-    else if (args.size() >= 2 && nuxsec::app::trim(args[0]) == "macro")
-    {
-        if (args.size() > 3)
-        {
-            throw std::runtime_error(kUsagePlot);
-        }
-        out.macro_path = nuxsec::app::trim(args[1]);
-        if (args.size() == 3)
-        {
-            out.macro_call = nuxsec::app::trim(args[2]);
-        }
-    }
-    else
-    {
-        throw std::runtime_error(kUsagePlot);
-    }
-
-    if (out.visibility_target.empty() && out.outstem.empty() && out.macro_path.empty())
-    {
-        throw std::runtime_error("Invalid output stem");
-    }
-    return out;
-}
-
-int run_plot(const std::vector<std::string> &args)
-{
-    if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
-    {
-        std::cout << kUsagePlot << "\n";
-        return 0;
-    }
-
-    const auto repo_root = find_repo_root();
-    const PlotArgs plot_args = parse_plot_args(args);
-    if (!plot_args.visibility_target.empty())
-    {
-        std::filesystem::path macro_path;
-        std::string call_cmd;
-        if (plot_args.visibility_target == "lambda")
-        {
-            macro_path = repo_root / "plot/macro/plotLambdaVisibility.C";
-            call_cmd = "plotLambdaVisibility();";
-        }
-        else if (plot_args.visibility_target == "sigma0")
-        {
-            macro_path = repo_root / "plot/macro/plotSigma0LambdaVisibility.C";
-            call_cmd = "plotSigma0LambdaVisibility();";
-        }
-        else
-        {
-            throw std::runtime_error("Unknown visibility macro (expected lambda|sigma0): " +
-                                     plot_args.visibility_target);
-        }
-
-        if (!std::filesystem::exists(macro_path))
-        {
-            throw std::runtime_error("Visibility macro not found at " + macro_path.string());
-        }
-
-        const std::string load_cmd = ".L " + macro_path.string();
-        gROOT->ProcessLine(load_cmd.c_str());
-        const long result = gROOT->ProcessLine(call_cmd.c_str());
-        return static_cast<int>(result);
-    }
-
-    if (!plot_args.macro_path.empty())
-    {
-        const auto include_path = repo_root / "plot/include";
-        gSystem->AddIncludePath(("-I" + include_path.string()).c_str());
-        const auto ana_include_path = repo_root / "ana/include";
-        gSystem->AddIncludePath(("-I" + ana_include_path.string()).c_str());
-
-        const auto macro_path = resolve_macro_path(repo_root, plot_args.macro_path);
-        if (!std::filesystem::exists(macro_path))
-        {
-            throw std::runtime_error("Macro not found at " + macro_path.string());
-        }
-
-        if (plot_args.macro_call.empty())
-        {
-            const std::string load_cmd = ".x " + macro_path.string();
-            const long result = gROOT->ProcessLine(load_cmd.c_str());
-            return static_cast<int>(result);
-        }
-
-        const std::string load_cmd = ".L " + macro_path.string();
-        gROOT->ProcessLine(load_cmd.c_str());
-        const long result = gROOT->ProcessLine(plot_args.macro_call.c_str());
-        return static_cast<int>(result);
-    }
-
-    std::filesystem::path outstem_path(plot_args.outstem);
-    if (!outstem_path.parent_path().empty())
-    {
-        std::filesystem::create_directories(outstem_path.parent_path());
-    }
     const auto include_path = repo_root / "plot/include";
     gSystem->AddIncludePath(("-I" + include_path.string()).c_str());
     const auto ana_include_path = repo_root / "ana/include";
     gSystem->AddIncludePath(("-I" + ana_include_path.string()).c_str());
-    const auto macro_path = repo_root / "plot/macro/NuxsecPlotDriver.C";
+}
+
+std::string quote_root_string(const std::string &s)
+{
+    std::string out;
+    out.reserve(s.size() + 2);
+    out.push_back('"');
+    for (char c : s)
+    {
+        if (c == '\\' || c == '"')
+        {
+            out.push_back('\\');
+        }
+        out.push_back(c);
+    }
+    out.push_back('"');
+    return out;
+}
+
+int run_root_macro_call(const std::filesystem::path &repo_root,
+                        const std::filesystem::path &macro_path,
+                        const std::string &call_cmd)
+{
+    ensure_plot_env(repo_root);
+    add_plot_include_paths(repo_root);
+
     if (!std::filesystem::exists(macro_path))
     {
-        throw std::runtime_error("Plot macro not found at " + macro_path.string());
+        throw std::runtime_error("Macro not found at " + macro_path.string());
     }
 
     const std::string load_cmd = ".L " + macro_path.string();
     gROOT->ProcessLine(load_cmd.c_str());
-
-    const std::string call_cmd = "nuxsec_plot(\"" + plot_args.outstem + "\");";
-    const long result = gROOT->ProcessLine(call_cmd.c_str());
+    const long result = call_cmd.empty() ? 0 : gROOT->ProcessLine(call_cmd.c_str());
     return static_cast<int>(result);
+}
+
+int run_root_macro_exec(const std::filesystem::path &repo_root,
+                        const std::filesystem::path &macro_path)
+{
+    ensure_plot_env(repo_root);
+    add_plot_include_paths(repo_root);
+
+    if (!std::filesystem::exists(macro_path))
+    {
+        throw std::runtime_error("Macro not found at " + macro_path.string());
+    }
+
+    const std::string exec_cmd = ".x " + macro_path.string();
+    const long result = gROOT->ProcessLine(exec_cmd.c_str());
+    return static_cast<int>(result);
+}
+
+void print_macro_list(std::ostream &out)
+{
+    out << "Built-in plot macros:\n"
+        << "  pot [OUT]\n"
+        << "  flux [FHC_ROOT [RHC_ROOT]]\n"
+        << "  visibility lambda|sigma0\n";
+}
+
+// Dispatch a macro by name. Returns >=0 if handled, -1 if not a known macro.
+int run_macro_named(const std::string &name, const std::vector<std::string> &args)
+{
+    const auto repo_root = find_repo_root();
+    ensure_plot_env(repo_root);
+
+    if (name == "pot")
+    {
+        const auto macro_path = repo_root / "plot/macro/plotPotSimple.C";
+        const std::string call =
+            args.empty() ? "plotPotSimple();"
+                         : "plotPotSimple(" + quote_root_string(nuxsec::app::trim(args[0])) + ");";
+        return run_root_macro_call(repo_root, macro_path, call);
+    }
+
+    if (name == "flux")
+    {
+        const auto macro_path = repo_root / "plot/macro/plotFluxMinimal.C";
+        std::string call;
+        if (args.empty())
+        {
+            call = "plotFluxMinimal();";
+        }
+        else if (args.size() == 1)
+        {
+            call = "plotFluxMinimal(" + quote_root_string(nuxsec::app::trim(args[0])) + ");";
+        }
+        else if (args.size() == 2)
+        {
+            call = "plotFluxMinimal(" + quote_root_string(nuxsec::app::trim(args[0])) + ", " +
+                   quote_root_string(nuxsec::app::trim(args[1])) + ");";
+        }
+        else
+        {
+            throw std::runtime_error(kUsageMacro);
+        }
+        return run_root_macro_call(repo_root, macro_path, call);
+    }
+
+    if (name == "visibility")
+    {
+        if (args.empty())
+        {
+            throw std::runtime_error(kUsageMacro);
+        }
+        const std::string which = nuxsec::app::trim(args[0]);
+        std::filesystem::path macro_path;
+        std::string call;
+        if (which == "lambda")
+        {
+            macro_path = repo_root / "plot/macro/plotLambdaVisibility.C";
+            call = "plotLambdaVisibility();";
+        }
+        else if (which == "sigma0")
+        {
+            macro_path = repo_root / "plot/macro/plotSigma0LambdaVisibility.C";
+            call = "plotSigma0LambdaVisibility();";
+        }
+        else
+        {
+            throw std::runtime_error("Unknown visibility macro (expected lambda|sigma0): " + which);
+        }
+        return run_root_macro_call(repo_root, macro_path, call);
+    }
+
+    return -1;
+}
+
+int run_macro_command(const std::vector<std::string> &args)
+{
+    if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
+    {
+        std::cout << kUsageMacro << "\n";
+        print_macro_list(std::cout);
+        return 0;
+    }
+
+    const auto repo_root = find_repo_root();
+    ensure_plot_env(repo_root);
+
+    const std::string verb = nuxsec::app::trim(args[0]);
+    std::vector<std::string> rest;
+    rest.reserve(args.size() > 0 ? args.size() - 1 : 0);
+    for (size_t i = 1; i < args.size(); ++i)
+    {
+        rest.emplace_back(args[i]);
+    }
+
+    if (verb == "list")
+    {
+        print_macro_list(std::cout);
+        return 0;
+    }
+
+    if (verb == "run")
+    {
+        if (rest.empty() || rest.size() > 2)
+        {
+            throw std::runtime_error(kUsageMacro);
+        }
+        const std::string macro_spec = nuxsec::app::trim(rest[0]);
+        const std::string call = (rest.size() == 2) ? nuxsec::app::trim(rest[1]) : "";
+
+        const auto macro_path = resolve_macro_path(repo_root, macro_spec);
+        if (call.empty())
+        {
+            return run_root_macro_exec(repo_root, macro_path);
+        }
+        return run_root_macro_call(repo_root, macro_path, call);
+    }
+
+    // Otherwise treat <name> as a built-in macro.
+    const int handled = run_macro_named(verb, rest);
+    if (handled >= 0)
+    {
+        return handled;
+    }
+
+    throw std::runtime_error("Unknown macro: " + verb + "\n\n" + std::string(kUsageMacro));
 }
 
 }
@@ -675,9 +730,17 @@ int main(int argc, char **argv)
         {
             return run_template(args);
         }
-        if (command == "plot")
+        if (command == "macro" || command == "m" || command == "plot")
         {
-            return run_plot(args);
+            // "plot" is kept as a legacy alias; prefer "macro".
+            return run_macro_command(args);
+        }
+
+        // Minimal: allow calling built-in plot macros directly as top-level commands.
+        const int handled = run_macro_named(command, args);
+        if (handled >= 0)
+        {
+            return handled;
         }
 
         std::cerr << "Unknown command: " << command << "\n";

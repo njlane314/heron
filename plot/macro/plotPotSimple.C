@@ -215,29 +215,59 @@ void fill_histogram(const pot_samples &samples, TH1D &histogram)
 struct cumulative_data
 {
     std::vector<double> x;
-    std::vector<double> scaled;
+    std::vector<double> scaled_total;
+    std::vector<double> scaled_bnb;
+    std::vector<double> scaled_fhc;
+    std::vector<double> scaled_rhc;
     double y_max;
-    double max_cumulative;
+    double max_cumulative_total;
 };
 
 cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int nbins)
 {
     cumulative_data data;
     data.x.resize(nbins);
-    data.scaled.resize(nbins);
-    std::vector<double> cumulative(nbins);
+    data.scaled_total.resize(nbins);
+    data.scaled_bnb.resize(nbins);
+    data.scaled_fhc.resize(nbins);
+    data.scaled_rhc.resize(nbins);
+
+    std::vector<double> cum_total(nbins);
+    std::vector<double> cum_bnb(nbins);
+    std::vector<double> cum_fhc(nbins);
+    std::vector<double> cum_rhc(nbins);
+
     double max_stack = 0;
-    double sum = 0;
-    data.max_cumulative = 0;
+    double sum_total_pot = 0;
+    double sum_bnb_pot = 0;
+    double sum_fhc_pot = 0;
+    double sum_rhc_pot = 0;
+    data.max_cumulative_total = 0;
     for (int i = 1; i <= nbins; ++i)
     {
-        const double stack = histograms.bnb.GetBinContent(i) + histograms.fhc.GetBinContent(i) +
-                             histograms.rhc.GetBinContent(i);
+        const double w_bnb = histograms.bnb.GetBinContent(i);
+        const double w_fhc = histograms.fhc.GetBinContent(i);
+        const double w_rhc = histograms.rhc.GetBinContent(i);
+        const double stack = w_bnb + w_fhc + w_rhc;
         max_stack = std::max(max_stack, stack);
-        sum += stack * 1e18;
-        const double cumulative_value = sum / 1e20;
-        cumulative[i - 1] = cumulative_value;
-        data.max_cumulative = std::max(data.max_cumulative, cumulative_value);
+
+        // Histogram bin contents are in units of 1e18 POT/week; integrate in POT then scale to 1e20.
+        sum_total_pot += stack * 1e18;
+        sum_bnb_pot += w_bnb * 1e18;
+        sum_fhc_pot += w_fhc * 1e18;
+        sum_rhc_pot += w_rhc * 1e18;
+
+        const double c_total = sum_total_pot / 1e20;
+        const double c_bnb = sum_bnb_pot / 1e20;
+        const double c_fhc = sum_fhc_pot / 1e20;
+        const double c_rhc = sum_rhc_pot / 1e20;
+
+        cum_total[i - 1] = c_total;
+        cum_bnb[i - 1] = c_bnb;
+        cum_fhc[i - 1] = c_fhc;
+        cum_rhc[i - 1] = c_rhc;
+
+        data.max_cumulative_total = std::max(data.max_cumulative_total, c_total);
         data.x[i - 1] = histograms.bnb.GetXaxis()->GetBinCenter(i);
     }
     // "Nice" headroom like the reference (major ticks at 0,5,10,... with minor ticks between).
@@ -247,10 +277,14 @@ cumulative_data compute_cumulative_data(const histogram_bundle &histograms, int 
         data.y_max = nice * 1.02;
     }
     else data.y_max = 1.0;
-    const double scale = data.max_cumulative > 0 ? data.y_max / data.max_cumulative : 1.0;
+    // Scale all cumulative curves to the left-axis range using the TOTAL cumulative maximum.
+    const double scale = data.max_cumulative_total > 0 ? data.y_max / data.max_cumulative_total : 1.0;
     for (int i = 0; i < nbins; ++i)
     {
-        data.scaled[i] = cumulative[i] * scale;
+        data.scaled_total[i] = cum_total[i] * scale;
+        data.scaled_bnb[i] = cum_bnb[i] * scale;
+        data.scaled_fhc[i] = cum_fhc[i] * scale;
+        data.scaled_rhc[i] = cum_rhc[i] * scale;
     }
     return data;
 }
@@ -300,17 +334,41 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     stack.SetMaximum(data.y_max);
     stack.SetMinimum(0);
 
-    const Int_t col_cumulative = TColor::GetColor("#2962ff");
-    TGraph graph(data.x.size(), data.x.data(), data.scaled.data());
-    graph.SetLineColor(col_cumulative);
-    graph.SetLineWidth(2);
-    graph.Draw("L SAME");
+    // Cumulative curves (scaled onto the left axis).
+    const Int_t col_total = TColor::GetColor("#2962ff");
+    const Int_t col_bnb = TColor::GetColor("#00c853");
+    const Int_t col_fhc = TColor::GetColor("#ffb300");
+    const Int_t col_rhc = TColor::GetColor("#ff1744");
+
+    TGraph g_total(data.x.size(), data.x.data(), data.scaled_total.data());
+    g_total.SetLineColor(col_total);
+    g_total.SetLineWidth(2);
+    g_total.SetLineStyle(1);
+    g_total.Draw("L SAME");
+
+    TGraph g_bnb(data.x.size(), data.x.data(), data.scaled_bnb.data());
+    g_bnb.SetLineColor(col_bnb);
+    g_bnb.SetLineWidth(2);
+    g_bnb.SetLineStyle(2);
+    g_bnb.Draw("L SAME");
+
+    TGraph g_fhc(data.x.size(), data.x.data(), data.scaled_fhc.data());
+    g_fhc.SetLineColor(col_fhc);
+    g_fhc.SetLineWidth(2);
+    g_fhc.SetLineStyle(2);
+    g_fhc.Draw("L SAME");
+
+    TGraph g_rhc(data.x.size(), data.x.data(), data.scaled_rhc.data());
+    g_rhc.SetLineColor(col_rhc);
+    g_rhc.SetLineWidth(2);
+    g_rhc.SetLineStyle(2);
+    g_rhc.Draw("L SAME");
 
     const double xhi = stack.GetXaxis()->GetXmax();
-    TGaxis right_axis(xhi, 0, xhi, data.y_max, 0, data.max_cumulative, 507, "+L");
-    right_axis.SetLineColor(col_cumulative);
-    right_axis.SetLabelColor(col_cumulative);
-    right_axis.SetTitleColor(col_cumulative);
+    TGaxis right_axis(xhi, 0, xhi, data.y_max, 0, data.max_cumulative_total, 507, "+L");
+    right_axis.SetLineColor(col_total);
+    right_axis.SetLabelColor(col_total);
+    right_axis.SetTitleColor(col_total);
     right_axis.SetLineWidth(2);
     right_axis.SetLabelFont(42);
     right_axis.SetTitleFont(42);
@@ -336,7 +394,10 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     legend.AddEntry(&histograms.bnb, "BNB (\\nu)", "f");
     legend.AddEntry(&histograms.fhc, "NuMI-FHC (\\nu)", "f");
     legend.AddEntry(&histograms.rhc, "NuMI-RHC (\\bar{\\nu})", "f");
-    legend.AddEntry(&graph, "Total POT", "l");
+    legend.AddEntry(&g_total, "Total cumulative POT", "l");
+    legend.AddEntry(&g_bnb, "BNB cumulative POT", "l");
+    legend.AddEntry(&g_fhc, "NuMI-FHC cumulative POT", "l");
+    legend.AddEntry(&g_rhc, "NuMI-RHC cumulative POT", "l");
     legend.Draw();
     main_pad->cd();
     main_pad->RedrawAxis();

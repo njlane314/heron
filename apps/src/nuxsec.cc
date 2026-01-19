@@ -508,23 +508,6 @@ void add_plot_include_paths(const std::filesystem::path &repo_root)
     gSystem->AddIncludePath(("-I" + ana_include_path.string()).c_str());
 }
 
-std::string quote_root_string(const std::string &s)
-{
-    std::string out;
-    out.reserve(s.size() + 2);
-    out.push_back('"');
-    for (char c : s)
-    {
-        if (c == '\\' || c == '"')
-        {
-            out.push_back('\\');
-        }
-        out.push_back(c);
-    }
-    out.push_back('"');
-    return out;
-}
-
 int run_root_macro_call(const std::filesystem::path &repo_root,
                         const std::filesystem::path &macro_path,
                         const std::string &call_cmd)

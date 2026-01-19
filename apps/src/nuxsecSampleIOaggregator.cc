@@ -56,7 +56,7 @@ Args parse_args(int argc, char **argv)
     }
 
     args.output_path = "build/out/sample/sample_root_" + args.sample_name + ".root";
-    args.sample_list_path = "build/out/sample/SampleRootIO_samples.tsv";
+    args.sample_list_path = "build/out/sample/samples.tsv";
 
     return args;
 }

@@ -155,7 +155,7 @@ Outputs:
 
 ```
 build/out/sample/sample_root_<sample>.root
-build/out/sample/SampleRootIO_samples.tsv
+build/out/sample/samples.tsv
 ```
 
 The TSV is the only input list you pass downstream.
@@ -167,7 +167,7 @@ name `MyTree`. The template maker writes templates plus metadata (analysis name,
 compiled template definitions, sample bookkeeping) into a single ROOT artifact.
 
 ```bash
-nuxsec template-make build/out/sample/SampleRootIO_samples.tsv \
+nuxsec template-make build/out/sample/samples.tsv \
   build/out/ana/analysis_default.root 8
 ```
 
@@ -182,7 +182,7 @@ the CLI with a new application.
 
 - Filelists for stages (already produced by your partitioning step).
 - Per-sample grouping filelists (or a small helper script).
-- `SampleRootIO_samples.tsv` is produced automatically and becomes the stable handoff.
+- `samples.tsv` is produced automatically and becomes the stable handoff.
 - After that, users only run:
   - `nuxsec template-make …` (required)
   - Anything else is currently external to this repo (macros or new applications).

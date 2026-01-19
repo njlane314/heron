@@ -222,7 +222,7 @@ SampleArgs parse_sample_args(const std::vector<std::string> &args)
     }
 
     out.output_path = "build/out/sample/sample_root_" + out.sample_name + ".root";
-    out.sample_list_path = "build/out/sample/SampleRootIO_samples.tsv";
+    out.sample_list_path = "build/out/sample/samples.tsv";
 
     return out;
 }

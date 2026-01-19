@@ -73,8 +73,8 @@ void configure_style()
     gStyle->SetHistLineWidth(1);
     gStyle->SetLabelFont(42, "XYZ");
     gStyle->SetTitleFont(42, "XYZ");
-    gStyle->SetLabelSize(0.038, "XYZ");
-    gStyle->SetTitleSize(0.050, "YZ");
+    gStyle->SetLabelSize(0.045, "XYZ");
+    gStyle->SetTitleSize(0.040, "XYZ");
     gStyle->SetTitleOffset(1.00, "Y");
     gStyle->SetPadTickX(1);
     // We draw a custom (blue) right axis; avoid black RHS ticks.
@@ -283,13 +283,13 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     stack.GetXaxis()->SetTimeOffset(0, "gmt");
     stack.GetXaxis()->SetTimeFormat("%d/%b/%Y");
     stack.GetXaxis()->SetNdivisions(509);
-    stack.GetXaxis()->SetLabelSize(0.032);
+    stack.GetXaxis()->SetLabelSize(0.045);
     stack.GetXaxis()->SetLabelOffset(0.018);
 
     stack.GetYaxis()->SetTitle("POT per week (x 10^{18})");
     stack.GetYaxis()->SetNdivisions(507);
-    stack.GetYaxis()->SetTitleSize(0.050);
-    stack.GetYaxis()->SetLabelSize(0.036);
+    stack.GetYaxis()->SetTitleSize(0.040);
+    stack.GetYaxis()->SetLabelSize(0.045);
     stack.GetYaxis()->SetTitleOffset(0.70);
 
     stack.SetMaximum(data.y_max);
@@ -309,8 +309,8 @@ void draw_plot(const histogram_bundle &histograms, const cumulative_data &data, 
     right_axis.SetLineWidth(2);
     right_axis.SetLabelFont(42);
     right_axis.SetTitleFont(42);
-    right_axis.SetLabelSize(0.036);
-    right_axis.SetTitleSize(0.050);
+    right_axis.SetLabelSize(0.045);
+    right_axis.SetTitleSize(0.040);
     right_axis.SetTitleOffset(0.80);
     right_axis.SetTickSize(0.02);
     right_axis.SetTitle("Cumulative POT (x 10^{20})");

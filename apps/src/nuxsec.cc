@@ -43,6 +43,7 @@ const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FI
 const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
 const char *kUsageMacro =
     "Usage: nuxsec macro run MACRO.C [CALL]\n"
+    "       nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
     "\nEnvironment:\n"
     "  NUXSEC_PLOT_DIR     Output directory (default: <repo>/build/plot)\n"
@@ -608,6 +609,22 @@ int run_macro_command(const std::vector<std::string> &args)
         const std::string macro_spec = nuxsec::app::trim(rest[0]);
         const std::string call = (rest.size() == 2) ? nuxsec::app::trim(rest[1]) : "";
 
+        const auto macro_path = resolve_macro_path(repo_root, macro_spec);
+        if (call.empty())
+        {
+            return run_root_macro_exec(repo_root, macro_path);
+        }
+        return run_root_macro_call(repo_root, macro_path, call);
+    }
+
+    if (rest.size() > 1)
+    {
+        throw std::runtime_error(kUsageMacro);
+    }
+
+    {
+        const std::string macro_spec = verb;
+        const std::string call = rest.empty() ? "" : nuxsec::app::trim(rest[0]);
         const auto macro_path = resolve_macro_path(repo_root, macro_spec);
         if (call.empty())
         {

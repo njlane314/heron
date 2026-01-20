@@ -52,8 +52,8 @@ struct ProcessorEntry
 class AnalysisRdfDefinitions
 {
   public:
-    ROOT::RDF::RNode Define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
-    static const AnalysisRdfDefinitions &Instance();
+    ROOT::RDF::RNode define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
+    static const AnalysisRdfDefinitions &instance();
 
   private:
     static const double kRecognisedPurityMin;
@@ -62,8 +62,8 @@ class AnalysisRdfDefinitions
     static const float kTrainingFraction;
     static const bool kTrainingIncludeExt;
 
-    static bool IsInTruthVolume(float x, float y, float z) noexcept;
-    static bool IsInRecoVolume(float x, float y, float z) noexcept;
+    static bool is_in_truth_volume(float x, float y, float z) noexcept;
+    static bool is_in_reco_volume(float x, float y, float z) noexcept;
 };
 
 } // namespace nuxsec

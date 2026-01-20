@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/AnalysisDefinition.hh
+ *  @file  ana/include/AnalysisConfigService.hh
  *
- *  @brief Compiled analysis definition for template production.
+ *  @brief Compiled analysis configuration service for template production.
  */
 
-#ifndef NUXSEC_ANA_ANALYSIS_DEFINITION_H
-#define NUXSEC_ANA_ANALYSIS_DEFINITION_H
+#ifndef NUXSEC_ANA_ANALYSIS_CONFIG_SERVICE_H
+#define NUXSEC_ANA_ANALYSIS_CONFIG_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -21,10 +21,10 @@ struct ProcessorEntry;
 using SampleIO = sample::SampleIO;
 
 /** \brief Compiled analysis configuration for template production. */
-class AnalysisDefinition final
+class AnalysisConfigService final
 {
   public:
-    static const AnalysisDefinition &instance();
+    static const AnalysisConfigService &instance();
 
     const std::string &name() const noexcept { return m_name; }
     const std::string &tree_name() const noexcept { return m_tree_name; }
@@ -34,7 +34,7 @@ class AnalysisDefinition final
     ProcessorEntry make_processor_entry(const SampleIO::Sample &sample) const noexcept;
 
   private:
-    AnalysisDefinition();
+    AnalysisConfigService();
 
     std::string m_name;
     std::string m_tree_name;
@@ -43,4 +43,4 @@ class AnalysisDefinition final
 
 } // namespace nuxsec
 
-#endif // NUXSEC_ANA_ANALYSIS_DEFINITION_H
+#endif // NUXSEC_ANA_ANALYSIS_CONFIG_SERVICE_H

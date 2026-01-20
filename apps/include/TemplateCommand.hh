@@ -14,7 +14,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 
-#include "AnalysisDefinition.hh"
+#include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
 #include "Utils.hh"
 #include "RDataFrameFactory.hh"
@@ -69,7 +69,7 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
     }
     TH1::SetDefaultSumw2(true);
 
-    const auto &analysis = nuxsec::AnalysisDefinition::instance();
+    const auto &analysis = nuxsec::AnalysisConfigService::instance();
     const auto entries = nuxsec::app::read_sample_list(tpl_args.list_path);
     const auto &specs = analysis.templates_1d();
 

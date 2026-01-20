@@ -40,22 +40,6 @@ struct SubrunTreeSummary
     std::vector<RunSubrun> unique_pairs;
 };
 
-struct RunInfoSums
-{
-    double tortgt_sum = 0.0;
-    double tor101_sum = 0.0;
-    double tor860_sum = 0.0;
-    double tor875_sum = 0.0;
-
-    long long EA9CNT_sum = 0;
-    long long E1DCNT_sum = 0;
-    long long EXTTrig_sum = 0;
-    long long Gate1Trig_sum = 0;
-    long long Gate2Trig_sum = 0;
-
-    long long n_pairs_loaded = 0;
-};
-
 struct StageCfg
 {
     std::string stage_name;
@@ -71,12 +55,8 @@ struct ArtFileProvenance
     std::vector<std::string> input_files;
 
     SubrunTreeSummary subrun;
-    RunInfoSums runinfo;
 
     double scale = 1.0;
-
-    double db_tortgt_pot = 0.0;
-    double db_tor101_pot = 0.0;
 };
 
 class ArtFileProvenanceIO

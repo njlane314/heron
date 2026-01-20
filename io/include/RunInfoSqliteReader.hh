@@ -18,6 +18,22 @@
 namespace nuxsec
 {
 
+struct RunInfoSums
+{
+    double tortgt_sum = 0.0;
+    double tor101_sum = 0.0;
+    double tor860_sum = 0.0;
+    double tor875_sum = 0.0;
+
+    long long EA9CNT_sum = 0;
+    long long E1DCNT_sum = 0;
+    long long EXTTrig_sum = 0;
+    long long Gate1Trig_sum = 0;
+    long long Gate2Trig_sum = 0;
+
+    long long n_pairs_loaded = 0;
+};
+
 class RunInfoSqliteReader
 {
   public:

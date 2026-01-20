@@ -34,20 +34,6 @@ void ArtFileProvenanceIO::write(const ArtFileProvenance &r, const std::string &o
     TParameter<long long>("unique_run_subrun_pairs", static_cast<long long>(r.subrun.unique_pairs.size()))
         .Write("unique_run_subrun_pairs", TObject::kOverwrite);
 
-    TParameter<double>("db_tortgt_sum_raw", r.runinfo.tortgt_sum).Write("db_tortgt_sum_raw", TObject::kOverwrite);
-    TParameter<double>("db_tor101_sum_raw", r.runinfo.tor101_sum).Write("db_tor101_sum_raw", TObject::kOverwrite);
-    TParameter<double>("db_tor860_sum", r.runinfo.tor860_sum).Write("db_tor860_sum", TObject::kOverwrite);
-    TParameter<double>("db_tor875_sum", r.runinfo.tor875_sum).Write("db_tor875_sum", TObject::kOverwrite);
-
-    TParameter<double>("db_tortgt_pot", r.db_tortgt_pot).Write("db_tortgt_pot", TObject::kOverwrite);
-    TParameter<double>("db_tor101_pot", r.db_tor101_pot).Write("db_tor101_pot", TObject::kOverwrite);
-
-    TParameter<long long>("db_ea9cnt_sum", r.runinfo.EA9CNT_sum).Write("db_ea9cnt_sum", TObject::kOverwrite);
-    TParameter<long long>("db_e1dcnt_sum", r.runinfo.E1DCNT_sum).Write("db_e1dcnt_sum", TObject::kOverwrite);
-    TParameter<long long>("db_exttrig_sum", r.runinfo.EXTTrig_sum).Write("db_exttrig_sum", TObject::kOverwrite);
-    TParameter<long long>("db_gate1trig_sum", r.runinfo.Gate1Trig_sum).Write("db_gate1trig_sum", TObject::kOverwrite);
-    TParameter<long long>("db_gate2trig_sum", r.runinfo.Gate2Trig_sum).Write("db_gate2trig_sum", TObject::kOverwrite);
-
     TParameter<double>("scale_factor", r.scale).Write("scale_factor", TObject::kOverwrite);
 
     {
@@ -128,18 +114,6 @@ ArtFileProvenance ArtFileProvenanceIO::read_directory(TDirectory *d, SampleKind 
     r.subrun.pot_sum = read_param<double>(d, "subrun_pot_sum");
     r.subrun.n_entries = read_param<long long>(d, "subrun_entries");
 
-    r.runinfo.tortgt_sum = read_param<double>(d, "db_tortgt_sum_raw");
-    r.runinfo.tor101_sum = read_param<double>(d, "db_tor101_sum_raw");
-    r.runinfo.tor860_sum = read_param<double>(d, "db_tor860_sum");
-    r.runinfo.tor875_sum = read_param<double>(d, "db_tor875_sum");
-    r.db_tortgt_pot = read_param<double>(d, "db_tortgt_pot");
-    r.db_tor101_pot = read_param<double>(d, "db_tor101_pot");
-
-    r.runinfo.EA9CNT_sum = read_param<long long>(d, "db_ea9cnt_sum");
-    r.runinfo.E1DCNT_sum = read_param<long long>(d, "db_e1dcnt_sum");
-    r.runinfo.EXTTrig_sum = read_param<long long>(d, "db_exttrig_sum");
-    r.runinfo.Gate1Trig_sum = read_param<long long>(d, "db_gate1trig_sum");
-    r.runinfo.Gate2Trig_sum = read_param<long long>(d, "db_gate2trig_sum");
     r.scale = read_param<double>(d, "scale_factor");
 
     r.input_files = read_input_files(d);

@@ -20,7 +20,6 @@
 #include "AppUtils.hh"
 #include "ArtFileProvenanceIO.hh"
 #include "RDataFrameFactory.hh"
-#include "RunInfoSqliteReader.hh"
 #include "SampleAggregator.hh"
 #include "SampleRootIO.hh"
 #include "SampleTypes.hh"
@@ -113,7 +112,6 @@ inline ArtArgs parse_art_args(const std::vector<std::string> &args, const std::s
 
 inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
 {
-    const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
     const double pot_scale = 1e12;
 
     std::filesystem::path out_path(art_args.artio_path);
@@ -121,8 +119,6 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
     {
         std::filesystem::create_directories(out_path.parent_path());
     }
-
-    nuxsec::RunInfoSqliteReader db(db_path);
 
     const auto files = nuxsec::app::read_file_list(art_args.stage_cfg.filelist_path);
 
@@ -138,22 +134,14 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
     }
 
     rec.subrun = nuxsec::scanSubrunTree(files);
-    rec.runinfo = db.sumRunInfo(rec.subrun.unique_pairs);
 
     rec.subrun.pot_sum *= pot_scale;
-    rec.runinfo.tortgt_sum *= pot_scale;
-    rec.runinfo.tor101_sum *= pot_scale;
-    rec.runinfo.tor860_sum *= pot_scale;
-    rec.runinfo.tor875_sum *= pot_scale;
-    rec.db_tortgt_pot = rec.runinfo.tortgt_sum;
-    rec.db_tor101_pot = rec.runinfo.tor101_sum;
     rec.scale = pot_scale;
 
     std::cerr << "[" << log_prefix << "] add stage=" << rec.cfg.stage_name
               << " files=" << rec.input_files.size()
               << " pairs=" << rec.subrun.unique_pairs.size()
               << " pot_sum=" << rec.subrun.pot_sum
-              << " tortgt=" << rec.runinfo.tortgt_sum
               << "\n";
 
     nuxsec::ArtFileProvenanceIO::write(rec, art_args.artio_path);
@@ -237,6 +225,7 @@ inline void update_sample_list(const std::string &list_path,
 
 inline int run_sample(const SampleArgs &sample_args, const std::string &log_prefix)
 {
+    const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
     const auto files = nuxsec::app::read_file_list(sample_args.filelist_path);
 
     std::filesystem::path output_path(sample_args.output_path);
@@ -250,7 +239,7 @@ inline int run_sample(const SampleArgs &sample_args, const std::string &log_pref
         std::filesystem::create_directories(sample_list_path.parent_path());
     }
 
-    nuxsec::Sample sample = nuxsec::SampleAggregator::aggregate(sample_args.sample_name, files);
+    nuxsec::Sample sample = nuxsec::SampleAggregator::aggregate(sample_args.sample_name, files, db_path);
     nuxsec::SampleRootIO::write(sample, sample_args.output_path);
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 

@@ -6,6 +6,7 @@
  */
 
 #include "SampleAggregator.hh"
+#include "RunInfoSqliteReader.hh"
 
 #include <stdexcept>
 #include <utility>
@@ -13,7 +14,9 @@
 namespace nuxsec
 {
 
-Sample SampleAggregator::aggregate(const std::string &sample_name, const std::vector<std::string> &artio_files)
+Sample SampleAggregator::aggregate(const std::string &sample_name,
+                                   const std::vector<std::string> &artio_files,
+                                   const std::string &db_path)
 {
     if (artio_files.empty())
     {
@@ -22,6 +25,8 @@ Sample SampleAggregator::aggregate(const std::string &sample_name, const std::ve
 
     Sample out;
     out.sample_name = sample_name;
+
+    RunInfoSqliteReader db(db_path);
 
     for (const auto &path : artio_files)
     {
@@ -43,7 +48,17 @@ Sample SampleAggregator::aggregate(const std::string &sample_name, const std::ve
             }
         }
 
-        SampleFragment fragment = make_fragment(prov, path);
+        RunInfoSums runinfo = db.sumRunInfo(prov.subrun.unique_pairs);
+        const double pot_scale = (prov.scale > 0.0) ? prov.scale : 1.0;
+        runinfo.tortgt_sum *= pot_scale;
+        runinfo.tor101_sum *= pot_scale;
+        runinfo.tor860_sum *= pot_scale;
+        runinfo.tor875_sum *= pot_scale;
+
+        const double db_tortgt_pot = runinfo.tortgt_sum;
+        const double db_tor101_pot = runinfo.tor101_sum;
+
+        SampleFragment fragment = make_fragment(prov, path, db_tortgt_pot, db_tor101_pot);
         out.subrun_pot_sum += fragment.subrun_pot_sum;
         out.db_tortgt_pot_sum += fragment.db_tortgt_pot;
         out.db_tor101_pot_sum += fragment.db_tor101_pot;
@@ -69,14 +84,17 @@ double SampleAggregator::compute_normalisation(double subrun_pot_sum, double db_
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleFragment SampleAggregator::make_fragment(const ArtFileProvenance &prov, const std::string &artio_path)
+SampleFragment SampleAggregator::make_fragment(const ArtFileProvenance &prov,
+                                               const std::string &artio_path,
+                                               double db_tortgt_pot,
+                                               double db_tor101_pot)
 {
     SampleFragment fragment;
     fragment.fragment_name = prov.cfg.stage_name;
     fragment.artio_path = artio_path;
     fragment.subrun_pot_sum = prov.subrun.pot_sum;
-    fragment.db_tortgt_pot = prov.db_tortgt_pot;
-    fragment.db_tor101_pot = prov.db_tor101_pot;
+    fragment.db_tortgt_pot = db_tortgt_pot;
+    fragment.db_tor101_pot = db_tor101_pot;
     fragment.normalisation = compute_normalisation(fragment.subrun_pot_sum, fragment.db_tortgt_pot);
     fragment.normalised_pot_sum = fragment.subrun_pot_sum * fragment.normalisation;
     return fragment;

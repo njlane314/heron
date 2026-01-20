@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "AppUtils.hh"
+#include "Utils.hh"
 #include "SystematicsBuilder.hh"
 #include "SystematicsSpec.hh"
 #include "TemplateSpec.hh"

@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef Nuxsec_APPS_APPARTCOMMAND_H_INCLUDED
-#define Nuxsec_APPS_APPARTCOMMAND_H_INCLUDED
+#ifndef NUXSEC_APPS_ARTCOMMAND_H
+#define NUXSEC_APPS_ARTCOMMAND_H
 
 #include <filesystem>
 #include <iostream>
@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "AppUtils.hh"
+#include "Utils.hh"
 #include "ArtFileProvenanceIO.hh"
 #include "SampleIO.hh"
 #include "SubRunInventoryService.hh"

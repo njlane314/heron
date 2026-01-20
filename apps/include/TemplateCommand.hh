@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef Nuxsec_APPS_APPTEMPLATECOMMAND_H_INCLUDED
-#define Nuxsec_APPS_APPTEMPLATECOMMAND_H_INCLUDED
+#ifndef NUXSEC_APPS_TEMPLATECOMMAND_H
+#define NUXSEC_APPS_TEMPLATECOMMAND_H
 
 #include <iostream>
 #include <stdexcept>
@@ -16,7 +16,7 @@
 
 #include "AnalysisDefinition.hh"
 #include "AnalysisRdfDefinitions.hh"
-#include "AppUtils.hh"
+#include "Utils.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
 #include "TemplateIO.hh"

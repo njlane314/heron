@@ -18,6 +18,7 @@ IO_LIB_NAME = build/lib/libNuXsecIO.so
 IO_SRC = io/src/ArtFileProvenanceIO.cc \
          io/src/RunInfoService.cc \
          io/src/SampleIO.cc \
+         io/src/SubRunInventoryService.cc \
          io/src/TemplateIO.cc
 IO_OBJ = $(IO_SRC:.cc=.o)
 

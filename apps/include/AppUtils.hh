@@ -7,6 +7,8 @@
 #include <cerrno>
 #include <cstring>
 #include <fstream>
+#include <functional>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -28,6 +30,34 @@ inline std::string trim(std::string s)
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), notspace));
     s.erase(std::find_if(s.rbegin(), s.rend(), notspace).base(), s.end());
     return s;
+}
+
+inline std::vector<std::string> collect_args(int argc, char **argv, int start_index = 1)
+{
+    std::vector<std::string> args;
+    if (argc <= start_index)
+    {
+        return args;
+    }
+    args.reserve(static_cast<size_t>(argc - start_index));
+    for (int i = start_index; i < argc; ++i)
+    {
+        args.emplace_back(argv[i]);
+    }
+    return args;
+}
+
+inline int run_with_exceptions(const std::function<int()> &func)
+{
+    try
+    {
+        return func();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "FATAL: " << e.what() << "\n";
+        return 1;
+    }
 }
 
 inline std::vector<std::string> split_tabs(const std::string &line)

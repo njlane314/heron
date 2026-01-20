@@ -289,52 +289,43 @@ int run_macro_command(const std::vector<std::string> &args)
 
 int main(int argc, char **argv)
 {
-    try
-    {
-        if (argc < 2)
+    return nuxsec::app::run_with_exceptions(
+        [argc, argv]()
         {
+            if (argc < 2)
+            {
+                print_main_help(std::cerr);
+                return 1;
+            }
+
+            const std::string command = argv[1];
+            const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv, 2);
+
+            if (command == "help" || command == "-h" || command == "--help")
+            {
+                print_main_help(std::cout);
+                return 0;
+            }
+
+            if (command == "artio-aggregate" || command == "artio" || command == "art" || command == "a")
+            {
+                return run_artio_command(args);
+            }
+            if (command == "sample-aggregate" || command == "sample" || command == "samp" || command == "s")
+            {
+                return run_sample_command(args);
+            }
+            if (command == "template-make" || command == "template" || command == "tpl" || command == "t")
+            {
+                return run_template_command(args);
+            }
+            if (command == "macro" || command == "m")
+            {
+                return run_macro_command(args);
+            }
+
+            std::cerr << "Unknown command: " << command << "\n";
             print_main_help(std::cerr);
             return 1;
-        }
-
-        const std::string command = argv[1];
-        std::vector<std::string> args;
-        args.reserve(static_cast<size_t>(argc - 2));
-        for (int i = 2; i < argc; ++i)
-        {
-            args.emplace_back(argv[i]);
-        }
-
-        if (command == "help" || command == "-h" || command == "--help")
-        {
-            print_main_help(std::cout);
-            return 0;
-        }
-
-        if (command == "artio-aggregate" || command == "artio" || command == "art" || command == "a")
-        {
-            return run_artio_command(args);
-        }
-        if (command == "sample-aggregate" || command == "sample" || command == "samp" || command == "s")
-        {
-            return run_sample_command(args);
-        }
-        if (command == "template-make" || command == "template" || command == "tpl" || command == "t")
-        {
-            return run_template_command(args);
-        }
-        if (command == "macro" || command == "m")
-        {
-            return run_macro_command(args);
-        }
-
-        std::cerr << "Unknown command: " << command << "\n";
-        print_main_help(std::cerr);
-        return 1;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "FATAL: " << e.what() << "\n";
-        return 1;
-    }
+        });
 }

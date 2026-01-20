@@ -78,31 +78,27 @@ Args parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    try
-    {
-        const Args args = parse_args(argc, argv);
+    return nuxsec::app::run_with_exceptions(
+        [argc, argv]()
+        {
+            const Args args = parse_args(argc, argv);
 
-        const std::vector<nuxsec::TemplateSpec1D> fit_specs =
-            nuxsec::read_template_spec_1d_tsv("inputs/fit_templates.tsv");
+            const std::vector<nuxsec::TemplateSpec1D> fit_specs =
+                nuxsec::read_template_spec_1d_tsv("inputs/fit_templates.tsv");
 
-        const auto entries = read_sample_list(args.list_path);
+            const auto entries = read_sample_list(args.list_path);
 
-        nuxsec::SystematicsBuilder::Options opt;
-        opt.nthreads = args.nthreads;
+            nuxsec::SystematicsBuilder::Options opt;
+            opt.nthreads = args.nthreads;
 
-        nuxsec::SystematicsBuilder::BuildAll(entries,
-                                             args.tree_name,
-                                             fit_specs,
-                                             args.template_root,
-                                             nuxsec::DefaultSystematics(),
-                                             opt);
+            nuxsec::SystematicsBuilder::BuildAll(entries,
+                                                 args.tree_name,
+                                                 fit_specs,
+                                                 args.template_root,
+                                                 nuxsec::DefaultSystematics(),
+                                                 opt);
 
-        std::cerr << "[nuxsecSystMaker] wrote systematics into " << args.template_root << "\n";
-        return 0;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "FATAL: " << e.what() << "\n";
-        return 1;
-    }
+            std::cerr << "[nuxsecSystMaker] wrote systematics into " << args.template_root << "\n";
+            return 0;
+        });
 }

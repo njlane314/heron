@@ -39,7 +39,7 @@ class SampleIO
 
     struct ProvenanceInput
     {
-        std::string fragment_name;
+        std::string entry_name;
         std::string artio_path;
 
         double subrun_pot_sum = 0.0;
@@ -56,7 +56,7 @@ class SampleIO
         SampleKind kind = SampleKind::kUnknown;
         BeamMode beam = BeamMode::kUnknown;
 
-        std::vector<ProvenanceInput> fragments;
+        std::vector<ProvenanceInput> entries;
 
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot_sum = 0.0;

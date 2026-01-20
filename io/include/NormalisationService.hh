@@ -28,10 +28,10 @@ class NormalisationService
 
   private:
     static double compute_normalisation(double subrun_pot_sum, double db_tortgt_pot);
-    static SampleIO::ProvenanceInput make_fragment(const artio::Provenance &prov,
-                                                  const std::string &artio_path,
-                                                  double db_tortgt_pot,
-                                                  double db_tor101_pot);
+    static SampleIO::ProvenanceInput make_entry(const artio::Provenance &prov,
+                                                const std::string &artio_path,
+                                                double db_tortgt_pot,
+                                                double db_tor101_pot);
 };
 
 } // namespace nuxsec

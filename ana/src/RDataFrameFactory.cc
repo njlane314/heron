@@ -33,10 +33,10 @@ ROOT::RDF::RNode RDataFrameFactory::define_variables(ROOT::RDF::RNode node,
 std::vector<std::string> RDataFrameFactory::collect_files(const SampleIO::Sample &sample)
 {
     std::vector<std::string> files;
-    files.reserve(sample.fragments.size());
-    for (const SampleIO::ProvenanceInput &fragment : sample.fragments)
+    files.reserve(sample.entries.size());
+    for (const SampleIO::ProvenanceInput &entry : sample.entries)
     {
-        files.push_back(fragment.artio_path);
+        files.push_back(entry.artio_path);
     }
 
     return files;

@@ -138,9 +138,9 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         .Write("normalised_pot_sum", TObject::kOverwrite);
 
     {
-        TTree fragments("fragments", "Art file fragments included in sample aggregation");
+        TTree entries("entries", "Art file entries included in sample aggregation");
 
-        std::string fragment_name;
+        std::string entry_name;
         std::string artio_path;
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot = 0.0;
@@ -148,27 +148,27 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         double normalisation = 1.0;
         double normalised_pot_sum = 0.0;
 
-        fragments.Branch("fragment_name", &fragment_name);
-        fragments.Branch("artio_path", &artio_path);
-        fragments.Branch("subrun_pot_sum", &subrun_pot_sum);
-        fragments.Branch("db_tortgt_pot", &db_tortgt_pot);
-        fragments.Branch("db_tor101_pot", &db_tor101_pot);
-        fragments.Branch("normalisation", &normalisation);
-        fragments.Branch("normalised_pot_sum", &normalised_pot_sum);
+        entries.Branch("entry_name", &entry_name);
+        entries.Branch("artio_path", &artio_path);
+        entries.Branch("subrun_pot_sum", &subrun_pot_sum);
+        entries.Branch("db_tortgt_pot", &db_tortgt_pot);
+        entries.Branch("db_tor101_pot", &db_tor101_pot);
+        entries.Branch("normalisation", &normalisation);
+        entries.Branch("normalised_pot_sum", &normalised_pot_sum);
 
-        for (const auto &fragment : sample.fragments)
+        for (const auto &entry : sample.entries)
         {
-            fragment_name = fragment.fragment_name;
-            artio_path = fragment.artio_path;
-            subrun_pot_sum = fragment.subrun_pot_sum;
-            db_tortgt_pot = fragment.db_tortgt_pot;
-            db_tor101_pot = fragment.db_tor101_pot;
-            normalisation = fragment.normalisation;
-            normalised_pot_sum = fragment.normalised_pot_sum;
-            fragments.Fill();
+            entry_name = entry.entry_name;
+            artio_path = entry.artio_path;
+            subrun_pot_sum = entry.subrun_pot_sum;
+            db_tortgt_pot = entry.db_tortgt_pot;
+            db_tor101_pot = entry.db_tor101_pot;
+            normalisation = entry.normalisation;
+            normalised_pot_sum = entry.normalised_pot_sum;
+            entries.Fill();
         }
 
-        fragments.Write("fragments", TObject::kOverwrite);
+        entries.Write("entries", TObject::kOverwrite);
     }
 
     f->Write();
@@ -238,14 +238,14 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     out.normalisation = read_param_double("normalisation");
     out.normalised_pot_sum = read_param_double("normalised_pot_sum");
 
-    TObject *obj = d->Get("fragments");
+    TObject *obj = d->Get("entries");
     auto *tree = dynamic_cast<TTree *>(obj);
     if (!tree)
     {
-        throw std::runtime_error("Missing fragments tree in SampleRootIO directory");
+        throw std::runtime_error("Missing entries tree in SampleRootIO directory");
     }
 
-    std::string fragment_name;
+    std::string entry_name;
     std::string artio_path;
     double subrun_pot_sum = 0.0;
     double db_tortgt_pot = 0.0;
@@ -253,7 +253,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     double normalisation = 1.0;
     double normalised_pot_sum = 0.0;
 
-    tree->SetBranchAddress("fragment_name", &fragment_name);
+    tree->SetBranchAddress("entry_name", &entry_name);
     tree->SetBranchAddress("artio_path", &artio_path);
     tree->SetBranchAddress("subrun_pot_sum", &subrun_pot_sum);
     tree->SetBranchAddress("db_tortgt_pot", &db_tortgt_pot);
@@ -262,19 +262,19 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     tree->SetBranchAddress("normalised_pot_sum", &normalised_pot_sum);
 
     const Long64_t n = tree->GetEntries();
-    out.fragments.reserve(static_cast<size_t>(n));
+    out.entries.reserve(static_cast<size_t>(n));
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
-        ProvenanceInput fragment;
-        fragment.fragment_name = fragment_name;
-        fragment.artio_path = artio_path;
-        fragment.subrun_pot_sum = subrun_pot_sum;
-        fragment.db_tortgt_pot = db_tortgt_pot;
-        fragment.db_tor101_pot = db_tor101_pot;
-        fragment.normalisation = normalisation;
-        fragment.normalised_pot_sum = normalised_pot_sum;
-        out.fragments.push_back(std::move(fragment));
+        ProvenanceInput entry;
+        entry.entry_name = entry_name;
+        entry.artio_path = artio_path;
+        entry.subrun_pot_sum = subrun_pot_sum;
+        entry.db_tortgt_pot = db_tortgt_pot;
+        entry.db_tor101_pot = db_tor101_pot;
+        entry.normalisation = normalisation;
+        entry.normalised_pot_sum = normalised_pot_sum;
+        out.entries.push_back(std::move(entry));
     }
 
     return out;

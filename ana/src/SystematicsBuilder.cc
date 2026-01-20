@@ -63,7 +63,7 @@ inline double rms(const std::vector<double> &x)
 
 } // namespace
 
-bool SystematicsBuilder::IsVariedSampleKind(SampleIO::SampleKind k, const Options &opt)
+bool SystematicsBuilder::is_varied_sample_kind(SampleIO::SampleKind k, const Options &opt)
 {
     switch (k)
     {
@@ -78,27 +78,27 @@ bool SystematicsBuilder::IsVariedSampleKind(SampleIO::SampleKind k, const Option
     }
 }
 
-std::unique_ptr<TH1D> SystematicsBuilder::ReadNominalHist(const std::string &root_path,
-                                                          const std::string &sample_name,
-                                                          const std::string &hist_name)
+std::unique_ptr<TH1D> SystematicsBuilder::read_nominal_hist(const std::string &root_path,
+                                                            const std::string &sample_name,
+                                                            const std::string &hist_name)
 {
     std::unique_ptr<TFile> f(TFile::Open(root_path.c_str(), "READ"));
     if (!f || f->IsZombie())
     {
-        throw std::runtime_error("ReadNominalHist: cannot open " + root_path);
+        throw std::runtime_error("read_nominal_hist: cannot open " + root_path);
     }
 
     const std::string key = sample_name + "/hists/" + hist_name;
     TH1 *obj = dynamic_cast<TH1 *>(f->Get(key.c_str()));
     if (!obj)
     {
-        throw std::runtime_error("ReadNominalHist: missing TH1 at " + key);
+        throw std::runtime_error("read_nominal_hist: missing TH1 at " + key);
     }
 
     auto *h = dynamic_cast<TH1D *>(obj);
     if (!h)
     {
-        throw std::runtime_error("ReadNominalHist: expected TH1D at " + key);
+        throw std::runtime_error("read_nominal_hist: expected TH1D at " + key);
     }
 
     std::unique_ptr<TH1D> out(dynamic_cast<TH1D *>(h->Clone(("nom_" + hist_name).c_str())));
@@ -106,16 +106,16 @@ std::unique_ptr<TH1D> SystematicsBuilder::ReadNominalHist(const std::string &roo
     return out;
 }
 
-void SystematicsBuilder::WriteOneSyst(const std::string &root_path,
-                                      const std::string &sample_name,
-                                      const std::string &syst_name,
-                                      const std::string &variation,
-                                      const std::vector<std::pair<std::string, const TH1 *>> &hists)
+void SystematicsBuilder::write_one_syst(const std::string &root_path,
+                                        const std::string &sample_name,
+                                        const std::string &syst_name,
+                                        const std::string &variation,
+                                        const std::vector<std::pair<std::string, const TH1 *>> &hists)
 {
     nuxsec::TemplateIO::write_syst_histograms(root_path, sample_name, syst_name, variation, hists);
 }
 
-void SystematicsBuilder::ClampNonNegative(TH1D &h)
+void SystematicsBuilder::clamp_non_negative(TH1D &h)
 {
     const int nb = h.GetNbinsX();
     for (int i = 1; i <= nb; ++i)
@@ -127,9 +127,9 @@ void SystematicsBuilder::ClampNonNegative(TH1D &h)
     }
 }
 
-int SystematicsBuilder::DetectUniverseCount(const SampleIO::Sample &sample,
-                                            const std::string &tree_name,
-                                            const std::string &vec_branch)
+int SystematicsBuilder::detect_universe_count(const SampleIO::Sample &sample,
+                                              const std::string &tree_name,
+                                              const std::string &vec_branch)
 {
     ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, tree_name);
 
@@ -141,11 +141,11 @@ int SystematicsBuilder::DetectUniverseCount(const SampleIO::Sample &sample,
     return static_cast<int>(v[0].size());
 }
 
-void SystematicsBuilder::BuildUnisim(const SampleIO::Sample &sample,
-                                     const std::string &tree_name,
-                                     const std::vector<TemplateSpec1D> &specs,
-                                     const std::string &template_root_path,
-                                     const UnisimSpec &uspec)
+void SystematicsBuilder::build_unisim(const SampleIO::Sample &sample,
+                                      const std::string &tree_name,
+                                      const std::vector<TemplateSpec1D> &specs,
+                                      const std::string &template_root_path,
+                                      const UnisimSpec &uspec)
 {
     ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, tree_name);
 
@@ -163,7 +163,7 @@ void SystematicsBuilder::BuildUnisim(const SampleIO::Sample &sample,
         return;
     }
 
-    ROOT::RDF::RNode node = nuxsec::AnalysisRdfDefinitions::Instance().Define(rdf, proc);
+    ROOT::RDF::RNode node = nuxsec::AnalysisRdfDefinitions::instance().define(rdf, proc);
 
     const std::string wup = "__w_unisim_up_" + uspec.name;
     const std::string wdn = "__w_unisim_dn_" + uspec.name;
@@ -229,8 +229,8 @@ void SystematicsBuilder::BuildUnisim(const SampleIO::Sample &sample,
         neg.emplace_back(specs[i].name, &hd);
     }
 
-    WriteOneSyst(template_root_path, sample.sample_name, uspec.name, "pos", pos);
-    WriteOneSyst(template_root_path, sample.sample_name, uspec.name, "neg", neg);
+    write_one_syst(template_root_path, sample.sample_name, uspec.name, "pos", pos);
+    write_one_syst(template_root_path, sample.sample_name, uspec.name, "neg", neg);
 
     nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, uspec.name, "type", "unisim");
     nuxsec::TemplateIO::write_syst_flag_meta(template_root_path,
@@ -243,13 +243,13 @@ void SystematicsBuilder::BuildUnisim(const SampleIO::Sample &sample,
                                                  uspec.floatable ? "1" : "0");
 }
 
-void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO::Sample> &samples,
-                                                      const std::vector<std::string> &sample_names,
-                                                      const std::string &tree_name,
-                                                      const std::vector<TemplateSpec1D> &specs,
-                                                      const std::string &template_root_path,
-                                                      const MultisimSpec &mspec,
-                                                      const Options &opt)
+void SystematicsBuilder::build_multisim_joint_eigenmodes(const std::vector<SampleIO::Sample> &samples,
+                                                         const std::vector<std::string> &sample_names,
+                                                         const std::string &tree_name,
+                                                         const std::vector<TemplateSpec1D> &specs,
+                                                         const std::string &template_root_path,
+                                                         const MultisimSpec &mspec,
+                                                         const Options &opt)
 {
     if (samples.empty() || specs.empty())
     {
@@ -259,7 +259,7 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
     int U = mspec.max_universes;
     if (U <= 0)
     {
-        U = DetectUniverseCount(samples.front(), tree_name, mspec.vec_branch);
+        U = detect_universe_count(samples.front(), tree_name, mspec.vec_branch);
     }
     if (U <= 0)
     {
@@ -290,7 +290,7 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
     std::vector<double> T0(static_cast<size_t>(L), 0.0);
     for (const auto &b : blocks)
     {
-        std::unique_ptr<TH1D> h = ReadNominalHist(template_root_path, b.sample, b.hist);
+        std::unique_ptr<TH1D> h = read_nominal_hist(template_root_path, b.sample, b.hist);
         for (int i = 0; i < b.nbins; ++i)
         {
             T0[static_cast<size_t>(b.offset + i)] = h->GetBinContent(i + 1);
@@ -324,7 +324,7 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
         proc.pot_nom = sample.db_tortgt_pot_sum;
         proc.pot_eqv = sample.subrun_pot_sum;
 
-        ROOT::RDF::RNode node = nuxsec::AnalysisRdfDefinitions::Instance().Define(rdf, proc);
+        ROOT::RDF::RNode node = nuxsec::AnalysisRdfDefinitions::instance().define(rdf, proc);
 
         SampleBook sb;
         sb.name = sample.sample_name;
@@ -484,7 +484,7 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
 
         for (const auto &b : blocks)
         {
-            std::unique_ptr<TH1D> hnom = ReadNominalHist(template_root_path, b.sample, b.hist);
+            std::unique_ptr<TH1D> hnom = read_nominal_hist(template_root_path, b.sample, b.hist);
 
             std::unique_ptr<TH1D> hup(dynamic_cast<TH1D *>(hnom->Clone((b.hist + "_rate_up").c_str())));
             std::unique_ptr<TH1D> hdn(dynamic_cast<TH1D *>(hnom->Clone((b.hist + "_rate_dn").c_str())));
@@ -494,8 +494,8 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
             hup->Scale(up_scale);
             hdn->Scale(dn_scale);
 
-            WriteOneSyst(template_root_path, b.sample, rate_name, "pos", {{b.hist, hup.get()}});
-            WriteOneSyst(template_root_path, b.sample, rate_name, "neg", {{b.hist, hdn.get()}});
+            write_one_syst(template_root_path, b.sample, rate_name, "pos", {{b.hist, hup.get()}});
+            write_one_syst(template_root_path, b.sample, rate_name, "neg", {{b.hist, hdn.get()}});
         }
     }
 
@@ -560,7 +560,7 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
 
         for (const auto &b : blocks)
         {
-            std::unique_ptr<TH1D> hnom = ReadNominalHist(template_root_path, b.sample, b.hist);
+            std::unique_ptr<TH1D> hnom = read_nominal_hist(template_root_path, b.sample, b.hist);
 
             std::unique_ptr<TH1D> hup(dynamic_cast<TH1D *>(hnom->Clone((b.hist + "_up").c_str())));
             std::unique_ptr<TH1D> hdn(dynamic_cast<TH1D *>(hnom->Clone((b.hist + "_dn").c_str())));
@@ -584,22 +584,22 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
 
             if (opt.clamp_negative_bins)
             {
-                ClampNonNegative(*hup);
-                ClampNonNegative(*hdn);
+                clamp_non_negative(*hup);
+                clamp_non_negative(*hdn);
             }
 
-            WriteOneSyst(template_root_path, b.sample, mode_name, "pos", {{b.hist, hup.get()}});
-            WriteOneSyst(template_root_path, b.sample, mode_name, "neg", {{b.hist, hdn.get()}});
+            write_one_syst(template_root_path, b.sample, mode_name, "pos", {{b.hist, hup.get()}});
+            write_one_syst(template_root_path, b.sample, mode_name, "neg", {{b.hist, hdn.get()}});
         }
     }
 }
 
-void SystematicsBuilder::BuildAll(const std::vector<SampleListEntry> &entries,
-                                  const std::string &tree_name,
-                                  const std::vector<TemplateSpec1D> &fit_specs,
-                                  const std::string &template_root_path,
-                                  const SystematicsConfig &cfg,
-                                  const Options &opt)
+void SystematicsBuilder::build_all(const std::vector<SampleListEntry> &entries,
+                                   const std::string &tree_name,
+                                   const std::vector<TemplateSpec1D> &fit_specs,
+                                   const std::string &template_root_path,
+                                   const SystematicsConfig &cfg,
+                                   const Options &opt)
 {
     if (opt.nthreads > 1)
     {
@@ -612,7 +612,7 @@ void SystematicsBuilder::BuildAll(const std::vector<SampleListEntry> &entries,
     for (const auto &e : entries)
     {
         SampleIO::Sample s = SampleIO::read(e.output_path);
-        if (!IsVariedSampleKind(s.kind, opt))
+        if (!is_varied_sample_kind(s.kind, opt))
         {
             continue;
         }
@@ -624,13 +624,19 @@ void SystematicsBuilder::BuildAll(const std::vector<SampleListEntry> &entries,
     {
         for (const auto &s : mc_samples)
         {
-            BuildUnisim(s, tree_name, fit_specs, template_root_path, us);
+            build_unisim(s, tree_name, fit_specs, template_root_path, us);
         }
     }
 
     for (const auto &ms : cfg.multisim)
     {
-        BuildMultisimJointEigenmodes(mc_samples, mc_names, tree_name, fit_specs, template_root_path, ms, opt);
+        build_multisim_joint_eigenmodes(mc_samples,
+                                        mc_names,
+                                        tree_name,
+                                        fit_specs,
+                                        template_root_path,
+                                        ms,
+                                        opt);
     }
 }
 

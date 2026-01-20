@@ -69,16 +69,16 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
     }
     TH1::SetDefaultSumw2(true);
 
-    const auto &analysis = nuxsec::AnalysisDefinition::Instance();
+    const auto &analysis = nuxsec::AnalysisDefinition::instance();
     const auto entries = nuxsec::app::read_sample_list(tpl_args.list_path);
-    const auto &specs = analysis.Templates1D();
+    const auto &specs = analysis.templates_1d();
 
     nuxsec::TemplateIO::write_string_meta(tpl_args.output_root, "__global__", "analysis_name",
-                                              analysis.Name());
+                                          analysis.name());
     nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                               "__global__",
                                               "analysis_tree",
-                                              analysis.TreeName());
+                                              analysis.tree_name());
     nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                               "__global__",
                                               "template_spec_source",
@@ -86,16 +86,16 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
     nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                               "__global__",
                                               "template_spec_tsv",
-                                              analysis.Templates1DToTsv());
+                                              analysis.templates_1d_to_tsv());
 
     for (const auto &entry : entries)
     {
         const sample::SampleIO::Sample sample = sample::SampleIO::read(entry.output_path);
-        ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.TreeName());
-        const nuxsec::ProcessorEntry proc_entry = analysis.MakeProcessorEntry(sample);
+        ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.tree_name());
+        const nuxsec::ProcessorEntry proc_entry = analysis.make_processor_entry(sample);
 
-        const auto &processor = nuxsec::AnalysisRdfDefinitions::Instance();
-        ROOT::RDF::RNode node = processor.Define(rdf, proc_entry);
+        const auto &processor = nuxsec::AnalysisRdfDefinitions::instance();
+        ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
         std::vector<ROOT::RDF::RResultPtr<TH1D>> booked;
         booked.reserve(specs.size());
@@ -144,7 +144,7 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
                                                   "sample_rootio_path",
                                                   entry.output_path);
 
-        std::cerr << "[" << log_prefix << "] analysis=" << analysis.Name()
+        std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
                   << " sample=" << sample.sample_name
                   << " kind=" << sample::SampleIO::sample_kind_name(sample.kind)
                   << " beam=" << sample::SampleIO::beam_mode_name(sample.beam)

@@ -24,14 +24,14 @@ using SampleIO = sample::SampleIO;
 class AnalysisDefinition final
 {
   public:
-    static const AnalysisDefinition &Instance();
+    static const AnalysisDefinition &instance();
 
-    const std::string &Name() const noexcept { return m_name; }
-    const std::string &TreeName() const noexcept { return m_tree_name; }
-    const std::vector<TemplateSpec1D> &Templates1D() const noexcept { return m_templates_1d; }
-    std::string Templates1DToTsv() const;
+    const std::string &name() const noexcept { return m_name; }
+    const std::string &tree_name() const noexcept { return m_tree_name; }
+    const std::vector<TemplateSpec1D> &templates_1d() const noexcept { return m_templates_1d; }
+    std::string templates_1d_to_tsv() const;
 
-    ProcessorEntry MakeProcessorEntry(const SampleIO::Sample &sample) const noexcept;
+    ProcessorEntry make_processor_entry(const SampleIO::Sample &sample) const noexcept;
 
   private:
     AnalysisDefinition();

@@ -20,7 +20,7 @@
 #include <numeric>
 #include <stdexcept>
 
-#include "AnalysisRdfDefinitions.hh"
+#include "ColumnDerivationService.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
 #include "TemplateIO.hh"
@@ -163,7 +163,7 @@ void SystematicsBuilder::build_unisim(const SampleIO::Sample &sample,
         return;
     }
 
-    ROOT::RDF::RNode node = nuxsec::AnalysisRdfDefinitions::instance().define(rdf, proc);
+    ROOT::RDF::RNode node = nuxsec::ColumnDerivationService::instance().define(rdf, proc);
 
     const std::string wup = "__w_unisim_up_" + uspec.name;
     const std::string wdn = "__w_unisim_dn_" + uspec.name;
@@ -324,7 +324,7 @@ void SystematicsBuilder::build_multisim_joint_eigenmodes(const std::vector<Sampl
         proc.pot_nom = sample.db_tortgt_pot_sum;
         proc.pot_eqv = sample.subrun_pot_sum;
 
-        ROOT::RDF::RNode node = nuxsec::AnalysisRdfDefinitions::instance().define(rdf, proc);
+        ROOT::RDF::RNode node = nuxsec::ColumnDerivationService::instance().define(rdf, proc);
 
         SampleBook sb;
         sb.name = sample.sample_name;

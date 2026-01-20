@@ -15,7 +15,7 @@
 #include <ROOT/RDataFrame.hxx>
 
 #include "AnalysisDefinition.hh"
-#include "AnalysisRdfDefinitions.hh"
+#include "ColumnDerivationService.hh"
 #include "Utils.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
@@ -94,7 +94,7 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
         ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.tree_name());
         const nuxsec::ProcessorEntry proc_entry = analysis.make_processor_entry(sample);
 
-        const auto &processor = nuxsec::AnalysisRdfDefinitions::instance();
+        const auto &processor = nuxsec::ColumnDerivationService::instance();
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
         std::vector<ROOT::RDF::RResultPtr<TH1D>> booked;

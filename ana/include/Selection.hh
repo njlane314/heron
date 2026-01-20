@@ -14,7 +14,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "AnalysisRdfDefinitions.hh"
+#include "ColumnDerivationService.hh"
 
 namespace nuxsec
 {

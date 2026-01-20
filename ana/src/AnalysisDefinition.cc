@@ -9,7 +9,7 @@
 
 #include <sstream>
 
-#include "AnalysisRdfDefinitions.hh"
+#include "ColumnDerivationService.hh"
 #include "SampleIO.hh"
 
 namespace nuxsec

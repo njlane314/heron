@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/AnalysisRdfDefinitions.hh
+ *  @file  ana/include/ColumnDerivationService.hh
  *
  *  @brief Variable definitions for analysis RDataFrame processing
  */
 
-#ifndef NUXSEC_ANA_ANALYSIS_RDF_DEFINITIONS_H
-#define NUXSEC_ANA_ANALYSIS_RDF_DEFINITIONS_H
+#ifndef NUXSEC_ANA_COLUMN_DERIVATION_SERVICE_H
+#define NUXSEC_ANA_COLUMN_DERIVATION_SERVICE_H
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
@@ -49,11 +49,11 @@ struct ProcessorEntry
 };
 
 /** \brief Apply analysis variable definitions to an RDataFrame. */
-class AnalysisRdfDefinitions
+class ColumnDerivationService
 {
   public:
     ROOT::RDF::RNode define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
-    static const AnalysisRdfDefinitions &instance();
+    static const ColumnDerivationService &instance();
 
   private:
     static const double kRecognisedPurityMin;
@@ -68,4 +68,4 @@ class AnalysisRdfDefinitions
 
 } // namespace nuxsec
 
-#endif // NUXSEC_ANA_ANALYSIS_RDF_DEFINITIONS_H
+#endif // NUXSEC_ANA_COLUMN_DERIVATION_SERVICE_H

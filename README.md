@@ -70,7 +70,7 @@ This produces:
 
 ## Analysis processing
 
-The `libNuXsecAna` library provides `nuxsec::AnalysisRdfDefinitions` and RDF construction helpers
+The `libNuXsecAna` library provides `nuxsec::ColumnDerivationService` and RDF construction helpers
 for defining analysis-level columns (weights, fiducial checks, channel classifications) on `ROOT::RDF::RNode`.
 
 The `libNuXsecPlot` library and `nuxsec` CLI build binned template histograms from

@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/AnalysisRdfDefinitions.cc
+ *  @file  ana/src/ColumnDerivationService.cc
  *
  *  @brief Variable definitions for analysis RDataFrame processing.
  */
 
-#include "AnalysisRdfDefinitions.hh"
+#include "ColumnDerivationService.hh"
 
 #include <algorithm>
 #include <cmath>
@@ -57,24 +57,24 @@ inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z)
 
 }
 
-const double AnalysisRdfDefinitions::kRecognisedPurityMin = 0.5;
-const double AnalysisRdfDefinitions::kRecognisedCompletenessMin = 0.1;
+const double ColumnDerivationService::kRecognisedPurityMin = 0.5;
+const double ColumnDerivationService::kRecognisedCompletenessMin = 0.1;
 
-const float AnalysisRdfDefinitions::kTrainingFraction = 0.10f;
-const bool AnalysisRdfDefinitions::kTrainingIncludeExt = true;
+const float ColumnDerivationService::kTrainingFraction = 0.10f;
+const bool ColumnDerivationService::kTrainingIncludeExt = true;
 
-bool AnalysisRdfDefinitions::is_in_truth_volume(float x, float y, float z) noexcept
+bool ColumnDerivationService::is_in_truth_volume(float x, float y, float z) noexcept
 {
     return is_in_truth_volume(x, y, z);
 }
 
-bool AnalysisRdfDefinitions::is_in_reco_volume(float x, float y, float z) noexcept
+bool ColumnDerivationService::is_in_reco_volume(float x, float y, float z) noexcept
 {
     return is_in_reco_volume(x, y, z);
 }
 
 //____________________________________________________________________________
-ROOT::RDF::RNode AnalysisRdfDefinitions::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
+ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
 {
     const bool is_data = (rec.source == SourceKind::kData);
     const bool is_ext = (rec.source == SourceKind::kExt);
@@ -332,9 +332,9 @@ ROOT::RDF::RNode AnalysisRdfDefinitions::define(ROOT::RDF::RNode node, const Pro
 //____________________________________________________________________________
 
 //____________________________________________________________________________
-const AnalysisRdfDefinitions &AnalysisRdfDefinitions::instance()
+const ColumnDerivationService &ColumnDerivationService::instance()
 {
-    static const AnalysisRdfDefinitions ep{};
+    static const ColumnDerivationService ep{};
     return ep;
 }
 //____________________________________________________________________________

@@ -266,7 +266,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
-        SampleFragment fragment;
+        ProvenanceInput fragment;
         fragment.fragment_name = fragment_name;
         fragment.artio_path = artio_path;
         fragment.subrun_pot_sum = subrun_pot_sum;

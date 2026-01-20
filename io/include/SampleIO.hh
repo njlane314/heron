@@ -37,7 +37,7 @@ class SampleIO
         kBNB
     };
 
-    struct SampleFragment
+    struct ProvenanceInput
     {
         std::string fragment_name;
         std::string artio_path;
@@ -56,7 +56,7 @@ class SampleIO
         SampleKind kind = SampleKind::kUnknown;
         BeamMode beam = BeamMode::kUnknown;
 
-        std::vector<SampleFragment> fragments;
+        std::vector<ProvenanceInput> fragments;
 
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot_sum = 0.0;

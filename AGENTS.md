@@ -11,7 +11,7 @@ This file captures the coding conventions and structural patterns used in the Nu
 - Use .hh for headers and .cc for implementation files.
 - Use the nuxsec namespace for library code.
 - Class and type names use descriptive PascalCase that keeps entities explicit
-  (e.g., SampleFragment, LogicalSample, Dataset, ChannelDef, Selection, HistDef).
+  (e.g., ProvenanceInput, LogicalSample, Dataset, ChannelDef, Selection, HistDef).
 - Global/static variables and macros are defined in implementation files when appropriate.
 
 ## Header conventions

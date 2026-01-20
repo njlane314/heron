@@ -58,7 +58,7 @@ SampleIO::Sample SampleNormalisationService::aggregate(const std::string &sample
         const double db_tortgt_pot = runinfo.tortgt_sum;
         const double db_tor101_pot = runinfo.tor101_sum;
 
-        SampleIO::SampleFragment fragment = make_fragment(prov, path, db_tortgt_pot, db_tor101_pot);
+        SampleIO::ProvenanceInput fragment = make_fragment(prov, path, db_tortgt_pot, db_tor101_pot);
         out.subrun_pot_sum += fragment.subrun_pot_sum;
         out.db_tortgt_pot_sum += fragment.db_tortgt_pot;
         out.db_tor101_pot_sum += fragment.db_tor101_pot;
@@ -84,12 +84,12 @@ double SampleNormalisationService::compute_normalisation(double subrun_pot_sum, 
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleIO::SampleFragment SampleNormalisationService::make_fragment(const artio::Provenance &prov,
+SampleIO::ProvenanceInput SampleNormalisationService::make_fragment(const artio::Provenance &prov,
                                                                    const std::string &artio_path,
                                                                    double db_tortgt_pot,
                                                                    double db_tor101_pot)
 {
-    SampleIO::SampleFragment fragment;
+    SampleIO::ProvenanceInput fragment;
     fragment.fragment_name = prov.cfg.stage_name;
     fragment.artio_path = artio_path;
     fragment.subrun_pot_sum = prov.subrun.pot_sum;

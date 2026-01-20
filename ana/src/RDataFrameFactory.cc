@@ -34,7 +34,7 @@ std::vector<std::string> RDataFrameFactory::collect_files(const SampleIO::Sample
 {
     std::vector<std::string> files;
     files.reserve(sample.fragments.size());
-    for (const SampleIO::SampleFragment &fragment : sample.fragments)
+    for (const SampleIO::ProvenanceInput &fragment : sample.fragments)
     {
         files.push_back(fragment.artio_path);
     }

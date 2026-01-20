@@ -25,7 +25,7 @@ Sample SampleAggregator::aggregate(const std::string &sample_name, const std::ve
 
     for (const auto &path : artio_files)
     {
-        ArtFileProvenance prov = ArtFileProvenanceRootIO::read(path);
+        ArtFileProvenance prov = ArtFileProvenanceIO::read(path);
         if (out.fragments.empty())
         {
             out.kind = prov.kind;

@@ -1,16 +1,16 @@
 /* -- C++ -- */
 /**
- *  @file  io/src/ArtFileProvenanceRootIO.cc
+ *  @file  io/src/ArtFileProvenanceIO.cc
  *
  *  @brief Implementation for Art file provenance ROOT IO.
  */
 
-#include "ArtFileProvenanceRootIO.hh"
+#include "ArtFileProvenanceIO.hh"
 
 namespace nuxsec
 {
 
-void ArtFileProvenanceRootIO::write(const ArtFileProvenance &r, const std::string &out_file)
+void ArtFileProvenanceIO::write(const ArtFileProvenance &r, const std::string &out_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(out_file.c_str(), "UPDATE"));
     if (!f || f->IsZombie())
@@ -79,7 +79,7 @@ void ArtFileProvenanceRootIO::write(const ArtFileProvenance &r, const std::strin
     f->Close();
 }
 
-ArtFileProvenance ArtFileProvenanceRootIO::read(const std::string &in_file)
+ArtFileProvenance ArtFileProvenanceIO::read(const std::string &in_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -100,7 +100,7 @@ ArtFileProvenance ArtFileProvenanceRootIO::read(const std::string &in_file)
     return read_directory(d, kind, beam);
 }
 
-ArtFileProvenance ArtFileProvenanceRootIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
+ArtFileProvenance ArtFileProvenanceIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -118,7 +118,7 @@ ArtFileProvenance ArtFileProvenanceRootIO::read(const std::string &in_file, Samp
     return read_directory(d, kind, beam);
 }
 
-ArtFileProvenance ArtFileProvenanceRootIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
+ArtFileProvenance ArtFileProvenanceIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
 {
     ArtFileProvenance r;
     r.cfg.stage_name = read_named_string(d, "stage_name");
@@ -147,7 +147,7 @@ ArtFileProvenance ArtFileProvenanceRootIO::read_directory(TDirectory *d, SampleK
     return r;
 }
 
-std::string ArtFileProvenanceRootIO::read_named_string(TDirectory *d, const char *key)
+std::string ArtFileProvenanceIO::read_named_string(TDirectory *d, const char *key)
 {
     TObject *obj = d->Get(key);
     auto *named = dynamic_cast<TNamed *>(obj);
@@ -158,7 +158,7 @@ std::string ArtFileProvenanceRootIO::read_named_string(TDirectory *d, const char
     return std::string(named->GetTitle());
 }
 
-std::vector<std::string> ArtFileProvenanceRootIO::read_input_files(TDirectory *d)
+std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)
 {
     std::vector<std::string> files;
     TObject *obj = d->Get("input_files");
@@ -181,7 +181,7 @@ std::vector<std::string> ArtFileProvenanceRootIO::read_input_files(TDirectory *d
     return files;
 }
 
-std::vector<RunSubrun> ArtFileProvenanceRootIO::read_run_subrun_pairs(TDirectory *d)
+std::vector<RunSubrun> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
 {
     TObject *obj = d->Get("run_subrun");
     auto *tree = dynamic_cast<TTree *>(obj);

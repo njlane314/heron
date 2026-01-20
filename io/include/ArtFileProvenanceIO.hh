@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  io/include/ArtFileProvenanceRootIO.hh
+ *  @file  io/include/ArtFileProvenanceIO.hh
  *
  *  @brief Data structures and IO helpers for Art file provenance ROOT IO.
  */
 
-#ifndef Nuxsec_IO_ART_FILE_PROVENANCE_ROOT_IO_H_INCLUDED
-#define Nuxsec_IO_ART_FILE_PROVENANCE_ROOT_IO_H_INCLUDED
+#ifndef Nuxsec_IO_ART_FILE_PROVENANCE_IO_H_INCLUDED
+#define Nuxsec_IO_ART_FILE_PROVENANCE_IO_H_INCLUDED
 
 #include <TDirectory.h>
 #include <TFile.h>
@@ -79,7 +79,7 @@ struct ArtFileProvenance
     double db_tor101_pot = 0.0;
 };
 
-class ArtFileProvenanceRootIO
+class ArtFileProvenanceIO
 {
   public:
     static void write(const ArtFileProvenance &r, const std::string &out_file);
@@ -108,4 +108,4 @@ class ArtFileProvenanceRootIO
 
 } // namespace nuxsec
 
-#endif // Nuxsec_IO_ART_FILE_PROVENANCE_ROOT_IO_H_INCLUDED
+#endif // Nuxsec_IO_ART_FILE_PROVENANCE_IO_H_INCLUDED

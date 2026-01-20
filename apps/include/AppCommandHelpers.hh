@@ -18,7 +18,7 @@
 #include "AnalysisDefinition.hh"
 #include "AnalysisRdfDefinitions.hh"
 #include "AppUtils.hh"
-#include "ArtFileProvenanceRootIO.hh"
+#include "ArtFileProvenanceIO.hh"
 #include "RDataFrameFactory.hh"
 #include "RunInfoSqliteReader.hh"
 #include "SampleAggregator.hh"
@@ -156,7 +156,7 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
               << " tortgt=" << rec.runinfo.tortgt_sum
               << "\n";
 
-    nuxsec::ArtFileProvenanceRootIO::write(rec, art_args.artio_path);
+    nuxsec::ArtFileProvenanceIO::write(rec, art_args.artio_path);
 
     return 0;
 }

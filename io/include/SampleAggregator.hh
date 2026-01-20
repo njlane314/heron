@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "ArtFileProvenanceRootIO.hh"
+#include "ArtFileProvenanceIO.hh"
 #include "Sample.hh"
 
 namespace nuxsec

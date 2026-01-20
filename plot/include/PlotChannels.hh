@@ -5,8 +5,8 @@
  *  @brief Channel display properties for plotting.
  */
 
-#ifndef Nuxsec_PLOT_CHANNELS_H_INCLUDED
-#define Nuxsec_PLOT_CHANNELS_H_INCLUDED
+#ifndef NUXSEC_PLOT_CHANNELS_H
+#define NUXSEC_PLOT_CHANNELS_H
 
 #include "RtypesCore.h"
 #include "TColor.h"
@@ -84,4 +84,4 @@ class Channels
 } // namespace plot
 } // namespace nuxsec
 
-#endif // Nuxsec_PLOT_CHANNELS_H_INCLUDED
+#endif // NUXSEC_PLOT_CHANNELS_H

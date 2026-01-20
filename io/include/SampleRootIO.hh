@@ -5,8 +5,8 @@
  *  @brief ROOT IO helpers for aggregated samples.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_ROOT_IO_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_ROOT_IO_H_INCLUDED
+#ifndef NUXSEC_SAMPLE_SAMPLE_ROOT_IO_H
+#define NUXSEC_SAMPLE_SAMPLE_ROOT_IO_H
 
 #include <string>
 
@@ -24,4 +24,4 @@ class SampleRootIO
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_ROOT_IO_H_INCLUDED
+#endif // NUXSEC_SAMPLE_SAMPLE_ROOT_IO_H

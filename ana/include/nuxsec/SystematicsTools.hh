@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef Nuxsec_ANA_SYSTEMATICSTOOLS_H_INCLUDED
-#define Nuxsec_ANA_SYSTEMATICSTOOLS_H_INCLUDED
+#ifndef NUXSEC_ANA_SYSTEMATICSTOOLS_H
+#define NUXSEC_ANA_SYSTEMATICSTOOLS_H
 
 #include <algorithm>
 #include <cmath>

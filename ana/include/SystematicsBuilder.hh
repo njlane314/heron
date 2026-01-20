@@ -5,8 +5,8 @@
  *  @brief Build systematic templates from unisim and multisim variations.
  */
 
-#ifndef Nuxsec_ANA_SYSTEMATICS_BUILDER_H_INCLUDED
-#define Nuxsec_ANA_SYSTEMATICS_BUILDER_H_INCLUDED
+#ifndef NUXSEC_ANA_SYSTEMATICS_BUILDER_H
+#define NUXSEC_ANA_SYSTEMATICS_BUILDER_H
 
 #include <memory>
 #include <string>
@@ -88,4 +88,4 @@ class SystematicsBuilder final
 
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_SYSTEMATICS_BUILDER_H_INCLUDED
+#endif // NUXSEC_ANA_SYSTEMATICS_BUILDER_H

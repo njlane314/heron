@@ -5,8 +5,8 @@
  *  @brief SQLite reader for run/subrun summary queries.
  */
 
-#ifndef Nuxsec_IO_RUNINFO_SQLITE_READER_H_INCLUDED
-#define Nuxsec_IO_RUNINFO_SQLITE_READER_H_INCLUDED
+#ifndef NUXSEC_IO_RUNINFO_SQLITE_READER_H
+#define NUXSEC_IO_RUNINFO_SQLITE_READER_H
 
 #include <sqlite3.h>
 
@@ -55,4 +55,4 @@ class RunInfoSqliteReader
 
 } // namespace nuxsec
 
-#endif // Nuxsec_IO_RUNINFO_SQLITE_READER_H_INCLUDED
+#endif // NUXSEC_IO_RUNINFO_SQLITE_READER_H

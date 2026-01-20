@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef Nuxsec_APPS_APPUTILS_H_INCLUDED
-#define Nuxsec_APPS_APPUTILS_H_INCLUDED
+#ifndef NUXSEC_APPS_APPUTILS_H
+#define NUXSEC_APPS_APPUTILS_H
 
 #include <algorithm>
 #include <cctype>

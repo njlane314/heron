@@ -5,8 +5,8 @@
  *  @brief Sample loading and variable definitions for ROOT RDataFrame.
  */
 
-#ifndef Nuxsec_ANA_RDATA_FRAME_FACTORY_H_INCLUDED
-#define Nuxsec_ANA_RDATA_FRAME_FACTORY_H_INCLUDED
+#ifndef NUXSEC_ANA_RDATA_FRAME_FACTORY_H
+#define NUXSEC_ANA_RDATA_FRAME_FACTORY_H
 
 #include <ROOT/RDataFrame.hxx>
 
@@ -36,4 +36,4 @@ class RDataFrameFactory
 
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_RDATA_FRAME_FACTORY_H_INCLUDED
+#endif // NUXSEC_ANA_RDATA_FRAME_FACTORY_H

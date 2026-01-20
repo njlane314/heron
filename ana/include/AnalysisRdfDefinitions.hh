@@ -5,8 +5,8 @@
  *  @brief Variable definitions for analysis RDataFrame processing
  */
 
-#ifndef Nuxsec_ANA_ANALYSIS_RDF_DEFINITIONS_H_INCLUDED
-#define Nuxsec_ANA_ANALYSIS_RDF_DEFINITIONS_H_INCLUDED
+#ifndef NUXSEC_ANA_ANALYSIS_RDF_DEFINITIONS_H
+#define NUXSEC_ANA_ANALYSIS_RDF_DEFINITIONS_H
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
@@ -68,4 +68,4 @@ class AnalysisRdfDefinitions
 
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_ANALYSIS_RDF_DEFINITIONS_H_INCLUDED
+#endif // NUXSEC_ANA_ANALYSIS_RDF_DEFINITIONS_H

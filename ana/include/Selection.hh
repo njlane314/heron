@@ -5,8 +5,8 @@
  *  @brief Selection helpers for analysis filters and summaries.
  */
 
-#ifndef Nuxsec_ANA_SELECTION_H_INCLUDED
-#define Nuxsec_ANA_SELECTION_H_INCLUDED
+#ifndef NUXSEC_ANA_SELECTION_H
+#define NUXSEC_ANA_SELECTION_H
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
@@ -165,4 +165,4 @@ inline EvalResult evaluate(const std::vector<const Entry *> &mc,
 } // namespace selection
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_SELECTION_H_INCLUDED
+#endif // NUXSEC_ANA_SELECTION_H

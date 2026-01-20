@@ -5,8 +5,8 @@
  *  @brief Plot orchestration helpers.
  */
 
-#ifndef Nuxsec_PLOT_PLOTTER_H_INCLUDED
-#define Nuxsec_PLOT_PLOTTER_H_INCLUDED
+#ifndef NUXSEC_PLOT_PLOTTER_H
+#define NUXSEC_PLOT_PLOTTER_H
 
 #include <string>
 #include <vector>
@@ -51,4 +51,4 @@ class Plotter
 } // namespace plot
 } // namespace nuxsec
 
-#endif // Nuxsec_PLOT_PLOTTER_H_INCLUDED
+#endif // NUXSEC_PLOT_PLOTTER_H

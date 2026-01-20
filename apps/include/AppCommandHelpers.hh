@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef Nuxsec_APPS_APPCOMMANDHELPERS_H_INCLUDED
-#define Nuxsec_APPS_APPCOMMANDHELPERS_H_INCLUDED
+#ifndef NUXSEC_APPS_APPCOMMANDHELPERS_H
+#define NUXSEC_APPS_APPCOMMANDHELPERS_H
 
 #include "AppArtCommand.hh"
 #include "AppSampleCommand.hh"

@@ -5,8 +5,8 @@
  *  @brief Stacked histogram plotting helper.
  */
 
-#ifndef Nuxsec_PLOT_STACKED_HIST_H_INCLUDED
-#define Nuxsec_PLOT_STACKED_HIST_H_INCLUDED
+#ifndef NUXSEC_PLOT_STACKED_HIST_H
+#define NUXSEC_PLOT_STACKED_HIST_H
 
 #include "TCanvas.h"
 #include "TH1.h"
@@ -68,4 +68,4 @@ class StackedHist
 } // namespace plot
 } // namespace nuxsec
 
-#endif // Nuxsec_PLOT_STACKED_HIST_H_INCLUDED
+#endif // NUXSEC_PLOT_STACKED_HIST_H

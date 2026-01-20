@@ -14,8 +14,8 @@
  *  consistently regardless of where the binary is invoked from.
  */
 
-#ifndef Nuxsec_plot_PlotEnv_H_INCLUDED
-#define Nuxsec_plot_PlotEnv_H_INCLUDED
+#ifndef NUXSEC_PLOT_PLOT_ENV_H
+#define NUXSEC_PLOT_PLOT_ENV_H
 
 #include <cstdlib>
 #include <filesystem>

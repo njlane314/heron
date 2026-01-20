@@ -5,8 +5,8 @@
  *  @brief Data structures and IO helpers for Art file provenance ROOT IO.
  */
 
-#ifndef Nuxsec_IO_ART_FILE_PROVENANCE_IO_H_INCLUDED
-#define Nuxsec_IO_ART_FILE_PROVENANCE_IO_H_INCLUDED
+#ifndef NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
+#define NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
 
 #include <TDirectory.h>
 #include <TFile.h>
@@ -88,4 +88,4 @@ class ArtFileProvenanceIO
 
 } // namespace nuxsec
 
-#endif // Nuxsec_IO_ART_FILE_PROVENANCE_IO_H_INCLUDED
+#endif // NUXSEC_IO_ART_FILE_PROVENANCE_IO_H

@@ -5,8 +5,8 @@
  *  @brief Data structures for sample aggregation.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_H_INCLUDED
+#ifndef NUXSEC_SAMPLE_SAMPLE_H
+#define NUXSEC_SAMPLE_SAMPLE_H
 
 #include <string>
 #include <vector>
@@ -47,4 +47,4 @@ struct Sample
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_H_INCLUDED
+#endif // NUXSEC_SAMPLE_SAMPLE_H

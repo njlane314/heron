@@ -5,8 +5,8 @@
  *  @brief Template specification helpers for analysis histogram booking.
  */
 
-#ifndef Nuxsec_ANA_TEMPLATE_SPEC_H_INCLUDED
-#define Nuxsec_ANA_TEMPLATE_SPEC_H_INCLUDED
+#ifndef NUXSEC_ANA_TEMPLATE_SPEC_H
+#define NUXSEC_ANA_TEMPLATE_SPEC_H
 
 #include <string>
 #include <vector>
@@ -31,4 +31,4 @@ std::vector<TemplateSpec1D> read_template_spec_1d_tsv(const std::string &path);
 
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_TEMPLATE_SPEC_H_INCLUDED
+#endif // NUXSEC_ANA_TEMPLATE_SPEC_H

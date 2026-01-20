@@ -5,8 +5,8 @@
  *  @brief Plot configuration descriptors.
  */
 
-#ifndef Nuxsec_PLOT_DESCRIPTORS_H_INCLUDED
-#define Nuxsec_PLOT_DESCRIPTORS_H_INCLUDED
+#ifndef NUXSEC_PLOT_DESCRIPTORS_H
+#define NUXSEC_PLOT_DESCRIPTORS_H
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
@@ -140,4 +140,4 @@ struct TH1DModel
 } // namespace plot
 } // namespace nuxsec
 
-#endif // Nuxsec_PLOT_DESCRIPTORS_H_INCLUDED
+#endif // NUXSEC_PLOT_DESCRIPTORS_H

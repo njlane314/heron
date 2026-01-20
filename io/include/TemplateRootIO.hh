@@ -5,8 +5,8 @@
  *  @brief ROOT IO helpers for template histogram output.
  */
 
-#ifndef Nuxsec_IO_TEMPLATE_ROOT_IO_H_INCLUDED
-#define Nuxsec_IO_TEMPLATE_ROOT_IO_H_INCLUDED
+#ifndef NUXSEC_IO_TEMPLATE_ROOT_IO_H
+#define NUXSEC_IO_TEMPLATE_ROOT_IO_H
 
 #include <string>
 #include <utility>
@@ -59,4 +59,4 @@ class TemplateRootIO
 
 } // namespace nuxsec
 
-#endif // Nuxsec_IO_TEMPLATE_ROOT_IO_H_INCLUDED
+#endif // NUXSEC_IO_TEMPLATE_ROOT_IO_H

@@ -5,8 +5,8 @@
  *  @brief Sample aggregation helpers.
  */
 
-#ifndef Nuxsec_SAMPLE_SAMPLE_AGGREGATOR_H_INCLUDED
-#define Nuxsec_SAMPLE_SAMPLE_AGGREGATOR_H_INCLUDED
+#ifndef NUXSEC_SAMPLE_SAMPLE_AGGREGATOR_H
+#define NUXSEC_SAMPLE_SAMPLE_AGGREGATOR_H
 
 #include <string>
 #include <vector>
@@ -34,4 +34,4 @@ class SampleAggregator
 
 } // namespace nuxsec
 
-#endif // Nuxsec_SAMPLE_SAMPLE_AGGREGATOR_H_INCLUDED
+#endif // NUXSEC_SAMPLE_SAMPLE_AGGREGATOR_H

@@ -5,8 +5,8 @@
  *  @brief Compiled analysis definition for template production.
  */
 
-#ifndef Nuxsec_ANA_ANALYSIS_DEFINITION_H_INCLUDED
-#define Nuxsec_ANA_ANALYSIS_DEFINITION_H_INCLUDED
+#ifndef NUXSEC_ANA_ANALYSIS_DEFINITION_H
+#define NUXSEC_ANA_ANALYSIS_DEFINITION_H
 
 #include <string>
 #include <vector>
@@ -42,4 +42,4 @@ class AnalysisDefinition final
 
 } // namespace nuxsec
 
-#endif // Nuxsec_ANA_ANALYSIS_DEFINITION_H_INCLUDED
+#endif // NUXSEC_ANA_ANALYSIS_DEFINITION_H

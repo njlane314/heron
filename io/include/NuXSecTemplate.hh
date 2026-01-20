@@ -5,8 +5,8 @@
  *  @brief Collie-style template container for NuXSec fits.
  */
 
-#ifndef Nuxsec_IO_NUXSEC_TEMPLATE_H_INCLUDED
-#define Nuxsec_IO_NUXSEC_TEMPLATE_H_INCLUDED
+#ifndef NUXSEC_IO_NUXSEC_TEMPLATE_H
+#define NUXSEC_IO_NUXSEC_TEMPLATE_H
 
 #include <TNamed.h>
 
@@ -135,4 +135,4 @@ class NuXSecTemplate : public TNamed
 
 } // namespace nuxsec
 
-#endif // Nuxsec_IO_NUXSEC_TEMPLATE_H_INCLUDED
+#endif // NUXSEC_IO_NUXSEC_TEMPLATE_H

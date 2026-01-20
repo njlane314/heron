@@ -18,7 +18,9 @@
 #include <TSystem.h>
 
 #include "AppUtils.hh"
-#include "AppCommandHelpers.hh"
+#include "AppArtCommand.hh"
+#include "AppSampleCommand.hh"
+#include "AppTemplateCommand.hh"
 
 namespace
 {

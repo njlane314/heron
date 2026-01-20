@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "AppCommandHelpers.hh"
+#include "AppTemplateCommand.hh"
 
 int main(int argc, char **argv)
 {

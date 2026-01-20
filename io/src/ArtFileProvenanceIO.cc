@@ -10,7 +10,7 @@
 namespace nuxsec
 {
 
-void ArtFileProvenanceIO::write(const ArtFileProvenance &r, const std::string &out_file)
+void ArtFileProvenanceIO::write(const artio::Provenance &r, const std::string &out_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(out_file.c_str(), "UPDATE"));
     if (!f || f->IsZombie())
@@ -65,7 +65,7 @@ void ArtFileProvenanceIO::write(const ArtFileProvenance &r, const std::string &o
     f->Close();
 }
 
-ArtFileProvenance ArtFileProvenanceIO::read(const std::string &in_file)
+artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -86,7 +86,7 @@ ArtFileProvenance ArtFileProvenanceIO::read(const std::string &in_file)
     return read_directory(d, kind, beam);
 }
 
-ArtFileProvenance ArtFileProvenanceIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
+artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file, SampleKind kind, BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -104,9 +104,9 @@ ArtFileProvenance ArtFileProvenanceIO::read(const std::string &in_file, SampleKi
     return read_directory(d, kind, beam);
 }
 
-ArtFileProvenance ArtFileProvenanceIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
+artio::Provenance ArtFileProvenanceIO::read_directory(TDirectory *d, SampleKind kind, BeamMode beam)
 {
-    ArtFileProvenance r;
+    artio::Provenance r;
     r.cfg.stage_name = read_named_string(d, "stage_name");
     r.kind = kind;
     r.beam = beam;
@@ -155,7 +155,7 @@ std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)
     return files;
 }
 
-std::vector<RunSubrun> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
+std::vector<artio::RunSubrunPair> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
 {
     TObject *obj = d->Get("run_subrun");
     auto *tree = dynamic_cast<TTree *>(obj);
@@ -170,12 +170,12 @@ std::vector<RunSubrun> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
     tree->SetBranchAddress("subrun", &subrun);
 
     const Long64_t n = tree->GetEntries();
-    std::vector<RunSubrun> pairs;
+    std::vector<artio::RunSubrunPair> pairs;
     pairs.reserve(static_cast<size_t>(n));
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
-        pairs.push_back(RunSubrun{static_cast<int>(run), static_cast<int>(subrun)});
+        pairs.push_back(artio::RunSubrunPair{static_cast<int>(run), static_cast<int>(subrun)});
     }
     return pairs;
 }

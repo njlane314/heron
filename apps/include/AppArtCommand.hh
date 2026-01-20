@@ -30,7 +30,7 @@ inline bool is_selection_data_file(const std::string &path)
 struct ArtArgs
 {
     std::string artio_path;
-    nuxsec::StageCfg stage_cfg;
+    nuxsec::artio::Stage stage_cfg;
     nuxsec::SampleKind sample_kind = nuxsec::SampleKind::kUnknown;
     nuxsec::BeamMode beam_mode = nuxsec::BeamMode::kUnknown;
 };
@@ -110,7 +110,7 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
 
     const auto files = nuxsec::app::read_file_list(art_args.stage_cfg.filelist_path);
 
-    nuxsec::ArtFileProvenance rec;
+    nuxsec::artio::Provenance rec;
     rec.cfg = art_args.stage_cfg;
     rec.input_files = files;
     rec.kind = art_args.sample_kind;

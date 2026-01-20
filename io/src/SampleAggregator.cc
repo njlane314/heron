@@ -30,7 +30,7 @@ Sample SampleAggregator::aggregate(const std::string &sample_name,
 
     for (const auto &path : artio_files)
     {
-        ArtFileProvenance prov = ArtFileProvenanceIO::read(path);
+        artio::Provenance prov = ArtFileProvenanceIO::read(path);
         if (out.fragments.empty())
         {
             out.kind = prov.kind;
@@ -84,7 +84,7 @@ double SampleAggregator::compute_normalisation(double subrun_pot_sum, double db_
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleFragment SampleAggregator::make_fragment(const ArtFileProvenance &prov,
+SampleFragment SampleAggregator::make_fragment(const artio::Provenance &prov,
                                                const std::string &artio_path,
                                                double db_tortgt_pot,
                                                double db_tor101_pot)

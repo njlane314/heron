@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsecArtIOaggregator.cc
+ *  @file  apps/src/nuxsecArtFileIOaggregator.cc
  *
  *  @brief Main entrypoint for Art file provenance generation.
  */
@@ -25,8 +25,8 @@ int main(int argc, char **argv)
         }
 
         const nuxsec::app::ArtArgs art_args =
-            nuxsec::app::parse_art_args(args, "Usage: nuxsecArtIOaggregator NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-        return nuxsec::app::run_artio(art_args, "nuxsecArtIOaggregator");
+            nuxsec::app::parse_art_args(args, "Usage: nuxsecArtFileIOaggregator NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
+        return nuxsec::app::run_artio(art_args, "nuxsecArtFileIOaggregator");
     }
     catch (const std::exception &e)
     {

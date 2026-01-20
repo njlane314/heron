@@ -17,10 +17,10 @@
 #include <TROOT.h>
 #include <TSystem.h>
 
-#include "AppUtils.hh"
-#include "AppArtCommand.hh"
-#include "AppSampleCommand.hh"
-#include "AppTemplateCommand.hh"
+#include "Utils.hh"
+#include "ArtCommand.hh"
+#include "SampleCommand.hh"
+#include "TemplateCommand.hh"
 
 namespace
 {

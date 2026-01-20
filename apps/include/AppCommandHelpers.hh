@@ -133,7 +133,7 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
         rec.kind = nuxsec::SampleKind::kData;
     }
 
-    rec.subrun = nuxsec::scanSubrunTree(files);
+    rec.subrun = nuxsec::scan_subrun_tree(files);
 
     rec.subrun.pot_sum *= pot_scale;
     rec.scale = pot_scale;

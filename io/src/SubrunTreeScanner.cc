@@ -20,7 +20,7 @@
 namespace nuxsec
 {
 
-SubrunTreeSummary scanSubrunTree(const std::vector<std::string> &files)
+SubrunTreeSummary scan_subrun_tree(const std::vector<std::string> &files)
 {
     SubrunTreeSummary out;
 

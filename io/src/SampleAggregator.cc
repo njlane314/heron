@@ -48,7 +48,7 @@ Sample SampleAggregator::aggregate(const std::string &sample_name,
             }
         }
 
-        RunInfoSums runinfo = db.sumRunInfo(prov.subrun.unique_pairs);
+        RunInfoSums runinfo = db.sum_run_info(prov.subrun.unique_pairs);
         const double pot_scale = (prov.scale > 0.0) ? prov.scale : 1.0;
         runinfo.tortgt_sum *= pot_scale;
         runinfo.tor101_sum *= pot_scale;

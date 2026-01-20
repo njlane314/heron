@@ -59,7 +59,7 @@ void RunInfoSqliteReader::prepare(const std::string &sql, sqlite3_stmt **stmt) c
     }
 }
 
-RunInfoSums RunInfoSqliteReader::sumRunInfo(const std::vector<RunSubrun> &pairs) const
+RunInfoSums RunInfoSqliteReader::sum_run_info(const std::vector<RunSubrun> &pairs) const
 {
     if (pairs.empty())
     {

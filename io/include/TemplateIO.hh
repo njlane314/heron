@@ -1,16 +1,17 @@
 /* -- C++ -- */
 /**
- *  @file  io/include/NuXSecTemplate.hh
+ *  @file  io/include/TemplateIO.hh
  *
- *  @brief Collie-style template container for NuXSec fits.
+ *  @brief Collie-style template container with ROOT IO helpers.
  */
 
-#ifndef NUXSEC_IO_NUXSEC_TEMPLATE_H
-#define NUXSEC_IO_NUXSEC_TEMPLATE_H
+#ifndef NUXSEC_IO_TEMPLATE_IO_H
+#define NUXSEC_IO_TEMPLATE_IO_H
 
 #include <TNamed.h>
 
 #include <string>
+#include <utility>
 #include <vector>
 
 class TH1;
@@ -18,6 +19,12 @@ class TH2;
 
 namespace nuxsec
 {
+
+struct TemplateWriteOptions
+{
+    std::string top_dir = "nuxsec/results";
+    bool overwrite = true;
+};
 
 struct NuXSecSystBin
 {
@@ -30,19 +37,19 @@ struct NuXSecSystBin
 
 };
 
-/** \brief CollieDistribution-like template representation for NuXSec. */
-class NuXSecTemplate : public TNamed
+/** \brief CollieDistribution-like template representation for NuXSec with IO helpers. */
+class TemplateIO : public TNamed
 {
   public:
     static const double kIgnoreExposureScale;
 
-    NuXSecTemplate();
-    NuXSecTemplate(const char *name, int n_x, double x_min, double x_max,
-                   int n_y = 1, double y_min = 0, double y_max = 1);
+    TemplateIO();
+    TemplateIO(const char *name, int n_x, double x_min, double x_max,
+               int n_y = 1, double y_min = 0, double y_max = 1);
 
-    NuXSecTemplate(const NuXSecTemplate &rhs);
-    NuXSecTemplate &operator=(const NuXSecTemplate &rhs);
-    ~NuXSecTemplate() override;
+    TemplateIO(const TemplateIO &rhs);
+    TemplateIO &operator=(const TemplateIO &rhs);
+    ~TemplateIO() override;
 
     int NX() const { return m_nx; }
     int NY() const { return m_ny; }
@@ -90,6 +97,36 @@ class NuXSecTemplate : public TNamed
     TH1 *MakeTH1(const std::string &title = "") const;
     TH2 *MakeTH2(const std::string &title = "") const;
 
+    static void write_histograms(const std::string &root_path,
+                                 const std::string &sample_name,
+                                 const std::vector<std::pair<std::string, const TH1 *>> &hists,
+                                 const TemplateWriteOptions &opt = {});
+
+    static void write_string_meta(const std::string &root_path,
+                                  const std::string &sample_name,
+                                  const std::string &key,
+                                  const std::string &value,
+                                  const TemplateWriteOptions &opt = {});
+
+    static void write_double_meta(const std::string &root_path,
+                                  const std::string &sample_name,
+                                  const std::string &key,
+                                  double value,
+                                  const TemplateWriteOptions &opt = {});
+
+    static void write_syst_histograms(const std::string &root_path,
+                                      const std::string &sample_name,
+                                      const std::string &syst_name,
+                                      const std::string &variation,
+                                      const std::vector<std::pair<std::string, const TH1 *>> &hists,
+                                      const TemplateWriteOptions &opt = {});
+
+    static void write_syst_flag_meta(const std::string &root_path,
+                                     const std::string &syst_name,
+                                     const std::string &key,
+                                     const std::string &value,
+                                     const TemplateWriteOptions &opt = {});
+
   private:
     int Index(int ix, int iy) const
     {
@@ -135,4 +172,4 @@ class NuXSecTemplate : public TNamed
 
 } // namespace nuxsec
 
-#endif // NUXSEC_IO_NUXSEC_TEMPLATE_H
+#endif // NUXSEC_IO_TEMPLATE_IO_H

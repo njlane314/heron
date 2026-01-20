@@ -19,7 +19,7 @@
 #include "AppUtils.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
-#include "TemplateRootIO.hh"
+#include "TemplateIO.hh"
 
 namespace nuxsec
 {
@@ -73,17 +73,17 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
     const auto entries = nuxsec::app::read_sample_list(tpl_args.list_path);
     const auto &specs = analysis.Templates1D();
 
-    nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root, "__global__", "analysis_name",
+    nuxsec::TemplateIO::write_string_meta(tpl_args.output_root, "__global__", "analysis_name",
                                               analysis.Name());
-    nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root,
+    nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                               "__global__",
                                               "analysis_tree",
                                               analysis.TreeName());
-    nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root,
+    nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                               "__global__",
                                               "template_spec_source",
                                               "compiled");
-    nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root,
+    nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                               "__global__",
                                               "template_spec_tsv",
                                               analysis.Templates1DToTsv());
@@ -130,16 +130,16 @@ inline int run_template(const TemplateArgs &tpl_args, const std::string &log_pre
             to_write.emplace_back(specs[i].name, &hist);
         }
 
-        nuxsec::TemplateRootIO::write_histograms(tpl_args.output_root, sample.sample_name, to_write);
-        nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root,
+        nuxsec::TemplateIO::write_histograms(tpl_args.output_root, sample.sample_name, to_write);
+        nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                                   sample.sample_name,
                                                   "sample_kind",
                                                   sample::SampleIO::sample_kind_name(sample.kind));
-        nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root,
+        nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                                   sample.sample_name,
                                                   "beam_mode",
                                                   sample::SampleIO::beam_mode_name(sample.beam));
-        nuxsec::TemplateRootIO::write_string_meta(tpl_args.output_root,
+        nuxsec::TemplateIO::write_string_meta(tpl_args.output_root,
                                                   sample.sample_name,
                                                   "sample_rootio_path",
                                                   entry.output_path);

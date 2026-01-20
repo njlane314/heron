@@ -23,7 +23,7 @@
 #include "AnalysisRdfDefinitions.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
-#include "TemplateRootIO.hh"
+#include "TemplateIO.hh"
 
 namespace nuxsec
 {
@@ -112,7 +112,7 @@ void SystematicsBuilder::WriteOneSyst(const std::string &root_path,
                                       const std::string &variation,
                                       const std::vector<std::pair<std::string, const TH1 *>> &hists)
 {
-    nuxsec::TemplateRootIO::write_syst_histograms(root_path, sample_name, syst_name, variation, hists);
+    nuxsec::TemplateIO::write_syst_histograms(root_path, sample_name, syst_name, variation, hists);
 }
 
 void SystematicsBuilder::ClampNonNegative(TH1D &h)
@@ -232,12 +232,12 @@ void SystematicsBuilder::BuildUnisim(const SampleIO::Sample &sample,
     WriteOneSyst(template_root_path, sample.sample_name, uspec.name, "pos", pos);
     WriteOneSyst(template_root_path, sample.sample_name, uspec.name, "neg", neg);
 
-    nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, uspec.name, "type", "unisim");
-    nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path,
+    nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, uspec.name, "type", "unisim");
+    nuxsec::TemplateIO::write_syst_flag_meta(template_root_path,
                                                  uspec.name,
                                                  "log_normal",
                                                  uspec.log_normal ? "1" : "0");
-    nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path,
+    nuxsec::TemplateIO::write_syst_flag_meta(template_root_path,
                                                  uspec.name,
                                                  "floatable",
                                                  uspec.floatable ? "1" : "0");
@@ -472,9 +472,9 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
         const double sigma_theta = rms(thetas);
 
         const std::string rate_name = mspec.name + "_rate";
-        nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, rate_name, "type", "rate");
-        nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, rate_name, "log_normal", "1");
-        nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path,
+        nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, rate_name, "type", "rate");
+        nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, rate_name, "log_normal", "1");
+        nuxsec::TemplateIO::write_syst_flag_meta(template_root_path,
                                                      rate_name,
                                                      "sigma_theta",
                                                      std::to_string(sigma_theta));
@@ -542,9 +542,9 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
         }
     }
 
-    nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, mspec.name, "type", "multisim_eigen");
-    nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, mspec.name, "nuniv", std::to_string(U));
-    nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, mspec.name, "nmodes", std::to_string(nmodes));
+    nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, mspec.name, "type", "multisim_eigen");
+    nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, mspec.name, "nuniv", std::to_string(U));
+    nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, mspec.name, "nmodes", std::to_string(nmodes));
 
     for (int m = 0; m < nmodes; ++m)
     {
@@ -555,8 +555,8 @@ void SystematicsBuilder::BuildMultisimJointEigenmodes(const std::vector<SampleIO
         const std::string mode_name =
             mspec.name + "_mode" + (m < 10 ? "0" : "") + std::to_string(m);
 
-        nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, mode_name, "type", "eigenmode");
-        nuxsec::TemplateRootIO::write_syst_flag_meta(template_root_path, mode_name, "parent", mspec.name);
+        nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, mode_name, "type", "eigenmode");
+        nuxsec::TemplateIO::write_syst_flag_meta(template_root_path, mode_name, "parent", mspec.name);
 
         for (const auto &b : blocks)
         {

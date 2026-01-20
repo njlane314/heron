@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "AppUtils.hh"
-#include "SampleAggregator.hh"
+#include "SampleNormalisationService.hh"
 #include "SampleIO.hh"
 
 namespace nuxsec
@@ -110,7 +110,7 @@ inline int run_sample(const SampleArgs &sample_args, const std::string &log_pref
     }
 
     sample::SampleIO::Sample sample =
-        nuxsec::SampleAggregator::aggregate(sample_args.sample_name, files, db_path);
+        nuxsec::SampleNormalisationService::aggregate(sample_args.sample_name, files, db_path);
     sample::SampleIO::write(sample, sample_args.output_path);
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 

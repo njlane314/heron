@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  io/include/SampleAggregator.hh
+ *  @file  io/include/SampleNormalisationService.hh
  *
- *  @brief Sample aggregation helpers.
+ *  @brief Sample normalisation service helpers.
  */
 
-#ifndef NUXSEC_SAMPLE_SAMPLE_AGGREGATOR_H
-#define NUXSEC_SAMPLE_SAMPLE_AGGREGATOR_H
+#ifndef NUXSEC_SAMPLE_SAMPLE_NORMALISATION_SERVICE_H
+#define NUXSEC_SAMPLE_SAMPLE_NORMALISATION_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -19,7 +19,7 @@ namespace nuxsec
 
 using SampleIO = sample::SampleIO;
 
-class SampleAggregator
+class SampleNormalisationService
 {
   public:
     static SampleIO::Sample aggregate(const std::string &sample_name,
@@ -36,4 +36,4 @@ class SampleAggregator
 
 } // namespace nuxsec
 
-#endif // NUXSEC_SAMPLE_SAMPLE_AGGREGATOR_H
+#endif // NUXSEC_SAMPLE_SAMPLE_NORMALISATION_SERVICE_H

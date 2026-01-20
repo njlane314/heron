@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  io/src/SampleAggregator.cc
+ *  @file  io/src/SampleNormalisationService.cc
  *
- *  @brief Implementation for Sample aggregation helpers.
+ *  @brief Implementation for Sample normalisation service helpers.
  */
 
-#include "SampleAggregator.hh"
+#include "SampleNormalisationService.hh"
 #include "RunInfoService.hh"
 
 #include <stdexcept>
@@ -14,9 +14,9 @@
 namespace nuxsec
 {
 
-SampleIO::Sample SampleAggregator::aggregate(const std::string &sample_name,
-                                             const std::vector<std::string> &artio_files,
-                                             const std::string &db_path)
+SampleIO::Sample SampleNormalisationService::aggregate(const std::string &sample_name,
+                                                       const std::vector<std::string> &artio_files,
+                                                       const std::string &db_path)
 {
     if (artio_files.empty())
     {
@@ -71,7 +71,7 @@ SampleIO::Sample SampleAggregator::aggregate(const std::string &sample_name,
     return out;
 }
 
-double SampleAggregator::compute_normalisation(double subrun_pot_sum, double db_tortgt_pot)
+double SampleNormalisationService::compute_normalisation(double subrun_pot_sum, double db_tortgt_pot)
 {
     if (subrun_pot_sum <= 0.0)
     {
@@ -84,10 +84,10 @@ double SampleAggregator::compute_normalisation(double subrun_pot_sum, double db_
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleIO::SampleFragment SampleAggregator::make_fragment(const artio::Provenance &prov,
-                                                         const std::string &artio_path,
-                                                         double db_tortgt_pot,
-                                                         double db_tor101_pot)
+SampleIO::SampleFragment SampleNormalisationService::make_fragment(const artio::Provenance &prov,
+                                                                   const std::string &artio_path,
+                                                                   double db_tortgt_pot,
+                                                                   double db_tor101_pot)
 {
     SampleIO::SampleFragment fragment;
     fragment.fragment_name = prov.cfg.stage_name;

@@ -1,12 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  io/include/SubrunTreeService.hh
+ *  @file  io/src/SubRunInventoryService.cc
  *
- *  @brief Declarations for Subrun tree scanning helpers.
+ *  @brief Implementation of the SubRun inventory helpers.
  */
 
-#ifndef NUXSEC_IO_SUBRUN_TREE_SERVICE_H
-#define NUXSEC_IO_SUBRUN_TREE_SERVICE_H
+#include "SubRunInventoryService.hh"
 
 #include <TChain.h>
 #include <TFile.h>
@@ -22,7 +21,8 @@
 
 namespace nuxsec
 {
-inline artio::SubrunSummary scan_subrun_tree(const std::vector<std::string> &files)
+
+artio::SubrunSummary SubRunInventoryService::scan_subrun_tree(const std::vector<std::string> &files)
 {
     artio::SubrunSummary out;
 
@@ -108,6 +108,5 @@ inline artio::SubrunSummary scan_subrun_tree(const std::vector<std::string> &fil
     out.unique_pairs = std::move(pairs);
     return out;
 }
-}
 
-#endif // NUXSEC_IO_SUBRUN_TREE_SERVICE_H
+}

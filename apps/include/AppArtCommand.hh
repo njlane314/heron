@@ -12,7 +12,7 @@
 #include "AppUtils.hh"
 #include "ArtFileProvenanceIO.hh"
 #include "SampleIO.hh"
-#include "SubrunTreeService.hh"
+#include "SubRunInventoryService.hh"
 
 namespace nuxsec
 {
@@ -121,7 +121,7 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
         rec.kind = sample::SampleIO::SampleKind::kData;
     }
 
-    rec.subrun = nuxsec::scan_subrun_tree(files);
+    rec.subrun = nuxsec::SubRunInventoryService::scan_subrun_tree(files);
 
     rec.subrun.pot_sum *= pot_scale;
     rec.scale = pot_scale;

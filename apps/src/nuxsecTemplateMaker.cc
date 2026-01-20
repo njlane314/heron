@@ -9,157 +9,24 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include <TH1.h>
-#include <TH1D.h>
-
-#include <ROOT/RDFHelpers.hxx>
-#include <ROOT/RDataFrame.hxx>
-
-#include "AnalysisDefinition.hh"
-#include "AnalysisRdfDefinitions.hh"
-#include "AppUtils.hh"
-#include "RDataFrameFactory.hh"
-#include "SampleRootIO.hh"
-#include "SampleTypes.hh"
-#include "TemplateRootIO.hh"
-
-namespace
-{
-
-struct Args
-{
-    std::string list_path;
-    std::string output_root;
-    int nthreads = 1;
-};
-
-Args parse_args(int argc, char **argv)
-{
-    if (argc < 3 || argc > 4)
-    {
-        throw std::runtime_error("Usage: nuxsecTemplateMaker SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
-    }
-
-    Args args;
-    args.list_path = nuxsec::app::trim(argv[1]);
-    args.output_root = nuxsec::app::trim(argv[2]);
-    if (argc == 4)
-    {
-        args.nthreads = std::stoi(nuxsec::app::trim(argv[3]));
-    }
-
-    if (args.list_path.empty() || args.output_root.empty())
-    {
-        throw std::runtime_error("Invalid arguments (empty path)");
-    }
-    if (args.nthreads < 1)
-    {
-        throw std::runtime_error("Invalid thread count (must be >= 1)");
-    }
-
-    return args;
-}
-
-}
+#include "AppCommandHelpers.hh"
 
 int main(int argc, char **argv)
 {
     try
     {
-        const Args args = parse_args(argc, argv);
-        if (args.nthreads > 1)
+        std::vector<std::string> args;
+        args.reserve(static_cast<size_t>(argc > 0 ? argc - 1 : 0));
+        for (int i = 1; i < argc; ++i)
         {
-            ROOT::EnableImplicitMT(args.nthreads);
-        }
-        TH1::SetDefaultSumw2(true);
-
-        const auto &analysis = nuxsec::AnalysisDefinition::Instance();
-        const auto entries = nuxsec::app::read_sample_list(args.list_path);
-        const auto &specs = analysis.Templates1D();
-
-        nuxsec::TemplateRootIO::write_string_meta(args.output_root, "__global__", "analysis_name", analysis.Name());
-        nuxsec::TemplateRootIO::write_string_meta(args.output_root,
-                                                  "__global__",
-                                                  "analysis_tree",
-                                                  analysis.TreeName());
-        nuxsec::TemplateRootIO::write_string_meta(args.output_root,
-                                                  "__global__",
-                                                  "template_spec_source",
-                                                  "compiled");
-        nuxsec::TemplateRootIO::write_string_meta(args.output_root,
-                                                  "__global__",
-                                                  "template_spec_tsv",
-                                                  analysis.Templates1DToTsv());
-
-        for (const auto &entry : entries)
-        {
-            const nuxsec::Sample sample = nuxsec::SampleRootIO::read(entry.output_path);
-            ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.TreeName());
-            const nuxsec::ProcessorEntry proc_entry = analysis.MakeProcessorEntry(sample);
-
-            const auto &processor = nuxsec::AnalysisRdfDefinitions::Instance();
-            ROOT::RDF::RNode node = processor.Define(rdf, proc_entry);
-
-            std::vector<ROOT::RDF::RResultPtr<TH1D>> booked;
-            booked.reserve(specs.size());
-            std::vector<ROOT::RDF::RResultHandle> handles;
-            handles.reserve(specs.size());
-
-            for (const auto &spec : specs)
-            {
-                ROOT::RDF::RNode filtered = node;
-                if (!spec.selection.empty())
-                {
-                    filtered = node.Filter(spec.selection, spec.name);
-                }
-                const std::string weight = spec.weight.empty() ? "w_template" : spec.weight;
-                ROOT::RDF::TH1DModel model(spec.name.c_str(),
-                                           spec.title.c_str(),
-                                           spec.nbins,
-                                           spec.xmin,
-                                           spec.xmax);
-                auto hist = filtered.Histo1D(model, spec.variable, weight);
-                booked.push_back(hist);
-                handles.emplace_back(hist);
-            }
-
-            ROOT::RDF::RunGraphs(handles);
-
-            std::vector<std::pair<std::string, const TH1 *>> to_write;
-            to_write.reserve(specs.size());
-            for (size_t i = 0; i < specs.size(); ++i)
-            {
-                const TH1D &hist = booked[i].GetValue();
-                to_write.emplace_back(specs[i].name, &hist);
-            }
-
-            nuxsec::TemplateRootIO::write_histograms(args.output_root, sample.sample_name, to_write);
-            nuxsec::TemplateRootIO::write_string_meta(args.output_root,
-                                                      sample.sample_name,
-                                                      "sample_kind",
-                                                      nuxsec::sample_kind_name(sample.kind));
-            nuxsec::TemplateRootIO::write_string_meta(args.output_root,
-                                                      sample.sample_name,
-                                                      "beam_mode",
-                                                      nuxsec::beam_mode_name(sample.beam));
-            nuxsec::TemplateRootIO::write_string_meta(args.output_root,
-                                                      sample.sample_name,
-                                                      "sample_rootio_path",
-                                                      entry.output_path);
-
-            std::cerr << "[nuxsecTemplateMaker] analysis=" << analysis.Name()
-                      << " sample=" << sample.sample_name
-                      << " kind=" << nuxsec::sample_kind_name(sample.kind)
-                      << " beam=" << nuxsec::beam_mode_name(sample.beam)
-                      << " templates=" << specs.size()
-                      << " output=" << args.output_root
-                      << "\n";
+            args.emplace_back(argv[i]);
         }
 
-        return 0;
+        const nuxsec::app::TemplateArgs tpl_args = nuxsec::app::parse_template_args(
+            args, "Usage: nuxsecTemplateMaker SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
+        return nuxsec::app::run_template(tpl_args, "nuxsecTemplateMaker");
     }
     catch (const std::exception &e)
     {

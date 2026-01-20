@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  io/src/SampleNormalisationService.cc
+ *  @file  io/src/NormalisationService.cc
  *
  *  @brief Implementation for Sample normalisation service helpers.
  */
 
-#include "SampleNormalisationService.hh"
+#include "NormalisationService.hh"
 #include "RunInfoService.hh"
 
 #include <stdexcept>
@@ -14,9 +14,9 @@
 namespace nuxsec
 {
 
-SampleIO::Sample SampleNormalisationService::aggregate(const std::string &sample_name,
-                                                       const std::vector<std::string> &artio_files,
-                                                       const std::string &db_path)
+SampleIO::Sample NormalisationService::aggregate(const std::string &sample_name,
+                                                 const std::vector<std::string> &artio_files,
+                                                 const std::string &db_path)
 {
     if (artio_files.empty())
     {
@@ -71,7 +71,7 @@ SampleIO::Sample SampleNormalisationService::aggregate(const std::string &sample
     return out;
 }
 
-double SampleNormalisationService::compute_normalisation(double subrun_pot_sum, double db_tortgt_pot)
+double NormalisationService::compute_normalisation(double subrun_pot_sum, double db_tortgt_pot)
 {
     if (subrun_pot_sum <= 0.0)
     {
@@ -84,10 +84,10 @@ double SampleNormalisationService::compute_normalisation(double subrun_pot_sum, 
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleIO::ProvenanceInput SampleNormalisationService::make_fragment(const artio::Provenance &prov,
-                                                                   const std::string &artio_path,
-                                                                   double db_tortgt_pot,
-                                                                   double db_tor101_pot)
+SampleIO::ProvenanceInput NormalisationService::make_fragment(const artio::Provenance &prov,
+                                                              const std::string &artio_path,
+                                                              double db_tortgt_pot,
+                                                              double db_tor101_pot)
 {
     SampleIO::ProvenanceInput fragment;
     fragment.fragment_name = prov.cfg.stage_name;

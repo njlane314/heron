@@ -22,7 +22,7 @@ IO_SRC = io/src/ArtFileProvenanceIO.cc \
 IO_OBJ = $(IO_SRC:.cc=.o)
 
 SAMPLE_LIB_NAME = build/lib/libNuXsecSample.so
-SAMPLE_SRC = io/src/SampleNormalisationService.cc
+SAMPLE_SRC = io/src/NormalisationService.cc
 SAMPLE_OBJ = $(SAMPLE_SRC:.cc=.o)
 
 ANA_LIB_NAME = build/lib/libNuXsecAna.so

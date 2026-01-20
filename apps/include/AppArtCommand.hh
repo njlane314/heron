@@ -12,7 +12,7 @@
 #include "AppUtils.hh"
 #include "ArtFileProvenanceIO.hh"
 #include "SampleIO.hh"
-#include "SubrunTreeScanner.hh"
+#include "SubrunTreeService.hh"
 
 namespace nuxsec
 {

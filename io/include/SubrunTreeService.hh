@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  io/include/SubrunTreeScanner.hh
+ *  @file  io/include/SubrunTreeService.hh
  *
  *  @brief Declarations for Subrun tree scanning helpers.
  */
 
-#ifndef NUXSEC_IO_SUBRUN_TREE_SCANNER_H
-#define NUXSEC_IO_SUBRUN_TREE_SCANNER_H
+#ifndef NUXSEC_IO_SUBRUN_TREE_SERVICE_H
+#define NUXSEC_IO_SUBRUN_TREE_SERVICE_H
 
 #include <TChain.h>
 #include <TFile.h>
@@ -110,4 +110,4 @@ inline artio::SubrunSummary scan_subrun_tree(const std::vector<std::string> &fil
 }
 }
 
-#endif // NUXSEC_IO_SUBRUN_TREE_SCANNER_H
+#endif // NUXSEC_IO_SUBRUN_TREE_SERVICE_H

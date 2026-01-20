@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsecTemplateMaker.cc
+ *  @file  apps/src/nuxsecTemplateIOdriver.cc
  *
  *  @brief Build binned template histograms from aggregated samples.
  */
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
             const nuxsec::app::TemplateArgs tpl_args = nuxsec::app::parse_template_args(
-                args, "Usage: nuxsecTemplateMaker SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
-            return nuxsec::app::run_template(tpl_args, "nuxsecTemplateMaker");
+                args, "Usage: nuxsecTemplateIOdriver SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
+            return nuxsec::app::run_template(tpl_args, "nuxsecTemplateIOdriver");
         });
 }

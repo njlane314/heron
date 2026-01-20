@@ -43,7 +43,7 @@ class RunInfoSqliteReader
     RunInfoSqliteReader(const RunInfoSqliteReader &) = delete;
     RunInfoSqliteReader &operator=(const RunInfoSqliteReader &) = delete;
 
-    RunInfoSums sumRunInfo(const std::vector<RunSubrun> &pairs) const;
+    RunInfoSums sumRunInfo(const std::vector<artio::RunSubrunPair> &pairs) const;
 
   private:
     void exec(const std::string &sql) const;

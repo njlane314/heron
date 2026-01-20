@@ -63,18 +63,18 @@ const double AnalysisRdfDefinitions::kRecognisedCompletenessMin = 0.1;
 const float AnalysisRdfDefinitions::kTrainingFraction = 0.10f;
 const bool AnalysisRdfDefinitions::kTrainingIncludeExt = true;
 
-bool AnalysisRdfDefinitions::IsInTruthVolume(float x, float y, float z) noexcept
+bool AnalysisRdfDefinitions::is_in_truth_volume(float x, float y, float z) noexcept
 {
     return is_in_truth_volume(x, y, z);
 }
 
-bool AnalysisRdfDefinitions::IsInRecoVolume(float x, float y, float z) noexcept
+bool AnalysisRdfDefinitions::is_in_reco_volume(float x, float y, float z) noexcept
 {
     return is_in_reco_volume(x, y, z);
 }
 
 //____________________________________________________________________________
-ROOT::RDF::RNode AnalysisRdfDefinitions::Define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
+ROOT::RDF::RNode AnalysisRdfDefinitions::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
 {
     const bool is_data = (rec.source == SourceKind::kData);
     const bool is_ext = (rec.source == SourceKind::kExt);
@@ -187,7 +187,7 @@ ROOT::RDF::RNode AnalysisRdfDefinitions::Define(ROOT::RDF::RNode node, const Pro
         node = node.Define(
             "in_fiducial",
             [](float x, float y, float z) {
-                return IsInTruthVolume(x, y, z);
+                return is_in_truth_volume(x, y, z);
             },
             {"nu_vtx_x", "nu_vtx_y", "nu_vtx_z"});
 
@@ -299,7 +299,7 @@ ROOT::RDF::RNode AnalysisRdfDefinitions::Define(ROOT::RDF::RNode node, const Pro
     node = node.Define(
         "in_reco_fiducial",
         [](float x, float y, float z) {
-            return IsInRecoVolume(x, y, z);
+            return is_in_reco_volume(x, y, z);
         },
         {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
@@ -332,7 +332,7 @@ ROOT::RDF::RNode AnalysisRdfDefinitions::Define(ROOT::RDF::RNode node, const Pro
 //____________________________________________________________________________
 
 //____________________________________________________________________________
-const AnalysisRdfDefinitions &AnalysisRdfDefinitions::Instance()
+const AnalysisRdfDefinitions &AnalysisRdfDefinitions::instance()
 {
     static const AnalysisRdfDefinitions ep{};
     return ep;

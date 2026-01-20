@@ -15,7 +15,7 @@
 namespace nuxsec
 {
 
-const AnalysisDefinition &AnalysisDefinition::Instance()
+const AnalysisDefinition &AnalysisDefinition::instance()
 {
     static const AnalysisDefinition analysis{};
     return analysis;
@@ -40,7 +40,7 @@ AnalysisDefinition::AnalysisDefinition()
     };
 }
 
-std::string AnalysisDefinition::Templates1DToTsv() const
+std::string AnalysisDefinition::templates_1d_to_tsv() const
 {
     std::ostringstream os;
     os << "name\ttitle\tselection\tvariable\tweight\tnbins\txmin\txmax\n";
@@ -53,7 +53,7 @@ std::string AnalysisDefinition::Templates1DToTsv() const
     return os.str();
 }
 
-ProcessorEntry AnalysisDefinition::MakeProcessorEntry(const SampleIO::Sample &sample) const noexcept
+ProcessorEntry AnalysisDefinition::make_processor_entry(const SampleIO::Sample &sample) const noexcept
 {
     ProcessorEntry proc_entry;
 

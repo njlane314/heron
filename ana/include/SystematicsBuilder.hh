@@ -45,45 +45,45 @@ class SystematicsBuilder final
         bool clamp_negative_bins = true;
     };
 
-    static void BuildAll(const std::vector<SampleListEntry> &entries,
-                         const std::string &tree_name,
-                         const std::vector<TemplateSpec1D> &fit_specs,
-                         const std::string &template_root_path,
-                         const SystematicsConfig &cfg,
-                         const Options &opt);
+    static void build_all(const std::vector<SampleListEntry> &entries,
+                          const std::string &tree_name,
+                          const std::vector<TemplateSpec1D> &fit_specs,
+                          const std::string &template_root_path,
+                          const SystematicsConfig &cfg,
+                          const Options &opt);
 
   private:
-    static bool IsVariedSampleKind(SampleIO::SampleKind k, const Options &opt);
+    static bool is_varied_sample_kind(SampleIO::SampleKind k, const Options &opt);
 
-    static std::unique_ptr<TH1D> ReadNominalHist(const std::string &root_path,
-                                                 const std::string &sample_name,
-                                                 const std::string &hist_name);
+    static std::unique_ptr<TH1D> read_nominal_hist(const std::string &root_path,
+                                                   const std::string &sample_name,
+                                                   const std::string &hist_name);
 
-    static void WriteOneSyst(const std::string &root_path,
-                             const std::string &sample_name,
-                             const std::string &syst_name,
-                             const std::string &variation,
-                             const std::vector<std::pair<std::string, const TH1 *>> &hists);
+    static void write_one_syst(const std::string &root_path,
+                               const std::string &sample_name,
+                               const std::string &syst_name,
+                               const std::string &variation,
+                               const std::vector<std::pair<std::string, const TH1 *>> &hists);
 
-    static void BuildUnisim(const SampleIO::Sample &sample,
-                            const std::string &tree_name,
-                            const std::vector<TemplateSpec1D> &specs,
-                            const std::string &template_root_path,
-                            const UnisimSpec &spec);
+    static void build_unisim(const SampleIO::Sample &sample,
+                             const std::string &tree_name,
+                             const std::vector<TemplateSpec1D> &specs,
+                             const std::string &template_root_path,
+                             const UnisimSpec &spec);
 
-    static void BuildMultisimJointEigenmodes(const std::vector<SampleIO::Sample> &samples,
-                                             const std::vector<std::string> &sample_names,
-                                             const std::string &tree_name,
-                                             const std::vector<TemplateSpec1D> &specs,
-                                             const std::string &template_root_path,
-                                             const MultisimSpec &mspec,
-                                             const Options &opt);
+    static void build_multisim_joint_eigenmodes(const std::vector<SampleIO::Sample> &samples,
+                                                const std::vector<std::string> &sample_names,
+                                                const std::string &tree_name,
+                                                const std::vector<TemplateSpec1D> &specs,
+                                                const std::string &template_root_path,
+                                                const MultisimSpec &mspec,
+                                                const Options &opt);
 
-    static int DetectUniverseCount(const SampleIO::Sample &sample,
-                                   const std::string &tree_name,
-                                   const std::string &vec_branch);
+    static int detect_universe_count(const SampleIO::Sample &sample,
+                                     const std::string &tree_name,
+                                     const std::string &vec_branch);
 
-    static void ClampNonNegative(TH1D &h);
+    static void clamp_non_negative(TH1D &h);
 };
 
 } // namespace nuxsec

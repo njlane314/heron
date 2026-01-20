@@ -418,13 +418,13 @@ void TemplateIO::AddSystematicFrac(const char *name, const TH1 *pos_frac, const 
     }
 
     m_syst_names.push_back(n);
-    m_syst.push_back(std::vector<NuXSecSystBin>(m_true_bin_count));
+    m_syst.push_back(std::vector<TemplateSystBin>(m_true_bin_count));
     m_float_flag.push_back(0);
     m_log_normal_flag.push_back(0);
 
     for (int i = 0; i < m_nx; ++i)
     {
-        NuXSecSystBin &sys_bin = m_syst.back()[i];
+        TemplateSystBin &sys_bin = m_syst.back()[i];
         const double pos = pos_frac->GetBinContent(i + 1);
         const double neg = neg_frac->GetBinContent(i + 1);
 
@@ -464,7 +464,7 @@ void TemplateIO::AddSystematicFrac2D(const char *name, const TH2 *pos_frac, cons
     }
 
     m_syst_names.push_back(n);
-    m_syst.push_back(std::vector<NuXSecSystBin>(m_true_bin_count));
+    m_syst.push_back(std::vector<TemplateSystBin>(m_true_bin_count));
     m_float_flag.push_back(0);
     m_log_normal_flag.push_back(0);
 
@@ -472,7 +472,7 @@ void TemplateIO::AddSystematicFrac2D(const char *name, const TH2 *pos_frac, cons
     {
         for (int ix = 0; ix < m_nx; ++ix)
         {
-            NuXSecSystBin &sys_bin = m_syst.back()[Index(ix, iy)];
+            TemplateSystBin &sys_bin = m_syst.back()[Index(ix, iy)];
             const double pos = pos_frac->GetBinContent(ix + 1, iy + 1);
             const double neg = neg_frac->GetBinContent(ix + 1, iy + 1);
 
@@ -595,10 +595,10 @@ void TemplateIO::Linearise(const std::vector<std::string> &global_syst_order)
             return;
         }
 
-        const std::vector<NuXSecSystBin> &syst = m_syst[index];
+        const std::vector<TemplateSystBin> &syst = m_syst[index];
         for (int ib = 0; ib < m_true_bin_count; ++ib)
         {
-            const NuXSecSystBin &sys_bin = syst[ib];
+            const TemplateSystBin &sys_bin = syst[ib];
             const double delta_eff = 0.5 * (std::abs(sys_bin.sigma_pos) + std::abs(sys_bin.sigma_neg));
             m_efficiency_sums[ib] += delta_eff;
         }
@@ -632,7 +632,7 @@ double TemplateIO::BinFractionVaried(int ix, int iy, const double *pulls) const
         double out = m_bin_fraction[ibin];
         for (size_t is = 0; is < m_syst.size(); ++is)
         {
-            const NuXSecSystBin &sys_bin = m_syst[is][ibin];
+            const TemplateSystBin &sys_bin = m_syst[is][ibin];
             const double delta = sys_bin.asym ? AsymDelta(pulls[is], sys_bin.sigma_pos, sys_bin.sigma_neg)
                                               : (pulls[is] * sys_bin.sigma_pos);
             out += (m_bin_fraction[ibin] * delta);
@@ -650,7 +650,7 @@ double TemplateIO::BinFractionVaried(int ix, int iy, const double *pulls) const
     for (size_t is = 0; is < m_syst.size(); ++is)
     {
         const int outer = m_syst_index_outer[is];
-        const NuXSecSystBin &sys_bin = m_syst[is][ibin];
+        const TemplateSystBin &sys_bin = m_syst[is][ibin];
         const double delta = sys_bin.asym ? AsymDelta(pulls[outer], sys_bin.sigma_pos, sys_bin.sigma_neg)
                                           : (pulls[outer] * sys_bin.sigma_pos);
         var += delta;
@@ -665,7 +665,7 @@ void TemplateIO::PrepareExclusionSums()
     {
         for (int ib = 0; ib < m_true_bin_count; ++ib)
         {
-            NuXSecSystBin &sys_bin = m_syst[is][ib];
+            TemplateSystBin &sys_bin = m_syst[is][ib];
             sys_bin.exclusion_sum = 0.0;
         }
     }
@@ -675,14 +675,14 @@ void TemplateIO::PrepareExclusionSums()
         double sum = 0.0;
         for (size_t is = 0; is < m_syst.size(); ++is)
         {
-            NuXSecSystBin &sys_bin = m_syst[is][ib];
+            TemplateSystBin &sys_bin = m_syst[is][ib];
             const double pos = std::abs(sys_bin.sigma_pos);
             const double neg = std::abs(sys_bin.sigma_neg);
             sum += (pos > neg) ? pos : neg;
         }
         for (size_t is = 0; is < m_syst.size(); ++is)
         {
-            NuXSecSystBin &sys_bin = m_syst[is][ib];
+            TemplateSystBin &sys_bin = m_syst[is][ib];
             sys_bin.exclusion_sum = sum - std::max(std::abs(sys_bin.sigma_pos), std::abs(sys_bin.sigma_neg));
         }
     }

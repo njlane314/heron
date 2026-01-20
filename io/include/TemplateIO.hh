@@ -26,17 +26,6 @@ struct TemplateWriteOptions
     bool overwrite = true;
 };
 
-struct NuXSecSystBin
-{
-    double sigma_pos = 0.0;
-    double sigma_neg = 0.0;
-    bool asym = false;
-
-    double base_delta_efficiency = 0.0;
-    double exclusion_sum = 0.0;
-
-};
-
 /** \brief CollieDistribution-like template representation for NuXSec with IO helpers. */
 class TemplateIO : public TNamed
 {
@@ -128,6 +117,17 @@ class TemplateIO : public TNamed
                                      const TemplateWriteOptions &opt = {});
 
   private:
+    struct TemplateSystBin
+    {
+        double sigma_pos = 0.0;
+        double sigma_neg = 0.0;
+        bool asym = false;
+
+        double base_delta_efficiency = 0.0;
+        double exclusion_sum = 0.0;
+
+    };
+
     int Index(int ix, int iy) const
     {
         return (m_ny > 1) ? (ix + iy * m_nx) : ix;
@@ -156,7 +156,7 @@ class TemplateIO : public TNamed
     std::vector<double> m_bin_stat;
 
     std::vector<std::string> m_syst_names;
-    std::vector<std::vector<NuXSecSystBin>> m_syst;
+    std::vector<std::vector<TemplateSystBin>> m_syst;
     std::vector<unsigned char> m_float_flag;
     std::vector<unsigned char> m_log_normal_flag;
 

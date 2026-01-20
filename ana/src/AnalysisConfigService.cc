@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/AnalysisDefinition.cc
+ *  @file  ana/src/AnalysisConfigService.cc
  *
  *  @brief Compiled analysis definition for template production.
  */
 
-#include "AnalysisDefinition.hh"
+#include "AnalysisConfigService.hh"
 
 #include <sstream>
 
@@ -15,13 +15,13 @@
 namespace nuxsec
 {
 
-const AnalysisDefinition &AnalysisDefinition::instance()
+const AnalysisConfigService &AnalysisConfigService::instance()
 {
-    static const AnalysisDefinition analysis{};
+    static const AnalysisConfigService analysis{};
     return analysis;
 }
 
-AnalysisDefinition::AnalysisDefinition()
+AnalysisConfigService::AnalysisConfigService()
 {
     m_name = "nuxsec_default_v1";
     m_tree_name = "MyTree";
@@ -40,7 +40,7 @@ AnalysisDefinition::AnalysisDefinition()
     };
 }
 
-std::string AnalysisDefinition::templates_1d_to_tsv() const
+std::string AnalysisConfigService::templates_1d_to_tsv() const
 {
     std::ostringstream os;
     os << "name\ttitle\tselection\tvariable\tweight\tnbins\txmin\txmax\n";
@@ -53,7 +53,7 @@ std::string AnalysisDefinition::templates_1d_to_tsv() const
     return os.str();
 }
 
-ProcessorEntry AnalysisDefinition::make_processor_entry(const SampleIO::Sample &sample) const noexcept
+ProcessorEntry AnalysisConfigService::make_processor_entry(const SampleIO::Sample &sample) const noexcept
 {
     ProcessorEntry proc_entry;
 

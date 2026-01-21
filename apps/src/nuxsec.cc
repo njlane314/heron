@@ -20,14 +20,12 @@
 #include "Utils.hh"
 #include "ArtCommand.hh"
 #include "SampleCommand.hh"
-#include "TemplateCommand.hh"
 
 namespace
 {
 
 const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
 const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
-const char *kUsageTemplate = "Usage: nuxsec t|tpl|template|template-make SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
 const char *kUsageMacro =
     "Usage: nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
@@ -46,7 +44,6 @@ void print_main_help(std::ostream &out)
         << "Commands:\n"
         << "  art         Aggregate art provenance for a stage\n"
         << "  samp        Aggregate Sample ROOT files from art provenance\n"
-        << "  tpl         Build template histograms from sample list\n"
         << "  macro       Run plot macros\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
@@ -117,18 +114,6 @@ int run_sample_command(const std::vector<std::string> &args)
 
     const nuxsec::app::SampleArgs sample_args = nuxsec::app::parse_sample_args(args, kUsageSample);
     return nuxsec::app::run_sample(sample_args, "nuxsec sample-aggregate");
-}
-
-int run_template_command(const std::vector<std::string> &args)
-{
-    if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
-    {
-        std::cout << kUsageTemplate << "\n";
-        return 0;
-    }
-
-    const nuxsec::app::TemplateArgs tpl_args = nuxsec::app::parse_template_args(args, kUsageTemplate);
-    return nuxsec::app::run_template(tpl_args, "nuxsec template-make");
 }
 
 
@@ -316,10 +301,6 @@ int main(int argc, char **argv)
             if (command == "sample-aggregate" || command == "sample" || command == "samp" || command == "s")
             {
                 return run_sample_command(args);
-            }
-            if (command == "template-make" || command == "template" || command == "tpl" || command == "t")
-            {
-                return run_template_command(args);
             }
             if (command == "macro" || command == "m")
             {

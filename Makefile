@@ -16,11 +16,10 @@ LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -lsqlite3
 
 IO_LIB_NAME = build/lib/libNuxsecIO.so
 IO_SRC = io/src/ArtFileProvenanceIO.cc \
-         io/src/AnalysisIO.cc \
+         io/src/EventIO.cc \
          io/src/RunDatabaseService.cc \
          io/src/SampleIO.cc \
-         io/src/SubRunInventoryService.cc \
-         io/src/TemplateIO.cc
+         io/src/SubRunInventoryService.cc
 IO_OBJ = $(IO_SRC:.cc=.o)
 
 SAMPLE_LIB_NAME = build/lib/libNuxsecSample.so
@@ -30,10 +29,7 @@ SAMPLE_OBJ = $(SAMPLE_SRC:.cc=.o)
 ANA_LIB_NAME = build/lib/libNuxsecAna.so
 ANA_SRC = ana/src/AnalysisConfigService.cc \
           ana/src/ColumnDerivationService.cc \
-          ana/src/RDataFrameFactory.cc \
-          ana/src/TemplateSpec.cc \
-          ana/src/SystematicsSpec.cc \
-          ana/src/SystematicsBuilder.cc
+          ana/src/RDataFrameFactory.cc
 ANA_OBJ = $(ANA_SRC:.cc=.o)
 
 PLOT_LIB_NAME = build/lib/libNuxsecPlot.so

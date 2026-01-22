@@ -173,7 +173,7 @@ The TSV is the only input list you pass downstream.
 
 ### 3) Samples → Analysis object (templates ROOT), sealed analysis
 
-The compiled analysis definition in this repository is `nuxsec_default_v1` with tree
+The compiled analysis definition in this repository is `nuxsec_default` with tree
 name `Events` by default. Override the input tree name by exporting `NUXSEC_TREE_NAME`
 before running the CLI. The template maker writes templates plus metadata (analysis name,
 tree name, compiled template definitions, sample bookkeeping) into a single ROOT artifact.

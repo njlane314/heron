@@ -32,7 +32,7 @@ SampleIO::Sample NormalisationService::build_sample(const std::string &sample_na
     for (const auto &path : art_files)
     {
         art::Provenance prov = ArtFileProvenanceIO::read(path);
-        if (out.entries.empty())
+        if (out.inputs.empty())
         {
             out.kind = prov.kind;
             out.beam = prov.beam;
@@ -59,11 +59,11 @@ SampleIO::Sample NormalisationService::build_sample(const std::string &sample_na
         const double db_tortgt_pot = runinfo.tortgt_sum;
         const double db_tor101_pot = runinfo.tor101_sum;
 
-        SampleIO::ProvenanceInput entry = make_entry(prov, path, db_tortgt_pot, db_tor101_pot);
-        out.subrun_pot_sum += entry.subrun_pot_sum;
-        out.db_tortgt_pot_sum += entry.db_tortgt_pot;
-        out.db_tor101_pot_sum += entry.db_tor101_pot;
-        out.entries.push_back(std::move(entry));
+        SampleIO::ProvenanceInput input = make_entry(prov, path, db_tortgt_pot, db_tor101_pot);
+        out.subrun_pot_sum += input.subrun_pot_sum;
+        out.db_tortgt_pot_sum += input.db_tortgt_pot;
+        out.db_tor101_pot_sum += input.db_tor101_pot;
+        out.inputs.push_back(std::move(input));
     }
 
     out.normalisation = compute_normalisation(out.subrun_pot_sum, out.db_tortgt_pot_sum);

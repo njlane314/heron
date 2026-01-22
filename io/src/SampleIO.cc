@@ -156,15 +156,15 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         entries.Branch("normalisation", &normalisation);
         entries.Branch("normalised_pot_sum", &normalised_pot_sum);
 
-        for (const auto &entry : sample.entries)
+        for (const auto &input : sample.inputs)
         {
-            entry_name = entry.entry_name;
-            art_path = entry.art_path;
-            subrun_pot_sum = entry.subrun_pot_sum;
-            db_tortgt_pot = entry.db_tortgt_pot;
-            db_tor101_pot = entry.db_tor101_pot;
-            normalisation = entry.normalisation;
-            normalised_pot_sum = entry.normalised_pot_sum;
+            entry_name = input.entry_name;
+            art_path = input.art_path;
+            subrun_pot_sum = input.subrun_pot_sum;
+            db_tortgt_pot = input.db_tortgt_pot;
+            db_tor101_pot = input.db_tor101_pot;
+            normalisation = input.normalisation;
+            normalised_pot_sum = input.normalised_pot_sum;
             entries.Fill();
         }
 
@@ -262,19 +262,19 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     tree->SetBranchAddress("normalised_pot_sum", &normalised_pot_sum);
 
     const Long64_t n = tree->GetEntries();
-    out.entries.reserve(static_cast<size_t>(n));
+    out.inputs.reserve(static_cast<size_t>(n));
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
-        ProvenanceInput entry;
-        entry.entry_name = entry_name;
-        entry.art_path = art_path;
-        entry.subrun_pot_sum = subrun_pot_sum;
-        entry.db_tortgt_pot = db_tortgt_pot;
-        entry.db_tor101_pot = db_tor101_pot;
-        entry.normalisation = normalisation;
-        entry.normalised_pot_sum = normalised_pot_sum;
-        out.entries.push_back(std::move(entry));
+        ProvenanceInput input;
+        input.entry_name = entry_name;
+        input.art_path = art_path;
+        input.subrun_pot_sum = subrun_pot_sum;
+        input.db_tortgt_pot = db_tortgt_pot;
+        input.db_tor101_pot = db_tor101_pot;
+        input.normalisation = normalisation;
+        input.normalised_pot_sum = normalised_pot_sum;
+        out.inputs.push_back(std::move(input));
     }
 
     return out;

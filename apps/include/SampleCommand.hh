@@ -118,7 +118,7 @@ inline int run(const Args &sample_args, const std::string &log_prefix)
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 
     std::cerr << "[" << log_prefix << "] sample=" << sample.sample_name
-              << " entries=" << sample.entries.size()
+              << " inputs=" << sample.inputs.size()
               << " pot_sum=" << sample.subrun_pot_sum
               << " db_tortgt_pot_sum=" << sample.db_tortgt_pot_sum
               << " normalisation=" << sample.normalisation

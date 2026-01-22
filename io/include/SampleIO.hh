@@ -56,7 +56,7 @@ class SampleIO
         SampleOrigin kind = SampleOrigin::kUnknown;
         BeamMode beam = BeamMode::kUnknown;
 
-        std::vector<ProvenanceInput> entries;
+        std::vector<ProvenanceInput> inputs;
 
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot_sum = 0.0;

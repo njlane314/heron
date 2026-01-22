@@ -60,7 +60,7 @@ void EventIO::init(const std::string &out_path,
     TTree tref("sample_refs", "Sample references (source + POT/triggers)");
     std::string sample_name;
     std::string sample_rootio_path;
-    int sample_kind = -1;
+    int sample_origin = -1;
     int beam_mode = -1;
     double subrun_pot_sum = 0.0;
     double db_tortgt_pot_sum = 0.0;
@@ -68,7 +68,7 @@ void EventIO::init(const std::string &out_path,
 
     tref.Branch("sample_name", &sample_name);
     tref.Branch("sample_rootio_path", &sample_rootio_path);
-    tref.Branch("sample_kind", &sample_kind);
+    tref.Branch("sample_origin", &sample_origin);
     tref.Branch("beam_mode", &beam_mode);
     tref.Branch("subrun_pot_sum", &subrun_pot_sum);
     tref.Branch("db_tortgt_pot_sum", &db_tortgt_pot_sum);
@@ -78,7 +78,7 @@ void EventIO::init(const std::string &out_path,
     {
         sample_name = r.sample_name;
         sample_rootio_path = r.sample_rootio_path;
-        sample_kind = r.sample_kind;
+        sample_origin = r.sample_origin;
         beam_mode = r.beam_mode;
         subrun_pot_sum = r.subrun_pot_sum;
         db_tortgt_pot_sum = r.db_tortgt_pot_sum;

@@ -30,7 +30,7 @@ struct SampleInfo
 {
     std::string sample_name;
     std::string sample_rootio_path;
-    int sample_kind = -1;
+    int sample_origin = -1;
     int beam_mode = -1;
     double subrun_pot_sum = 0.0;
     double db_tortgt_pot_sum = 0.0;

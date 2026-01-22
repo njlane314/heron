@@ -98,7 +98,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
         nuxsec::event::SampleInfo ref;
         ref.sample_name = sample.sample_name;
         ref.sample_rootio_path = entry.output_path;
-        ref.sample_kind = static_cast<int>(sample.origin);
+        ref.sample_origin = static_cast<int>(sample.origin);
         ref.beam_mode = static_cast<int>(sample.beam);
         ref.subrun_pot_sum = sample.subrun_pot_sum;
         ref.db_tortgt_pot_sum = sample.db_tortgt_pot_sum;

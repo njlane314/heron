@@ -5,8 +5,8 @@
  *  @brief Event-level IO for selection/analysis bookkeeping outputs.
  */
 
-#ifndef NUXSEC_IO_EVENTIO_H
-#define NUXSEC_IO_EVENTIO_H
+#ifndef NUXSEC_EVENT_EVENTIO_H
+#define NUXSEC_EVENT_EVENTIO_H
 
 #include <cstdint>
 #include <string>
@@ -16,7 +16,7 @@
 
 namespace nuxsec
 {
-namespace io
+namespace event
 {
 
 struct EventHeader
@@ -76,7 +76,7 @@ private:
     OpenMode m_mode;
 };
 
-} // namespace io
+} // namespace event
 } // namespace nuxsec
 
-#endif // NUXSEC_IO_EVENTIO_H
+#endif // NUXSEC_EVENT_EVENTIO_H

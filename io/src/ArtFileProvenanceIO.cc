@@ -151,9 +151,9 @@ SampleIO::SampleOrigin ArtFileProvenanceIO::read_sample_origin(TDirectory *d)
     auto *named = dynamic_cast<TNamed *>(obj);
     if (named)
     {
-        return SampleIO::parse_sample_kind(named->GetTitle());
+        return SampleIO::parse_sample_origin(named->GetTitle());
     }
-    return SampleIO::parse_sample_kind(read_named_string(d, "sample_kind"));
+    return SampleIO::parse_sample_origin(read_named_string(d, "sample_kind"));
 }
 
 std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)

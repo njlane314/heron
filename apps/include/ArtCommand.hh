@@ -71,7 +71,7 @@ inline Args parse_input(const std::string &input)
 
     if (fields.size() >= 4)
     {
-        out.sample_origin = nuxsec::sample::SampleIO::parse_sample_kind(fields[2]);
+        out.sample_origin = nuxsec::sample::SampleIO::parse_sample_origin(fields[2]);
         out.beam_mode = nuxsec::sample::SampleIO::parse_beam_mode(fields[3]);
         if (out.sample_origin == nuxsec::sample::SampleIO::SampleOrigin::kUnknown)
         {

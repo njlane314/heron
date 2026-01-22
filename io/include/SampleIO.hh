@@ -67,7 +67,7 @@ class SampleIO
     };
 
     static const char *sample_kind_name(SampleOrigin k);
-    static SampleOrigin parse_sample_kind(const std::string &name);
+    static SampleOrigin parse_sample_origin(const std::string &name);
 
     static const char *beam_mode_name(BeamMode b);
     static BeamMode parse_beam_mode(const std::string &name);

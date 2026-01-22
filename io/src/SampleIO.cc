@@ -44,7 +44,7 @@ const char *SampleIO::sample_kind_name(SampleOrigin k)
     }
 }
 
-SampleIO::SampleOrigin SampleIO::parse_sample_kind(const std::string &name)
+SampleIO::SampleOrigin SampleIO::parse_sample_origin(const std::string &name)
 {
     std::string lowered = name;
     std::transform(lowered.begin(), lowered.end(), lowered.begin(),
@@ -208,7 +208,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
         {
             throw std::runtime_error("Missing sample_kind metadata in SampleRootIO directory");
         }
-        out.kind = parse_sample_kind(named->GetTitle());
+        out.kind = parse_sample_origin(named->GetTitle());
     }
 
     {

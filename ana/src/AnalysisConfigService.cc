@@ -24,8 +24,7 @@ const AnalysisConfigService &AnalysisConfigService::instance()
 AnalysisConfigService::AnalysisConfigService()
 {
     m_name = "nuxsec_default";
-    m_tree_name = "nuxsec_art_provenance";
-
+    m_tree_name = "nuxsec_art_provenance/nuxsec_art_provenance";
 }
 
 ProcessorEntry AnalysisConfigService::make_processor(const sample::SampleIO::Sample &sample) const noexcept

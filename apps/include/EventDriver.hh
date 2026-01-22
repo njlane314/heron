@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -16,6 +17,8 @@
 
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
+#include <TFile.h>
+#include <TTree.h>
 
 #include "AppUtils.hh"
 #include "AnalysisConfigService.hh"
@@ -67,6 +70,33 @@ inline void log_event_finish(const std::string &log_prefix,
               << "Completed event build for " << format_count(sample_count) << " samples in "
               << std::fixed << std::setprecision(1)
               << elapsed_seconds << "s\n";
+}
+
+inline void ensure_tree_present(const nuxsec::sample::SampleIO::Sample &sample,
+                                const std::string &tree_name)
+{
+    if (sample.inputs.empty())
+    {
+        throw std::runtime_error("Event inputs missing ROOT files for sample: " + sample.sample_name);
+    }
+
+    for (const auto &input : sample.inputs)
+    {
+        std::unique_ptr<TFile> f(TFile::Open(input.art_path.c_str(), "READ"));
+        if (!f || f->IsZombie())
+        {
+            throw std::runtime_error("Event input failed to open ROOT file: " + input.art_path);
+        }
+
+        TTree *tree = nullptr;
+        f->GetObject(tree_name.c_str(), tree);
+        if (!tree)
+        {
+            throw std::runtime_error(
+                "Event input missing tree '" + tree_name + "' in " + input.art_path
+                + ". Set NUXSEC_TREE_NAME to override.");
+        }
+    }
 }
 
 struct Args
@@ -202,6 +232,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     for (const auto &input : inputs)
     {
         const nuxsec::sample::SampleIO::Sample &sample = input.sample;
+        ensure_tree_present(sample, analysis.tree_name());
         ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.tree_name());
         const nuxsec::ProcessorEntry proc_entry = analysis.make_processor(sample);
 

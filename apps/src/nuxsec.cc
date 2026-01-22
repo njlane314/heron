@@ -6,9 +6,7 @@
  */
 
 #include <algorithm>
-#include <exception>
 #include <filesystem>
-#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -229,28 +227,6 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
     }
 }
 
-int run_with_status(const std::string &label, const std::function<int()> &func)
-{
-    try
-    {
-        const int code = func();
-        if (code == 0)
-        {
-            std::cout << "Status: " << label << " completed successfully.\n";
-        }
-        else
-        {
-            std::cout << "Status: " << label << " completed with exit code " << code << ".\n";
-        }
-        return code;
-    }
-    catch (const std::exception &)
-    {
-        std::cout << "Status: " << label << " failed.\n";
-        throw;
-    }
-}
-
 int run_macro_command(const std::vector<std::string> &args)
 {
     if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
@@ -337,35 +313,19 @@ int main(int argc, char **argv)
 
             if (command == "art")
             {
-                return run_with_status("nuxsec art",
-                                       [&args]()
-                                       {
-                                           return run_art_command(args);
-                                       });
+                return run_art_command(args);
             }
             if (command == "sample")
             {
-                return run_with_status("nuxsec sample",
-                                       [&args]()
-                                       {
-                                           return run_sample_command(args);
-                                       });
+                return run_sample_command(args);
             }
             if (command == "event")
             {
-                return run_with_status("nuxsec event",
-                                       [&args]()
-                                       {
-                                           return run_event_command(args);
-                                       });
+                return run_event_command(args);
             }
             if (command == "macro")
             {
-                return run_with_status("nuxsec macro",
-                                       [&args]()
-                                       {
-                                           return run_macro_command(args);
-                                       });
+                return run_macro_command(args);
             }
 
             std::cerr << "Unknown command: " << command << "\n";

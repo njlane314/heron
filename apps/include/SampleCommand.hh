@@ -113,7 +113,7 @@ inline int run(const Args &sample_args, const std::string &log_prefix)
     }
 
     nuxsec::sample::SampleIO::Sample sample =
-        nuxsec::NormalisationService::aggregate(sample_args.sample_name, files, db_path);
+        nuxsec::NormalisationService::build_sample(sample_args.sample_name, files, db_path);
     nuxsec::sample::SampleIO::write(sample, sample_args.output_path);
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 

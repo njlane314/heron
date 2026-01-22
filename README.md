@@ -116,16 +116,16 @@ Each stage filelist is a plain text file containing the input art/selection ROOT
 
 ```bash
 # Data (kind can be omitted if your first file is nuselection_data.root and you rely on auto-detect)
-nuxsec artio "data_bnb_run1a:inputs/filelists/data_bnb_run1a.txt:Data:BNB"
+nuxsec art "data_bnb_run1a:inputs/filelists/data_bnb_run1a.txt:Data:BNB"
 
 # EXT
-nuxsec artio "ext_bnb_run1a:inputs/filelists/ext_bnb_run1a.txt:EXT:BNB"
+nuxsec art "ext_bnb_run1a:inputs/filelists/ext_bnb_run1a.txt:EXT:BNB"
 
 # MC overlay
-nuxsec artio "overlay_bnb_run1a:inputs/filelists/overlay_bnb_run1a.txt:Overlay:BNB"
+nuxsec art "overlay_bnb_run1a:inputs/filelists/overlay_bnb_run1a.txt:Overlay:BNB"
 
 # Dirt
-nuxsec artio "dirt_bnb_run1a:inputs/filelists/dirt_bnb_run1a.txt:Dirt:BNB"
+nuxsec art "dirt_bnb_run1a:inputs/filelists/dirt_bnb_run1a.txt:Dirt:BNB"
 ```
 
 Outputs (by code convention):
@@ -137,7 +137,7 @@ build/out/art/art_prov_overlay_bnb_run1a.root
 build/out/art/art_prov_dirt_bnb_run1a.root
 ```
 
-Repeat `nuxsec artio ...` for each partition/stage (run1b, run1c, etc.).
+Repeat `nuxsec art ...` for each partition/stage (run1b, run1c, etc.).
 
 ### 2) Art provenance ROOT → Sample ROOT (group stages into samples)
 

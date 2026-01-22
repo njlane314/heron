@@ -125,7 +125,7 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
     d->cd();
 
     TNamed("sample_name", sample.sample_name.c_str()).Write("sample_name", TObject::kOverwrite);
-    TNamed("sample_kind", sample_origin_name(sample.kind)).Write("sample_kind", TObject::kOverwrite);
+    TNamed("sample_kind", sample_origin_name(sample.origin)).Write("sample_kind", TObject::kOverwrite);
     TNamed("beam_mode", beam_mode_name(sample.beam)).Write("beam_mode", TObject::kOverwrite);
 
     TParameter<double>("subrun_pot_sum", sample.subrun_pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);
@@ -208,7 +208,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
         {
             throw std::runtime_error("Missing sample_kind metadata in SampleRootIO directory");
         }
-        out.kind = parse_sample_origin(named->GetTitle());
+        out.origin = parse_sample_origin(named->GetTitle());
     }
 
     {

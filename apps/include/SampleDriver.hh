@@ -69,7 +69,7 @@ inline void update_sample_list(const std::string &list_path,
                                const std::string &output_path)
 {
     auto entries = nuxsec::app::read_samples(list_path, true, false);
-    const std::string origin_name = nuxsec::sample::SampleIO::sample_origin_name(sample.kind);
+    const std::string origin_name = nuxsec::sample::SampleIO::sample_origin_name(sample.origin);
     const std::string beam_name = nuxsec::sample::SampleIO::beam_mode_name(sample.beam);
 
     bool updated = false;

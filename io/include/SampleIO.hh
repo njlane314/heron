@@ -53,7 +53,7 @@ class SampleIO
     struct Sample
     {
         std::string sample_name;
-        SampleOrigin kind = SampleOrigin::kUnknown;
+        SampleOrigin origin = SampleOrigin::kUnknown;
         BeamMode beam = BeamMode::kUnknown;
 
         std::vector<ProvenanceInput> inputs;

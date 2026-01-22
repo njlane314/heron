@@ -98,7 +98,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
         nuxsec::io::EventSampleRef ref;
         ref.sample_name = sample.sample_name;
         ref.sample_rootio_path = entry.output_path;
-        ref.sample_kind = static_cast<int>(sample.kind);
+        ref.sample_kind = static_cast<int>(sample.origin);
         ref.beam_mode = static_cast<int>(sample.beam);
         ref.subrun_pot_sum = sample.subrun_pot_sum;
         ref.db_tortgt_pot_sum = sample.db_tortgt_pot_sum;
@@ -221,7 +221,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
 
         std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
                   << " sample=" << sample.sample_name
-                  << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.kind)
+                  << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.origin)
                   << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)
                   << " events_written=" << n_written
                   << " output=" << event_args.output_root

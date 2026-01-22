@@ -34,12 +34,12 @@ SampleIO::Sample NormalisationService::build_sample(const std::string &sample_na
         art::Provenance prov = ArtFileProvenanceIO::read(path);
         if (out.inputs.empty())
         {
-            out.kind = prov.kind;
+            out.origin = prov.kind;
             out.beam = prov.beam;
         }
         else
         {
-            if (prov.kind != out.kind)
+            if (prov.kind != out.origin)
             {
                 throw std::runtime_error("Sample kind mismatch in Art file provenance: " + path);
             }

@@ -32,7 +32,7 @@ using SampleIO = sample::SampleIO;
 namespace art
 {
 
-struct RunSubrunPair
+struct Subrun
 {
     int run = 0;
     int subrun = 0;
@@ -42,7 +42,7 @@ struct Summary
 {
     double pot_sum = 0.0;
     long long n_entries = 0;
-    std::vector<RunSubrunPair> unique_pairs;
+    std::vector<Subrun> unique_pairs;
 };
 
 struct InputProvenance
@@ -92,7 +92,7 @@ class ArtFileProvenanceIO
     }
 
     static std::vector<std::string> read_input_files(TDirectory *d);
-    static std::vector<art::RunSubrunPair> read_run_subrun_pairs(TDirectory *d);
+    static std::vector<art::Subrun> read_run_subrun_pairs(TDirectory *d);
     static art::Provenance read_directory(TDirectory *d,
                                           SampleIO::SampleOrigin kind,
                                           SampleIO::BeamMode beam);

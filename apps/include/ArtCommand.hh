@@ -126,15 +126,15 @@ inline int run(const Args &art_args, const std::string &log_prefix)
         rec.kind = nuxsec::sample::SampleIO::SampleOrigin::kData;
     }
 
-    rec.subrun = nuxsec::SubRunInventoryService::scan_subruns(files);
+    rec.summary = nuxsec::SubRunInventoryService::scan_subruns(files);
 
-    rec.subrun.pot_sum *= pot_scale;
+    rec.summary.pot_sum *= pot_scale;
     rec.scale = pot_scale;
 
     std::cerr << "[" << log_prefix << "] add input=" << rec.cfg.input_name
               << " files=" << rec.input_files.size()
-              << " pairs=" << rec.subrun.unique_pairs.size()
-              << " pot_sum=" << rec.subrun.pot_sum
+              << " pairs=" << rec.summary.unique_pairs.size()
+              << " pot_sum=" << rec.summary.pot_sum
               << "\n";
 
     nuxsec::ArtFileProvenanceIO::write(rec, art_args.art_path);

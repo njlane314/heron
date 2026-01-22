@@ -22,9 +22,9 @@
 namespace nuxsec
 {
 
-art::SubrunSummary SubRunInventoryService::scan_subruns(const std::vector<std::string> &files)
+art::Summary SubRunInventoryService::scan_subruns(const std::vector<std::string> &files)
 {
-    art::SubrunSummary out;
+    art::Summary out;
 
     const std::vector<std::string> candidates = {"nuselection/SubRun", "SubRun"};
     std::string tree_path;

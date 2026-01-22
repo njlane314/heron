@@ -38,7 +38,7 @@ struct RunSubrunPair
     int subrun = 0;
 };
 
-struct SubrunSummary
+struct Summary
 {
     double pot_sum = 0.0;
     long long n_entries = 0;
@@ -59,7 +59,7 @@ struct Provenance
 
     std::vector<std::string> input_files;
 
-    SubrunSummary subrun;
+    Summary summary;
 
     double scale = 1.0;
 };

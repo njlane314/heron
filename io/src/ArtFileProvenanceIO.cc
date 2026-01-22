@@ -29,9 +29,9 @@ void ArtFileProvenanceIO::write(const art::Provenance &r, const std::string &out
     TNamed("sample_origin", SampleIO::sample_kind_name(r.kind)).Write("sample_origin", TObject::kOverwrite);
     TNamed("beam_mode", SampleIO::beam_mode_name(r.beam)).Write("beam_mode", TObject::kOverwrite);
 
-    TParameter<double>("subrun_pot_sum", r.subrun.pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);
-    TParameter<long long>("subrun_entries", r.subrun.n_entries).Write("subrun_entries", TObject::kOverwrite);
-    TParameter<long long>("unique_run_subrun_pairs", static_cast<long long>(r.subrun.unique_pairs.size()))
+    TParameter<double>("subrun_pot_sum", r.summary.pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);
+    TParameter<long long>("subrun_entries", r.summary.n_entries).Write("subrun_entries", TObject::kOverwrite);
+    TParameter<long long>("unique_run_subrun_pairs", static_cast<long long>(r.summary.unique_pairs.size()))
         .Write("unique_run_subrun_pairs", TObject::kOverwrite);
 
     TParameter<double>("scale_factor", r.scale).Write("scale_factor", TObject::kOverwrite);
@@ -52,7 +52,7 @@ void ArtFileProvenanceIO::write(const art::Provenance &r, const std::string &out
         Int_t subrun = 0;
         rs.Branch("run", &run, "run/I");
         rs.Branch("subrun", &subrun, "subrun/I");
-        for (const auto &p : r.subrun.unique_pairs)
+        for (const auto &p : r.summary.unique_pairs)
         {
             run = p.run;
             subrun = p.subrun;
@@ -124,13 +124,13 @@ art::Provenance ArtFileProvenanceIO::read_directory(TDirectory *d,
     r.kind = kind;
     r.beam = beam;
 
-    r.subrun.pot_sum = read_param<double>(d, "subrun_pot_sum");
-    r.subrun.n_entries = read_param<long long>(d, "subrun_entries");
+    r.summary.pot_sum = read_param<double>(d, "subrun_pot_sum");
+    r.summary.n_entries = read_param<long long>(d, "subrun_entries");
 
     r.scale = read_param<double>(d, "scale_factor");
 
     r.input_files = read_input_files(d);
-    r.subrun.unique_pairs = read_run_subrun_pairs(d);
+    r.summary.unique_pairs = read_run_subrun_pairs(d);
     return r;
 }
 

@@ -16,7 +16,7 @@ namespace nuxsec
 
 namespace art
 {
-struct SubrunSummary;
+struct Summary;
 }
 
 /** \brief Build summary information from SubRun trees. */
@@ -24,7 +24,7 @@ class SubRunInventoryService
 {
   public:
     /// \brief Scan input files for SubRun information.
-    static art::SubrunSummary scan_subruns(const std::vector<std::string> &files);
+    static art::Summary scan_subruns(const std::vector<std::string> &files);
 };
 
 }

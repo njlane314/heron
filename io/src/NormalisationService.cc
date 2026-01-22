@@ -49,7 +49,7 @@ SampleIO::Sample NormalisationService::build_sample(const std::string &sample_na
             }
         }
 
-        RunInfoSums runinfo = db.sum_run_info(prov.subrun.unique_pairs);
+        RunInfoSums runinfo = db.sum_run_info(prov.summary.unique_pairs);
         const double pot_scale = (prov.scale > 0.0) ? prov.scale : 1.0;
         runinfo.tortgt_sum *= pot_scale;
         runinfo.tor101_sum *= pot_scale;
@@ -93,7 +93,7 @@ SampleIO::ProvenanceInput NormalisationService::make_entry(const art::Provenance
     SampleIO::ProvenanceInput entry;
     entry.entry_name = prov.cfg.input_name;
     entry.art_path = art_path;
-    entry.subrun_pot_sum = prov.subrun.pot_sum;
+    entry.subrun_pot_sum = prov.summary.pot_sum;
     entry.db_tortgt_pot = db_tortgt_pot;
     entry.db_tor101_pot = db_tor101_pot;
     entry.normalisation = compute_normalisation(entry.subrun_pot_sum, entry.db_tortgt_pot);

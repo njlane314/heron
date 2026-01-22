@@ -20,6 +20,7 @@
 #include "EventIO.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
+#include "SampleUtils.hh"
 
 namespace nuxsec
 {

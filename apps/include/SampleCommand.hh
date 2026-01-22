@@ -12,6 +12,7 @@
 #include "AppUtils.hh"
 #include "NormalisationService.hh"
 #include "SampleIO.hh"
+#include "SampleUtils.hh"
 
 namespace nuxsec
 {

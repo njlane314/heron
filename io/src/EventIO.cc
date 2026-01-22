@@ -8,8 +8,10 @@
 #include "EventIO.hh"
 
 #include <cctype>
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
+#include <system_error>
 
 #include <TArrayD.h>
 #include <TArrayI.h>
@@ -42,6 +44,20 @@ void EventIO::init(const std::string &out_path,
                    const std::string &event_schema_tsv,
                    const std::string &schema_tag)
 {
+    const std::filesystem::path output_path(out_path);
+    if (!output_path.parent_path().empty())
+    {
+        std::error_code ec;
+        std::filesystem::create_directories(output_path.parent_path(), ec);
+        if (ec)
+        {
+            throw std::runtime_error(
+                "EventIO::init: failed to create output directory: "
+                + output_path.parent_path().string()
+                + " (" + ec.message() + ")");
+        }
+    }
+
     std::unique_ptr<TFile> fout(TFile::Open(out_path.c_str(), "RECREATE"));
     if (!fout || fout->IsZombie())
         throw std::runtime_error("EventIO::init: failed to create output file: " + out_path);

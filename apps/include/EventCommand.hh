@@ -230,6 +230,10 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     return 0;
 }
 
-}
+} // namespace event
+
+} // namespace app
+
+} // namespace nuxsec
 
 #endif // NUXSEC_APPS_EVENTCOMMAND_H

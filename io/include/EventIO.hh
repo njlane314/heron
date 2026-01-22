@@ -22,7 +22,8 @@ namespace event
 struct Header
 {
     std::string analysis_name;
-    std::string analysis_tree;
+    std::string provenance_tree;
+    std::string event_tree;
     std::string sample_list_source;
 };
 

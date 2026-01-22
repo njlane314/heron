@@ -105,7 +105,7 @@ int run_art_command(const std::vector<std::string> &args)
 
     const nuxsec::app::art::Args art_args =
         nuxsec::app::art::parse_args(args, kUsageArt);
-    return nuxsec::app::art::run(art_args, "nuxsec art");
+    return nuxsec::app::art::run(art_args, "nuxsec:art");
 }
 
 int run_sample_command(const std::vector<std::string> &args)

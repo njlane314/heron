@@ -26,23 +26,23 @@ AnalysisConfigService::AnalysisConfigService()
 
 }
 
-ProcessorEntry AnalysisConfigService::make_processor(const SampleIO::Sample &sample) const noexcept
+ProcessorEntry AnalysisConfigService::make_processor(const sample::SampleIO::Sample &sample) const noexcept
 {
     ProcessorEntry proc_entry;
 
     switch (sample.kind)
     {
-    case SampleIO::SampleOrigin::kData:
+    case sample::SampleIO::SampleOrigin::kData:
         proc_entry.source = SourceKind::kData;
         break;
-    case SampleIO::SampleOrigin::kEXT:
+    case sample::SampleIO::SampleOrigin::kEXT:
         proc_entry.source = SourceKind::kExt;
         proc_entry.trig_nom = sample.db_tor101_pot_sum;
         proc_entry.trig_eqv = sample.subrun_pot_sum;
         break;
-    case SampleIO::SampleOrigin::kOverlay:
-    case SampleIO::SampleOrigin::kDirt:
-    case SampleIO::SampleOrigin::kStrangeness:
+    case sample::SampleIO::SampleOrigin::kOverlay:
+    case sample::SampleIO::SampleOrigin::kDirt:
+    case sample::SampleIO::SampleOrigin::kStrangeness:
         proc_entry.source = SourceKind::kMC;
         proc_entry.pot_nom = sample.db_tortgt_pot_sum;
         proc_entry.pot_eqv = sample.subrun_pot_sum;

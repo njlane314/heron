@@ -15,16 +15,16 @@
 namespace nuxsec
 {
 
-SampleIO::Sample NormalisationService::build_sample(const std::string &sample_name,
-                                                    const std::vector<std::string> &art_files,
-                                                    const std::string &db_path)
+sample::SampleIO::Sample NormalisationService::build_sample(const std::string &sample_name,
+                                                            const std::vector<std::string> &art_files,
+                                                            const std::string &db_path)
 {
     if (art_files.empty())
     {
         throw std::runtime_error("Sample aggregation requires at least one Art file provenance root file.");
     }
 
-    SampleIO::Sample out;
+    sample::SampleIO::Sample out;
     out.sample_name = sample_name;
 
     RunDatabaseService db(db_path);
@@ -59,7 +59,7 @@ SampleIO::Sample NormalisationService::build_sample(const std::string &sample_na
         const double db_tortgt_pot = runinfo.tortgt_sum;
         const double db_tor101_pot = runinfo.tor101_sum;
 
-        SampleIO::ProvenanceInput input = make_entry(prov, path, db_tortgt_pot, db_tor101_pot);
+        sample::SampleIO::ProvenanceInput input = make_entry(prov, path, db_tortgt_pot, db_tor101_pot);
         out.subrun_pot_sum += input.subrun_pot_sum;
         out.db_tortgt_pot_sum += input.db_tortgt_pot;
         out.db_tor101_pot_sum += input.db_tor101_pot;
@@ -85,12 +85,12 @@ double NormalisationService::compute_normalisation(double subrun_pot_sum, double
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleIO::ProvenanceInput NormalisationService::make_entry(const art::Provenance &prov,
-                                                           const std::string &art_path,
-                                                           double db_tortgt_pot,
-                                                           double db_tor101_pot)
+sample::SampleIO::ProvenanceInput NormalisationService::make_entry(const art::Provenance &prov,
+                                                                   const std::string &art_path,
+                                                                   double db_tortgt_pot,
+                                                                   double db_tor101_pot)
 {
-    SampleIO::ProvenanceInput entry;
+    sample::SampleIO::ProvenanceInput entry;
     entry.entry_name = prov.input.input_name;
     entry.art_path = art_path;
     entry.subrun_pot_sum = prov.summary.pot_sum;

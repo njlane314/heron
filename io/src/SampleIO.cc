@@ -25,26 +25,26 @@ namespace nuxsec
 namespace sample
 {
 
-const char *SampleIO::sample_kind_name(SampleKind k)
+const char *SampleIO::sample_kind_name(SampleOrigin k)
 {
     switch (k)
     {
-    case SampleKind::kData:
+    case SampleOrigin::kData:
         return "data";
-    case SampleKind::kEXT:
+    case SampleOrigin::kEXT:
         return "ext";
-    case SampleKind::kOverlay:
+    case SampleOrigin::kOverlay:
         return "mc_overlay";
-    case SampleKind::kDirt:
+    case SampleOrigin::kDirt:
         return "mc_dirt";
-    case SampleKind::kStrangeness:
+    case SampleOrigin::kStrangeness:
         return "mc_strangeness";
     default:
         return "unknown";
     }
 }
 
-SampleIO::SampleKind SampleIO::parse_sample_kind(const std::string &name)
+SampleIO::SampleOrigin SampleIO::parse_sample_kind(const std::string &name)
 {
     std::string lowered = name;
     std::transform(lowered.begin(), lowered.end(), lowered.begin(),
@@ -55,25 +55,25 @@ SampleIO::SampleKind SampleIO::parse_sample_kind(const std::string &name)
 
     if (lowered == "data")
     {
-        return SampleKind::kData;
+        return SampleOrigin::kData;
     }
     if (lowered == "ext")
     {
-        return SampleKind::kEXT;
+        return SampleOrigin::kEXT;
     }
     if (lowered == "overlay")
     {
-        return SampleKind::kOverlay;
+        return SampleOrigin::kOverlay;
     }
     if (lowered == "dirt")
     {
-        return SampleKind::kDirt;
+        return SampleOrigin::kDirt;
     }
     if (lowered == "strangeness")
     {
-        return SampleKind::kStrangeness;
+        return SampleOrigin::kStrangeness;
     }
-    return SampleKind::kUnknown;
+    return SampleOrigin::kUnknown;
 }
 
 const char *SampleIO::beam_mode_name(BeamMode b)

@@ -54,7 +54,7 @@ struct Stage
 struct Provenance
 {
     Stage cfg;
-    SampleIO::SampleKind kind = SampleIO::SampleKind::kUnknown;
+    SampleIO::SampleOrigin kind = SampleIO::SampleOrigin::kUnknown;
     SampleIO::BeamMode beam = SampleIO::BeamMode::kUnknown;
 
     std::vector<std::string> input_files;
@@ -72,7 +72,7 @@ class ArtFileProvenanceIO
     static void write(const artio::Provenance &r, const std::string &out_file);
     static artio::Provenance read(const std::string &in_file);
     static artio::Provenance read(const std::string &in_file,
-                                  SampleIO::SampleKind kind,
+                                  SampleIO::SampleOrigin kind,
                                   SampleIO::BeamMode beam);
 
   private:
@@ -93,7 +93,7 @@ class ArtFileProvenanceIO
     static std::vector<std::string> read_input_files(TDirectory *d);
     static std::vector<artio::RunSubrunPair> read_run_subrun_pairs(TDirectory *d);
     static artio::Provenance read_directory(TDirectory *d,
-                                            SampleIO::SampleKind kind,
+                                            SampleIO::SampleOrigin kind,
                                             SampleIO::BeamMode beam);
 };
 

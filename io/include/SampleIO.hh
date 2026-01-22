@@ -20,7 +20,7 @@ namespace sample
 class SampleIO
 {
   public:
-    enum class SampleKind
+    enum class SampleOrigin
     {
         kUnknown = 0,
         kData,
@@ -53,7 +53,7 @@ class SampleIO
     struct Sample
     {
         std::string sample_name;
-        SampleKind kind = SampleKind::kUnknown;
+        SampleOrigin kind = SampleOrigin::kUnknown;
         BeamMode beam = BeamMode::kUnknown;
 
         std::vector<ProvenanceInput> entries;
@@ -66,8 +66,8 @@ class SampleIO
         double normalised_pot_sum = 0.0;
     };
 
-    static const char *sample_kind_name(SampleKind k);
-    static SampleKind parse_sample_kind(const std::string &name);
+    static const char *sample_kind_name(SampleOrigin k);
+    static SampleOrigin parse_sample_kind(const std::string &name);
 
     static const char *beam_mode_name(BeamMode b);
     static BeamMode parse_beam_mode(const std::string &name);

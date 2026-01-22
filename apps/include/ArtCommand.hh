@@ -31,7 +31,7 @@ struct ArtArgs
 {
     std::string artio_path;
     nuxsec::artio::Stage stage_cfg;
-    sample::SampleIO::SampleKind sample_kind = sample::SampleIO::SampleKind::kUnknown;
+    sample::SampleIO::SampleOrigin sample_kind = sample::SampleIO::SampleOrigin::kUnknown;
     sample::SampleIO::BeamMode beam_mode = sample::SampleIO::BeamMode::kUnknown;
 };
 
@@ -69,7 +69,7 @@ inline ArtArgs parse_art_spec(const std::string &spec)
     {
         out.sample_kind = sample::SampleIO::parse_sample_kind(fields[2]);
         out.beam_mode = sample::SampleIO::parse_beam_mode(fields[3]);
-        if (out.sample_kind == sample::SampleIO::SampleKind::kUnknown)
+        if (out.sample_kind == sample::SampleIO::SampleOrigin::kUnknown)
         {
             throw std::runtime_error("Bad stage sample kind: " + fields[2]);
         }
@@ -116,9 +116,9 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
     rec.kind = art_args.sample_kind;
     rec.beam = art_args.beam_mode;
 
-    if (rec.kind == sample::SampleIO::SampleKind::kUnknown && is_selection_data_file(files.front()))
+    if (rec.kind == sample::SampleIO::SampleOrigin::kUnknown && is_selection_data_file(files.front()))
     {
-        rec.kind = sample::SampleIO::SampleKind::kData;
+        rec.kind = sample::SampleIO::SampleOrigin::kData;
     }
 
     rec.subrun = nuxsec::SubRunInventoryService::scan_subrun_tree(files);

@@ -80,14 +80,14 @@ artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file)
     }
     d->cd();
 
-    const SampleIO::SampleKind kind = SampleIO::parse_sample_kind(read_named_string(d, "sample_kind"));
+    const SampleIO::SampleOrigin kind = SampleIO::parse_sample_kind(read_named_string(d, "sample_kind"));
     const SampleIO::BeamMode beam = SampleIO::parse_beam_mode(read_named_string(d, "beam_mode"));
 
     return read_directory(d, kind, beam);
 }
 
 artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file,
-                                            SampleIO::SampleKind kind,
+                                            SampleIO::SampleOrigin kind,
                                             SampleIO::BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
@@ -107,7 +107,7 @@ artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file,
 }
 
 artio::Provenance ArtFileProvenanceIO::read_directory(TDirectory *d,
-                                                      SampleIO::SampleKind kind,
+                                                      SampleIO::SampleOrigin kind,
                                                       SampleIO::BeamMode beam)
 {
     artio::Provenance r;

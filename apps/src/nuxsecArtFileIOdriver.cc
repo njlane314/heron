@@ -19,9 +19,10 @@ int main(int argc, char **argv)
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
-            const nuxsec::app::ArtArgs art_args =
-                nuxsec::app::parse_art_args(args,
-                                           "Usage: nuxsecArtFileIOdriver INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-            return nuxsec::app::run_art(art_args, "nuxsecArtFileIOdriver");
+            const nuxsec::app::art::Args art_args =
+                nuxsec::app::art::parse_args(
+                    args,
+                    "Usage: nuxsecArtFileIOdriver INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
+            return nuxsec::app::art::run(art_args, "nuxsecArtFileIOdriver");
         });
 }

@@ -27,27 +27,30 @@ namespace nuxsec
 namespace app
 {
 
-struct EventIOArgs
+namespace event
+{
+
+struct Args
 {
     std::string list_path;
     std::string output_root;
     int nthreads = 0;
 };
 
-struct EventIOInput
+struct Input
 {
     nuxsec::app::SampleListEntry entry;
-    sample::SampleIO::Sample sample;
+    nuxsec::sample::SampleIO::Sample sample;
 };
 
-inline EventIOArgs parse_eventio_args(const std::vector<std::string> &args, const std::string &usage)
+inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
 {
     if (args.size() != 2 && args.size() != 3)
     {
         throw std::runtime_error(usage);
     }
 
-    EventIOArgs out;
+    Args out;
     out.list_path = nuxsec::app::trim(args.at(0));
     out.output_root = nuxsec::app::trim(args.at(1));
     if (args.size() == 3)
@@ -72,7 +75,7 @@ inline EventIOArgs parse_eventio_args(const std::vector<std::string> &args, cons
     return out;
 }
 
-inline int run_eventio(const EventIOArgs &event_args, const std::string &log_prefix)
+inline int run(const Args &event_args, const std::string &log_prefix)
 {
     if (event_args.nthreads > 0)
         ROOT::EnableImplicitMT(event_args.nthreads);
@@ -82,14 +85,14 @@ inline int run_eventio(const EventIOArgs &event_args, const std::string &log_pre
     const auto &analysis = nuxsec::AnalysisConfigService::instance();
     const auto entries = nuxsec::app::read_sample_list(event_args.list_path);
 
-    std::vector<EventIOInput> inputs;
+    std::vector<Input> inputs;
     inputs.reserve(entries.size());
     std::vector<nuxsec::io::EventSampleRef> sample_refs;
     sample_refs.reserve(entries.size());
 
     for (const auto &entry : entries)
     {
-        sample::SampleIO::Sample sample = sample::SampleIO::read(entry.output_path);
+        nuxsec::sample::SampleIO::Sample sample = nuxsec::sample::SampleIO::read(entry.output_path);
 
         nuxsec::io::EventSampleRef ref;
         ref.sample_name = sample.sample_name;
@@ -101,7 +104,7 @@ inline int run_eventio(const EventIOArgs &event_args, const std::string &log_pre
         ref.db_tor101_pot_sum = sample.db_tor101_pot_sum;
         sample_refs.push_back(std::move(ref));
 
-        EventIOInput input;
+        Input input;
         input.entry = entry;
         input.sample = std::move(sample);
         inputs.push_back(std::move(input));
@@ -153,7 +156,7 @@ inline int run_eventio(const EventIOArgs &event_args, const std::string &log_pre
 
     for (const auto &input : inputs)
     {
-        const sample::SampleIO::Sample &sample = input.sample;
+        const nuxsec::sample::SampleIO::Sample &sample = input.sample;
         ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.tree_name());
         const nuxsec::ProcessorEntry proc_entry = analysis.make_processor_entry(sample);
 
@@ -217,8 +220,8 @@ inline int run_eventio(const EventIOArgs &event_args, const std::string &log_pre
 
         std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
                   << " sample=" << sample.sample_name
-                  << " kind=" << sample::SampleIO::sample_kind_name(sample.kind)
-                  << " beam=" << sample::SampleIO::beam_mode_name(sample.beam)
+                  << " kind=" << nuxsec::sample::SampleIO::sample_kind_name(sample.kind)
+                  << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)
                   << " events_written=" << n_written
                   << " output=" << event_args.output_root
                   << "\n";
@@ -227,8 +230,6 @@ inline int run_eventio(const EventIOArgs &event_args, const std::string &log_pre
     return 0;
 }
 
-} // namespace app
-
-} // namespace nuxsec
+}
 
 #endif // NUXSEC_APPS_EVENTCOMMAND_H

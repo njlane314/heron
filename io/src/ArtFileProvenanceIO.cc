@@ -26,7 +26,7 @@ void ArtFileProvenanceIO::write(const art::Provenance &r, const std::string &out
     d->cd();
 
     TNamed("input_name", r.input.input_name.c_str()).Write("input_name", TObject::kOverwrite);
-    TNamed("sample_origin", SampleIO::sample_kind_name(r.kind)).Write("sample_origin", TObject::kOverwrite);
+    TNamed("sample_origin", SampleIO::sample_origin_name(r.kind)).Write("sample_origin", TObject::kOverwrite);
     TNamed("beam_mode", SampleIO::beam_mode_name(r.beam)).Write("beam_mode", TObject::kOverwrite);
 
     TParameter<double>("subrun_pot_sum", r.summary.pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);

@@ -25,7 +25,7 @@ namespace nuxsec
 namespace sample
 {
 
-const char *SampleIO::sample_kind_name(SampleOrigin k)
+const char *SampleIO::sample_origin_name(SampleOrigin k)
 {
     switch (k)
     {
@@ -125,7 +125,7 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
     d->cd();
 
     TNamed("sample_name", sample.sample_name.c_str()).Write("sample_name", TObject::kOverwrite);
-    TNamed("sample_kind", sample_kind_name(sample.kind)).Write("sample_kind", TObject::kOverwrite);
+    TNamed("sample_kind", sample_origin_name(sample.kind)).Write("sample_kind", TObject::kOverwrite);
     TNamed("beam_mode", beam_mode_name(sample.beam)).Write("beam_mode", TObject::kOverwrite);
 
     TParameter<double>("subrun_pot_sum", sample.subrun_pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);

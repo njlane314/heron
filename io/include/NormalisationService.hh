@@ -17,8 +17,6 @@
 namespace nuxsec
 {
 
-using SampleIO = sample::SampleIO;
-
 class NormalisationService
 {
   public:

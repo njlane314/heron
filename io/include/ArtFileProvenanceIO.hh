@@ -27,8 +27,6 @@
 namespace nuxsec
 {
 
-using SampleIO = sample::SampleIO;
-
 namespace art
 {
 

@@ -18,8 +18,6 @@
 namespace nuxsec
 {
 
-using SampleIO = sample::SampleIO;
-
 struct ColumnDefinition
 {
     std::string name;

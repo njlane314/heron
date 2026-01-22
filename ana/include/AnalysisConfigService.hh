@@ -17,8 +17,6 @@ namespace nuxsec
 {
 
 struct ProcessorEntry;
-using SampleIO = sample::SampleIO;
-
 /** \brief Compiled analysis configuration. */
 class AnalysisConfigService final
 {

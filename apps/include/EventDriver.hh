@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef NUXSEC_APPS_EVENTCOMMAND_H
-#define NUXSEC_APPS_EVENTCOMMAND_H
+#ifndef NUXSEC_APPS_EVENTDRIVER_H
+#define NUXSEC_APPS_EVENTDRIVER_H
 
 #include <algorithm>
 #include <cstdint>

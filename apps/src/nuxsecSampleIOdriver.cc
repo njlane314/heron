@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "SampleCommand.hh"
+#include "SampleDriver.hh"
 
 int main(int argc, char **argv)
 {

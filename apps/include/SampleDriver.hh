@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef NUXSEC_APPS_SAMPLECOMMAND_H
-#define NUXSEC_APPS_SAMPLECOMMAND_H
+#ifndef NUXSEC_APPS_SAMPLEDRIVER_H
+#define NUXSEC_APPS_SAMPLEDRIVER_H
 
 #include <filesystem>
 #include <iostream>

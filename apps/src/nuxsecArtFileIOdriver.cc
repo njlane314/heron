@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "ArtCommand.hh"
+#include "ArtDriver.hh"
 
 int main(int argc, char **argv)
 {

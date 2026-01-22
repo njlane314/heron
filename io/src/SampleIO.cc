@@ -141,7 +141,7 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         TTree entries("entries", "Art file entries included in sample aggregation");
 
         std::string entry_name;
-        std::string artio_path;
+        std::string art_path;
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot = 0.0;
         double db_tor101_pot = 0.0;
@@ -149,7 +149,7 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         double normalised_pot_sum = 0.0;
 
         entries.Branch("entry_name", &entry_name);
-        entries.Branch("artio_path", &artio_path);
+        entries.Branch("art_path", &art_path);
         entries.Branch("subrun_pot_sum", &subrun_pot_sum);
         entries.Branch("db_tortgt_pot", &db_tortgt_pot);
         entries.Branch("db_tor101_pot", &db_tor101_pot);
@@ -159,7 +159,7 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         for (const auto &entry : sample.entries)
         {
             entry_name = entry.entry_name;
-            artio_path = entry.artio_path;
+            art_path = entry.art_path;
             subrun_pot_sum = entry.subrun_pot_sum;
             db_tortgt_pot = entry.db_tortgt_pot;
             db_tor101_pot = entry.db_tor101_pot;
@@ -246,7 +246,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     }
 
     std::string entry_name;
-    std::string artio_path;
+    std::string art_path;
     double subrun_pot_sum = 0.0;
     double db_tortgt_pot = 0.0;
     double db_tor101_pot = 0.0;
@@ -254,7 +254,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     double normalised_pot_sum = 0.0;
 
     tree->SetBranchAddress("entry_name", &entry_name);
-    tree->SetBranchAddress("artio_path", &artio_path);
+    tree->SetBranchAddress("art_path", &art_path);
     tree->SetBranchAddress("subrun_pot_sum", &subrun_pot_sum);
     tree->SetBranchAddress("db_tortgt_pot", &db_tortgt_pot);
     tree->SetBranchAddress("db_tor101_pot", &db_tor101_pot);
@@ -268,7 +268,7 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
         tree->GetEntry(i);
         ProvenanceInput entry;
         entry.entry_name = entry_name;
-        entry.artio_path = artio_path;
+        entry.art_path = art_path;
         entry.subrun_pot_sum = subrun_pot_sum;
         entry.db_tortgt_pot = db_tortgt_pot;
         entry.db_tor101_pot = db_tor101_pot;

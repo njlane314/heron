@@ -92,7 +92,7 @@ void ensure_plot_env(const std::filesystem::path &repo_root)
     }
 }
 
-int run_artio_command(const std::vector<std::string> &args)
+int run_art_command(const std::vector<std::string> &args)
 {
     if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
     {
@@ -101,7 +101,7 @@ int run_artio_command(const std::vector<std::string> &args)
     }
 
     const nuxsec::app::ArtArgs art_args = nuxsec::app::parse_art_args(args, kUsageArt);
-    return nuxsec::app::run_artio(art_args, "nuxsec art");
+    return nuxsec::app::run_art(art_args, "nuxsec art");
 }
 
 int run_sample_command(const std::vector<std::string> &args)
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
 
             if (command == "art")
             {
-                return run_artio_command(args);
+                return run_art_command(args);
             }
             if (command == "sample")
             {

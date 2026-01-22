@@ -10,7 +10,7 @@
 namespace nuxsec
 {
 
-void ArtFileProvenanceIO::write(const artio::Provenance &r, const std::string &out_file)
+void ArtFileProvenanceIO::write(const art::Provenance &r, const std::string &out_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(out_file.c_str(), "UPDATE"));
     if (!f || f->IsZombie())
@@ -65,7 +65,7 @@ void ArtFileProvenanceIO::write(const artio::Provenance &r, const std::string &o
     f->Close();
 }
 
-artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file)
+art::Provenance ArtFileProvenanceIO::read(const std::string &in_file)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -86,9 +86,9 @@ artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file)
     return read_directory(d, kind, beam);
 }
 
-artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file,
-                                            SampleIO::SampleKind kind,
-                                            SampleIO::BeamMode beam)
+art::Provenance ArtFileProvenanceIO::read(const std::string &in_file,
+                                          SampleIO::SampleKind kind,
+                                          SampleIO::BeamMode beam)
 {
     std::unique_ptr<TFile> f(TFile::Open(in_file.c_str(), "READ"));
     if (!f || f->IsZombie())
@@ -106,11 +106,11 @@ artio::Provenance ArtFileProvenanceIO::read(const std::string &in_file,
     return read_directory(d, kind, beam);
 }
 
-artio::Provenance ArtFileProvenanceIO::read_directory(TDirectory *d,
-                                                      SampleIO::SampleKind kind,
-                                                      SampleIO::BeamMode beam)
+art::Provenance ArtFileProvenanceIO::read_directory(TDirectory *d,
+                                                    SampleIO::SampleKind kind,
+                                                    SampleIO::BeamMode beam)
 {
-    artio::Provenance r;
+    art::Provenance r;
     r.cfg.stage_name = read_named_string(d, "stage_name");
     r.kind = kind;
     r.beam = beam;
@@ -159,7 +159,7 @@ std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)
     return files;
 }
 
-std::vector<artio::RunSubrunPair> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
+std::vector<art::RunSubrunPair> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
 {
     TObject *obj = d->Get("run_subrun");
     auto *tree = dynamic_cast<TTree *>(obj);
@@ -174,12 +174,12 @@ std::vector<artio::RunSubrunPair> ArtFileProvenanceIO::read_run_subrun_pairs(TDi
     tree->SetBranchAddress("subrun", &subrun);
 
     const Long64_t n = tree->GetEntries();
-    std::vector<artio::RunSubrunPair> pairs;
+    std::vector<art::RunSubrunPair> pairs;
     pairs.reserve(static_cast<size_t>(n));
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
-        pairs.push_back(artio::RunSubrunPair{static_cast<int>(run), static_cast<int>(subrun)});
+        pairs.push_back(art::RunSubrunPair{static_cast<int>(run), static_cast<int>(subrun)});
     }
     return pairs;
 }

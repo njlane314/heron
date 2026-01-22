@@ -59,7 +59,7 @@ void RunDatabaseService::prepare(const std::string &sql, sqlite3_stmt **stmt) co
     }
 }
 
-RunInfoSums RunDatabaseService::sum_run_info(const std::vector<artio::RunSubrunPair> &pairs) const
+RunInfoSums RunDatabaseService::sum_run_info(const std::vector<art::RunSubrunPair> &pairs) const
 {
     if (pairs.empty())
     {

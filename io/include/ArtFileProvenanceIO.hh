@@ -29,7 +29,7 @@ namespace nuxsec
 
 using SampleIO = sample::SampleIO;
 
-namespace artio
+namespace art
 {
 
 struct RunSubrunPair
@@ -64,16 +64,16 @@ struct Provenance
     double scale = 1.0;
 };
 
-} // namespace artio
+} // namespace art
 
 class ArtFileProvenanceIO
 {
   public:
-    static void write(const artio::Provenance &r, const std::string &out_file);
-    static artio::Provenance read(const std::string &in_file);
-    static artio::Provenance read(const std::string &in_file,
-                                  SampleIO::SampleKind kind,
-                                  SampleIO::BeamMode beam);
+    static void write(const art::Provenance &r, const std::string &out_file);
+    static art::Provenance read(const std::string &in_file);
+    static art::Provenance read(const std::string &in_file,
+                                SampleIO::SampleKind kind,
+                                SampleIO::BeamMode beam);
 
   private:
     static std::string read_named_string(TDirectory *d, const char *key);
@@ -91,10 +91,10 @@ class ArtFileProvenanceIO
     }
 
     static std::vector<std::string> read_input_files(TDirectory *d);
-    static std::vector<artio::RunSubrunPair> read_run_subrun_pairs(TDirectory *d);
-    static artio::Provenance read_directory(TDirectory *d,
-                                            SampleIO::SampleKind kind,
-                                            SampleIO::BeamMode beam);
+    static std::vector<art::RunSubrunPair> read_run_subrun_pairs(TDirectory *d);
+    static art::Provenance read_directory(TDirectory *d,
+                                          SampleIO::SampleKind kind,
+                                          SampleIO::BeamMode beam);
 };
 
 } // namespace nuxsec

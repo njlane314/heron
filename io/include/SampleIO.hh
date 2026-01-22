@@ -40,7 +40,7 @@ class SampleIO
     struct ProvenanceInput
     {
         std::string entry_name;
-        std::string artio_path;
+        std::string art_path;
 
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot = 0.0;

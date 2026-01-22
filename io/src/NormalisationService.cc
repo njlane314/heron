@@ -15,10 +15,10 @@ namespace nuxsec
 {
 
 SampleIO::Sample NormalisationService::aggregate(const std::string &sample_name,
-                                                 const std::vector<std::string> &artio_files,
+                                                 const std::vector<std::string> &art_files,
                                                  const std::string &db_path)
 {
-    if (artio_files.empty())
+    if (art_files.empty())
     {
         throw std::runtime_error("Sample aggregation requires at least one Art file provenance root file.");
     }
@@ -28,9 +28,9 @@ SampleIO::Sample NormalisationService::aggregate(const std::string &sample_name,
 
     RunDatabaseService db(db_path);
 
-    for (const auto &path : artio_files)
+    for (const auto &path : art_files)
     {
-        artio::Provenance prov = ArtFileProvenanceIO::read(path);
+        art::Provenance prov = ArtFileProvenanceIO::read(path);
         if (out.entries.empty())
         {
             out.kind = prov.kind;
@@ -84,14 +84,14 @@ double NormalisationService::compute_normalisation(double subrun_pot_sum, double
     return db_tortgt_pot / subrun_pot_sum;
 }
 
-SampleIO::ProvenanceInput NormalisationService::make_entry(const artio::Provenance &prov,
-                                                           const std::string &artio_path,
+SampleIO::ProvenanceInput NormalisationService::make_entry(const art::Provenance &prov,
+                                                           const std::string &art_path,
                                                            double db_tortgt_pot,
                                                            double db_tor101_pot)
 {
     SampleIO::ProvenanceInput entry;
     entry.entry_name = prov.cfg.stage_name;
-    entry.artio_path = artio_path;
+    entry.art_path = art_path;
     entry.subrun_pot_sum = prov.subrun.pot_sum;
     entry.db_tortgt_pot = db_tortgt_pot;
     entry.db_tor101_pot = db_tor101_pot;

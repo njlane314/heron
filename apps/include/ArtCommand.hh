@@ -29,8 +29,8 @@ inline bool is_selection_data_file(const std::string &path)
 
 struct ArtArgs
 {
-    std::string artio_path;
-    nuxsec::artio::Stage stage_cfg;
+    std::string art_path;
+    nuxsec::art::Stage stage_cfg;
     sample::SampleIO::SampleKind sample_kind = sample::SampleIO::SampleKind::kUnknown;
     sample::SampleIO::BeamMode beam_mode = sample::SampleIO::BeamMode::kUnknown;
 };
@@ -83,7 +83,7 @@ inline ArtArgs parse_art_spec(const std::string &spec)
         throw std::runtime_error("Bad stage spec (expected NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]): " + spec);
     }
 
-    out.artio_path = "build/out/art/art_prov_" + out.stage_cfg.stage_name + ".root";
+    out.art_path = "build/out/art/art_prov_" + out.stage_cfg.stage_name + ".root";
 
     return out;
 }
@@ -98,11 +98,11 @@ inline ArtArgs parse_art_args(const std::vector<std::string> &args, const std::s
     return parse_art_spec(args[0]);
 }
 
-inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
+inline int run_art(const ArtArgs &art_args, const std::string &log_prefix)
 {
     const double pot_scale = 1e12;
 
-    std::filesystem::path out_path(art_args.artio_path);
+    std::filesystem::path out_path(art_args.art_path);
     if (!out_path.parent_path().empty())
     {
         std::filesystem::create_directories(out_path.parent_path());
@@ -110,7 +110,7 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
 
     const auto files = nuxsec::app::read_file_list(art_args.stage_cfg.filelist_path);
 
-    nuxsec::artio::Provenance rec;
+    nuxsec::art::Provenance rec;
     rec.cfg = art_args.stage_cfg;
     rec.input_files = files;
     rec.kind = art_args.sample_kind;
@@ -132,7 +132,7 @@ inline int run_artio(const ArtArgs &art_args, const std::string &log_prefix)
               << " pot_sum=" << rec.subrun.pot_sum
               << "\n";
 
-    nuxsec::ArtFileProvenanceIO::write(rec, art_args.artio_path);
+    nuxsec::ArtFileProvenanceIO::write(rec, art_args.art_path);
 
     return 0;
 }

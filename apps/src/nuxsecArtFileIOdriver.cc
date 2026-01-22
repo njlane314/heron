@@ -22,6 +22,6 @@ int main(int argc, char **argv)
             const nuxsec::app::ArtArgs art_args =
                 nuxsec::app::parse_art_args(args,
                                            "Usage: nuxsecArtFileIOdriver NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-            return nuxsec::app::run_artio(art_args, "nuxsecArtFileIOdriver");
+            return nuxsec::app::run_art(art_args, "nuxsecArtFileIOdriver");
         });
 }

@@ -43,7 +43,7 @@ class RunDatabaseService
     RunDatabaseService(const RunDatabaseService &) = delete;
     RunDatabaseService &operator=(const RunDatabaseService &) = delete;
 
-    RunInfoSums sum_run_info(const std::vector<artio::RunSubrunPair> &pairs) const;
+    RunInfoSums sum_run_info(const std::vector<art::RunSubrunPair> &pairs) const;
 
   private:
     void exec(const std::string &sql) const;

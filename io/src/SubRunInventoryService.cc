@@ -22,9 +22,9 @@
 namespace nuxsec
 {
 
-artio::SubrunSummary SubRunInventoryService::scan_subrun_tree(const std::vector<std::string> &files)
+art::SubrunSummary SubRunInventoryService::scan_subrun_tree(const std::vector<std::string> &files)
 {
-    artio::SubrunSummary out;
+    art::SubrunSummary out;
 
     const std::vector<std::string> candidates = {"nuselection/SubRun", "SubRun"};
     std::string tree_path;
@@ -78,18 +78,18 @@ artio::SubrunSummary SubRunInventoryService::scan_subrun_tree(const std::vector<
     const Long64_t n = chain.GetEntries();
     out.n_entries = static_cast<long long>(n);
 
-    std::vector<artio::RunSubrunPair> pairs;
+    std::vector<art::RunSubrunPair> pairs;
     pairs.reserve(static_cast<size_t>(n));
 
     for (Long64_t i = 0; i < n; ++i)
     {
         chain.GetEntry(i);
         out.pot_sum += static_cast<double>(pot);
-        pairs.push_back(artio::RunSubrunPair{static_cast<int>(run), static_cast<int>(subRun)});
+        pairs.push_back(art::RunSubrunPair{static_cast<int>(run), static_cast<int>(subRun)});
     }
 
     std::sort(pairs.begin(), pairs.end(),
-              [](const artio::RunSubrunPair &a, const artio::RunSubrunPair &b)
+              [](const art::RunSubrunPair &a, const art::RunSubrunPair &b)
               {
                   if (a.run != b.run)
                   {
@@ -99,7 +99,7 @@ artio::SubrunSummary SubRunInventoryService::scan_subrun_tree(const std::vector<
               });
 
     pairs.erase(std::unique(pairs.begin(), pairs.end(),
-                            [](const artio::RunSubrunPair &a, const artio::RunSubrunPair &b)
+                            [](const art::RunSubrunPair &a, const art::RunSubrunPair &b)
                             {
                                 return a.run == b.run && a.subrun == b.subrun;
                             }),

@@ -69,7 +69,7 @@ public:
                                   bool overwrite_if_exists = true) const;
 
 private:
-    static std::string sanitize_root_key(std::string s);
+    static std::string sanitise_root_key(std::string s);
 
 private:
     std::string m_path;

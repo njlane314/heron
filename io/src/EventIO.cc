@@ -23,7 +23,7 @@ namespace nuxsec
 namespace io
 {
 
-std::string EventIO::sanitize_root_key(std::string s)
+std::string EventIO::sanitise_root_key(std::string s)
 {
     for (char &c : s)
     {
@@ -53,7 +53,7 @@ void EventIO::init(const std::string &out_path,
     if (!event_schema_tsv.empty())
     {
         const std::string key = schema_tag.empty() ? "event_schema"
-                                                   : ("event_schema_" + sanitize_root_key(schema_tag));
+                                                   : ("event_schema_" + sanitise_root_key(schema_tag));
         TObjString(event_schema_tsv.c_str()).Write(key.c_str());
     }
 
@@ -104,7 +104,7 @@ std::string EventIO::tree_name_for_sample(const std::string &sample_name,
                                           const std::string &tree_prefix) const
 {
     const std::string p = tree_prefix.empty() ? "events" : tree_prefix;
-    return sanitize_root_key(p) + "_" + sanitize_root_key(sample_name);
+    return sanitise_root_key(p) + "_" + sanitise_root_key(sample_name);
 }
 
 ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,

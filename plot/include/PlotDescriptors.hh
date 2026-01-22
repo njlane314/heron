@@ -8,15 +8,15 @@
 #ifndef NUXSEC_PLOT_DESCRIPTORS_H
 #define NUXSEC_PLOT_DESCRIPTORS_H
 
-#include <ROOT/RDataFrame.hxx>
-#include <ROOT/RDFHelpers.hxx>
-#include <TMatrixDSym.h>
-
 #include <cctype>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RDFHelpers.hxx>
+#include <TMatrixDSym.h>
 
 #include "../../ana/include/Selection.hh"
 

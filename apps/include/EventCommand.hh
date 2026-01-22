@@ -14,12 +14,12 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 
+#include "AppUtils.hh"
 #include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
 #include "EventIO.hh"
 #include "RDataFrameFactory.hh"
 #include "SampleIO.hh"
-#include "AppUtils.hh"
 
 namespace nuxsec
 {

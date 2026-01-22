@@ -8,6 +8,12 @@
 #ifndef NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
 #define NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
 
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <TDirectory.h>
 #include <TFile.h>
 #include <TNamed.h>
@@ -15,12 +21,6 @@
 #include <TObjString.h>
 #include <TParameter.h>
 #include <TTree.h>
-
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
 
 #include "SampleIO.hh"
 

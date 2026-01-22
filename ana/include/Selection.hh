@@ -8,11 +8,11 @@
 #ifndef NUXSEC_ANA_SELECTION_H
 #define NUXSEC_ANA_SELECTION_H
 
-#include <ROOT/RDataFrame.hxx>
-#include <ROOT/RVec.hxx>
-
 #include <cstddef>
 #include <vector>
+
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RVec.hxx>
 
 #include "ColumnDerivationService.hh"
 

@@ -7,17 +7,17 @@
 
 #include "SampleIO.hh"
 
-#include <TDirectory.h>
-#include <TFile.h>
-#include <TNamed.h>
-#include <TParameter.h>
-#include <TTree.h>
-
 #include <algorithm>
 #include <cctype>
 #include <memory>
 #include <stdexcept>
 #include <utility>
+
+#include <TDirectory.h>
+#include <TFile.h>
+#include <TNamed.h>
+#include <TParameter.h>
+#include <TTree.h>
 
 namespace nuxsec
 {

@@ -8,10 +8,10 @@
 #ifndef NUXSEC_IO_RUNDATABASE_SERVICE_H
 #define NUXSEC_IO_RUNDATABASE_SERVICE_H
 
-#include <sqlite3.h>
-
 #include <string>
 #include <vector>
+
+#include <sqlite3.h>
 
 #include "ArtFileProvenanceIO.hh"
 

@@ -8,17 +8,17 @@
 #ifndef NUXSEC_PLOT_STACKED_HIST_H
 #define NUXSEC_PLOT_STACKED_HIST_H
 
-#include "TCanvas.h"
-#include "TH1.h"
-#include "THStack.h"
-#include "TLegend.h"
-#include "TLegendEntry.h"
-#include "TImage.h"
-#include "TPad.h"
-
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "TCanvas.h"
+#include "TH1.h"
+#include "THStack.h"
+#include "TImage.h"
+#include "TLegend.h"
+#include "TLegendEntry.h"
+#include "TPad.h"
 
 #include "PlotDescriptors.hh"
 

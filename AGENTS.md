@@ -19,6 +19,10 @@ This file captures the coding conventions and structural patterns used in the Nu
 - Use concise include guards in the form #ifndef NUXSEC_<MODULE>_<NAME>_H / #define NUXSEC_<MODULE>_<NAME>_H.
 - Forward declare classes when possible, include system/ROOT headers after that.
 - using namespace std; appears in headers and is acceptable in this codebase.
+- Group and order includes with blank lines between groups:
+  - Headers (.hh): C/C++ standard library headers, then external dependencies (e.g., ROOT, sqlite3), then project headers.
+  - Sources (.cc): corresponding header first, then C/C++ standard library headers, then external dependencies, then project headers.
+  - Keep includes alphabetised within each group.
 
 ## Documentation & comments
 - Use Doxygen-style comments:

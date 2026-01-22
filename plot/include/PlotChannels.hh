@@ -8,12 +8,12 @@
 #ifndef NUXSEC_PLOT_CHANNELS_H
 #define NUXSEC_PLOT_CHANNELS_H
 
-#include "RtypesCore.h"
-#include "TColor.h"
-
 #include <map>
 #include <string>
 #include <vector>
+
+#include "RtypesCore.h"
+#include "TColor.h"
 
 namespace nuxsec
 {

@@ -7,15 +7,15 @@
 
 #include "SubRunInventoryService.hh"
 
-#include <TChain.h>
-#include <TFile.h>
-#include <TTree.h>
-
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <TChain.h>
+#include <TFile.h>
+#include <TTree.h>
 
 #include "ArtFileProvenanceIO.hh"
 

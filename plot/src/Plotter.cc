@@ -7,20 +7,20 @@
 
 #include "Plotter.hh"
 
-#include "PlotEnv.hh"
-#include "StackedHist.hh"
-
-#include <TGaxis.h>
-#include <TMatrixDSym.h>
-#include <TROOT.h>
-#include <TStyle.h>
-
 #include <cctype>
 #include <iomanip>
 #include <memory>
 #include <sstream>
 #include <utility>
 #include <vector>
+
+#include <TGaxis.h>
+#include <TMatrixDSym.h>
+#include <TROOT.h>
+#include <TStyle.h>
+
+#include "PlotEnv.hh"
+#include "StackedHist.hh"
 
 namespace nuxsec
 {

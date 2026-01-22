@@ -8,10 +8,10 @@
 #ifndef NUXSEC_ANA_RDATA_FRAME_FACTORY_H
 #define NUXSEC_ANA_RDATA_FRAME_FACTORY_H
 
-#include <ROOT/RDataFrame.hxx>
-
 #include <string>
 #include <vector>
+
+#include <ROOT/RDataFrame.hxx>
 
 #include "SampleIO.hh"
 

@@ -7,8 +7,13 @@
 
 #include "StackedHist.hh"
 
-#include "PlotChannels.hh"
-#include "Plotter.hh"
+#include <algorithm>
+#include <cmath>
+#include <filesystem>
+#include <iomanip>
+#include <map>
+#include <sstream>
+#include <utility>
 
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
@@ -19,13 +24,8 @@
 #include "TList.h"
 #include "TMatrixDSym.h"
 
-#include <algorithm>
-#include <cmath>
-#include <filesystem>
-#include <iomanip>
-#include <map>
-#include <sstream>
-#include <utility>
+#include "PlotChannels.hh"
+#include "Plotter.hh"
 
 namespace nuxsec
 {

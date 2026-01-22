@@ -6,10 +6,11 @@
  */
 
 #include "NormalisationService.hh"
-#include "RunDatabaseService.hh"
 
 #include <stdexcept>
 #include <utility>
+
+#include "RunDatabaseService.hh"
 
 namespace nuxsec
 {

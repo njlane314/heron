@@ -78,18 +78,18 @@ art::Summary SubRunInventoryService::scan_subruns(const std::vector<std::string>
     const Long64_t n = chain.GetEntries();
     out.n_entries = static_cast<long long>(n);
 
-    std::vector<art::RunSubrunPair> pairs;
+    std::vector<art::Subrun> pairs;
     pairs.reserve(static_cast<size_t>(n));
 
     for (Long64_t i = 0; i < n; ++i)
     {
         chain.GetEntry(i);
         out.pot_sum += static_cast<double>(pot);
-        pairs.push_back(art::RunSubrunPair{static_cast<int>(run), static_cast<int>(subRun)});
+        pairs.push_back(art::Subrun{static_cast<int>(run), static_cast<int>(subRun)});
     }
 
     std::sort(pairs.begin(), pairs.end(),
-              [](const art::RunSubrunPair &a, const art::RunSubrunPair &b)
+              [](const art::Subrun &a, const art::Subrun &b)
               {
                   if (a.run != b.run)
                   {
@@ -99,7 +99,7 @@ art::Summary SubRunInventoryService::scan_subruns(const std::vector<std::string>
               });
 
     pairs.erase(std::unique(pairs.begin(), pairs.end(),
-                            [](const art::RunSubrunPair &a, const art::RunSubrunPair &b)
+                            [](const art::Subrun &a, const art::Subrun &b)
                             {
                                 return a.run == b.run && a.subrun == b.subrun;
                             }),

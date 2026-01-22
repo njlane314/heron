@@ -179,7 +179,7 @@ std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)
     return files;
 }
 
-std::vector<art::RunSubrunPair> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
+std::vector<art::Subrun> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *d)
 {
     TObject *obj = d->Get("run_subrun");
     auto *tree = dynamic_cast<TTree *>(obj);
@@ -194,12 +194,12 @@ std::vector<art::RunSubrunPair> ArtFileProvenanceIO::read_run_subrun_pairs(TDire
     tree->SetBranchAddress("subrun", &subrun);
 
     const Long64_t n = tree->GetEntries();
-    std::vector<art::RunSubrunPair> pairs;
+    std::vector<art::Subrun> pairs;
     pairs.reserve(static_cast<size_t>(n));
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
-        pairs.push_back(art::RunSubrunPair{static_cast<int>(run), static_cast<int>(subrun)});
+        pairs.push_back(art::Subrun{static_cast<int>(run), static_cast<int>(subrun)});
     }
     return pairs;
 }

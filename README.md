@@ -141,22 +141,25 @@ Repeat `nuxsec art ...` for each partition/input (run1b, run1c, etc.).
 
 ### 2) Art provenance ROOT → Sample ROOT (group inputs into samples)
 
-Create per-sample filelists that contain the art provenance ROOT outputs from step (1):
+Create per-sample filelists that contain the art provenance ROOT outputs from step (1).
+If you want these lists under the build tree, prefer a dedicated directory (for example
+`build/out/lists/`) to avoid confusion with the output directory `build/out/sample/`:
 
 ```bash
-ls build/out/art/art_prov_data_bnb_run1*.root    > inputs/samples/data_bnb_run1.txt
-ls build/out/art/art_prov_ext_bnb_run1*.root     > inputs/samples/ext_bnb_run1.txt
-ls build/out/art/art_prov_overlay_bnb_run1*.root > inputs/samples/overlay_bnb_run1.txt
-ls build/out/art/art_prov_dirt_bnb_run1*.root    > inputs/samples/dirt_bnb_run1.txt
+mkdir -p build/out/lists
+ls build/out/art/art_prov_data_bnb_run1*.root    > build/out/lists/data_bnb_run1.txt
+ls build/out/art/art_prov_ext_bnb_run1*.root     > build/out/lists/ext_bnb_run1.txt
+ls build/out/art/art_prov_overlay_bnb_run1*.root > build/out/lists/overlay_bnb_run1.txt
+ls build/out/art/art_prov_dirt_bnb_run1*.root    > build/out/lists/dirt_bnb_run1.txt
 ```
 
 Then aggregate each sample:
 
 ```bash
-nuxsec sample "data_bnb_run1:inputs/samples/data_bnb_run1.txt"
-nuxsec sample "ext_bnb_run1:inputs/samples/ext_bnb_run1.txt"
-nuxsec sample "overlay_bnb_run1:inputs/samples/overlay_bnb_run1.txt"
-nuxsec sample "dirt_bnb_run1:inputs/samples/dirt_bnb_run1.txt"
+nuxsec sample "data_bnb_run1:build/out/lists/data_bnb_run1.txt"
+nuxsec sample "ext_bnb_run1:build/out/lists/ext_bnb_run1.txt"
+nuxsec sample "overlay_bnb_run1:build/out/lists/overlay_bnb_run1.txt"
+nuxsec sample "dirt_bnb_run1:build/out/lists/dirt_bnb_run1.txt"
 ```
 
 Outputs:

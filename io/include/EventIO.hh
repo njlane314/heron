@@ -55,8 +55,8 @@ public:
     explicit EventIO(std::string out_path, OpenMode mode);
     const std::string &path() const noexcept { return m_path; }
 
-    std::string tree_name_for_sample(const std::string &sample_name,
-                                     const std::string &tree_prefix = "events") const;
+    std::string sample_tree_name(const std::string &sample_name,
+                                 const std::string &tree_prefix = "events") const;
 
     ULong64_t snapshot_event_list(ROOT::RDF::RNode node,
                                   const std::string &sample_name,

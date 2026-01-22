@@ -100,8 +100,8 @@ EventIO::EventIO(std::string out_path, OpenMode mode)
     f->Close();
 }
 
-std::string EventIO::tree_name_for_sample(const std::string &sample_name,
-                                          const std::string &tree_prefix) const
+std::string EventIO::sample_tree_name(const std::string &sample_name,
+                                      const std::string &tree_prefix) const
 {
     const std::string p = tree_prefix.empty() ? "events" : tree_prefix;
     return sanitise_root_key(p) + "_" + sanitise_root_key(sample_name);
@@ -123,7 +123,7 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
         filtered = filtered.Filter(selection, "eventio_selection");
     }
 
-    const std::string tree_name = tree_name_for_sample(sample_name, tree_prefix);
+    const std::string tree_name = sample_tree_name(sample_name, tree_prefix);
 
     std::vector<std::vector<double>> dvalues;
     dvalues.reserve(double_columns.size() + 2);

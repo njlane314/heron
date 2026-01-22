@@ -28,10 +28,11 @@ struct ColumnDefinition
 class RDataFrameFactory
 {
   public:
-    static ROOT::RDataFrame load_sample(const SampleIO::Sample &sample, const std::string &tree_name);
+    static ROOT::RDataFrame load_sample(const sample::SampleIO::Sample &sample,
+                                        const std::string &tree_name);
     static ROOT::RDF::RNode define_variables(ROOT::RDF::RNode node,
                                              const std::vector<ColumnDefinition> &definitions);
-    static std::vector<std::string> collect_files(const SampleIO::Sample &sample);
+    static std::vector<std::string> collect_files(const sample::SampleIO::Sample &sample);
 };
 
 } // namespace nuxsec

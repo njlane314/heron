@@ -52,8 +52,8 @@ struct Input
 struct Provenance
 {
     Input input;
-    SampleIO::SampleOrigin kind = SampleIO::SampleOrigin::kUnknown;
-    SampleIO::BeamMode beam = SampleIO::BeamMode::kUnknown;
+    sample::SampleIO::SampleOrigin kind = sample::SampleIO::SampleOrigin::kUnknown;
+    sample::SampleIO::BeamMode beam = sample::SampleIO::BeamMode::kUnknown;
 
     std::vector<std::string> input_files;
 
@@ -70,12 +70,12 @@ class ArtFileProvenanceIO
     static void write(const art::Provenance &r, const std::string &out_file);
     static art::Provenance read(const std::string &in_file);
     static art::Provenance read(const std::string &in_file,
-                                SampleIO::SampleOrigin kind,
-                                SampleIO::BeamMode beam);
+                                sample::SampleIO::SampleOrigin kind,
+                                sample::SampleIO::BeamMode beam);
 
   private:
     static std::string read_named_string(TDirectory *d, const char *key);
-    static SampleIO::SampleOrigin read_sample_origin(TDirectory *d);
+    static sample::SampleIO::SampleOrigin read_sample_origin(TDirectory *d);
 
     template <typename T>
     static T read_param(TDirectory *d, const char *key)
@@ -92,8 +92,8 @@ class ArtFileProvenanceIO
     static std::vector<std::string> read_input_files(TDirectory *d);
     static std::vector<art::Subrun> read_run_subrun_pairs(TDirectory *d);
     static art::Provenance read_directory(TDirectory *d,
-                                          SampleIO::SampleOrigin kind,
-                                          SampleIO::BeamMode beam);
+                                          sample::SampleIO::SampleOrigin kind,
+                                          sample::SampleIO::BeamMode beam);
 };
 
 } // namespace nuxsec

@@ -25,7 +25,7 @@ class AnalysisConfigService final
 
     const std::string &name() const noexcept { return m_name; }
     const std::string &tree_name() const noexcept { return m_tree_name; }
-    ProcessorEntry make_processor(const SampleIO::Sample &sample) const noexcept;
+    ProcessorEntry make_processor(const sample::SampleIO::Sample &sample) const noexcept;
 
   private:
     AnalysisConfigService();

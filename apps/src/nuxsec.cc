@@ -17,7 +17,7 @@
 #include <TROOT.h>
 #include <TSystem.h>
 
-#include "Utils.hh"
+#include "AppUtils.hh"
 #include "ArtCommand.hh"
 #include "SampleCommand.hh"
 

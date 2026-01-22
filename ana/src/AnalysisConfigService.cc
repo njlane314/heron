@@ -30,7 +30,7 @@ ProcessorEntry AnalysisConfigService::make_processor(const sample::SampleIO::Sam
 {
     ProcessorEntry proc_entry;
 
-    switch (sample.kind)
+    switch (sample.origin)
     {
     case sample::SampleIO::SampleOrigin::kData:
         proc_entry.source = SourceKind::kData;

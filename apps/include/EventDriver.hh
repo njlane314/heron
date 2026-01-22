@@ -88,14 +88,14 @@ inline int run(const Args &event_args, const std::string &log_prefix)
 
     std::vector<Input> inputs;
     inputs.reserve(entries.size());
-    std::vector<nuxsec::io::EventSampleRef> sample_refs;
+    std::vector<nuxsec::event::SampleInfo> sample_refs;
     sample_refs.reserve(entries.size());
 
     for (const auto &entry : entries)
     {
         nuxsec::sample::SampleIO::Sample sample = nuxsec::sample::SampleIO::read(entry.output_path);
 
-        nuxsec::io::EventSampleRef ref;
+        nuxsec::event::SampleInfo ref;
         ref.sample_name = sample.sample_name;
         ref.sample_rootio_path = entry.output_path;
         ref.sample_kind = static_cast<int>(sample.kind);
@@ -147,13 +147,13 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     for (const auto &c : int_columns)
         schema << "int\t" << c << "\n";
 
-    nuxsec::io::EventHeader header;
+    nuxsec::event::Header header;
     header.analysis_name = analysis.name();
     header.analysis_tree = analysis.tree_name();
     header.sample_list_source = event_args.list_path;
 
-    nuxsec::io::EventIO::init(event_args.output_root, header, sample_refs, schema.str(), "compiled");
-    nuxsec::io::EventIO event_io(event_args.output_root, nuxsec::io::EventIO::OpenMode::kUpdate);
+    nuxsec::event::EventIO::init(event_args.output_root, header, sample_refs, schema.str(), "compiled");
+    nuxsec::event::EventIO event_io(event_args.output_root, nuxsec::event::EventIO::OpenMode::kUpdate);
 
     for (const auto &input : inputs)
     {

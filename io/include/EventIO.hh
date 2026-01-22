@@ -19,14 +19,14 @@ namespace nuxsec
 namespace event
 {
 
-struct EventHeader
+struct Header
 {
     std::string analysis_name;
     std::string analysis_tree;
     std::string sample_list_source;
 };
 
-struct EventSampleRef
+struct SampleInfo
 {
     std::string sample_name;
     std::string sample_rootio_path;
@@ -47,8 +47,8 @@ public:
     };
 
     static void init(const std::string &out_path,
-                     const EventHeader &header,
-                     const std::vector<EventSampleRef> &sample_refs,
+                     const Header &header,
+                     const std::vector<SampleInfo> &sample_refs,
                      const std::string &event_schema_tsv,
                      const std::string &schema_tag);
 

@@ -20,7 +20,7 @@
 
 namespace nuxsec
 {
-namespace io
+namespace event
 {
 
 std::string EventIO::sanitise_root_key(std::string s)
@@ -37,8 +37,8 @@ std::string EventIO::sanitise_root_key(std::string s)
 }
 
 void EventIO::init(const std::string &out_path,
-                   const EventHeader &header,
-                   const std::vector<EventSampleRef> &sample_refs,
+                   const Header &header,
+                   const std::vector<SampleInfo> &sample_refs,
                    const std::string &event_schema_tsv,
                    const std::string &schema_tag)
 {
@@ -196,5 +196,5 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     return static_cast<ULong64_t>(nevents);
 }
 
-} // namespace io
+} // namespace event
 } // namespace nuxsec

@@ -67,7 +67,7 @@ inline void update_sample_list(const std::string &list_path,
                                const nuxsec::sample::SampleIO::Sample &sample,
                                const std::string &output_path)
 {
-    auto entries = nuxsec::app::read_sample_list(list_path, true, false);
+    auto entries = nuxsec::app::read_samples(list_path, true, false);
     const std::string kind_name = nuxsec::sample::SampleIO::sample_kind_name(sample.kind);
     const std::string beam_name = nuxsec::sample::SampleIO::beam_mode_name(sample.beam);
 
@@ -93,13 +93,13 @@ inline void update_sample_list(const std::string &list_path,
         entries.push_back(std::move(entry));
     }
 
-    nuxsec::app::write_sample_list(list_path, std::move(entries));
+    nuxsec::app::write_samples(list_path, std::move(entries));
 }
 
 inline int run(const Args &sample_args, const std::string &log_prefix)
 {
     const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
-    const auto files = nuxsec::app::read_file_list(sample_args.filelist_path);
+    const auto files = nuxsec::app::read_paths(sample_args.filelist_path);
 
     std::filesystem::path output_path(sample_args.output_path);
     if (!output_path.parent_path().empty())

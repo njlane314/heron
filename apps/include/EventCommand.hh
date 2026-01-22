@@ -83,7 +83,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
         ROOT::EnableImplicitMT();
 
     const auto &analysis = nuxsec::AnalysisConfigService::instance();
-    const auto entries = nuxsec::app::read_sample_list(event_args.list_path);
+    const auto entries = nuxsec::app::read_samples(event_args.list_path);
 
     std::vector<Input> inputs;
     inputs.reserve(entries.size());
@@ -158,7 +158,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     {
         const nuxsec::sample::SampleIO::Sample &sample = input.sample;
         ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.tree_name());
-        const nuxsec::ProcessorEntry proc_entry = analysis.make_processor_entry(sample);
+        const nuxsec::ProcessorEntry proc_entry = analysis.make_processor(sample);
 
         const auto &processor = nuxsec::ColumnDerivationService::instance();
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);

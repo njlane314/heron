@@ -294,7 +294,7 @@ int run_macro_command(const std::vector<std::string> &args)
 
 int main(int argc, char **argv)
 {
-    return nuxsec::app::run_with_exceptions(
+    return nuxsec::app::run_guarded(
         [argc, argv]()
         {
             if (argc < 2)

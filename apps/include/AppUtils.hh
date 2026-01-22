@@ -47,7 +47,7 @@ inline std::vector<std::string> collect_args(int argc, char **argv, int start_in
     return args;
 }
 
-inline int run_with_exceptions(const std::function<int()> &func)
+inline int run_guarded(const std::function<int()> &func)
 {
     try
     {
@@ -78,7 +78,7 @@ inline std::vector<std::string> split_tabs(const std::string &line)
     return out;
 }
 
-inline std::vector<std::string> read_file_list(const std::string &filelist_path)
+inline std::vector<std::string> read_paths(const std::string &filelist_path)
 {
     std::ifstream fin(filelist_path);
     if (!fin)
@@ -112,7 +112,7 @@ struct SampleListEntry
     std::string output_path;
 };
 
-inline std::vector<SampleListEntry> read_sample_list(const std::string &list_path,
+inline std::vector<SampleListEntry> read_samples(const std::string &list_path,
                                                      bool allow_missing = false,
                                                      bool require_nonempty = true)
 {
@@ -167,7 +167,7 @@ inline std::vector<SampleListEntry> read_sample_list(const std::string &list_pat
     return entries;
 }
 
-inline void write_sample_list(const std::string &list_path, std::vector<SampleListEntry> entries)
+inline void write_samples(const std::string &list_path, std::vector<SampleListEntry> entries)
 {
     std::sort(entries.begin(), entries.end(),
               [](const SampleListEntry &a, const SampleListEntry &b)

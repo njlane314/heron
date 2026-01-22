@@ -66,25 +66,25 @@ void Plotter::set_options(Options opt)
     apply_env_defaults(opt_);
 }
 
-void Plotter::draw_stack_by_channel(const TH1DModel &spec, const std::vector<const Entry *> &mc) const
+void Plotter::draw_stack(const TH1DModel &spec, const std::vector<const Entry *> &mc) const
 {
     static const std::vector<const Entry *> empty_data{};
-    draw_stack_by_channel(spec, mc, empty_data);
+    draw_stack(spec, mc, empty_data);
 }
 
-void Plotter::draw_stack_by_channel(const TH1DModel &spec,
-                                    const std::vector<const Entry *> &mc,
-                                    const std::vector<const Entry *> &data) const
+void Plotter::draw_stack(const TH1DModel &spec,
+                         const std::vector<const Entry *> &mc,
+                         const std::vector<const Entry *> &data) const
 {
     set_global_style();
     StackedHist plot(spec, opt_, mc, data);
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_stack_by_channel_with_cov(const TH1DModel &spec,
-                                             const std::vector<const Entry *> &mc,
-                                             const std::vector<const Entry *> &data,
-                                             const TMatrixDSym &total_cov) const
+void Plotter::draw_stack_cov(const TH1DModel &spec,
+                             const std::vector<const Entry *> &mc,
+                             const std::vector<const Entry *> &data,
+                             const TMatrixDSym &total_cov) const
 {
     set_global_style();
     auto opt2 = opt_;

@@ -30,14 +30,14 @@ class Plotter
     Options &options() noexcept;
     void set_options(Options opt);
 
-    void draw_stack_by_channel(const TH1DModel &spec, const std::vector<const Entry *> &mc) const;
-    void draw_stack_by_channel(const TH1DModel &spec,
-                               const std::vector<const Entry *> &mc,
-                               const std::vector<const Entry *> &data) const;
-    void draw_stack_by_channel_with_cov(const TH1DModel &spec,
-                                        const std::vector<const Entry *> &mc,
-                                        const std::vector<const Entry *> &data,
-                                        const TMatrixDSym &total_cov) const;
+    void draw_stack(const TH1DModel &spec, const std::vector<const Entry *> &mc) const;
+    void draw_stack(const TH1DModel &spec,
+                    const std::vector<const Entry *> &mc,
+                    const std::vector<const Entry *> &data) const;
+    void draw_stack_cov(const TH1DModel &spec,
+                        const std::vector<const Entry *> &mc,
+                        const std::vector<const Entry *> &data,
+                        const TMatrixDSym &total_cov) const;
 
     void set_global_style() const;
 

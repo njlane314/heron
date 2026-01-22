@@ -15,7 +15,7 @@
 
 int main(int argc, char **argv)
 {
-    return nuxsec::app::run_with_exceptions(
+    return nuxsec::app::run_guarded(
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);

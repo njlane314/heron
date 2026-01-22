@@ -112,7 +112,7 @@ inline int run(const Args &art_args, const std::string &log_prefix)
         std::filesystem::create_directories(out_path.parent_path());
     }
 
-    const auto files = nuxsec::app::read_file_list(art_args.input_provenance.filelist_path);
+    const auto files = nuxsec::app::read_paths(art_args.input_provenance.filelist_path);
 
     nuxsec::art::Provenance rec;
     rec.cfg = art_args.input_provenance;
@@ -126,7 +126,7 @@ inline int run(const Args &art_args, const std::string &log_prefix)
         rec.kind = nuxsec::sample::SampleIO::SampleOrigin::kData;
     }
 
-    rec.subrun = nuxsec::SubRunInventoryService::scan_subrun_tree(files);
+    rec.subrun = nuxsec::SubRunInventoryService::scan_subruns(files);
 
     rec.subrun.pot_sum *= pot_scale;
     rec.scale = pot_scale;

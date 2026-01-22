@@ -26,7 +26,7 @@ AnalysisConfigService::AnalysisConfigService()
 
 }
 
-ProcessorEntry AnalysisConfigService::make_processor_entry(const SampleIO::Sample &sample) const noexcept
+ProcessorEntry AnalysisConfigService::make_processor(const SampleIO::Sample &sample) const noexcept
 {
     ProcessorEntry proc_entry;
 

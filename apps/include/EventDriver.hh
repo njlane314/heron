@@ -221,7 +221,7 @@ inline int run(const Args &event_args, const std::string &log_prefix)
 
         std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
                   << " sample=" << sample.sample_name
-                  << " kind=" << nuxsec::sample::SampleIO::sample_kind_name(sample.kind)
+                  << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.kind)
                   << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)
                   << " events_written=" << n_written
                   << " output=" << event_args.output_root

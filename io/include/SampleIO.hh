@@ -66,7 +66,7 @@ class SampleIO
         double normalised_pot_sum = 0.0;
     };
 
-    static const char *sample_kind_name(SampleOrigin k);
+    static const char *sample_origin_name(SampleOrigin k);
     static SampleOrigin parse_sample_origin(const std::string &name);
 
     static const char *beam_mode_name(BeamMode b);

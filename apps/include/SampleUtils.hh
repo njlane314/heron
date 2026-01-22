@@ -116,7 +116,7 @@ inline void write_samples(const std::string &list_path, std::vector<SampleListEn
         throw std::runtime_error("Failed to open sample list for writing: " + list_path +
                                  " (errno=" + std::to_string(errno) + " " + std::strerror(errno) + ")");
     }
-    fout << "# sample_name\tsample_kind\tbeam_mode\toutput_path\n";
+    fout << "# sample_name\tsample_origin\tbeam_mode\toutput_path\n";
     for (const auto &entry : entries)
     {
         fout << entry.sample_name << "\t"

@@ -24,8 +24,7 @@ class SubRunInventoryService
 {
   public:
     /// \brief Scan input files for SubRun information.
-    static art::Summary scan_subruns(const std::vector<std::string> &files,
-                                     const std::string &log_prefix = "nuxsec");
+    static art::Summary scan_subruns(const std::vector<std::string> &files);
 };
 
 }

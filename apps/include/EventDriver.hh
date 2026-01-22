@@ -3,7 +3,9 @@
 #define NUXSEC_APPS_EVENTDRIVER_H
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -30,6 +32,41 @@ namespace app
 
 namespace event
 {
+
+inline std::string format_count(const size_t count)
+{
+    std::ostringstream out;
+    if (count >= 1000000)
+    {
+        out << std::fixed << std::setprecision(1)
+            << (static_cast<double>(count) / 1000000.0) << "M";
+    }
+    else if (count >= 1000)
+    {
+        out << (count / 1000) << "k";
+    }
+    else
+    {
+        out << count;
+    }
+    return out.str();
+}
+
+inline void log_event_start(const std::string &log_prefix, const size_t sample_count)
+{
+    std::cerr << "[" << log_prefix << "] "
+              << "Building events for " << format_count(sample_count) << " samples\n";
+}
+
+inline void log_event_finish(const std::string &log_prefix,
+                             const size_t sample_count,
+                             const double elapsed_seconds)
+{
+    std::cerr << "[" << log_prefix << "] "
+              << "Completed event build for " << format_count(sample_count) << " samples in "
+              << std::fixed << std::setprecision(1)
+              << elapsed_seconds << "s\n";
+}
 
 struct Args
 {
@@ -85,6 +122,8 @@ inline int run(const Args &event_args, const std::string &log_prefix)
 
     const auto &analysis = nuxsec::AnalysisConfigService::instance();
     const auto entries = nuxsec::app::read_samples(event_args.list_path);
+    const auto start_time = std::chrono::steady_clock::now();
+    log_event_start(log_prefix, entries.size());
 
     std::vector<Input> inputs;
     inputs.reserve(entries.size());
@@ -227,6 +266,10 @@ inline int run(const Args &event_args, const std::string &log_prefix)
                   << " output=" << event_args.output_root
                   << "\n";
     }
+    const auto end_time = std::chrono::steady_clock::now();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    log_event_finish(log_prefix, entries.size(), elapsed_seconds);
 
     return 0;
 }

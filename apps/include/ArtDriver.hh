@@ -2,8 +2,11 @@
 #ifndef NUXSEC_APPS_ARTDRIVER_H
 #define NUXSEC_APPS_ARTDRIVER_H
 
+#include <chrono>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -22,6 +25,41 @@ namespace app
 
 namespace art
 {
+
+inline std::string format_count(const long long count)
+{
+    std::ostringstream out;
+    if (count >= 1000000)
+    {
+        out << std::fixed << std::setprecision(1)
+            << (static_cast<double>(count) / 1000000.0) << "M";
+    }
+    else if (count >= 1000)
+    {
+        out << (count / 1000) << "k";
+    }
+    else
+    {
+        out << count;
+    }
+    return out.str();
+}
+
+inline void log_scan_start(const std::string &log_prefix)
+{
+    std::cerr << "[" << log_prefix << "] "
+              << "Scanning SubRun entries\n";
+}
+
+inline void log_scan_finish(const std::string &log_prefix,
+                            const long long total,
+                            const double elapsed_seconds)
+{
+    std::cerr << "[" << log_prefix << "] "
+              << "Completed scan of " << format_count(total) << " entries in "
+              << std::fixed << std::setprecision(1)
+              << elapsed_seconds << "s\n";
+}
 
 inline bool is_selection_data_file(const std::string &path)
 {
@@ -126,7 +164,13 @@ inline int run(const Args &art_args, const std::string &log_prefix)
         rec.kind = nuxsec::sample::SampleIO::SampleOrigin::kData;
     }
 
-    rec.summary = nuxsec::SubRunInventoryService::scan_subruns(files, log_prefix);
+    const auto start_time = std::chrono::steady_clock::now();
+    log_scan_start(log_prefix);
+    rec.summary = nuxsec::SubRunInventoryService::scan_subruns(files);
+    const auto end_time = std::chrono::steady_clock::now();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);
 
     rec.summary.pot_sum *= pot_scale;
     rec.scale = pot_scale;

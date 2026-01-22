@@ -2,8 +2,11 @@
 #ifndef NUXSEC_APPS_SAMPLEDRIVER_H
 #define NUXSEC_APPS_SAMPLEDRIVER_H
 
+#include <chrono>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -22,6 +25,41 @@ namespace app
 
 namespace sample
 {
+
+inline std::string format_count(const size_t count)
+{
+    std::ostringstream out;
+    if (count >= 1000000)
+    {
+        out << std::fixed << std::setprecision(1)
+            << (static_cast<double>(count) / 1000000.0) << "M";
+    }
+    else if (count >= 1000)
+    {
+        out << (count / 1000) << "k";
+    }
+    else
+    {
+        out << count;
+    }
+    return out.str();
+}
+
+inline void log_sample_start(const std::string &log_prefix, const size_t file_count)
+{
+    std::cerr << "[" << log_prefix << "] "
+              << "Building sample from " << format_count(file_count) << " files\n";
+}
+
+inline void log_sample_finish(const std::string &log_prefix,
+                              const size_t input_count,
+                              const double elapsed_seconds)
+{
+    std::cerr << "[" << log_prefix << "] "
+              << "Completed sample build from " << format_count(input_count) << " inputs in "
+              << std::fixed << std::setprecision(1)
+              << elapsed_seconds << "s\n";
+}
 
 struct Args
 {
@@ -113,8 +151,14 @@ inline int run(const Args &sample_args, const std::string &log_prefix)
         std::filesystem::create_directories(sample_list_path.parent_path());
     }
 
+    const auto start_time = std::chrono::steady_clock::now();
+    log_sample_start(log_prefix, files.size());
     nuxsec::sample::SampleIO::Sample sample =
         nuxsec::NormalisationService::build_sample(sample_args.sample_name, files, db_path);
+    const auto end_time = std::chrono::steady_clock::now();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    log_sample_finish(log_prefix, sample.inputs.size(), elapsed_seconds);
     nuxsec::sample::SampleIO::write(sample, sample_args.output_path);
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 

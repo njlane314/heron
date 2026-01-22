@@ -8,11 +8,7 @@
 #include "SubRunInventoryService.hh"
 
 #include <algorithm>
-#include <chrono>
-#include <iomanip>
-#include <iostream>
 #include <memory>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -26,49 +22,7 @@
 namespace nuxsec
 {
 
-namespace
-{
-
-std::string format_count(const Long64_t count)
-{
-    std::ostringstream out;
-    if (count >= 1000000)
-    {
-        out << std::fixed << std::setprecision(1)
-            << (static_cast<double>(count) / 1000000.0) << "M";
-    }
-    else if (count >= 1000)
-    {
-        out << (count / 1000) << "k";
-    }
-    else
-    {
-        out << count;
-    }
-    return out.str();
-}
-
-void log_progress(const std::string &log_prefix,
-                  const Long64_t current,
-                  const Long64_t total,
-                  const double elapsed_seconds)
-{
-    if (total <= 0)
-    {
-        return;
-    }
-    const int percent =
-        static_cast<int>((static_cast<double>(current) / static_cast<double>(total)) * 100.0);
-    std::cerr << "[" << log_prefix << "] " << percent << "% ("
-              << format_count(current) << "/" << format_count(total)
-              << "), " << std::fixed << std::setprecision(1)
-              << elapsed_seconds << "s elapsed\n";
-}
-
-}
-
-art::Summary SubRunInventoryService::scan_subruns(const std::vector<std::string> &files,
-                                                  const std::string &log_prefix)
+art::Summary SubRunInventoryService::scan_subruns(const std::vector<std::string> &files)
 {
     art::Summary out;
 
@@ -127,23 +81,11 @@ art::Summary SubRunInventoryService::scan_subruns(const std::vector<std::string>
     std::vector<art::Subrun> pairs;
     pairs.reserve(static_cast<size_t>(n));
 
-    const auto start_time = std::chrono::steady_clock::now();
-    auto next_update = start_time + std::chrono::seconds(2);
-
     for (Long64_t i = 0; i < n; ++i)
     {
         chain.GetEntry(i);
         out.pot_sum += static_cast<double>(pot);
         pairs.push_back(art::Subrun{static_cast<int>(run), static_cast<int>(subRun)});
-
-        const auto now = std::chrono::steady_clock::now();
-        if (now >= next_update)
-        {
-            const double elapsed_seconds =
-                std::chrono::duration_cast<std::chrono::duration<double>>(now - start_time).count();
-            log_progress(log_prefix, i + 1, n, elapsed_seconds);
-            next_update = now + std::chrono::seconds(2);
-        }
     }
 
     std::sort(pairs.begin(), pairs.end(),

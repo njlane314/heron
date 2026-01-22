@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef NUXSEC_APPS_EVENTCOMMAND_H
-#define NUXSEC_APPS_EVENTCOMMAND_H
+#ifndef NUXSEC_APPS_EVENTDRIVER_H
+#define NUXSEC_APPS_EVENTDRIVER_H
 
 #include <algorithm>
 #include <cstdint>
@@ -236,4 +236,4 @@ inline int run(const Args &event_args, const std::string &log_prefix)
 
 } // namespace nuxsec
 
-#endif // NUXSEC_APPS_EVENTCOMMAND_H
+#endif // NUXSEC_APPS_EVENTDRIVER_H

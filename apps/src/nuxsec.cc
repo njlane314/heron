@@ -18,9 +18,9 @@
 #include <TSystem.h>
 
 #include "AppUtils.hh"
-#include "ArtCommand.hh"
-#include "EventCommand.hh"
-#include "SampleCommand.hh"
+#include "ArtDriver.hh"
+#include "EventDriver.hh"
+#include "SampleDriver.hh"
 
 namespace
 {

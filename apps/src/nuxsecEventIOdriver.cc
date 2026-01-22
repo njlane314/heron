@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "EventCommand.hh"
+#include "EventDriver.hh"
 
 int main(int argc, char **argv)
 {

@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef NUXSEC_APPS_ARTCOMMAND_H
-#define NUXSEC_APPS_ARTCOMMAND_H
+#ifndef NUXSEC_APPS_ARTDRIVER_H
+#define NUXSEC_APPS_ARTDRIVER_H
 
 #include <filesystem>
 #include <iostream>

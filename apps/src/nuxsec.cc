@@ -24,8 +24,8 @@
 namespace
 {
 
-const char *kUsageArt = "Usage: nuxsec a|art|artio|artio-aggregate NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
-const char *kUsageSample = "Usage: nuxsec s|samp|sample|sample-aggregate NAME:FILELIST";
+const char *kUsageArt = "Usage: nuxsec art NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
+const char *kUsageSample = "Usage: nuxsec sample NAME:FILELIST";
 const char *kUsageMacro =
     "Usage: nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
@@ -43,7 +43,7 @@ void print_main_help(std::ostream &out)
     out << "Usage: nuxsec <command> [args]\n\n"
         << "Commands:\n"
         << "  art         Aggregate art provenance for a stage\n"
-        << "  samp        Aggregate Sample ROOT files from art provenance\n"
+        << "  sample      Aggregate Sample ROOT files from art provenance\n"
         << "  macro       Run plot macros\n"
         << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
 }
@@ -101,7 +101,7 @@ int run_artio_command(const std::vector<std::string> &args)
     }
 
     const nuxsec::app::ArtArgs art_args = nuxsec::app::parse_art_args(args, kUsageArt);
-    return nuxsec::app::run_artio(art_args, "nuxsec artio-aggregate");
+    return nuxsec::app::run_artio(art_args, "nuxsec art");
 }
 
 int run_sample_command(const std::vector<std::string> &args)
@@ -113,7 +113,7 @@ int run_sample_command(const std::vector<std::string> &args)
     }
 
     const nuxsec::app::SampleArgs sample_args = nuxsec::app::parse_sample_args(args, kUsageSample);
-    return nuxsec::app::run_sample(sample_args, "nuxsec sample-aggregate");
+    return nuxsec::app::run_sample(sample_args, "nuxsec sample");
 }
 
 
@@ -294,15 +294,15 @@ int main(int argc, char **argv)
                 return 0;
             }
 
-            if (command == "artio-aggregate" || command == "artio" || command == "art" || command == "a")
+            if (command == "art")
             {
                 return run_artio_command(args);
             }
-            if (command == "sample-aggregate" || command == "sample" || command == "samp" || command == "s")
+            if (command == "sample")
             {
                 return run_sample_command(args);
             }
-            if (command == "macro" || command == "m")
+            if (command == "macro")
             {
                 return run_macro_command(args);
             }

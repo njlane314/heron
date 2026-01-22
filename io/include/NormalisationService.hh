@@ -22,9 +22,9 @@ using SampleIO = sample::SampleIO;
 class NormalisationService
 {
   public:
-    static SampleIO::Sample aggregate(const std::string &sample_name,
-                                      const std::vector<std::string> &art_files,
-                                      const std::string &db_path);
+    static SampleIO::Sample build_sample(const std::string &sample_name,
+                                         const std::vector<std::string> &art_files,
+                                         const std::string &db_path);
 
   private:
     static double compute_normalisation(double subrun_pot_sum, double db_tortgt_pot);

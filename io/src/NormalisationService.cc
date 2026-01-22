@@ -15,9 +15,9 @@
 namespace nuxsec
 {
 
-SampleIO::Sample NormalisationService::aggregate(const std::string &sample_name,
-                                                 const std::vector<std::string> &art_files,
-                                                 const std::string &db_path)
+SampleIO::Sample NormalisationService::build_sample(const std::string &sample_name,
+                                                    const std::vector<std::string> &art_files,
+                                                    const std::string &db_path)
 {
     if (art_files.empty())
     {

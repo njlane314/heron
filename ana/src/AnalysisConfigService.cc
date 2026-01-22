@@ -23,7 +23,7 @@ const AnalysisConfigService &AnalysisConfigService::instance()
 
 AnalysisConfigService::AnalysisConfigService()
 {
-    m_name = "nuxsec_default_v1";
+    m_name = "nuxsec_default";
     m_tree_name = "nuxsec_art_provenance";
 
 }

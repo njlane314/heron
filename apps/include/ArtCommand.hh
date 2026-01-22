@@ -33,7 +33,7 @@ inline bool is_selection_data_file(const std::string &path)
 struct Args
 {
     std::string art_path;
-    nuxsec::art::InputProvenance input_provenance;
+    nuxsec::art::Input input;
     nuxsec::sample::SampleIO::SampleOrigin sample_origin =
         nuxsec::sample::SampleIO::SampleOrigin::kUnknown;
     nuxsec::sample::SampleIO::BeamMode beam_mode = nuxsec::sample::SampleIO::BeamMode::kUnknown;
@@ -61,10 +61,10 @@ inline Args parse_input(const std::string &input)
     }
 
     Args out;
-    out.input_provenance.input_name = fields[0];
-    out.input_provenance.filelist_path = fields[1];
+    out.input.input_name = fields[0];
+    out.input.filelist_path = fields[1];
 
-    if (out.input_provenance.input_name.empty() || out.input_provenance.filelist_path.empty())
+    if (out.input.input_name.empty() || out.input.filelist_path.empty())
     {
         throw std::runtime_error("Bad input definition: " + input);
     }
@@ -87,7 +87,7 @@ inline Args parse_input(const std::string &input)
         throw std::runtime_error("Bad input definition (expected NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]): " + input);
     }
 
-    out.art_path = "build/out/art/art_prov_" + out.input_provenance.input_name + ".root";
+    out.art_path = "build/out/art/art_prov_" + out.input.input_name + ".root";
 
     return out;
 }
@@ -112,10 +112,10 @@ inline int run(const Args &art_args, const std::string &log_prefix)
         std::filesystem::create_directories(out_path.parent_path());
     }
 
-    const auto files = nuxsec::app::read_paths(art_args.input_provenance.filelist_path);
+    const auto files = nuxsec::app::read_paths(art_args.input.filelist_path);
 
     nuxsec::art::Provenance rec;
-    rec.cfg = art_args.input_provenance;
+    rec.input = art_args.input;
     rec.input_files = files;
     rec.kind = art_args.sample_origin;
     rec.beam = art_args.beam_mode;
@@ -131,7 +131,7 @@ inline int run(const Args &art_args, const std::string &log_prefix)
     rec.summary.pot_sum *= pot_scale;
     rec.scale = pot_scale;
 
-    std::cerr << "[" << log_prefix << "] add input=" << rec.cfg.input_name
+    std::cerr << "[" << log_prefix << "] add input=" << rec.input.input_name
               << " files=" << rec.input_files.size()
               << " pairs=" << rec.summary.unique_pairs.size()
               << " pot_sum=" << rec.summary.pot_sum

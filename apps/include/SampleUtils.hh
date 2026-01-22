@@ -41,7 +41,7 @@ inline std::vector<std::string> split_tabs(const std::string &line)
 struct SampleListEntry
 {
     std::string sample_name;
-    std::string sample_kind;
+    std::string sample_origin;
     std::string beam_mode;
     std::string output_path;
 };
@@ -87,7 +87,7 @@ inline std::vector<SampleListEntry> read_samples(const std::string &list_path,
 
         SampleListEntry entry;
         entry.sample_name = fields[0];
-        entry.sample_kind = fields[1];
+        entry.sample_origin = fields[1];
         entry.beam_mode = fields[2];
         entry.output_path = fields[3];
         entries.push_back(std::move(entry));
@@ -106,8 +106,8 @@ inline void write_samples(const std::string &list_path, std::vector<SampleListEn
     std::sort(entries.begin(), entries.end(),
               [](const SampleListEntry &a, const SampleListEntry &b)
               {
-                  return std::tie(a.sample_kind, a.beam_mode, a.sample_name) <
-                         std::tie(b.sample_kind, b.beam_mode, b.sample_name);
+                  return std::tie(a.sample_origin, a.beam_mode, a.sample_name) <
+                         std::tie(b.sample_origin, b.beam_mode, b.sample_name);
               });
 
     std::ofstream fout(list_path, std::ios::trunc);
@@ -120,7 +120,7 @@ inline void write_samples(const std::string &list_path, std::vector<SampleListEn
     for (const auto &entry : entries)
     {
         fout << entry.sample_name << "\t"
-             << entry.sample_kind << "\t"
+             << entry.sample_origin << "\t"
              << entry.beam_mode << "\t"
              << entry.output_path << "\n";
     }

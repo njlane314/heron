@@ -69,14 +69,14 @@ inline void update_sample_list(const std::string &list_path,
                                const std::string &output_path)
 {
     auto entries = nuxsec::app::read_samples(list_path, true, false);
-    const std::string kind_name = nuxsec::sample::SampleIO::sample_kind_name(sample.kind);
+    const std::string origin_name = nuxsec::sample::SampleIO::sample_kind_name(sample.kind);
     const std::string beam_name = nuxsec::sample::SampleIO::beam_mode_name(sample.beam);
 
     bool updated = false;
     for (auto &entry : entries)
     {
         if (entry.sample_name == sample.sample_name &&
-            entry.sample_kind == kind_name &&
+            entry.sample_origin == origin_name &&
             entry.beam_mode == beam_name)
         {
             entry.output_path = output_path;
@@ -88,7 +88,7 @@ inline void update_sample_list(const std::string &list_path,
     {
         nuxsec::app::SampleListEntry entry;
         entry.sample_name = sample.sample_name;
-        entry.sample_kind = kind_name;
+        entry.sample_origin = origin_name;
         entry.beam_mode = beam_name;
         entry.output_path = output_path;
         entries.push_back(std::move(entry));

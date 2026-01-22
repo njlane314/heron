@@ -63,7 +63,8 @@ void EventIO::init(const std::string &out_path,
         throw std::runtime_error("EventIO::init: failed to create output file: " + out_path);
 
     TObjString(header.analysis_name.c_str()).Write("analysis_name");
-    TObjString(header.analysis_tree.c_str()).Write("analysis_tree");
+    TObjString(header.provenance_tree.c_str()).Write("provenance_tree");
+    TObjString(header.event_tree.c_str()).Write("event_tree");
     TObjString(header.sample_list_source.c_str()).Write("sample_list_source");
 
     if (!event_schema_tsv.empty())

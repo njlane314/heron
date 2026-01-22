@@ -217,9 +217,13 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     for (const auto &c : int_columns)
         schema << "int\t" << c << "\n";
 
+    const std::string provenance_tree = "nuxsec_art_provenance/run_subrun";
+    const std::string event_tree = analysis.tree_name();
+
     nuxsec::event::Header header;
     header.analysis_name = analysis.name();
-    header.analysis_tree = analysis.tree_name();
+    header.provenance_tree = provenance_tree;
+    header.event_tree = event_tree;
     header.sample_list_source = event_args.list_path;
 
     const std::filesystem::path output_path(event_args.output_root);
@@ -232,8 +236,8 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     for (const auto &input : inputs)
     {
         const nuxsec::sample::SampleIO::Sample &sample = input.sample;
-        ensure_tree_present(sample, analysis.tree_name());
-        ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, analysis.tree_name());
+        ensure_tree_present(sample, event_tree);
+        ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, event_tree);
         const nuxsec::ProcessorEntry proc_entry = analysis.make_processor(sample);
 
         const auto &processor = nuxsec::ColumnDerivationService::instance();

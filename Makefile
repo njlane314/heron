@@ -20,22 +20,23 @@ IO_SRC = io/src/ArtFileProvenanceIO.cc \
          io/src/RunDatabaseService.cc \
          io/src/SampleIO.cc \
          io/src/SubRunInventoryService.cc
-IO_OBJ = $(IO_SRC:.cc=.o)
+OBJ_DIR = build/obj
+IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 SAMPLE_LIB_NAME = build/lib/libNuxsecSample.so
 SAMPLE_SRC = io/src/NormalisationService.cc
-SAMPLE_OBJ = $(SAMPLE_SRC:.cc=.o)
+SAMPLE_OBJ = $(SAMPLE_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 ANA_LIB_NAME = build/lib/libNuxsecAna.so
 ANA_SRC = ana/src/AnalysisConfigService.cc \
           ana/src/ColumnDerivationService.cc \
           ana/src/RDataFrameFactory.cc
-ANA_OBJ = $(ANA_SRC:.cc=.o)
+ANA_OBJ = $(ANA_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 PLOT_LIB_NAME = build/lib/libNuxsecPlot.so
 PLOT_SRC = plot/src/Plotter.cc \
            plot/src/StackedHist.cc
-PLOT_OBJ = $(PLOT_SRC:.cc=.o)
+PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 NUXSEC_NAME = build/bin/nuxsec
 NUXSEC_SRC = apps/src/nuxsec.cc
@@ -66,8 +67,9 @@ $(NUXSEC_NAME): $(NUXSEC_SRC) $(IO_LIB_NAME) $(SAMPLE_LIB_NAME) $(ANA_LIB_NAME)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_SRC) -Lbuild/lib -lNuxsecSample -lNuxsecIO \
 		-lNuxsecAna $(LDFLAGS) -o $(NUXSEC_NAME)
 
-%.o: %.cc
+$(OBJ_DIR)/%.o: %.cc
+	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -fPIC -c $< -o $@
 
 clean:
-	rm -rf build/lib build/bin
+	rm -rf build/lib build/bin build/obj

@@ -245,16 +245,16 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
         throw std::runtime_error("Missing entries tree in SampleRootIO directory");
     }
 
-    std::string entry_name;
-    std::string art_path;
+    std::string *p_entry_name = nullptr;
+    std::string *p_art_path = nullptr;
     double subrun_pot_sum = 0.0;
     double db_tortgt_pot = 0.0;
     double db_tor101_pot = 0.0;
     double normalisation = 1.0;
     double normalised_pot_sum = 0.0;
 
-    tree->SetBranchAddress("entry_name", &entry_name);
-    tree->SetBranchAddress("art_path", &art_path);
+    tree->SetBranchAddress("entry_name", &p_entry_name);
+    tree->SetBranchAddress("art_path", &p_art_path);
     tree->SetBranchAddress("subrun_pot_sum", &subrun_pot_sum);
     tree->SetBranchAddress("db_tortgt_pot", &db_tortgt_pot);
     tree->SetBranchAddress("db_tor101_pot", &db_tor101_pot);
@@ -266,9 +266,13 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
     for (Long64_t i = 0; i < n; ++i)
     {
         tree->GetEntry(i);
+        if (!p_entry_name || !p_art_path)
+        {
+            throw std::runtime_error("Missing entry_name or art_path branch data");
+        }
         ProvenanceInput input;
-        input.entry_name = entry_name;
-        input.art_path = art_path;
+        input.entry_name = *p_entry_name;
+        input.art_path = *p_art_path;
         input.subrun_pot_sum = subrun_pot_sum;
         input.db_tortgt_pot = db_tortgt_pot;
         input.db_tor101_pot = db_tor101_pot;

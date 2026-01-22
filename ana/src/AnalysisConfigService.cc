@@ -23,7 +23,7 @@ const AnalysisConfigService &AnalysisConfigService::instance()
 
 AnalysisConfigService::AnalysisConfigService()
 {
-    m_name = "nuxsec_default_v1";
+    m_name = "nuxsec_default";
     const char *tree_override = std::getenv("NUXSEC_TREE_NAME");
     if (tree_override && std::string(tree_override).size() > 0)
     {

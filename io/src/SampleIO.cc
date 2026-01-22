@@ -34,11 +34,11 @@ const char *SampleIO::sample_kind_name(SampleOrigin k)
     case SampleOrigin::kEXT:
         return "ext";
     case SampleOrigin::kOverlay:
-        return "mc_overlay";
+        return "overlay";
     case SampleOrigin::kDirt:
-        return "mc_dirt";
+        return "dirt";
     case SampleOrigin::kStrangeness:
-        return "mc_strangeness";
+        return "strangeness";
     default:
         return "unknown";
     }

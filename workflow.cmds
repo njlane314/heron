@@ -41,3 +41,6 @@ ls build/out/art/art_prov_strangeness_run1_fhc.root > scripts/numi_fhc_run1_samp
 
 # Input 3: template-make (templates ROOT from SampleRootIO_samples.tsv)
 ./nuxsec template-make build/out/sample/SampleRootIO_samples.tsv build/out/ana/analysis_default.root 8
+
+# Input 4: event (build event lists from sample list)
+./nuxsec event build/out/sample/samples.tsv build/out/ana/events.root 8

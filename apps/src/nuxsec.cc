@@ -103,8 +103,9 @@ int run_art_command(const std::vector<std::string> &args)
         return 0;
     }
 
-    const nuxsec::app::ArtArgs art_args = nuxsec::app::parse_art_args(args, kUsageArt);
-    return nuxsec::app::run_art(art_args, "nuxsec art");
+    const nuxsec::app::art::Args art_args =
+        nuxsec::app::art::parse_args(args, kUsageArt);
+    return nuxsec::app::art::run(art_args, "nuxsec art");
 }
 
 int run_sample_command(const std::vector<std::string> &args)
@@ -115,8 +116,9 @@ int run_sample_command(const std::vector<std::string> &args)
         return 0;
     }
 
-    const nuxsec::app::SampleArgs sample_args = nuxsec::app::parse_sample_args(args, kUsageSample);
-    return nuxsec::app::run_sample(sample_args, "nuxsec sample");
+    const nuxsec::app::sample::Args sample_args =
+        nuxsec::app::sample::parse_args(args, kUsageSample);
+    return nuxsec::app::sample::run(sample_args, "nuxsec sample");
 }
 
 int run_event_command(const std::vector<std::string> &args)
@@ -127,8 +129,9 @@ int run_event_command(const std::vector<std::string> &args)
         return 0;
     }
 
-    const nuxsec::app::EventIOArgs event_args = nuxsec::app::parse_eventio_args(args, kUsageEvent);
-    return nuxsec::app::run_eventio(event_args, "nuxsec event");
+    const nuxsec::app::event::Args event_args =
+        nuxsec::app::event::parse_args(args, kUsageEvent);
+    return nuxsec::app::event::run(event_args, "nuxsec event");
 }
 
 

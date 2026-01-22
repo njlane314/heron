@@ -19,7 +19,10 @@ namespace nuxsec
 namespace app
 {
 
-struct SampleArgs
+namespace sample
+{
+
+struct Args
 {
     std::string sample_name;
     std::string filelist_path;
@@ -27,7 +30,7 @@ struct SampleArgs
     std::string sample_list_path;
 };
 
-inline SampleArgs parse_sample_input(const std::string &input)
+inline Args parse_input(const std::string &input)
 {
     const auto pos = input.find(':');
     if (pos == std::string::npos)
@@ -35,7 +38,7 @@ inline SampleArgs parse_sample_input(const std::string &input)
         throw std::runtime_error("Bad sample definition (expected NAME:FILELIST): " + input);
     }
 
-    SampleArgs out;
+    Args out;
     out.sample_name = nuxsec::app::trim(input.substr(0, pos));
     out.filelist_path = nuxsec::app::trim(input.substr(pos + 1));
 
@@ -50,23 +53,23 @@ inline SampleArgs parse_sample_input(const std::string &input)
     return out;
 }
 
-inline SampleArgs parse_sample_args(const std::vector<std::string> &args, const std::string &usage)
+inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
 {
     if (args.size() != 1)
     {
         throw std::runtime_error(usage);
     }
 
-    return parse_sample_input(args[0]);
+    return parse_input(args[0]);
 }
 
 inline void update_sample_list(const std::string &list_path,
-                               const sample::SampleIO::Sample &sample,
+                               const nuxsec::sample::SampleIO::Sample &sample,
                                const std::string &output_path)
 {
     auto entries = nuxsec::app::read_sample_list(list_path, true, false);
-    const std::string kind_name = sample::SampleIO::sample_kind_name(sample.kind);
-    const std::string beam_name = sample::SampleIO::beam_mode_name(sample.beam);
+    const std::string kind_name = nuxsec::sample::SampleIO::sample_kind_name(sample.kind);
+    const std::string beam_name = nuxsec::sample::SampleIO::beam_mode_name(sample.beam);
 
     bool updated = false;
     for (auto &entry : entries)
@@ -93,7 +96,7 @@ inline void update_sample_list(const std::string &list_path,
     nuxsec::app::write_sample_list(list_path, std::move(entries));
 }
 
-inline int run_sample(const SampleArgs &sample_args, const std::string &log_prefix)
+inline int run(const Args &sample_args, const std::string &log_prefix)
 {
     const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
     const auto files = nuxsec::app::read_file_list(sample_args.filelist_path);
@@ -109,9 +112,9 @@ inline int run_sample(const SampleArgs &sample_args, const std::string &log_pref
         std::filesystem::create_directories(sample_list_path.parent_path());
     }
 
-    sample::SampleIO::Sample sample =
+    nuxsec::sample::SampleIO::Sample sample =
         nuxsec::NormalisationService::aggregate(sample_args.sample_name, files, db_path);
-    sample::SampleIO::write(sample, sample_args.output_path);
+    nuxsec::sample::SampleIO::write(sample, sample_args.output_path);
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 
     std::cerr << "[" << log_prefix << "] sample=" << sample.sample_name
@@ -125,6 +128,8 @@ inline int run_sample(const SampleArgs &sample_args, const std::string &log_pref
               << "\n";
 
     return 0;
+}
+
 }
 
 }

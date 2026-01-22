@@ -20,6 +20,9 @@ namespace nuxsec
 namespace app
 {
 
+namespace art
+{
+
 inline bool is_selection_data_file(const std::string &path)
 {
     const auto pos = path.find_last_of("/\\");
@@ -27,15 +30,16 @@ inline bool is_selection_data_file(const std::string &path)
     return name == "nuselection_data.root";
 }
 
-struct ArtArgs
+struct Args
 {
     std::string art_path;
     nuxsec::art::InputProvenance input_provenance;
-    sample::SampleIO::SampleOrigin sample_origin = sample::SampleIO::SampleOrigin::kUnknown;
-    sample::SampleIO::BeamMode beam_mode = sample::SampleIO::BeamMode::kUnknown;
+    nuxsec::sample::SampleIO::SampleOrigin sample_origin =
+        nuxsec::sample::SampleIO::SampleOrigin::kUnknown;
+    nuxsec::sample::SampleIO::BeamMode beam_mode = nuxsec::sample::SampleIO::BeamMode::kUnknown;
 };
 
-inline ArtArgs parse_art_input(const std::string &input)
+inline Args parse_input(const std::string &input)
 {
     std::vector<std::string> fields;
     size_t start = 0;
@@ -56,7 +60,7 @@ inline ArtArgs parse_art_input(const std::string &input)
         throw std::runtime_error("Bad input definition (expected NAME:FILELIST): " + input);
     }
 
-    ArtArgs out;
+    Args out;
     out.input_provenance.input_name = fields[0];
     out.input_provenance.filelist_path = fields[1];
 
@@ -67,13 +71,13 @@ inline ArtArgs parse_art_input(const std::string &input)
 
     if (fields.size() >= 4)
     {
-        out.sample_origin = sample::SampleIO::parse_sample_kind(fields[2]);
-        out.beam_mode = sample::SampleIO::parse_beam_mode(fields[3]);
-        if (out.sample_origin == sample::SampleIO::SampleOrigin::kUnknown)
+        out.sample_origin = nuxsec::sample::SampleIO::parse_sample_kind(fields[2]);
+        out.beam_mode = nuxsec::sample::SampleIO::parse_beam_mode(fields[3]);
+        if (out.sample_origin == nuxsec::sample::SampleIO::SampleOrigin::kUnknown)
         {
             throw std::runtime_error("Bad input sample kind: " + fields[2]);
         }
-        if (out.beam_mode == sample::SampleIO::BeamMode::kUnknown)
+        if (out.beam_mode == nuxsec::sample::SampleIO::BeamMode::kUnknown)
         {
             throw std::runtime_error("Bad input beam mode: " + fields[3]);
         }
@@ -88,17 +92,17 @@ inline ArtArgs parse_art_input(const std::string &input)
     return out;
 }
 
-inline ArtArgs parse_art_args(const std::vector<std::string> &args, const std::string &usage)
+inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
 {
     if (args.size() != 1)
     {
         throw std::runtime_error(usage);
     }
 
-    return parse_art_input(args[0]);
+    return parse_input(args[0]);
 }
 
-inline int run_art(const ArtArgs &art_args, const std::string &log_prefix)
+inline int run(const Args &art_args, const std::string &log_prefix)
 {
     const double pot_scale = 1e12;
 
@@ -116,9 +120,10 @@ inline int run_art(const ArtArgs &art_args, const std::string &log_prefix)
     rec.kind = art_args.sample_origin;
     rec.beam = art_args.beam_mode;
 
-    if (rec.kind == sample::SampleIO::SampleOrigin::kUnknown && is_selection_data_file(files.front()))
+    if (rec.kind == nuxsec::sample::SampleIO::SampleOrigin::kUnknown &&
+        is_selection_data_file(files.front()))
     {
-        rec.kind = sample::SampleIO::SampleOrigin::kData;
+        rec.kind = nuxsec::sample::SampleIO::SampleOrigin::kData;
     }
 
     rec.subrun = nuxsec::SubRunInventoryService::scan_subrun_tree(files);
@@ -135,6 +140,8 @@ inline int run_art(const ArtArgs &art_args, const std::string &log_prefix)
     nuxsec::ArtFileProvenanceIO::write(rec, art_args.art_path);
 
     return 0;
+}
+
 }
 
 }

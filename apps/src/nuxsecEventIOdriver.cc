@@ -19,8 +19,9 @@ int main(int argc, char **argv)
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
-            const nuxsec::app::EventIOArgs event_args = nuxsec::app::parse_eventio_args(
-                args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
-            return nuxsec::app::run_eventio(event_args, "nuxsecEventIOdriver");
+            const nuxsec::app::event::Args event_args =
+                nuxsec::app::event::parse_args(
+                    args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
+            return nuxsec::app::event::run(event_args, "nuxsecEventIOdriver");
         });
 }

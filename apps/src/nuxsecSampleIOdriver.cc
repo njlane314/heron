@@ -19,8 +19,9 @@ int main(int argc, char **argv)
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
-            const nuxsec::app::SampleArgs sample_args =
-                nuxsec::app::parse_sample_args(args, "Usage: nuxsecSampleIOdriver NAME:FILELIST");
-            return nuxsec::app::run_sample(sample_args, "nuxsecSampleIOdriver");
+            const nuxsec::app::sample::Args sample_args =
+                nuxsec::app::sample::parse_args(
+                    args, "Usage: nuxsecSampleIOdriver NAME:FILELIST");
+            return nuxsec::app::sample::run(sample_args, "nuxsecSampleIOdriver");
         });
 }

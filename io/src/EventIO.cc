@@ -12,11 +12,11 @@
 #include <memory>
 #include <stdexcept>
 #include <system_error>
+#include <vector>
 
-#include <TArrayD.h>
-#include <TArrayI.h>
+#include <ROOT/RSnapshotOptions.hxx>
+
 #include <TFile.h>
-#include <TObjArray.h>
 #include <TObjString.h>
 #include <TTree.h>
 
@@ -142,75 +142,22 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
 
     const std::string tree_name = sample_tree_name(sample_name, tree_prefix);
 
-    std::vector<std::vector<double>> dvalues;
-    dvalues.reserve(double_columns.size() + 2);
-    dvalues.push_back(filtered.Take<double>(x_column).GetValue());
+    std::vector<std::string> columns;
+    columns.reserve(2 + double_columns.size() + int_columns.size());
+    columns.push_back(x_column);
     if (!y_column.empty())
-        dvalues.push_back(filtered.Take<double>(y_column).GetValue());
+        columns.push_back(y_column);
     for (const auto &col : double_columns)
-        dvalues.push_back(filtered.Take<double>(col).GetValue());
-
-    std::vector<std::vector<int>> ivalues;
-    ivalues.reserve(int_columns.size());
+        columns.push_back(col);
     for (const auto &col : int_columns)
-        ivalues.push_back(filtered.Take<int>(col).GetValue());
+        columns.push_back(col);
 
-    const int dimensionality = y_column.empty() ? 1 : 2;
-    const int ndoubles = static_cast<int>(dvalues.size());
-    const int nints = static_cast<int>(ivalues.size());
-    const int nevents = ndoubles > 0 ? static_cast<int>(dvalues.front().size()) : 0;
+    ROOT::RDF::RSnapshotOptions options;
+    options.fMode = std::filesystem::exists(m_path) ? "UPDATE" : "RECREATE";
+    options.fOverwriteIfExists = overwrite_if_exists;
 
-    for (const auto &vals : dvalues)
-        if (static_cast<int>(vals.size()) != nevents)
-            throw std::runtime_error("EventIO::snapshot_event_list: inconsistent double column sizes");
-    for (const auto &vals : ivalues)
-        if (static_cast<int>(vals.size()) != nevents)
-            throw std::runtime_error("EventIO::snapshot_event_list: inconsistent int column sizes");
-
-    TArrayD doubles(ndoubles * nevents);
-    for (int v = 0; v < ndoubles; ++v)
-        for (int i = 0; i < nevents; ++i)
-            doubles[v * nevents + i] = dvalues[v][i];
-
-    TArrayI integers(nints * nevents);
-    for (int v = 0; v < nints; ++v)
-        for (int i = 0; i < nevents; ++i)
-            integers[v * nevents + i] = ivalues[v][i];
-
-    TObjArray value_names;
-    int name_index = 0;
-    value_names.AddAtAndExpand(new TObjString("X"), name_index++);
-    if (dimensionality > 1)
-        value_names.AddAtAndExpand(new TObjString("Y"), name_index++);
-    for (const auto &name : double_columns)
-        value_names.AddAtAndExpand(new TObjString(name.c_str()), name_index++);
-    for (const auto &name : int_columns)
-        value_names.AddAtAndExpand(new TObjString(name.c_str()), name_index++);
-
-    std::unique_ptr<TFile> fout(TFile::Open(m_path.c_str(), "UPDATE"));
-    if (!fout || fout->IsZombie())
-        throw std::runtime_error("EventIO::snapshot_event_list: failed to open " + m_path);
-
-    if (overwrite_if_exists)
-        fout->Delete((tree_name + ";*").c_str());
-
-    TTree tree(tree_name.c_str(), "Event list");
-    int dim_i = dimensionality;
-    int ndoubles_i = ndoubles;
-    int nints_i = nints;
-    int nevents_i = nevents;
-    tree.Branch("dimensionality", &dim_i, "dimensionality/I");
-    tree.Branch("ndoubles", &ndoubles_i, "ndoubles/I");
-    tree.Branch("nints", &nints_i, "nints/I");
-    tree.Branch("nevents", &nevents_i, "nevents/I");
-    tree.Branch("doubles", &doubles);
-    tree.Branch("integers", &integers);
-    tree.Branch("value_names", &value_names);
-    tree.Fill();
-    tree.Write(tree_name.c_str(), TObject::kOverwrite);
-
-    fout->Close();
-    return static_cast<ULong64_t>(nevents);
+    auto snapshot = filtered.Snapshot(tree_name, m_path, columns, options);
+    return snapshot.GetValue();
 }
 
 } // namespace event

@@ -294,9 +294,9 @@ inline int run(const Args &event_args, const std::string &log_prefix)
             {"sel_signal", "sel_bkg"});
 
         node = node.Define("evt_x", [](float e) { return static_cast<double>(e); }, {"reco_nu_energy"});
-        node = node.Define("run_i", [](auto v) { return static_cast<int>(v); }, {"run"});
-        node = node.Define("subrun_i", [](auto v) { return static_cast<int>(v); }, {"subrun"});
-        node = node.Define("event_i", [](auto v) { return static_cast<int>(v); }, {"event"});
+        node = node.Define("run_i", "static_cast<int>(run)");
+        node = node.Define("subrun_i", "static_cast<int>(subrun)");
+        node = node.Define("event_i", "static_cast<int>(event)");
         node = node.Define("evt_cutmask_i", [](uint64_t v) { return static_cast<int>(v); }, {"evt_cutmask"});
         node = node.Define("sel_template_i", [](bool v) { return static_cast<int>(v); }, {"sel_template"});
         node = node.Define("sel_reco_fv_i", [](bool v) { return static_cast<int>(v); }, {"sel_reco_fv"});

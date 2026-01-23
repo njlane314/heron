@@ -157,7 +157,8 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fOverwriteIfExists = overwrite_if_exists;
 
     auto snapshot = filtered.Snapshot(tree_name, m_path, columns, options);
-    return snapshot.GetValue();
+    auto count = snapshot.Count();
+    return count.GetValue();
 }
 
 } // namespace event

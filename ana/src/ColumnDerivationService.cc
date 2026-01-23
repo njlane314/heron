@@ -85,7 +85,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
     const double scale_ext =
         (is_ext && rec.trig_nom > 0.0 && rec.trig_eqv > 0.0) ? (rec.trig_nom / rec.trig_eqv) : 1.0;
 
-    node = node.Define("w_base", [is_mc, is_ext, scale_mc, scale_ext] {
+    node = node.Define("w_base", [is_mc, is_ext, scale_mc, scale_ext]() -> double {
         const double scale = is_mc ? scale_mc : (is_ext ? scale_ext : 1.0);
         return scale;
     });
@@ -118,7 +118,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
     {
         node = node.Define(
             "w_nominal",
-            [](double w_base, float w_spline, float w_tune, float w_flux_cv, double w_root) {
+            [](double w_base, float w_spline, float w_tune, float w_flux_cv, double w_root) -> double {
                 auto sanitise_weight = [](double w) {
                     if (!std::isfinite(w) || w <= 0.0)
                         return 1.0;
@@ -139,7 +139,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
     }
     else
     {
-        node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
+        node = node.Define("w_nominal", [](double w) -> double { return w; }, {"w_base"});
     }
 
     {

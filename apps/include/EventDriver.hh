@@ -241,11 +241,24 @@ inline int run(const Args &event_args, const std::string &log_prefix)
     for (const auto &input : inputs)
     {
         const nuxsec::sample::SampleIO::Sample &sample = input.sample;
+        std::cerr << "[" << log_prefix << "]"
+                  << " stage=ensure_tree sample=" << sample.sample_name
+                  << " tree=" << event_tree
+                  << "\n";
         ensure_tree_present(sample, event_tree);
+        std::cerr << "[" << log_prefix << "]"
+                  << " stage=load_rdf sample=" << sample.sample_name
+                  << "\n";
         ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, event_tree);
+        std::cerr << "[" << log_prefix << "]"
+                  << " stage=make_processor sample=" << sample.sample_name
+                  << "\n";
         const nuxsec::ProcessorEntry proc_entry = analysis.make_processor(sample);
 
         const auto &processor = nuxsec::ColumnDerivationService::instance();
+        std::cerr << "[" << log_prefix << "]"
+                  << " stage=define_columns sample=" << sample.sample_name
+                  << "\n";
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
         {
@@ -298,13 +311,22 @@ inline int run(const Args &event_args, const std::string &log_prefix)
         const auto origin = sample.origin;
         if (origin == SampleOrigin::kOverlay)
         {
+            std::cerr << "[" << log_prefix << "]"
+                      << " stage=filter_overlay sample=" << sample.sample_name
+                      << "\n";
             node = node.Filter([](int strange) { return strange == 0; }, {"count_strange"});
         }
         else if (origin == SampleOrigin::kStrangeness)
         {
+            std::cerr << "[" << log_prefix << "]"
+                      << " stage=filter_strangeness sample=" << sample.sample_name
+                      << "\n";
             node = node.Filter([](int strange) { return strange > 0; }, {"count_strange"});
         }
 
+        std::cerr << "[" << log_prefix << "]"
+                  << " stage=snapshot sample=" << sample.sample_name
+                  << "\n";
         const ULong64_t n_written =
             event_io.snapshot_event_list(node,
                                          sample.sample_name,

@@ -267,11 +267,11 @@ inline int run(const Args &event_args, const std::string &log_prefix)
                 return std::find(cnames.begin(), cnames.end(), name) != cnames.end();
             };
             if (!has("run"))
-                node = node.Define("run", [] { return static_cast<unsigned int>(0); });
+                node = node.Define("run", [] { return static_cast<int>(0); });
             if (!has("subrun"))
-                node = node.Define("subrun", [] { return static_cast<unsigned int>(0); });
+                node = node.Define("subrun", [] { return static_cast<int>(0); });
             if (!has("event"))
-                node = node.Define("event", [] { return static_cast<unsigned int>(0); });
+                node = node.Define("event", [] { return static_cast<int>(0); });
 
             if (!has("reco_nu_energy"))
                 node = node.Define("reco_nu_energy", [] { return 0.0f; });

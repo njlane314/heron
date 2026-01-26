@@ -143,7 +143,6 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fMode = "UPDATE";
     options.fOverwriteIfExists = overwrite_if_exists;
     options.fLazy = true;
-    options.fBasketSize = 256 * 1024;
     options.fAutoFlush = 100000;
 
     auto count = filtered.Count();

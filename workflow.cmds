@@ -16,18 +16,6 @@ USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 scripts/numi-fhc-run1-li
 ./nuxsec art "ext_p1:inputs/numi_fhc_run1/filelists/ext_p1.list:ext:numi"
 ./nuxsec art "ext_p2:inputs/numi_fhc_run1/filelists/ext_p2.list:ext:numi"
 
-# Input 1 (batch): run all art entries
-./nuxsec art "beam_s0:inputs/numi_fhc_run1/filelists/beam_s0.list:overlay:numi" \
-  && ./nuxsec art "beam_s1:inputs/numi_fhc_run1/filelists/beam_s1.list:overlay:numi" \
-  && ./nuxsec art "beam_s2:inputs/numi_fhc_run1/filelists/beam_s2.list:overlay:numi" \
-  && ./nuxsec art "beam_s3:inputs/numi_fhc_run1/filelists/beam_s3.list:overlay:numi" \
-  && ./nuxsec art "dirt_s0:inputs/numi_fhc_run1/filelists/dirt_s0.list:dirt:numi" \
-  && ./nuxsec art "dirt_s1:inputs/numi_fhc_run1/filelists/dirt_s1.list:dirt:numi" \
-  && ./nuxsec art "strangeness_run1_fhc:inputs/numi_fhc_run1/filelists/strangeness_run1_fhc.list:strangeness:numi" \
-  && ./nuxsec art "ext_p0:inputs/numi_fhc_run1/filelists/ext_p0.list:ext:numi" \
-  && ./nuxsec art "ext_p1:inputs/numi_fhc_run1/filelists/ext_p1.list:ext:numi" \
-  && ./nuxsec art "ext_p2:inputs/numi_fhc_run1/filelists/ext_p2.list:ext:numi"
-
 # Input 2: sample lists (group art outputs into logical samples)
 ls build/out/art/art_prov_beam_s*.root > scripts/numi_fhc_run1_sample_beam.list
 ls build/out/art/art_prov_strangeness_run1_fhc.root > scripts/numi_fhc_run1_sample_strangeness.list

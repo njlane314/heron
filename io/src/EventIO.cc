@@ -24,21 +24,6 @@ namespace nuxsec
 {
 namespace event
 {
-namespace
-{
-
-ULong64_t snapshot_entry_count(const ROOT::RDF::RResultPtr<ULong64_t> &result)
-{
-    return result.GetValue();
-}
-
-ULong64_t snapshot_entry_count(const ROOT::RDF::RNode &result)
-{
-    return result.Count().GetValue();
-}
-
-} // namespace
-
 std::string EventIO::sanitise_root_key(std::string s)
 {
     for (char &c : s)
@@ -170,8 +155,10 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fMode = std::filesystem::exists(m_path) ? "UPDATE" : "RECREATE";
     options.fOverwriteIfExists = overwrite_if_exists;
 
+    auto count = filtered.Count();
     auto result = filtered.Snapshot(tree_name, m_path, columns, options);
-    return snapshot_entry_count(result);
+    result.GetValue();
+    return count.GetValue();
 }
 
 } // namespace event

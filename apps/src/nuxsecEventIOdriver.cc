@@ -137,10 +137,6 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
-        node = node.Define("run_i", "static_cast<int>(run)");
-        node = node.Define("subrun_i", "static_cast<int>(subrun)");
-        node = node.Define("event_i", "static_cast<int>(event)");
-
         using SampleOrigin = nuxsec::sample::SampleIO::SampleOrigin;
         const auto origin = sample.origin;
         

@@ -148,7 +148,7 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fAutoFlush = 100000;
 
     auto count = filtered.Count();
-    constexpr ULong64_t progress_every = 10000;
+    constexpr ULong64_t progress_every = 1000;
     const auto start_time = std::chrono::steady_clock::now();
     count.OnPartialResult(progress_every,
                           [sample_name](ULong64_t processed)

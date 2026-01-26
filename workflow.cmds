@@ -1,30 +1,30 @@
 # Nuxsec workflow command cheat-sheet (numi_fhc_run1)
 # Copy a single line as needed for a specific partition/sample or an entire input.
 
-# Input 0: build filelists for each partition (uses scripts/numi-fhc-run1-lists.sh defaults)
-USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 scripts/numi-fhc-run1-lists.sh
+# Input 0: build filelists for each partition (uses scripts/partition-lists.sh defaults)
+USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 scripts/partition-lists.sh
 
 # Input 1: art (single partition)
-nuxsec art "beam_s0:inputs/numi_fhc_run1/filelists/beam_s0.list:overlay:numi"
-nuxsec art "beam_s1:inputs/numi_fhc_run1/filelists/beam_s1.list:overlay:numi"
-nuxsec art "beam_s2:inputs/numi_fhc_run1/filelists/beam_s2.list:overlay:numi"
-nuxsec art "beam_s3:inputs/numi_fhc_run1/filelists/beam_s3.list:overlay:numi"
-nuxsec art "dirt_s0:inputs/numi_fhc_run1/filelists/dirt_s0.list:dirt:numi"
-nuxsec art "dirt_s1:inputs/numi_fhc_run1/filelists/dirt_s1.list:dirt:numi"
-nuxsec art "strangeness_run1_fhc:inputs/numi_fhc_run1/filelists/strangeness_run1_fhc.list:strangeness:numi"
-nuxsec art "ext_p0:inputs/numi_fhc_run1/filelists/ext_p0.list:ext:numi"
-nuxsec art "ext_p1:inputs/numi_fhc_run1/filelists/ext_p1.list:ext:numi"
-nuxsec art "ext_p2:inputs/numi_fhc_run1/filelists/ext_p2.list:ext:numi"
+nuxsec art "beam_s0:build/out/filelists/beam_s0.list:overlay:numi"
+nuxsec art "beam_s1:build/out/filelists/beam_s1.list:overlay:numi"
+nuxsec art "beam_s2:build/out/filelists/beam_s2.list:overlay:numi"
+nuxsec art "beam_s3:build/out/filelists/beam_s3.list:overlay:numi"
+nuxsec art "dirt_s0:build/out/filelists/dirt_s0.list:dirt:numi"
+nuxsec art "dirt_s1:build/out/filelists/dirt_s1.list:dirt:numi"
+nuxsec art "strangeness_run1_fhc:build/out/filelists/strangeness_run1_fhc.list:strangeness:numi"
+nuxsec art "ext_p0:build/out/filelists/ext_p0.list:ext:numi"
+nuxsec art "ext_p1:build/out/filelists/ext_p1.list:ext:numi"
+nuxsec art "ext_p2:build/out/filelists/ext_p2.list:ext:numi"
 
 # Input 2: sample lists (group art outputs into logical samples)
-bash scripts/numi-fhc-run1-sample-lists.sh
+bash scripts/sample-lists.sh
 
 # Input 2: sample (single sample)
-nuxsec sample "beam:scripts/numi_fhc_run1_sample_beam.list"
-nuxsec sample "strangeness:scripts/numi_fhc_run1_sample_strangeness.list"
+nuxsec sample "beam:build/out/sample-lists/numi_fhc_run1_sample_beam.list"
+nuxsec sample "strangeness:build/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
 
 # Input 2 (batch): run all sample entries
-nuxsec sample "beam:scripts/numi_fhc_run1_sample_beam.list"
+nuxsec sample "beam:build/out/sample-lists/numi_fhc_run1_sample_beam.list"
 
 # Input 4: event (build event lists from sample list)
 nuxsec event build/out/sample/samples.tsv build/out/ana/events.root 8

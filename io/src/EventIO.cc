@@ -9,6 +9,7 @@
 
 #include <cctype>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <system_error>
@@ -146,6 +147,15 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fAutoFlush = 100000;
 
     auto count = filtered.Count();
+    constexpr ULong64_t progress_every = 100000;
+    count.OnPartialResult(progress_every,
+                          [sample_name](ULong64_t processed)
+                          {
+                              std::cerr << "[EventIO] stage=snapshot_progress"
+                                        << " sample=" << sample_name
+                                        << " processed=" << processed
+                                        << "\n";
+                          });
     auto snapshot = filtered.Snapshot(tree_name, m_path, columns, options);
     ROOT::RDF::RunGraphs({count, snapshot});
     return count.GetValue();

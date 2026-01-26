@@ -66,6 +66,7 @@ sample::SampleIO::Sample NormalisationService::build_sample(const std::string &s
         out.inputs.push_back(std::move(input));
     }
 
+    out.root_files = sample::SampleIO::resolve_root_files(out);
     out.normalisation = compute_normalisation(out.subrun_pot_sum, out.db_tortgt_pot_sum);
     out.normalised_pot_sum = out.subrun_pot_sum * out.normalisation;
 

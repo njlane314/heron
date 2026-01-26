@@ -19,10 +19,7 @@ namespace nuxsec
 namespace app
 {
 
-namespace sample
-{
-
-int run(const Args &sample_args, const std::string &log_prefix)
+int run(const sample::Args &sample_args, const std::string &log_prefix)
 {
     const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
     const auto files = nuxsec::app::read_paths(sample_args.filelist_path);
@@ -67,8 +64,6 @@ int run(const Args &sample_args, const std::string &log_prefix)
 
 }
 
-}
-
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
@@ -78,6 +73,6 @@ int main(int argc, char **argv)
             const nuxsec::app::sample::Args sample_args =
                 nuxsec::app::sample::parse_args(
                     args, "Usage: nuxsecSampleIOdriver NAME:FILELIST");
-            return nuxsec::app::sample::run(sample_args, "nuxsecSampleIOdriver");
+            return nuxsec::app::run(sample_args, "nuxsecSampleIOdriver");
         });
 }

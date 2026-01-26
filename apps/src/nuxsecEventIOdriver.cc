@@ -19,10 +19,7 @@ namespace nuxsec
 namespace app
 {
 
-namespace event
-{
-
-int run(const Args &event_args, const std::string &log_prefix)
+int run(const event::Args &event_args, const std::string &log_prefix)
 {
     if (event_args.nthreads > 0)
         ROOT::EnableImplicitMT(event_args.nthreads);
@@ -225,8 +222,6 @@ int run(const Args &event_args, const std::string &log_prefix)
     return 0;
 }
 
-} // namespace event
-
 } // namespace app
 
 } // namespace nuxsec
@@ -240,6 +235,6 @@ int main(int argc, char **argv)
             const nuxsec::app::event::Args event_args =
                 nuxsec::app::event::parse_args(
                     args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
-            return nuxsec::app::event::run(event_args, "nuxsecEventIOdriver");
+            return nuxsec::app::run(event_args, "nuxsecEventIOdriver");
         });
 }

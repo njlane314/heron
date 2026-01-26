@@ -146,12 +146,6 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                                          columns,
                                          "");
 
-        std::cout << "[" << log_prefix << "]"
-                  << " stage=snapshot_complete"
-                  << " sample=" << sample.sample_name
-                  << " events_written=" << n_written
-                  << "\n";
-
         std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
                   << " sample=" << sample.sample_name
                   << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.origin)
@@ -160,11 +154,6 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                   << " output=" << event_args.output_root
                   << "\n";
     }
-    std::cout << "[" << log_prefix << "]"
-              << " stage=snapshot_complete_all"
-              << " samples=" << inputs.size()
-              << " output=" << event_args.output_root
-              << "\n";
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     

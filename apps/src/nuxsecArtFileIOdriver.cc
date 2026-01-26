@@ -21,6 +21,8 @@ namespace app
 
 int run(const art::Args &art_args, const std::string &log_prefix)
 {
+    ROOT::EnableImplicitMT();
+    
     std::filesystem::path out_path(art_args.art_path);
     if (!out_path.parent_path().empty())
     {

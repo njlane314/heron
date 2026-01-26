@@ -27,7 +27,7 @@ IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)
 ANA_LIB_NAME = build/lib/libNuxsecAna.so
 ANA_SRC = ana/src/AnalysisConfigService.cc \
           ana/src/ColumnDerivationService.cc \
-          ana/src/RDataFrameFactory.cc
+          ana/src/RDataFrameService.cc
 ANA_OBJ = $(ANA_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 PLOT_LIB_NAME = build/lib/libNuxsecPlot.so

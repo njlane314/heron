@@ -120,7 +120,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                   << " stage=load_rdf sample=" << sample.sample_name
                   << "\n";
         
-        ROOT::RDataFrame rdf = nuxsec::RDataFrameFactory::load_sample(sample, event_tree);
+        ROOT::RDataFrame rdf = nuxsec::RDataFrameService::load_sample(sample, event_tree);
         
         std::cerr << "[" << log_prefix << "]"
                   << " stage=make_processor sample=" << sample.sample_name

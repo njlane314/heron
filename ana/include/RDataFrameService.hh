@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/RDataFrameFactory.hh
+ *  @file  ana/include/RDataFrameService.hh
  *
  *  @brief Sample loading and variable definitions for ROOT RDataFrame.
  */
 
-#ifndef NUXSEC_ANA_RDATA_FRAME_FACTORY_H
-#define NUXSEC_ANA_RDATA_FRAME_FACTORY_H
+#ifndef NUXSEC_ANA_RDATA_FRAME_SERVICE_H
+#define NUXSEC_ANA_RDATA_FRAME_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -25,7 +25,7 @@ struct ColumnDefinition
     std::string description;
 };
 
-class RDataFrameFactory
+class RDataFrameService
 {
   public:
     static ROOT::RDataFrame load_sample(const sample::SampleIO::Sample &sample,
@@ -37,4 +37,4 @@ class RDataFrameFactory
 
 } // namespace nuxsec
 
-#endif // NUXSEC_ANA_RDATA_FRAME_FACTORY_H
+#endif // NUXSEC_ANA_RDATA_FRAME_SERVICE_H

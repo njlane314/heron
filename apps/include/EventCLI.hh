@@ -25,8 +25,8 @@
 #include "ColumnDerivationService.hh"
 #include "EventIO.hh"
 #include "RDataFrameFactory.hh"
+#include "SampleCLI.hh"
 #include "SampleIO.hh"
-#include "SampleUtils.hh"
 
 namespace nuxsec
 {

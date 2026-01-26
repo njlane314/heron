@@ -152,14 +152,21 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     constexpr ULong64_t progress_every = 1000;
     const auto start_time = std::chrono::steady_clock::now();
     count.OnPartialResult(progress_every,
-                          [sample_name](ULong64_t processed)
+                          [sample_name, start_time](ULong64_t processed)
                           {
+                              const auto now = std::chrono::steady_clock::now();
+                              const double elapsed_seconds =
+                                  std::chrono::duration_cast<std::chrono::duration<double>>(now - start_time).count();
                               std::cerr << "[EventIO] stage=snapshot_progress"
                                         << " sample=" << sample_name
                                         << " processed=" << processed
+                                        << " elapsed_seconds=" << elapsed_seconds
                                         << "\n";
                           });
     auto snapshot = filtered.Snapshot(tree_name, m_path, columns, options);
+    std::cerr << "[EventIO] stage=snapshot_run"
+              << " sample=" << sample_name
+              << "\n";
     ROOT::RDF::RunGraphs({count, snapshot});
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds =

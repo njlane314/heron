@@ -19,10 +19,7 @@ namespace nuxsec
 namespace app
 {
 
-namespace art
-{
-
-int run(const Args &art_args, const std::string &log_prefix)
+int run(const art::Args &art_args, const std::string &log_prefix)
 {
     const double pot_scale = 1e12;
 
@@ -72,8 +69,6 @@ int run(const Args &art_args, const std::string &log_prefix)
 
 }
 
-}
-
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
@@ -84,6 +79,6 @@ int main(int argc, char **argv)
                 nuxsec::app::art::parse_args(
                     args,
                     "Usage: nuxsecArtFileIOdriver INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-            return nuxsec::app::art::run(art_args, "nuxsecArtFileIOdriver");
+            return nuxsec::app::run(art_args, "nuxsecArtFileIOdriver");
         });
 }

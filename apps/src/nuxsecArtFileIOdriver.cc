@@ -5,13 +5,74 @@
  *  @brief Main entrypoint for Art file provenance generation.
  */
 
+#include "ArtCLI.hh"
+
 #include <exception>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-#include "ArtDriver.hh"
+namespace nuxsec
+{
+
+namespace app
+{
+
+namespace art
+{
+
+int run(const Args &art_args, const std::string &log_prefix)
+{
+    const double pot_scale = 1e12;
+
+    std::filesystem::path out_path(art_args.art_path);
+    if (!out_path.parent_path().empty())
+    {
+        std::filesystem::create_directories(out_path.parent_path());
+    }
+
+    const auto files = nuxsec::app::read_paths(art_args.input.filelist_path);
+
+    nuxsec::art::Provenance rec;
+    rec.input = art_args.input;
+    rec.input_files = files;
+    rec.kind = art_args.sample_origin;
+    rec.beam = art_args.beam_mode;
+
+    if (rec.kind == nuxsec::sample::SampleIO::SampleOrigin::kUnknown &&
+        is_selection_data_file(files.front()))
+    {
+        rec.kind = nuxsec::sample::SampleIO::SampleOrigin::kData;
+    }
+
+    const auto start_time = std::chrono::steady_clock::now();
+    log_scan_start(log_prefix);
+    rec.summary = nuxsec::SubRunInventoryService::scan_subruns(files);
+    const auto end_time = std::chrono::steady_clock::now();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);
+
+    rec.summary.pot_sum *= pot_scale;
+    rec.scale = pot_scale;
+
+    std::cerr << "[" << log_prefix << "] add input=" << rec.input.input_name
+              << " files=" << rec.input_files.size()
+              << " pairs=" << rec.summary.unique_pairs.size()
+              << " pot_sum=" << rec.summary.pot_sum
+              << "\n";
+
+    nuxsec::ArtFileProvenanceIO::write(rec, art_args.art_path);
+
+    return 0;
+}
+
+}
+
+}
+
+}
 
 int main(int argc, char **argv)
 {

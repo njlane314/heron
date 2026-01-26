@@ -8,6 +8,7 @@
 #include "EventIO.hh"
 
 #include <cctype>
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -147,7 +148,8 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fAutoFlush = 100000;
 
     auto count = filtered.Count();
-    constexpr ULong64_t progress_every = 100000;
+    constexpr ULong64_t progress_every = 10000;
+    const auto start_time = std::chrono::steady_clock::now();
     count.OnPartialResult(progress_every,
                           [sample_name](ULong64_t processed)
                           {
@@ -158,6 +160,14 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
                           });
     auto snapshot = filtered.Snapshot(tree_name, m_path, columns, options);
     ROOT::RDF::RunGraphs({count, snapshot});
+    const auto end_time = std::chrono::steady_clock::now();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    std::cerr << "[EventIO] stage=snapshot_complete"
+              << " sample=" << sample_name
+              << " processed=" << count.GetValue()
+              << " elapsed_seconds=" << elapsed_seconds
+              << "\n";
     return count.GetValue();
 }
 

@@ -25,9 +25,9 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     const auto entries = nuxsec::app::read_samples(event_args.list_path);
     
     const auto start_time = std::chrono::steady_clock::now();
-    log_event_start(log_prefix, entries.size());
+    nuxsec::app::event::log_event_start(log_prefix, entries.size());
 
-    std::vector<Input> inputs;
+    std::vector<nuxsec::app::event::Input> inputs;
     inputs.reserve(entries.size());
     
     std::vector<nuxsec::event::SampleInfo> sample_infos;
@@ -47,7 +47,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         info.db_tor101_pot_sum = sample.db_tor101_pot_sum;
         sample_infos.push_back(std::move(info));
 
-        Input input;
+        nuxsec::app::event::Input input;
         input.entry = entry;
         input.sample = std::move(sample);
         inputs.push_back(std::move(input));
@@ -102,7 +102,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     if (!output_path.parent_path().empty())
         std::filesystem::create_directories(output_path.parent_path());
 
-    nuxsec::event::EventIO::init(event_args.output_root, header, sample_refs, schema.str(), "compiled");
+    nuxsec::event::EventIO::init(event_args.output_root, header, sample_infos, schema.str(), "compiled");
     nuxsec::event::EventIO event_io(event_args.output_root, nuxsec::event::EventIO::OpenMode::kUpdate);
 
     for (const auto &input : inputs)
@@ -114,7 +114,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                   << " tree=" << event_tree
                   << "\n";
         
-        ensure_tree_present(sample, event_tree);
+        nuxsec::app::event::ensure_tree_present(sample, event_tree);
         
         std::cerr << "[" << log_prefix << "]"
                   << " stage=load_rdf sample=" << sample.sample_name
@@ -181,7 +181,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     
-    log_event_finish(log_prefix, entries.size(), elapsed_seconds);
+    nuxsec::app::event::log_event_finish(log_prefix, entries.size(), elapsed_seconds);
 
     return 0;
 }

@@ -38,19 +38,19 @@ int run(const art::Args &art_args, const std::string &log_prefix)
     rec.beam = art_args.beam_mode;
 
     if (rec.kind == nuxsec::sample::SampleIO::SampleOrigin::kUnknown &&
-        is_selection_data_file(files.front()))
+        nuxsec::app::art::is_selection_data_file(files.front()))
     {
         rec.kind = nuxsec::sample::SampleIO::SampleOrigin::kData;
     }
 
     const auto start_time = std::chrono::steady_clock::now();
-    log_scan_start(log_prefix);
+    nuxsec::app::art::log_scan_start(log_prefix);
     
     rec.summary = nuxsec::SubRunInventoryService::scan_subruns(files);
     
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-    log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);
+    nuxsec::app::art::log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);
 
     rec.summary.pot_sum *= 1;
     rec.scale = 1;

@@ -37,16 +37,16 @@ int run(const sample::Args &sample_args, const std::string &log_prefix)
     }
 
     const auto start_time = std::chrono::steady_clock::now();
-    log_sample_start(log_prefix, files.size());
+    nuxsec::app::sample::log_sample_start(log_prefix, files.size());
     
     nuxsec::sample::SampleIO::Sample sample = nuxsec::NormalisationService::build_sample(sample_args.sample_name, files, db_path);
     
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-    log_sample_finish(log_prefix, sample.inputs.size(), elapsed_seconds);
+    nuxsec::app::sample::log_sample_finish(log_prefix, sample.inputs.size(), elapsed_seconds);
     
     nuxsec::sample::SampleIO::write(sample, sample_args.output_path);
-    update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
+    nuxsec::app::sample::update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 
     std::cerr << "[" << log_prefix << "] sample=" << sample.sample_name
               << " inputs=" << sample.inputs.size()

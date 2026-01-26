@@ -57,6 +57,7 @@ class SampleIO
         BeamMode beam = BeamMode::kUnknown;
 
         std::vector<ProvenanceInput> inputs;
+        std::vector<std::string> root_files;
 
         double subrun_pot_sum = 0.0;
         double db_tortgt_pot_sum = 0.0;
@@ -71,6 +72,8 @@ class SampleIO
 
     static const char *beam_mode_name(BeamMode b);
     static BeamMode parse_beam_mode(const std::string &name);
+
+    static std::vector<std::string> resolve_root_files(const Sample &sample);
 
     static void write(const Sample &sample, const std::string &out_file);
     static Sample read(const std::string &in_file);

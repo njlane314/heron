@@ -155,6 +155,7 @@ inline int run(const Args &sample_args, const std::string &log_prefix)
     log_sample_start(log_prefix, files.size());
     nuxsec::sample::SampleIO::Sample sample =
         nuxsec::NormalisationService::build_sample(sample_args.sample_name, files, db_path);
+    sample.root_files = nuxsec::sample::SampleIO::resolve_root_files(sample);
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds =
         std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();

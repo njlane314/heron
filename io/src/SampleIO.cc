@@ -19,6 +19,8 @@
 #include <TParameter.h>
 #include <TTree.h>
 
+#include "ArtFileProvenanceIO.hh"
+
 namespace nuxsec
 {
 
@@ -171,6 +173,21 @@ void SampleIO::write(const Sample &sample, const std::string &out_file)
         entries.Write("entries", TObject::kOverwrite);
     }
 
+    {
+        TTree root_files("root_files", "Resolved ROOT input files for sample");
+
+        std::string root_file;
+        root_files.Branch("root_file", &root_file);
+
+        for (const auto &path : sample.root_files)
+        {
+            root_file = path;
+            root_files.Fill();
+        }
+
+        root_files.Write("root_files", TObject::kOverwrite);
+    }
+
     f->Write();
     f->Close();
 }
@@ -281,7 +298,51 @@ SampleIO::Sample SampleIO::read(const std::string &in_file)
         out.inputs.push_back(std::move(input));
     }
 
+    TObject *files_obj = d->Get("root_files");
+    auto *files_tree = dynamic_cast<TTree *>(files_obj);
+    if (files_tree)
+    {
+        std::string *p_root_file = nullptr;
+        files_tree->SetBranchAddress("root_file", &p_root_file);
+        const Long64_t n_files = files_tree->GetEntries();
+        out.root_files.reserve(static_cast<size_t>(n_files));
+        for (Long64_t i = 0; i < n_files; ++i)
+        {
+            files_tree->GetEntry(i);
+            if (!p_root_file)
+            {
+                throw std::runtime_error("Missing root_file branch data");
+            }
+            out.root_files.push_back(*p_root_file);
+        }
+    }
+
     return out;
+}
+
+std::vector<std::string> SampleIO::resolve_root_files(const Sample &sample)
+{
+    if (!sample.root_files.empty())
+    {
+        std::vector<std::string> files = sample.root_files;
+        std::sort(files.begin(), files.end());
+        files.erase(std::unique(files.begin(), files.end()), files.end());
+        return files;
+    }
+
+    std::vector<std::string> files;
+    files.reserve(sample.inputs.size());
+
+    for (const ProvenanceInput &input : sample.inputs)
+    {
+        const art::Provenance prov = ArtFileProvenanceIO::read(input.art_path);
+        files.insert(files.end(), prov.input_files.begin(), prov.input_files.end());
+    }
+
+    std::sort(files.begin(), files.end());
+    files.erase(std::unique(files.begin(), files.end()), files.end());
+
+    return files;
 }
 
 } // namespace sample

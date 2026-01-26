@@ -21,6 +21,7 @@
 
 #include <TFile.h>
 #include <TObjString.h>
+#include <TROOT.h>
 #include <TTree.h>
 
 namespace nuxsec
@@ -159,7 +160,14 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
                                         << "\n";
                           });
     auto snapshot = filtered.Snapshot(tree_name, m_path, columns, options);
-    ROOT::RDF::RunGraphs({count, snapshot});
+    const auto pool_size = ROOT::GetThreadPoolSize();
+    const bool imt_enabled = (pool_size > 0);
+    if (imt_enabled)
+        ROOT::DisableImplicitMT();
+    ROOT::RDF::RunGraphs({count});
+    snapshot.GetValue();
+    if (imt_enabled)
+        ROOT::EnableImplicitMT(pool_size);
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds =
         std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();

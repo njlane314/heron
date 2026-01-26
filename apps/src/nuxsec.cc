@@ -129,10 +129,7 @@ namespace event
 
 int run(const Args &event_args, const std::string &log_prefix)
 {
-    if (event_args.nthreads > 0)
-        ROOT::EnableImplicitMT(event_args.nthreads);
-    else
-        ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
 
     const auto &analysis = nuxsec::AnalysisConfigService::instance();
     const auto entries = nuxsec::app::read_samples(event_args.list_path);
@@ -340,7 +337,7 @@ namespace
 {
 
 const char *kUsageArt = "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]";
-const char *kUsageEvent = "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]";
+const char *kUsageEvent = "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root";
 const char *kUsageSample = "Usage: nuxsec sample NAME:FILELIST";
 const char *kUsageMacro =
     "Usage: nuxsec macro MACRO.C [CALL]\n"

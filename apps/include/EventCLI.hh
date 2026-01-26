@@ -108,7 +108,6 @@ struct Args
 {
     std::string list_path;
     std::string output_root;
-    int nthreads = 0;
 };
 
 struct Input
@@ -119,7 +118,7 @@ struct Input
 
 inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
 {
-    if (args.size() != 2 && args.size() != 3)
+    if (args.size() != 2)
     {
         throw std::runtime_error(usage);
     }
@@ -127,19 +126,6 @@ inline Args parse_args(const std::vector<std::string> &args, const std::string &
     Args out;
     out.list_path = nuxsec::app::trim(args.at(0));
     out.output_root = nuxsec::app::trim(args.at(1));
-    if (args.size() == 3)
-    {
-        try
-        {
-            out.nthreads = std::stoi(nuxsec::app::trim(args.at(2)));
-        }
-        catch (const std::exception &)
-        {
-            throw std::runtime_error("Invalid NTHREADS (expected integer)");
-        }
-        if (out.nthreads < 0)
-            throw std::runtime_error("Invalid NTHREADS (must be >= 0)");
-    }
 
     if (out.list_path.empty() || out.output_root.empty())
     {

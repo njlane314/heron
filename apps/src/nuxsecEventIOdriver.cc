@@ -7,9 +7,7 @@
 
 #include "EventCLI.hh"
 
-#include <exception>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -21,10 +19,7 @@ namespace app
 
 int run(const event::Args &event_args, const std::string &log_prefix)
 {
-    if (event_args.nthreads > 0)
-        ROOT::EnableImplicitMT(event_args.nthreads);
-    else
-        ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
 
     const auto &analysis = nuxsec::AnalysisConfigService::instance();
     const auto entries = nuxsec::app::read_samples(event_args.list_path);
@@ -234,7 +229,7 @@ int main(int argc, char **argv)
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
             const nuxsec::app::event::Args event_args =
                 nuxsec::app::event::parse_args(
-                    args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [NTHREADS]");
+                    args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root");
             return nuxsec::app::run(event_args, "nuxsecEventIOdriver");
         });
 }

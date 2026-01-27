@@ -171,6 +171,56 @@ build/out/sample/samples.tsv
 
 The TSV is the only input list you pass downstream.
 
+#### Separate sample lists for training versus templates/plots
+
+If you want full separation between CNN training and histogram/plot production, keep two
+independent sample aggregations and `samples.tsv` handoffs. This keeps the inputs disjoint
+and makes the handoff explicit.
+
+**Step A: build two sets of input lists**
+
+```bash
+mkdir -p build/out/lists_train build/out/lists_plot
+
+# Training lists (use only the inputs you want for CNN training)
+for kind in data_bnb ext_bnb overlay_bnb dirt_bnb; do
+  ls build/out/art/art_prov_${kind}_train*.root > build/out/lists_train/${kind}_train.txt
+done
+
+# Plot/template lists (disjoint from training)
+for kind in data_bnb ext_bnb overlay_bnb dirt_bnb; do
+  ls build/out/art/art_prov_${kind}_plot*.root > build/out/lists_plot/${kind}_plot.txt
+done
+```
+
+**Step B: aggregate each set and stage outputs**
+
+The `sample` CLI always writes to `build/out/sample/`, so run one set at a time and move
+the outputs into per-purpose directories:
+
+```bash
+# Training samples/TSV
+for kind in data_bnb ext_bnb overlay_bnb dirt_bnb; do
+  nuxsec sample "${kind}_train:build/out/lists_train/${kind}_train.txt"
+done
+
+mkdir -p build/out/sample_train
+mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_train/
+
+# Plot/template samples/TSV
+for kind in data_bnb ext_bnb overlay_bnb dirt_bnb; do
+  nuxsec sample "${kind}_plot:build/out/lists_plot/${kind}_plot.txt"
+done
+
+mkdir -p build/out/sample_plot
+mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_plot/
+```
+
+**Handoffs**
+
+- `build/out/sample_train/samples.tsv` for CNN training.
+- `build/out/sample_plot/samples.tsv` for templates, histograms, and plots.
+
 ### 3) Samples → Analysis object (templates ROOT), sealed analysis
 
 The compiled analysis definition in this repository is `nuxsec_default` with tree

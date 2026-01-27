@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -41,6 +42,13 @@ bool is_help_arg(const std::string &arg)
 struct GlobalOptions
 {
     std::string set;
+};
+
+struct CommandEntry
+{
+    const char *name;
+    std::function<int(const std::vector<std::string> &)> handler;
+    std::function<void()> help;
 };
 
 GlobalOptions parse_global(int &i, int argc, char **argv)
@@ -345,14 +353,20 @@ void print_paths(std::ostream &out, const std::filesystem::path &repo_root)
     out << "PLOT_DIR=" << plot_dir(repo_root).string() << "\n";
 }
 
+int handle_paths_command(const std::vector<std::string> &args,
+                         const std::filesystem::path &repo_root)
+{
+    if (!args.empty())
+    {
+        throw std::runtime_error("Usage: nuxsec paths");
+    }
+    print_paths(std::cout, repo_root);
+    return 0;
+}
+
 int handle_env_command(const std::vector<std::string> &args,
                        const std::filesystem::path &repo_root)
 {
-    if (!args.empty() && is_help_arg(args[0]))
-    {
-        std::cout << "Usage: nuxsec env [SET]\n";
-        return 0;
-    }
     if (args.size() > 1)
     {
         throw std::runtime_error("Usage: nuxsec env [SET]");
@@ -433,7 +447,7 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
 
 int handle_macro_command(const std::vector<std::string> &args)
 {
-    if (args.empty() || (args.size() == 1 && is_help_arg(args[0])))
+    if (args.empty())
     {
         std::cout << kUsageMacro << "\n";
         print_macro_list(std::cout, find_repo_root());
@@ -493,6 +507,122 @@ int handle_macro_command(const std::vector<std::string> &args)
     return exec_root_macro(repo_root, macro_path, call);
 }
 
+std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_root)
+{
+    std::vector<CommandEntry> table;
+    table.push_back(CommandEntry{
+        "help",
+        [](const std::vector<std::string> &)
+        {
+            print_main_help(std::cout);
+            return 0;
+        },
+        []()
+        {
+            print_main_help(std::cout);
+        }
+    });
+    table.push_back(CommandEntry{
+        "-h",
+        [](const std::vector<std::string> &)
+        {
+            print_main_help(std::cout);
+            return 0;
+        },
+        []()
+        {
+            print_main_help(std::cout);
+        }
+    });
+    table.push_back(CommandEntry{
+        "--help",
+        [](const std::vector<std::string> &)
+        {
+            print_main_help(std::cout);
+            return 0;
+        },
+        []()
+        {
+            print_main_help(std::cout);
+        }
+    });
+    table.push_back(CommandEntry{
+        "paths",
+        [repo_root](const std::vector<std::string> &args)
+        {
+            return handle_paths_command(args, repo_root);
+        },
+        []()
+        {
+            std::cout << "Usage: nuxsec paths\n";
+        }
+    });
+    table.push_back(CommandEntry{
+        "env",
+        [repo_root](const std::vector<std::string> &args)
+        {
+            return handle_env_command(args, repo_root);
+        },
+        []()
+        {
+            std::cout << "Usage: nuxsec env [SET]\n";
+        }
+    });
+    table.push_back(CommandEntry{
+        "macro",
+        [](const std::vector<std::string> &args)
+        {
+            return handle_macro_command(args);
+        },
+        []()
+        {
+            std::cout << kUsageMacro << "\n";
+            print_macro_list(std::cout, find_repo_root());
+        }
+    });
+    table.push_back(CommandEntry{
+        "art",
+        [](const std::vector<std::string> &args)
+        {
+            return dispatch_driver_command("nuxsecArtFileIOdriver", args);
+        },
+        []()
+        {
+            std::cout << "Usage: nuxsec art <args>\n";
+        }
+    });
+    table.push_back(CommandEntry{
+        "sample",
+        [](const std::vector<std::string> &args)
+        {
+            return dispatch_driver_command("nuxsecSampleIOdriver", args);
+        },
+        []()
+        {
+            std::cout << "Usage: nuxsec sample <args>\n";
+        }
+    });
+    table.push_back(CommandEntry{
+        "event",
+        [repo_root](const std::vector<std::string> &args)
+        {
+            if (args.size() == 1 && !is_help_arg(args[0]))
+            {
+                std::vector<std::string> rewritten;
+                rewritten.push_back(default_samples_tsv(repo_root).string());
+                rewritten.push_back(args[0]);
+                return dispatch_driver_command("nuxsecEventIOdriver", rewritten);
+            }
+            return dispatch_driver_command("nuxsecEventIOdriver", args);
+        },
+        []()
+        {
+            std::cout << "Usage: nuxsec event <args>\n";
+        }
+    });
+    return table;
+}
+
 }
 
 int main(int argc, char **argv)
@@ -522,54 +652,18 @@ int main(int argc, char **argv)
             const std::string command = argv[i++];
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv, i);
 
-            if (command == "help" || command == "-h" || command == "--help")
+            const auto command_table = build_command_table(repo_root);
+            for (const auto &entry : command_table)
             {
-                print_main_help(std::cout);
-                return 0;
-            }
-
-            if (command == "paths")
-            {
-                if (!args.empty() && is_help_arg(args[0]))
+                if (command == entry.name)
                 {
-                    std::cout << "Usage: nuxsec paths\n";
-                    return 0;
-                }
-                if (!args.empty())
-                {
-                    throw std::runtime_error("Usage: nuxsec paths");
-                }
-                print_paths(std::cout, repo_root);
-                return 0;
-            }
-
-            if (command == "env")
-            {
-                return handle_env_command(args, repo_root);
-            }
-
-            const std::pair<const char *, const char *> driver_map[] = {
-                {"art", "nuxsecArtFileIOdriver"},
-                {"sample", "nuxsecSampleIOdriver"},
-                {"event", "nuxsecEventIOdriver"}
-            };
-            for (const auto &entry : driver_map)
-            {
-                if (command == entry.first)
-                {
-                    if (command == "event" && args.size() == 1 && !is_help_arg(args[0]))
+                    if (!args.empty() && is_help_arg(args[0]))
                     {
-                        std::vector<std::string> rewritten;
-                        rewritten.push_back(default_samples_tsv(repo_root).string());
-                        rewritten.push_back(args[0]);
-                        return dispatch_driver_command(entry.second, rewritten);
+                        entry.help();
+                        return 0;
                     }
-                    return dispatch_driver_command(entry.second, args);
+                    return entry.handler(args);
                 }
-            }
-            if (command == "macro")
-            {
-                return handle_macro_command(args);
             }
 
             std::cerr << "Unknown command: " << command << "\n";

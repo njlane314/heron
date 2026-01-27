@@ -192,13 +192,13 @@ training set never overlaps the template/plotting set.
 mkdir -p build/out/lists_train build/out/lists_template
 
 # Train lists (only training partitions)
-for kind in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${kind}_train*.root > build/out/lists_train/${kind}_train.txt
+for origin in sample_a sample_b sample_c sample_d; do
+  ls build/out/art/art_prov_${origin}_train*.root > build/out/lists_train/${origin}_train.txt
 done
 
 # Template lists (disjoint from training)
-for kind in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${kind}_template*.root > build/out/lists_template/${kind}_template.txt
+for origin in sample_a sample_b sample_c sample_d; do
+  ls build/out/art/art_prov_${origin}_template*.root > build/out/lists_template/${origin}_template.txt
 done
 ```
 
@@ -206,15 +206,15 @@ Aggregate each set and archive the outputs:
 
 ```bash
 # Training samples/TSV
-for kind in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${kind}_train:build/out/lists_train/${kind}_train.txt"
+for origin in sample_a sample_b sample_c sample_d; do
+  nuxsec sample "${origin}_train:build/out/lists_train/${origin}_train.txt"
 done
 mkdir -p build/out/sample_train
 mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_train/
 
 # Template samples/TSV
-for kind in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${kind}_template:build/out/lists_template/${kind}_template.txt"
+for origin in sample_a sample_b sample_c sample_d; do
+  nuxsec sample "${origin}_template:build/out/lists_template/${origin}_template.txt"
 done
 mkdir -p build/out/sample_template
 mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_template/

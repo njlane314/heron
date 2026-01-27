@@ -22,26 +22,6 @@ plot/  stacked-histogram and channel plotting helpers
 apps/  CLI entrypoints that orchestrate the pipeline
 ```
 
-### Key library surfaces (headers)
-
-**IO services**
-- `ArtFileProvenanceIO` for art provenance ingestion and ROOT output management. ([io/include/ArtFileProvenanceIO.hh](io/include/ArtFileProvenanceIO.hh#L67-L172))
-- `SampleIO` for sample aggregation metadata (origin, beam mode, tree names) used by both analysis and
-  CNN-training sample materialisation workflows. ([io/include/SampleIO.hh](io/include/SampleIO.hh#L20-L117))
-- `EventIO` for event-level ROOT I/O, including open modes and metadata handling. ([io/include/EventIO.hh](io/include/EventIO.hh#L41-L170))
-- `RunDatabaseService` and `SubRunInventoryService` for run/subrun tracking and SQLite-backed state. ([io/include/RunDatabaseService.hh](io/include/RunDatabaseService.hh#L37-L171), [io/include/SubRunInventoryService.hh](io/include/SubRunInventoryService.hh#L23-L146))
-- `NormalisationService` for exposure and POT normalisation handling. ([io/include/NormalisationService.hh](io/include/NormalisationService.hh#L20-L109))
-
-**Analysis services**
-- `AnalysisConfigService` for analysis configuration and on-disk metadata. ([ana/include/AnalysisConfigService.hh](ana/include/AnalysisConfigService.hh#L21-L126))
-- `Selection` for declarative selection/plot definitions, presets, and categorisation logic. ([ana/include/Selection.hh](ana/include/Selection.hh#L33-L195))
-- `RDataFrameService` for RDF sources and derived column orchestration. ([ana/include/RDataFrameService.hh](ana/include/RDataFrameService.hh#L28-L91))
-- `ColumnDerivationService` for channel-aware column additions and derived variables. ([ana/include/ColumnDerivationService.hh](ana/include/ColumnDerivationService.hh#L17-L110))
-
-**Plotting utilities**
-- `Plotter` and `StackedHist` for channel-aware stacked histograms and outputs. ([plot/include/Plotter.hh](plot/include/Plotter.hh#L21-L94), [plot/include/StackedHist.hh](plot/include/StackedHist.hh#L30-L88))
-- `Channels` and `PlotDescriptors` for plot metadata, cut direction, and visual configuration. ([plot/include/PlotChannels.hh](plot/include/PlotChannels.hh#L23-L78), [plot/include/PlotDescriptors.hh](plot/include/PlotDescriptors.hh#L20-L100))
-
 ### Runtime artefacts (by convention)
 
 - `build/out/art/` stores provenance ROOT outputs from `nuxsec art`.

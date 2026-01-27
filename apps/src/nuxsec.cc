@@ -494,6 +494,7 @@ int handle_macro_command(const std::vector<std::string> &args)
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
+        "nuxsec",
         [argc, argv]()
         {
             int i = 1;

@@ -7,9 +7,7 @@
 
 #include "ArtCLI.hh"
 
-#include <exception>
-#include <iostream>
-#include <stdexcept>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -55,11 +53,12 @@ int run(const art::Args &art_args, const std::string &log_prefix)
     rec.summary.pot_sum *= 1;
     rec.scale = 1;
 
-    std::cerr << "[" << log_prefix << "] add input=" << rec.input.input_name
-              << " files=" << rec.input_files.size()
-              << " pairs=" << rec.summary.unique_pairs.size()
-              << " pot_sum=" << rec.summary.pot_sum
-              << "\n";
+    std::ostringstream log_message;
+    log_message << "add input=" << rec.input.input_name
+                << " files=" << rec.input_files.size()
+                << " pairs=" << rec.summary.unique_pairs.size()
+                << " pot_sum=" << rec.summary.pot_sum;
+    nuxsec::app::log::log_success(log_prefix, log_message.str());
 
     nuxsec::ArtFileProvenanceIO::write(rec, art_args.art_path);
 
@@ -73,6 +72,7 @@ int run(const art::Args &art_args, const std::string &log_prefix)
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
+        "nuxsecArtFileIOdriver",
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);

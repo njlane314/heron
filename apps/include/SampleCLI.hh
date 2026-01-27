@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include "AppLog.hh"
 #include "AppUtils.hh"
 #include "NormalisationService.hh"
 #include "SampleIO.hh"
@@ -136,39 +137,24 @@ inline void write_samples(const std::string &list_path, std::vector<SampleListEn
 namespace sample
 {
 
-inline std::string format_count(const size_t count)
-{
-    std::ostringstream out;
-    if (count >= 1000000)
-    {
-        out << std::fixed << std::setprecision(1)
-            << (static_cast<double>(count) / 1000000.0) << "M";
-    }
-    else if (count >= 1000)
-    {
-        out << (count / 1000) << "k";
-    }
-    else
-    {
-        out << count;
-    }
-    return out.str();
-}
-
 inline void log_sample_start(const std::string &log_prefix, const size_t file_count)
 {
-    std::cerr << "[" << log_prefix << "] "
-              << "Building sample from " << format_count(file_count) << " files\n";
+    nuxsec::app::log::log_info(
+        log_prefix,
+        "Building sample from " + nuxsec::app::log::format_count(static_cast<long long>(file_count)) +
+            " files");
 }
 
 inline void log_sample_finish(const std::string &log_prefix,
                               const size_t input_count,
                               const double elapsed_seconds)
 {
-    std::cerr << "[" << log_prefix << "] "
-              << "Completed sample build from " << format_count(input_count) << " inputs in "
-              << std::fixed << std::setprecision(1)
-              << elapsed_seconds << "s\n";
+    std::ostringstream out;
+    out << "Completed sample build from "
+        << nuxsec::app::log::format_count(static_cast<long long>(input_count))
+        << " inputs in " << std::fixed << std::setprecision(1)
+        << elapsed_seconds << "s";
+    nuxsec::app::log::log_success(log_prefix, out.str());
 }
 
 struct Args

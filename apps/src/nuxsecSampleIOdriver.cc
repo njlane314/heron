@@ -7,9 +7,7 @@
 
 #include "SampleCLI.hh"
 
-#include <exception>
-#include <iostream>
-#include <stdexcept>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -48,15 +46,16 @@ int run(const sample::Args &sample_args, const std::string &log_prefix)
     nuxsec::sample::SampleIO::write(sample, sample_args.output_path);
     nuxsec::app::sample::update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 
-    std::cerr << "[" << log_prefix << "] sample=" << sample.sample_name
-              << " inputs=" << sample.inputs.size()
-              << " pot_sum=" << sample.subrun_pot_sum
-              << " db_tortgt_pot_sum=" << sample.db_tortgt_pot_sum
-              << " normalisation=" << sample.normalisation
-              << " normalised_pot_sum=" << sample.normalised_pot_sum
-              << " output=" << sample_args.output_path
-              << " sample_list=" << sample_args.sample_list_path
-              << "\n";
+    std::ostringstream log_message;
+    log_message << "sample=" << sample.sample_name
+                << " inputs=" << sample.inputs.size()
+                << " pot_sum=" << sample.subrun_pot_sum
+                << " db_tortgt_pot_sum=" << sample.db_tortgt_pot_sum
+                << " normalisation=" << sample.normalisation
+                << " normalised_pot_sum=" << sample.normalised_pot_sum
+                << " output=" << sample_args.output_path
+                << " sample_list=" << sample_args.sample_list_path;
+    nuxsec::app::log::log_success(log_prefix, log_message.str());
 
     return 0;
 }
@@ -68,6 +67,7 @@ int run(const sample::Args &sample_args, const std::string &log_prefix)
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
+        "nuxsecSampleIOdriver",
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);

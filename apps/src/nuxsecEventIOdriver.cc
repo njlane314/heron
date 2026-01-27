@@ -99,30 +99,33 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         const nuxsec::sample::SampleIO::Sample &sample = input.sample;
         const int sample_id = static_cast<int>(i);
         
-        std::cerr << "[" << log_prefix << "]"
-                  << " stage=ensure_tree sample=" << sample.sample_name
-                  << " tree=" << event_tree
-                  << "\n";
-        
+        nuxsec::app::log::log_stage(
+            log_prefix,
+            "ensure_tree",
+            "sample=" + sample.sample_name + " tree=" + event_tree);
+
         nuxsec::app::event::ensure_tree_present(sample, event_tree);
-        
-        std::cerr << "[" << log_prefix << "]"
-                  << " stage=load_rdf sample=" << sample.sample_name
-                  << "\n";
-        
+
+        nuxsec::app::log::log_stage(
+            log_prefix,
+            "load_rdf",
+            "sample=" + sample.sample_name);
+
         ROOT::RDataFrame rdf = nuxsec::RDataFrameService::load_sample(sample, event_tree);
-        
-        std::cerr << "[" << log_prefix << "]"
-                  << " stage=make_processor sample=" << sample.sample_name
-                  << "\n";
-        
+
+        nuxsec::app::log::log_stage(
+            log_prefix,
+            "make_processor",
+            "sample=" + sample.sample_name);
+
         const nuxsec::ProcessorEntry proc_entry = analysis.make_processor(sample);
         const auto &processor = nuxsec::ColumnDerivationService::instance();
-        
-        std::cerr << "[" << log_prefix << "]"
-                  << " stage=define_columns sample=" << sample.sample_name
-                  << "\n";
-        
+
+        nuxsec::app::log::log_stage(
+            log_prefix,
+            "define_columns",
+            "sample=" + sample.sample_name);
+
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
         using SampleOrigin = nuxsec::sample::SampleIO::SampleOrigin;
@@ -130,22 +133,25 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         
         if (origin == SampleOrigin::kOverlay)
         {
-            std::cerr << "[" << log_prefix << "]"
-                      << " stage=filter_overlay sample=" << sample.sample_name
-                      << "\n";
+            nuxsec::app::log::log_stage(
+                log_prefix,
+                "filter_overlay",
+                "sample=" + sample.sample_name);
             node = node.Filter([](int strange) { return strange == 0; }, {"count_strange"});
         }
         else if (origin == SampleOrigin::kStrangeness)
         {
-            std::cerr << "[" << log_prefix << "]"
-                      << " stage=filter_strangeness sample=" << sample.sample_name
-                      << "\n";
+            nuxsec::app::log::log_stage(
+                log_prefix,
+                "filter_strangeness",
+                "sample=" + sample.sample_name);
             node = node.Filter([](int strange) { return strange > 0; }, {"count_strange"});
         }
 
-        std::cerr << "[" << log_prefix << "]"
-                  << " stage=snapshot sample=" << sample.sample_name
-                  << "\n";
+        nuxsec::app::log::log_stage(
+            log_prefix,
+            "snapshot",
+            "sample=" + sample.sample_name);
 
         const ULong64_t n_written =
             event_io.snapshot_event_list_merged(node,
@@ -155,13 +161,14 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                                                 "",
                                                 "events");
 
-        std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
-                  << " sample=" << sample.sample_name
-                  << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.origin)
-                  << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)
-                  << " events_written=" << n_written
-                  << " output=" << event_args.output_root
-                  << "\n";
+        std::ostringstream log_message;
+        log_message << "analysis=" << analysis.name()
+                    << " sample=" << sample.sample_name
+                    << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.origin)
+                    << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)
+                    << " events_written=" << n_written
+                    << " output=" << event_args.output_root;
+        nuxsec::app::log::log_success(log_prefix, log_message.str());
     }
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
@@ -178,6 +185,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
+        "nuxsecEventIOdriver",
         [argc, argv]()
         {
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);

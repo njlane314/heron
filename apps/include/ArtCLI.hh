@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "AppLog.hh"
 #include "AppUtils.hh"
 #include "ArtFileProvenanceIO.hh"
 #include "SampleIO.hh"
@@ -26,39 +27,20 @@ namespace app
 namespace art
 {
 
-inline std::string format_count(const long long count)
-{
-    std::ostringstream out;
-    if (count >= 1000000)
-    {
-        out << std::fixed << std::setprecision(1)
-            << (static_cast<double>(count) / 1000000.0) << "M";
-    }
-    else if (count >= 1000)
-    {
-        out << (count / 1000) << "k";
-    }
-    else
-    {
-        out << count;
-    }
-    return out.str();
-}
-
 inline void log_scan_start(const std::string &log_prefix)
 {
-    std::cerr << "[" << log_prefix << "] "
-              << "Scanning SubRun entries\n";
+    nuxsec::app::log::log_info(log_prefix, "Scanning SubRun entries");
 }
 
 inline void log_scan_finish(const std::string &log_prefix,
                             const long long total,
                             const double elapsed_seconds)
 {
-    std::cerr << "[" << log_prefix << "] "
-              << "Completed scan of " << format_count(total) << " entries in "
-              << std::fixed << std::setprecision(1)
-              << elapsed_seconds << "s\n";
+    std::ostringstream out;
+    out << "Completed scan of " << nuxsec::app::log::format_count(total)
+        << " entries in " << std::fixed << std::setprecision(1)
+        << elapsed_seconds << "s";
+    nuxsec::app::log::log_success(log_prefix, out.str());
 }
 
 inline bool is_selection_data_file(const std::string &path)

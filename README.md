@@ -190,6 +190,35 @@ build_sample_set train
 build_sample_set template
 ```
 
+If you do not want to define a helper function, run the commands explicitly (still keeping
+train/template partitions separate):
+
+```bash
+base_dir="build/out/sample_sets"
+
+mkdir -p "${base_dir}/lists/train" "${base_dir}/samples/train"
+ls "build/out/art/art_prov_sample_a_train"*.root > "${base_dir}/lists/train/sample_a_train.txt"
+nuxsec sample "sample_a:${base_dir}/lists/train/sample_a_train.txt"
+ls "build/out/art/art_prov_sample_b_train"*.root > "${base_dir}/lists/train/sample_b_train.txt"
+nuxsec sample "sample_b:${base_dir}/lists/train/sample_b_train.txt"
+ls "build/out/art/art_prov_sample_c_train"*.root > "${base_dir}/lists/train/sample_c_train.txt"
+nuxsec sample "sample_c:${base_dir}/lists/train/sample_c_train.txt"
+ls "build/out/art/art_prov_sample_d_train"*.root > "${base_dir}/lists/train/sample_d_train.txt"
+nuxsec sample "sample_d:${base_dir}/lists/train/sample_d_train.txt"
+mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${base_dir}/samples/train/"
+
+mkdir -p "${base_dir}/lists/template" "${base_dir}/samples/template"
+ls "build/out/art/art_prov_sample_a_template"*.root > "${base_dir}/lists/template/sample_a_template.txt"
+nuxsec sample "sample_a:${base_dir}/lists/template/sample_a_template.txt"
+ls "build/out/art/art_prov_sample_b_template"*.root > "${base_dir}/lists/template/sample_b_template.txt"
+nuxsec sample "sample_b:${base_dir}/lists/template/sample_b_template.txt"
+ls "build/out/art/art_prov_sample_c_template"*.root > "${base_dir}/lists/template/sample_c_template.txt"
+nuxsec sample "sample_c:${base_dir}/lists/template/sample_c_template.txt"
+ls "build/out/art/art_prov_sample_d_template"*.root > "${base_dir}/lists/template/sample_d_template.txt"
+nuxsec sample "sample_d:${base_dir}/lists/template/sample_d_template.txt"
+mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${base_dir}/samples/template/"
+```
+
 This keeps the filesystem layout tidy:
 
 ```

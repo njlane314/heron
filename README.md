@@ -1,20 +1,53 @@
 # nuxsec
 
-ROOT-based utilities for a neutrino cross-section analysis pipeline built around explicit analysis entities
-(Aggregation → Sample → Dataset/RDF → Channel/Category → Selection → Template/Plot).
+ROOT-based utilities for a neutrino cross-section analysis pipeline. The codebase formalises the analysis
+entities (aggregation → sample → dataset/RDF → channel/category → selection → template/plot) and provides
+compiled drivers to move between them.
 
-## Repository structure
+The core design goal is to keep analysis structure explicit: inputs are aggregated into samples with
+recorded provenance, samples feed into a compiled event-level analysis, and plots/macros operate on the
+resulting outputs. This makes it easier to audit which inputs contributed to each step and to reproduce
+analysis or training artefacts later.
 
-Each module is built as its own shared library.
+## Architecture at a glance
+
+Each top-level module builds a shared library and exposes typed services or analysis entities. The pipeline
+also supports producing a CNN training snapshot: sample-level ROOT outputs can be materialised, split, and
+saved as an offline training set before event-level aggregation or plotting.
 
 ```
-nuxsec/
-  io/      # LArSoft output discovery, file manifests, provenance extraction
-  ana/     # analysis-level definitions and ROOT::RDataFrame sources + derived columns
-  plot/    # plotting utilities for stacked histograms and diagnostic outputs
-  apps/    # unified CLI (aggregators, template makers)
-  scripts/ # environment helpers
+io/    LArSoft output discovery, file manifests, provenance, and run databases
+ana/   analysis configuration, selection logic, and ROOT::RDataFrame column derivations
+plot/  stacked-histogram and channel plotting helpers
+apps/  CLI entrypoints that orchestrate the pipeline
 ```
+
+### Key library surfaces (headers)
+
+**IO services**
+- `ArtFileProvenanceIO` for art provenance ingestion and ROOT output management.【F:io/include/ArtFileProvenanceIO.hh†L67-L172】
+- `SampleIO` for sample aggregation metadata (origin, beam mode, tree names) used by both analysis and
+  CNN-training sample materialisation workflows.【F:io/include/SampleIO.hh†L20-L117】
+- `EventIO` for event-level ROOT I/O, including open modes and metadata handling.【F:io/include/EventIO.hh†L41-L170】
+- `RunDatabaseService` and `SubRunInventoryService` for run/subrun tracking and SQLite-backed state.【F:io/include/RunDatabaseService.hh†L37-L171】【F:io/include/SubRunInventoryService.hh†L23-L146】
+- `NormalisationService` for exposure and POT normalisation handling.【F:io/include/NormalisationService.hh†L20-L109】
+
+**Analysis services**
+- `AnalysisConfigService` for analysis configuration and on-disk metadata.【F:ana/include/AnalysisConfigService.hh†L21-L126】
+- `Selection` for declarative selection/plot definitions, presets, and categorisation logic.【F:ana/include/Selection.hh†L33-L195】
+- `RDataFrameService` for RDF sources and derived column orchestration.【F:ana/include/RDataFrameService.hh†L28-L91】
+- `ColumnDerivationService` for channel-aware column additions and derived variables.【F:ana/include/ColumnDerivationService.hh†L17-L110】
+
+**Plotting utilities**
+- `Plotter` and `StackedHist` for channel-aware stacked histograms and outputs.【F:plot/include/Plotter.hh†L21-L94】【F:plot/include/StackedHist.hh†L30-L88】
+- `Channels` and `PlotDescriptors` for plot metadata, cut direction, and visual configuration.【F:plot/include/PlotChannels.hh†L23-L78】【F:plot/include/PlotDescriptors.hh†L20-L100】
+
+### Runtime artefacts (by convention)
+
+- `build/out/art/` stores provenance ROOT outputs from `nuxsec art`.
+- `build/out/sample/` stores per-sample ROOT outputs and `samples.tsv` produced by `nuxsec sample`.
+- `build/out/event/` stores event-level ROOT outputs produced by `nuxsec event`.
+- `build/plot/` stores plot outputs produced by `nuxsec macro` (configurable via `NUXSEC_PLOT_DIR`).
 
 ## Requirements
 
@@ -33,7 +66,7 @@ source .setup.sh
 make
 ```
 
-This produces:
+This produces shared libraries and drivers:
 
 - `build/lib/libNuxsecIO.so`
 - `build/lib/libNuxsecAna.so`
@@ -78,9 +111,15 @@ wrapper script:
 ./nuxsec <command> [args...]
 ```
 
-## Prepare file lists
+### Environment knobs
 
-File lists are newline-delimited paths to ROOT files (blank lines and `#` comments are ignored).
+- `NUXSEC_REPO_ROOT` can be set to override the repo discovery used by the CLI.
+- `NUXSEC_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
+- `NUXSEC_PLOT_DIR` and `NUXSEC_PLOT_FORMAT` control plot output location and file extension.
+
+## Input file lists
+
+File lists are newline-delimited paths to ROOT files (blank lines and `#` comments are ignored):
 
 ```bash
 cat > data.list <<'LIST'
@@ -90,14 +129,11 @@ cat > data.list <<'LIST'
 LIST
 ```
 
-## Example command-line workflow (template-style)
+## Minimal workflow (analysis + CNN training snapshots)
 
-Assume you run from the repo top-level (`nuxsec/`) and you already have per-input filelists
-produced by your partitioning step.
+Assume you run from the repo root and already have per-input filelists from your partitioning step.
 
-### 1) Input → Art provenance ROOT (per partition/input)
-
-Each input filelist is a plain text file containing the input art/selection ROOT files for that input.
+1) **Input → art provenance ROOT (per partition/input)**
 
 ```bash
 nuxsec art "sample_a:inputs/filelists/sample_a.txt:Data:Beam"
@@ -115,13 +151,9 @@ build/out/art/art_prov_sample_c.root
 build/out/art/art_prov_sample_d.root
 ```
 
-Repeat `nuxsec art ...` for each partition/input you need.
+2) **Art provenance ROOT → sample ROOT (group inputs into samples)**
 
-### 2) Art provenance ROOT → Sample ROOT (group inputs into samples)
-
-Create per-sample filelists that contain the art provenance ROOT outputs from step (1).
-If you want these lists under the build tree, prefer a dedicated directory (for example
-`build/out/lists/`) to avoid confusion with the output directory `build/out/sample/`:
+Create per-sample filelists containing the art provenance outputs from step (1):
 
 ```bash
 mkdir -p build/out/lists
@@ -147,59 +179,51 @@ build/out/sample/sample_root_<sample>.root
 build/out/sample/samples.tsv
 ```
 
-The TSV is the only input list you pass downstream.
+The `build/out/sample/` artefacts can feed event-level aggregation or be snapshotted for
+CNN training (for example, copying the per-sample ROOT outputs into a dedicated training
+dataset directory alongside a curated `samples.tsv`).
 
-#### Separate sample lists for training versus templates/plots
+**Training vs template sample sets (recommended handoff)**
 
-If you want full separation between training and histogram/plot production, keep two
-independent sample aggregations and `samples.tsv` handoffs. This keeps the inputs disjoint
-and makes the handoff explicit.
-
-**Step A: build two sets of input lists**
+Maintain two disjoint sample aggregations and stage them into separate directories so the
+training set never overlaps the template/plotting set.
 
 ```bash
-mkdir -p build/out/lists_train build/out/lists_plot
+mkdir -p build/out/lists_train build/out/lists_template
 
-# Training lists (use only the inputs you want for training)
+# Train lists (only training partitions)
 for kind in sample_a sample_b sample_c sample_d; do
   ls build/out/art/art_prov_${kind}_train*.root > build/out/lists_train/${kind}_train.txt
 done
 
-# Plot/template lists (disjoint from training)
+# Template lists (disjoint from training)
 for kind in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${kind}_plot*.root > build/out/lists_plot/${kind}_plot.txt
+  ls build/out/art/art_prov_${kind}_template*.root > build/out/lists_template/${kind}_template.txt
 done
 ```
 
-**Step B: aggregate each set and stage outputs**
-
-The `sample` CLI always writes to `build/out/sample/`, so run one set at a time and move
-the outputs into per-purpose directories:
+Aggregate each set and archive the outputs:
 
 ```bash
 # Training samples/TSV
 for kind in sample_a sample_b sample_c sample_d; do
   nuxsec sample "${kind}_train:build/out/lists_train/${kind}_train.txt"
 done
-
 mkdir -p build/out/sample_train
 mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_train/
 
-# Plot/template samples/TSV
+# Template samples/TSV
 for kind in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${kind}_plot:build/out/lists_plot/${kind}_plot.txt"
+  nuxsec sample "${kind}_template:build/out/lists_template/${kind}_template.txt"
 done
-
-mkdir -p build/out/sample_plot
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_plot/
+mkdir -p build/out/sample_template
+mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_template/
 ```
 
-**Handoffs**
+Use the training snapshot for CNN workflows, and pass
+`build/out/sample_template/samples.tsv` downstream for event-level aggregation and plotting.
 
-- `build/out/sample_train/samples.tsv` for training.
-- `build/out/sample_plot/samples.tsv` for templates, histograms, and plots.
-
-### 3) Samples → Event-level output (compiled analysis)
+3) **Samples → event-level output (compiled analysis)**
 
 The compiled analysis definition in this repository is `nuxsec_default` with tree
 name `Events` by default. Override the input tree name by exporting `NUXSEC_TREE_NAME`
@@ -207,10 +231,10 @@ before running the CLI. The event builder writes a single ROOT file containing t
 event-level tree plus metadata for the aggregated samples.
 
 ```bash
-nuxsec event build/out/sample/samples.tsv build/out/event/events.root
+nuxsec event build/out/sample_template/samples.tsv build/out/event/events.root
 ```
 
-### 4) Plotting via macros
+4) **Plotting via macros**
 
 Plotting is macro-driven. Use the `nuxsec macro` helper to run a plot macro
 (and optionally a specific function inside it).

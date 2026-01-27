@@ -5,14 +5,18 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <chrono>
+#include <condition_variable>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "AppLog.hh"
@@ -139,6 +143,63 @@ inline std::vector<std::string> read_paths(const std::string &filelist_path)
     }
     return files;
 }
+
+class StatusMonitor
+{
+public:
+    StatusMonitor(const std::string &log_prefix,
+                  const std::string &message,
+                  const std::chrono::seconds interval = std::chrono::minutes(1))
+        : log_prefix_(log_prefix),
+          message_(message),
+          interval_(interval),
+          worker_(&StatusMonitor::run_loop, this)
+    {
+    }
+
+    ~StatusMonitor()
+    {
+        stop();
+    }
+
+    StatusMonitor(const StatusMonitor &) = delete;
+    StatusMonitor &operator=(const StatusMonitor &) = delete;
+
+    void stop()
+    {
+        {
+            std::lock_guard<std::mutex> guard(mutex_);
+            done_ = true;
+        }
+        cv_.notify_all();
+        if (worker_.joinable())
+        {
+            worker_.join();
+        }
+    }
+
+private:
+    void run_loop()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        while (!done_)
+        {
+            if (cv_.wait_for(lock, interval_, [this]() { return done_; }))
+            {
+                break;
+            }
+            nuxsec::app::log::log_info(log_prefix_, message_);
+        }
+    }
+
+    std::string log_prefix_;
+    std::string message_;
+    std::chrono::seconds interval_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    bool done_ = false;
+    std::thread worker_;
+};
 
 }
 

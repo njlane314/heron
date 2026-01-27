@@ -5,13 +5,13 @@
  *  @brief Build event-level output from aggregated samples.
  */
 
-#include "EventCLI.hh"
-
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "AppUtils.hh"
+#include "EventCLI.hh"
 #include "RDataFrameService.hh"
 
 namespace nuxsec
@@ -29,6 +29,10 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     
     const auto start_time = std::chrono::steady_clock::now();
     nuxsec::app::event::log_event_start(log_prefix, entries.size());
+
+    nuxsec::app::StatusMonitor status_monitor(
+        log_prefix,
+        "action=event_build status=running message=processing");
 
     std::vector<nuxsec::app::event::Input> inputs;
     inputs.reserve(entries.size());
@@ -170,6 +174,8 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                     << " output=" << event_args.output_root;
         nuxsec::app::log::log_success(log_prefix, log_message.str());
     }
+    status_monitor.stop();
+
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     

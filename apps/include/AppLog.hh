@@ -66,14 +66,14 @@ inline const char *level_colour(const Level level)
     switch (level)
     {
     case Level::kSuccess:
-        return "\033[1;32m";
+        return "\033[0;32m";
     case Level::kWarn:
-        return "\033[1;33m";
+        return "\033[0;33m";
     case Level::kError:
         return "\033[1;31m";
     case Level::kInfo:
     default:
-        return "\033[1;37m";
+        return "\033[0;36m";
     }
 }
 
@@ -117,7 +117,7 @@ inline void log_line(const std::string &log_prefix,
     const std::string level_label = level_name(level);
     if (use_colour())
     {
-        out << decorate(prefix, "\033[1;90m") << " "
+        out << decorate(prefix, "\033[1;34m") << " "
             << decorate(level_label, level_colour(level)) << " ";
     }
     else

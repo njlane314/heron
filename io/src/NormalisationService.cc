@@ -51,10 +51,11 @@ sample::SampleIO::Sample NormalisationService::build_sample(const std::string &s
 
         RunInfoSums runinfo = db.sum_run_info(prov.summary.unique_pairs);
         const double pot_scale = (prov.scale > 0.0) ? prov.scale : 1.0;
-        runinfo.tortgt_sum *= pot_scale;
-        runinfo.tor101_sum *= pot_scale;
-        runinfo.tor860_sum *= pot_scale;
-        runinfo.tor875_sum *= pot_scale;
+        const double db_pot_scale = 1.0e12; // Run DB stores POT in units of 1e12.
+        runinfo.tortgt_sum *= pot_scale * db_pot_scale;
+        runinfo.tor101_sum *= pot_scale * db_pot_scale;
+        runinfo.tor860_sum *= pot_scale * db_pot_scale;
+        runinfo.tor875_sum *= pot_scale * db_pot_scale;
 
         const double db_tortgt_pot = runinfo.tortgt_sum;
         const double db_tor101_pot = runinfo.tor101_sum;

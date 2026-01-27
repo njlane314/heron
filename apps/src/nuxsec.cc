@@ -6,13 +6,16 @@
  */
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -99,6 +102,7 @@ void print_main_help(std::ostream &out)
         << "  sample      Aggregate Sample ROOT files from art provenance\n"
         << "  event       Build event-level output from aggregated samples\n"
         << "  macro       Run plot macros\n"
+        << "  status      Log status for executable binaries\n"
         << "  paths       Print resolved workspace paths\n"
         << "  env         Print environment exports for a workspace\n"
         << "\nGlobal options:\n"
@@ -518,6 +522,176 @@ int handle_macro_command(const std::vector<std::string> &args)
     return exec_root_macro(repo_root, macro_path, call);
 }
 
+struct StatusOptions
+{
+    int interval_seconds = 60;
+    long long count = 0;
+};
+
+StatusOptions parse_status_args(const std::vector<std::string> &args)
+{
+    StatusOptions opts;
+    for (size_t i = 0; i < args.size(); ++i)
+    {
+        const std::string arg = nuxsec::app::trim(args[i]);
+        if (arg == "--interval" || arg == "-i")
+        {
+            if (i + 1 >= args.size())
+            {
+                throw std::runtime_error("Missing value for --interval");
+            }
+            opts.interval_seconds = std::stoi(args[++i]);
+            if (opts.interval_seconds <= 0)
+            {
+                throw std::runtime_error("Interval must be positive");
+            }
+            continue;
+        }
+        if (arg == "--count" || arg == "-n")
+        {
+            if (i + 1 >= args.size())
+            {
+                throw std::runtime_error("Missing value for --count");
+            }
+            opts.count = std::stoll(args[++i]);
+            if (opts.count <= 0)
+            {
+                throw std::runtime_error("Count must be positive");
+            }
+            continue;
+        }
+        if (arg == "--once")
+        {
+            opts.count = 1;
+            continue;
+        }
+        throw std::runtime_error("Usage: nuxsec status [--interval SECONDS] [--count COUNT] [--once]");
+    }
+    return opts;
+}
+
+std::vector<std::filesystem::path> status_dirs(const std::filesystem::path &repo_root)
+{
+    std::vector<std::filesystem::path> dirs;
+    if (const char *driver_dir = std::getenv("NUXSEC_DRIVER_DIR"))
+    {
+        dirs.emplace_back(driver_dir);
+    }
+    std::error_code ec;
+    const auto exe = std::filesystem::read_symlink("/proc/self/exe", ec);
+    if (!ec)
+    {
+        dirs.push_back(exe.parent_path());
+    }
+    dirs.push_back(repo_root / "build" / "bin");
+
+    std::vector<std::filesystem::path> unique_dirs;
+    std::set<std::filesystem::path> seen;
+    for (const auto &dir : dirs)
+    {
+        if (dir.empty())
+        {
+            continue;
+        }
+        if (!seen.insert(dir).second)
+        {
+            continue;
+        }
+        unique_dirs.push_back(dir);
+    }
+    return unique_dirs;
+}
+
+std::vector<std::filesystem::path> collect_executables(
+    const std::filesystem::path &repo_root)
+{
+    std::vector<std::filesystem::path> executables;
+    const auto dirs = status_dirs(repo_root);
+    for (const auto &dir : dirs)
+    {
+        if (!std::filesystem::exists(dir))
+        {
+            continue;
+        }
+        if (!std::filesystem::is_directory(dir))
+        {
+            if (is_executable(dir))
+            {
+                executables.push_back(dir);
+            }
+            continue;
+        }
+        for (const auto &entry : std::filesystem::directory_iterator(dir))
+        {
+            if (!entry.is_regular_file())
+            {
+                continue;
+            }
+            const auto &path = entry.path();
+            if (is_executable(path))
+            {
+                executables.push_back(path);
+            }
+        }
+    }
+    std::sort(executables.begin(), executables.end());
+    executables.erase(std::unique(executables.begin(), executables.end()),
+                      executables.end());
+    return executables;
+}
+
+int handle_status_command(const std::vector<std::string> &args,
+                          const std::filesystem::path &repo_root)
+{
+    const StatusOptions opts = parse_status_args(args);
+    std::ostringstream start_message;
+    start_message << "action=exe_status_monitor status=start interval="
+                  << opts.interval_seconds << "s";
+    if (opts.count > 0)
+    {
+        start_message << " count=" << opts.count;
+    }
+    nuxsec::app::log::log_info("nuxsec", start_message.str());
+
+    long long completed = 0;
+    while (opts.count == 0 || completed < opts.count)
+    {
+        const auto executables = collect_executables(repo_root);
+        std::ostringstream summary;
+        summary << "action=exe_status_scan status=complete executables="
+                << nuxsec::app::log::format_count(
+                       static_cast<long long>(executables.size()));
+        nuxsec::app::log::log_info("nuxsec", summary.str());
+
+        if (executables.empty())
+        {
+            nuxsec::app::log::log_warning(
+                "nuxsec",
+                "action=exe_status status=empty message=No executables found");
+        }
+        else
+        {
+            for (const auto &path : executables)
+            {
+                std::ostringstream message;
+                message << "action=exe_status status=ok exe="
+                        << path.filename().string()
+                        << " path=" << path.string();
+                nuxsec::app::log::log_info("nuxsec", message.str());
+            }
+        }
+
+        ++completed;
+        if (opts.count != 0 && completed >= opts.count)
+        {
+            break;
+        }
+        std::this_thread::sleep_for(
+            std::chrono::seconds(opts.interval_seconds));
+    }
+    return 0;
+}
+
 std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_root)
 {
     std::vector<CommandEntry> table;
@@ -577,6 +751,17 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         []()
         {
             std::cout << "Usage: nuxsec env [SET]\n";
+        }
+    });
+    table.push_back(CommandEntry{
+        "status",
+        [repo_root](const std::vector<std::string> &args)
+        {
+            return handle_status_command(args, repo_root);
+        },
+        []()
+        {
+            std::cout << "Usage: nuxsec status [--interval SECONDS] [--count COUNT] [--once]\n";
         }
     });
     table.push_back(CommandEntry{

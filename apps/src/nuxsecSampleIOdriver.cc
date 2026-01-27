@@ -5,11 +5,12 @@
  *  @brief Main entrypoint for Sample aggregation.
  */
 
-#include "SampleCLI.hh"
-
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "AppUtils.hh"
+#include "SampleCLI.hh"
 
 namespace nuxsec
 {
@@ -36,9 +37,17 @@ int run(const sample::Args &sample_args, const std::string &log_prefix)
 
     const auto start_time = std::chrono::steady_clock::now();
     nuxsec::app::sample::log_sample_start(log_prefix, files.size());
-    
-    nuxsec::sample::SampleIO::Sample sample = nuxsec::NormalisationService::build_sample(sample_args.sample_name, files, db_path);
-    
+
+    nuxsec::app::StatusMonitor status_monitor(
+        log_prefix,
+        "action=sample_build status=running message=processing");
+    nuxsec::sample::SampleIO::Sample sample =
+        nuxsec::NormalisationService::build_sample(sample_args.sample_name,
+                                                   files,
+                                                   db_path);
+
+    status_monitor.stop();
+
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     nuxsec::app::sample::log_sample_finish(log_prefix, sample.inputs.size(), elapsed_seconds);

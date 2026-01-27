@@ -5,11 +5,13 @@
  *  @brief Main entrypoint for Art file provenance generation.
  */
 
-#include "ArtCLI.hh"
-
+#include <chrono>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "AppUtils.hh"
+#include "ArtCLI.hh"
 
 namespace nuxsec
 {
@@ -20,7 +22,7 @@ namespace app
 int run(const art::Args &art_args, const std::string &log_prefix)
 {
     ROOT::EnableImplicitMT();
-    
+
     std::filesystem::path out_path(art_args.art_path);
     if (!out_path.parent_path().empty())
     {
@@ -43,9 +45,13 @@ int run(const art::Args &art_args, const std::string &log_prefix)
 
     const auto start_time = std::chrono::steady_clock::now();
     nuxsec::app::art::log_scan_start(log_prefix);
-    
+
+    nuxsec::app::StatusMonitor status_monitor(
+        log_prefix,
+        "action=art_scan status=running message=scan_in_progress");
     rec.summary = nuxsec::SubRunInventoryService::scan_subruns(files);
-    
+    status_monitor.stop();
+
     const auto end_time = std::chrono::steady_clock::now();
     const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     nuxsec::app::art::log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);

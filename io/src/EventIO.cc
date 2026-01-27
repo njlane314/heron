@@ -206,6 +206,9 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
               << " tmp_file=" << tmp_file
               << "\n";
     ROOT::RDF::RunGraphs({count, snapshot});
+    // Some ROOT builds still warn about lazy Snapshot not triggered unless the
+    // result is explicitly materialised.
+    (void)snapshot.GetValue();
 
     std::cerr << "[EventIO] stage=snapshot_merge_begin"
               << " sample=" << sample_name
@@ -213,7 +216,9 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
               << " out_file=" << m_path
               << "\n";
     {
-        TFileMerger merger(kTRUE, kTRUE);
+        // Avoid useCP (2nd ctor arg) which routes through TFile::Cp using "file.root:/"
+        // and can trigger spurious TUrl complaints on some ROOT versions.
+        TFileMerger merger; // isLocal=true, useCP=false
         merger.SetFastMethod(kFALSE);
         if (!merger.OutputFile(m_path.c_str(), "UPDATE"))
             throw std::runtime_error("EventIO: failed to open output for merge: " + m_path);

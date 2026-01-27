@@ -24,10 +24,10 @@ apps/  CLI entrypoints that orchestrate the pipeline
 
 ### Runtime 
 
-- `build/out/art/` stores provenance ROOT outputs from `nuxsec art`.
-- `build/out/sample/` stores per-sample ROOT outputs and `samples.tsv` produced by `nuxsec sample`.
-- `build/out/event/` stores event-level ROOT outputs produced by `nuxsec event`.
-- `build/plot/` stores plot outputs produced by `nuxsec macro` (configurable via `NUXSEC_PLOT_DIR`).
+- `scratch/out/art/` stores provenance ROOT outputs from `nuxsec art`.
+- `scratch/out/sample/` stores per-sample ROOT outputs and `samples.tsv` produced by `nuxsec sample`.
+- `scratch/out/event/` stores event-level ROOT outputs produced by `nuxsec event`.
+- `scratch/plot/` stores plot outputs produced by `nuxsec macro` (configurable via `NUXSEC_PLOT_DIR`).
 
 ## Requirements
 
@@ -121,10 +121,10 @@ nuxsec art "sample_d:inputs/filelists/sample_d.txt:Dirt:Beam"
 Outputs (by code convention):
 
 ```
-build/out/art/art_prov_sample_a.root
-build/out/art/art_prov_sample_b.root
-build/out/art/art_prov_sample_c.root
-build/out/art/art_prov_sample_d.root
+scratch/out/art/art_prov_sample_a.root
+scratch/out/art/art_prov_sample_b.root
+scratch/out/art/art_prov_sample_c.root
+scratch/out/art/art_prov_sample_d.root
 ```
 
 2) **Art provenance ROOT → sample ROOT (group inputs into samples)**
@@ -132,30 +132,30 @@ build/out/art/art_prov_sample_d.root
 Create per-sample filelists containing the art provenance outputs from step (1):
 
 ```bash
-mkdir -p build/out/lists
-ls build/out/art/art_prov_sample_a*.root > build/out/lists/sample_a.txt
-ls build/out/art/art_prov_sample_b*.root > build/out/lists/sample_b.txt
-ls build/out/art/art_prov_sample_c*.root > build/out/lists/sample_c.txt
-ls build/out/art/art_prov_sample_d*.root > build/out/lists/sample_d.txt
+mkdir -p scratch/out/lists
+ls scratch/out/art/art_prov_sample_a*.root > scratch/out/lists/sample_a.txt
+ls scratch/out/art/art_prov_sample_b*.root > scratch/out/lists/sample_b.txt
+ls scratch/out/art/art_prov_sample_c*.root > scratch/out/lists/sample_c.txt
+ls scratch/out/art/art_prov_sample_d*.root > scratch/out/lists/sample_d.txt
 ```
 
 Then aggregate each sample:
 
 ```bash
-nuxsec sample "sample_a:build/out/lists/sample_a.txt"
-nuxsec sample "sample_b:build/out/lists/sample_b.txt"
-nuxsec sample "sample_c:build/out/lists/sample_c.txt"
-nuxsec sample "sample_d:build/out/lists/sample_d.txt"
+nuxsec sample "sample_a:scratch/out/lists/sample_a.txt"
+nuxsec sample "sample_b:scratch/out/lists/sample_b.txt"
+nuxsec sample "sample_c:scratch/out/lists/sample_c.txt"
+nuxsec sample "sample_d:scratch/out/lists/sample_d.txt"
 ```
 
 Outputs:
 
 ```
-build/out/sample/sample_root_<sample>.root
-build/out/sample/samples.tsv
+scratch/out/sample/sample_root_<sample>.root
+scratch/out/sample/samples.tsv
 ```
 
-The `build/out/sample/` artefacts can feed event-level aggregation or be snapshotted for
+The `scratch/out/sample/` artefacts can feed event-level aggregation or be snapshotted for
 CNN training (for example, copying the per-sample ROOT outputs into a dedicated training
 dataset directory alongside a curated `samples.tsv`).
 
@@ -165,7 +165,7 @@ Maintain two disjoint sample aggregations (training/template), but keep the logi
 names consistent between them so normalisations stay aligned with the logical samples.
 
 ```bash
-base_dir="build/out/sample_sets"
+base_dir="scratch/out/sample_sets"
 sample_kinds=(sample_a sample_b sample_c sample_d)
 
 build_sample_set() {
@@ -176,11 +176,11 @@ build_sample_set() {
   mkdir -p "${list_dir}" "${out_dir}"
 
   for origin in "${sample_kinds[@]}"; do
-    ls "build/out/art/art_prov_${origin}_${set_name}"*.root > "${list_dir}/${origin}_${set_name}.txt"
+    ls "scratch/out/art/art_prov_${origin}_${set_name}"*.root > "${list_dir}/${origin}_${set_name}.txt"
     nuxsec sample "${origin}:${list_dir}/${origin}_${set_name}.txt"
   done
 
-  mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${out_dir}/"
+  mv scratch/out/sample/sample_root_* scratch/out/sample/samples.tsv "${out_dir}/"
 }
 
 # Training lists/samples (only training partitions)
@@ -194,35 +194,35 @@ If you do not want to define a helper function, run the commands explicitly (sti
 train/template partitions separate):
 
 ```bash
-base_dir="build/out/sample_sets"
+base_dir="scratch/out/sample_sets"
 
 mkdir -p "${base_dir}/lists/train" "${base_dir}/samples/train"
-ls "build/out/art/art_prov_sample_a_train"*.root > "${base_dir}/lists/train/sample_a_train.txt"
+ls "scratch/out/art/art_prov_sample_a_train"*.root > "${base_dir}/lists/train/sample_a_train.txt"
 nuxsec sample "sample_a:${base_dir}/lists/train/sample_a_train.txt"
-ls "build/out/art/art_prov_sample_b_train"*.root > "${base_dir}/lists/train/sample_b_train.txt"
+ls "scratch/out/art/art_prov_sample_b_train"*.root > "${base_dir}/lists/train/sample_b_train.txt"
 nuxsec sample "sample_b:${base_dir}/lists/train/sample_b_train.txt"
-ls "build/out/art/art_prov_sample_c_train"*.root > "${base_dir}/lists/train/sample_c_train.txt"
+ls "scratch/out/art/art_prov_sample_c_train"*.root > "${base_dir}/lists/train/sample_c_train.txt"
 nuxsec sample "sample_c:${base_dir}/lists/train/sample_c_train.txt"
-ls "build/out/art/art_prov_sample_d_train"*.root > "${base_dir}/lists/train/sample_d_train.txt"
+ls "scratch/out/art/art_prov_sample_d_train"*.root > "${base_dir}/lists/train/sample_d_train.txt"
 nuxsec sample "sample_d:${base_dir}/lists/train/sample_d_train.txt"
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${base_dir}/samples/train/"
+mv scratch/out/sample/sample_root_* scratch/out/sample/samples.tsv "${base_dir}/samples/train/"
 
 mkdir -p "${base_dir}/lists/template" "${base_dir}/samples/template"
-ls "build/out/art/art_prov_sample_a_template"*.root > "${base_dir}/lists/template/sample_a_template.txt"
+ls "scratch/out/art/art_prov_sample_a_template"*.root > "${base_dir}/lists/template/sample_a_template.txt"
 nuxsec sample "sample_a:${base_dir}/lists/template/sample_a_template.txt"
-ls "build/out/art/art_prov_sample_b_template"*.root > "${base_dir}/lists/template/sample_b_template.txt"
+ls "scratch/out/art/art_prov_sample_b_template"*.root > "${base_dir}/lists/template/sample_b_template.txt"
 nuxsec sample "sample_b:${base_dir}/lists/template/sample_b_template.txt"
-ls "build/out/art/art_prov_sample_c_template"*.root > "${base_dir}/lists/template/sample_c_template.txt"
+ls "scratch/out/art/art_prov_sample_c_template"*.root > "${base_dir}/lists/template/sample_c_template.txt"
 nuxsec sample "sample_c:${base_dir}/lists/template/sample_c_template.txt"
-ls "build/out/art/art_prov_sample_d_template"*.root > "${base_dir}/lists/template/sample_d_template.txt"
+ls "scratch/out/art/art_prov_sample_d_template"*.root > "${base_dir}/lists/template/sample_d_template.txt"
 nuxsec sample "sample_d:${base_dir}/lists/template/sample_d_template.txt"
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${base_dir}/samples/template/"
+mv scratch/out/sample/sample_root_* scratch/out/sample/samples.tsv "${base_dir}/samples/template/"
 ```
 
 This keeps the filesystem layout tidy:
 
 ```
-build/out/sample_sets/
+scratch/out/sample_sets/
 ├── lists/
 │   ├── train/
 │   └── template/
@@ -232,7 +232,7 @@ build/out/sample_sets/
 ```
 
 Use the training snapshot for CNN workflows, and pass
-`build/out/sample_sets/samples/template/samples.tsv` downstream for event-level aggregation and plotting.
+`scratch/out/sample_sets/samples/template/samples.tsv` downstream for event-level aggregation and plotting.
 
 3) **Samples → event-level output (compiled analysis)**
 
@@ -242,7 +242,7 @@ before running the CLI. The event builder writes a single ROOT file containing t
 event-level tree plus metadata for the aggregated samples.
 
 ```bash
-nuxsec event build/out/sample_sets/samples/template/samples.tsv build/out/event/events.root
+nuxsec event scratch/out/sample_sets/samples/template/samples.tsv scratch/out/event/events.root
 ```
 
 4) **Plotting via macros**

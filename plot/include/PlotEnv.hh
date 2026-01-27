@@ -7,7 +7,7 @@
  *  Conventions:
  *    - All *relative* plot outputs are rooted under NUXSEC_PLOT_DIR.
  *    - Defaults:
- *        NUXSEC_PLOT_DIR    = <repo>/build/plot
+ *        NUXSEC_PLOT_DIR    = <repo>/scratch/plot
  *        NUXSEC_PLOT_FORMAT = pdf
  *
  *  The CLI sets NUXSEC_REPO_ROOT and (if unset) NUXSEC_PLOT_DIR so plots land
@@ -51,7 +51,7 @@ inline std::filesystem::path plot_output_dir_path()
     {
         return std::filesystem::path(e);
     }
-    return repo_root_dir() / "build" / "plot";
+    return repo_root_dir() / "scratch" / "plot";
 }
 
 inline std::string plot_output_dir()

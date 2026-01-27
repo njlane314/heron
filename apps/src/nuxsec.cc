@@ -28,7 +28,7 @@ const char *kUsageMacro =
     "Usage: nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
     "\nEnvironment:\n"
-    "  NUXSEC_PLOT_DIR     Output directory (default: <repo>/build/plot)\n"
+    "  NUXSEC_PLOT_DIR     Output directory (default: <repo>/scratch/plot)\n"
     "  NUXSEC_PLOT_FORMAT  Output extension (default: pdf)\n";
 
 bool is_help_arg(const std::string &arg)
@@ -155,7 +155,7 @@ void ensure_plot_env(const std::filesystem::path &repo_root)
     }
     if (!gSystem->Getenv("NUXSEC_PLOT_DIR"))
     {
-        const auto out = (repo_root / "build" / "plot").string();
+        const auto out = (repo_root / "scratch" / "plot").string();
         gSystem->Setenv("NUXSEC_PLOT_DIR", out.c_str());
     }
 }

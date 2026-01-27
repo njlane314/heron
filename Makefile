@@ -91,6 +91,3 @@ $(OBJ_DIR)/%.o: %.cc
 
 clean:
 	rm -rf build/lib build/bin build/obj
-
-restart:
-	rm -rf build/out

@@ -25,4 +25,4 @@ nuxsec sample "beam:scratch/out/sample-lists/numi_fhc_run1_sample_beam.list"
 nuxsec sample "strangeness:scratch/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples
-nuxsec event scratch/out/sample/samples.tsv scratch/out/ana/events.root
+nuxsec event scratch/out/template/event/events.root

@@ -73,7 +73,7 @@ inline const char *level_colour(const Level level)
         return "\033[1;31m";
     case Level::kInfo:
     default:
-        return "\033[1;36m";
+        return "\033[1;37m";
     }
 }
 
@@ -117,7 +117,7 @@ inline void log_line(const std::string &log_prefix,
     const std::string level_label = level_name(level);
     if (use_colour())
     {
-        out << decorate(prefix, "\033[1;34m") << " "
+        out << decorate(prefix, "\033[1;90m") << " "
             << decorate(level_label, level_colour(level)) << " ";
     }
     else

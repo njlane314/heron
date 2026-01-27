@@ -3,21 +3,26 @@
 #define NUXSEC_APPS_APP_UTILS_H
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cerrno>
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <mutex>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <unistd.h>
 
 #include "AppLog.hh"
 
@@ -153,6 +158,7 @@ public:
         : log_prefix_(log_prefix),
           message_(message),
           interval_(interval),
+          start_time_(std::chrono::steady_clock::now()),
           worker_(&StatusMonitor::run_loop, this)
     {
     }
@@ -188,13 +194,53 @@ private:
             {
                 break;
             }
-            nuxsec::app::log::log_info(log_prefix_, message_);
+            std::ostringstream out;
+            out << message_
+                << " host=" << resolve_hostname()
+                << " pid=" << ::getpid()
+                << " time=" << format_timestamp()
+                << " elapsed=" << format_elapsed_seconds() << "s"
+                << " interval=" << interval_.count() << "s";
+            nuxsec::app::log::log_info(log_prefix_, out.str());
         }
+    }
+
+    std::string resolve_hostname() const
+    {
+        std::array<char, 256> buffer{};
+        if (::gethostname(buffer.data(), buffer.size()) != 0)
+        {
+            return "unknown";
+        }
+        buffer.back() = '\0';
+        return std::string(buffer.data());
+    }
+
+    std::string format_timestamp() const
+    {
+        const auto now = std::chrono::system_clock::now();
+        const std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+        std::tm tm_snapshot;
+#if defined(_WIN32)
+        localtime_s(&tm_snapshot, &now_time);
+#else
+        localtime_r(&now_time, &tm_snapshot);
+#endif
+        std::ostringstream out;
+        out << std::put_time(&tm_snapshot, "%Y-%m-%dT%H:%M:%S%z");
+        return out.str();
+    }
+
+    long long format_elapsed_seconds() const
+    {
+        const auto elapsed = std::chrono::steady_clock::now() - start_time_;
+        return std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
     }
 
     std::string log_prefix_;
     std::string message_;
     std::chrono::seconds interval_;
+    std::chrono::steady_clock::time_point start_time_;
     std::mutex mutex_;
     std::condition_variable cv_;
     bool done_ = false;

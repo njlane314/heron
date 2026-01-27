@@ -189,35 +189,28 @@ Maintain two disjoint sample aggregations and stage them into separate directori
 training set never overlaps the template/plotting set.
 
 ```bash
-mkdir -p build/out/lists_train build/out/lists_template
+sample_kinds=(sample_a sample_b sample_c sample_d)
 
-# Train lists (only training partitions)
-for origin in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${origin}_train*.root > build/out/lists_train/${origin}_train.txt
-done
+build_sample_set() {
+  local set_name=$1
+  local list_dir="build/out/lists_${set_name}"
+  local out_dir="build/out/sample_${set_name}"
 
-# Template lists (disjoint from training)
-for origin in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${origin}_template*.root > build/out/lists_template/${origin}_template.txt
-done
-```
+  mkdir -p "${list_dir}" "${out_dir}"
 
-Aggregate each set and archive the outputs:
+  for origin in "${sample_kinds[@]}"; do
+    ls "build/out/art/art_prov_${origin}_${set_name}"*.root > "${list_dir}/${origin}_${set_name}.txt"
+    nuxsec sample "${origin}_${set_name}:${list_dir}/${origin}_${set_name}.txt"
+  done
 
-```bash
-# Training samples/TSV
-for origin in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${origin}_train:build/out/lists_train/${origin}_train.txt"
-done
-mkdir -p build/out/sample_train
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_train/
+  mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${out_dir}/"
+}
 
-# Template samples/TSV
-for origin in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${origin}_template:build/out/lists_template/${origin}_template.txt"
-done
-mkdir -p build/out/sample_template
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_template/
+# Training lists/samples (only training partitions)
+build_sample_set train
+
+# Template lists/samples (disjoint from training)
+build_sample_set template
 ```
 
 Use the training snapshot for CNN workflows, and pass

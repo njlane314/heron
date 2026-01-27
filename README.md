@@ -58,11 +58,6 @@ apps/  CLI entrypoints that orchestrate the pipeline
 ## Build
 
 ```bash
-source .container.sh
-source .setup.sh
-```
-
-```bash
 make
 ```
 
@@ -98,6 +93,7 @@ Run 'nuxsec <command> --help' for command-specific usage.
 ## Runtime environment
 
 ```bash
+source .container.sh
 source .setup.sh
 ```
 

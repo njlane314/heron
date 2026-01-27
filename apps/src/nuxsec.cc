@@ -91,6 +91,8 @@ GlobalOptions parse_global(int &i, int argc, char **argv)
 void print_main_help(std::ostream &out)
 {
     out << kMainBanner << "\n"
+        << "Neutrino cross-section analysis CLI for provenance, samples, events,\n"
+        << "and plots.\n\n"
         << "Usage: nuxsec <command> [args]\n\n"
         << "Commands:\n"
         << "  art         Aggregate art provenance for an input\n"

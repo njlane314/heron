@@ -145,6 +145,19 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     }
 
     const std::string tree_name = sample_tree_name(sample_name, tree_prefix);
+    if (!overwrite_if_exists)
+    {
+        std::unique_ptr<TFile> check_file(TFile::Open(m_path.c_str(), "READ"));
+        if (check_file && check_file->Get(tree_name.c_str()))
+        {
+            std::cerr << "[EventIO] stage=snapshot_skip_existing"
+                      << " sample=" << sample_name
+                      << " tree=" << tree_name
+                      << " output=" << m_path
+                      << "\n";
+            return 0;
+        }
+    }
 
     // Snapshot to a fresh temp file (RECREATE) to avoid Snapshot+UPDATE corner-cases.
     // Then merge the temp file into the real output file with TFileMerger.

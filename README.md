@@ -161,22 +161,23 @@ dataset directory alongside a curated `samples.tsv`).
 
 **Training vs template sample sets (recommended handoff)**
 
-Maintain two disjoint sample aggregations and stage them into separate directories so the
-training set never overlaps the template/plotting set.
+Maintain two disjoint sample aggregations (training/template), but keep the logical sample
+names consistent between them so normalisations stay aligned with the logical samples.
 
 ```bash
+base_dir="build/out/sample_sets"
 sample_kinds=(sample_a sample_b sample_c sample_d)
 
 build_sample_set() {
   local set_name=$1
-  local list_dir="build/out/lists_${set_name}"
-  local out_dir="build/out/sample_${set_name}"
+  local list_dir="${base_dir}/lists/${set_name}"
+  local out_dir="${base_dir}/samples/${set_name}"
 
   mkdir -p "${list_dir}" "${out_dir}"
 
   for origin in "${sample_kinds[@]}"; do
     ls "build/out/art/art_prov_${origin}_${set_name}"*.root > "${list_dir}/${origin}_${set_name}.txt"
-    nuxsec sample "${origin}_${set_name}:${list_dir}/${origin}_${set_name}.txt"
+    nuxsec sample "${origin}:${list_dir}/${origin}_${set_name}.txt"
   done
 
   mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${out_dir}/"
@@ -189,8 +190,20 @@ build_sample_set train
 build_sample_set template
 ```
 
+This keeps the filesystem layout tidy:
+
+```
+build/out/sample_sets/
+├── lists/
+│   ├── train/
+│   └── template/
+└── samples/
+    ├── train/
+    └── template/
+```
+
 Use the training snapshot for CNN workflows, and pass
-`build/out/sample_template/samples.tsv` downstream for event-level aggregation and plotting.
+`build/out/sample_sets/samples/template/samples.tsv` downstream for event-level aggregation and plotting.
 
 3) **Samples → event-level output (compiled analysis)**
 
@@ -200,7 +213,7 @@ before running the CLI. The event builder writes a single ROOT file containing t
 event-level tree plus metadata for the aggregated samples.
 
 ```bash
-nuxsec event build/out/sample_template/samples.tsv build/out/event/events.root
+nuxsec event build/out/sample_sets/samples/template/samples.tsv build/out/event/events.root
 ```
 
 4) **Plotting via macros**

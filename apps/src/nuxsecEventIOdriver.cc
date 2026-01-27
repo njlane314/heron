@@ -162,7 +162,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                                                 "events");
 
         std::ostringstream log_message;
-        log_message << "analysis=" << analysis.name()
+        log_message << "action=event_snapshot status=complete analysis=" << analysis.name()
                     << " sample=" << sample.sample_name
                     << " kind=" << nuxsec::sample::SampleIO::sample_origin_name(sample.origin)
                     << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)

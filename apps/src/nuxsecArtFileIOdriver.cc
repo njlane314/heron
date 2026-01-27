@@ -54,7 +54,7 @@ int run(const art::Args &art_args, const std::string &log_prefix)
     rec.scale = 1;
 
     std::ostringstream log_message;
-    log_message << "add input=" << rec.input.input_name
+    log_message << "action=input_register status=complete input=" << rec.input.input_name
                 << " files=" << rec.input_files.size()
                 << " pairs=" << rec.summary.unique_pairs.size()
                 << " pot_sum=" << rec.summary.pot_sum;

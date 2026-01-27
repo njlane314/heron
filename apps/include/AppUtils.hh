@@ -103,7 +103,7 @@ inline int run_guarded(const std::string &log_prefix, const std::function<int()>
     }
     catch (const std::exception &e)
     {
-        nuxsec::app::log::log_error(log_prefix, std::string("FATAL: ") + e.what());
+        nuxsec::app::log::log_error(log_prefix, std::string("fatal_error=") + e.what());
         return 1;
     }
 }

@@ -47,7 +47,7 @@ int run(const sample::Args &sample_args, const std::string &log_prefix)
     nuxsec::app::sample::update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 
     std::ostringstream log_message;
-    log_message << "sample=" << sample.sample_name
+    log_message << "action=sample_write status=complete sample=" << sample.sample_name
                 << " inputs=" << sample.inputs.size()
                 << " pot_sum=" << sample.subrun_pot_sum
                 << " db_tortgt_pot_sum=" << sample.db_tortgt_pot_sum

@@ -29,7 +29,7 @@ namespace art
 
 inline void log_scan_start(const std::string &log_prefix)
 {
-    nuxsec::app::log::log_info(log_prefix, "Scanning SubRun entries");
+    nuxsec::app::log::log_info(log_prefix, "action=subrun_scan status=start");
 }
 
 inline void log_scan_finish(const std::string &log_prefix,
@@ -37,9 +37,10 @@ inline void log_scan_finish(const std::string &log_prefix,
                             const double elapsed_seconds)
 {
     std::ostringstream out;
-    out << "Completed scan of " << nuxsec::app::log::format_count(total)
-        << " entries in " << std::fixed << std::setprecision(1)
-        << elapsed_seconds << "s";
+    out << "action=subrun_scan status=complete entries="
+        << nuxsec::app::log::format_count(total)
+        << " elapsed_s=" << std::fixed << std::setprecision(1)
+        << elapsed_seconds;
     nuxsec::app::log::log_success(log_prefix, out.str());
 }
 

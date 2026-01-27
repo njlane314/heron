@@ -41,8 +41,8 @@ inline void log_event_start(const std::string &log_prefix, const size_t sample_c
 {
     nuxsec::app::log::log_info(
         log_prefix,
-        "Building events for " + nuxsec::app::log::format_count(static_cast<long long>(sample_count)) +
-            " samples");
+        "action=event_build status=start samples=" +
+            nuxsec::app::log::format_count(static_cast<long long>(sample_count)));
 }
 
 inline void log_event_finish(const std::string &log_prefix,
@@ -50,10 +50,10 @@ inline void log_event_finish(const std::string &log_prefix,
                              const double elapsed_seconds)
 {
     std::ostringstream out;
-    out << "Completed event build for "
+    out << "action=event_build status=complete samples="
         << nuxsec::app::log::format_count(static_cast<long long>(sample_count))
-        << " samples in " << std::fixed << std::setprecision(1)
-        << elapsed_seconds << "s";
+        << " elapsed_s=" << std::fixed << std::setprecision(1)
+        << elapsed_seconds;
     nuxsec::app::log::log_success(log_prefix, out.str());
 }
 

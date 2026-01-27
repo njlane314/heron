@@ -141,8 +141,8 @@ inline void log_sample_start(const std::string &log_prefix, const size_t file_co
 {
     nuxsec::app::log::log_info(
         log_prefix,
-        "Building sample from " + nuxsec::app::log::format_count(static_cast<long long>(file_count)) +
-            " files");
+        "action=sample_build status=start files=" +
+            nuxsec::app::log::format_count(static_cast<long long>(file_count)));
 }
 
 inline void log_sample_finish(const std::string &log_prefix,
@@ -150,10 +150,10 @@ inline void log_sample_finish(const std::string &log_prefix,
                               const double elapsed_seconds)
 {
     std::ostringstream out;
-    out << "Completed sample build from "
+    out << "action=sample_build status=complete inputs="
         << nuxsec::app::log::format_count(static_cast<long long>(input_count))
-        << " inputs in " << std::fixed << std::setprecision(1)
-        << elapsed_seconds << "s";
+        << " elapsed_s=" << std::fixed << std::setprecision(1)
+        << elapsed_seconds;
     nuxsec::app::log::log_success(log_prefix, out.str());
 }
 

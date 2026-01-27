@@ -189,35 +189,25 @@ Maintain two disjoint sample aggregations and stage them into separate directori
 training set never overlaps the template/plotting set.
 
 ```bash
-mkdir -p build/out/lists_train build/out/lists_template
+sample_kinds=(sample_a sample_b sample_c sample_d)
 
-# Train lists (only training partitions)
-for kind in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${kind}_train*.root > build/out/lists_train/${kind}_train.txt
-done
+build_sample_set() {
+  local suffix="$1"
+  local list_dir="build/out/lists_${suffix}"
+  local sample_dir="build/out/sample_${suffix}"
 
-# Template lists (disjoint from training)
-for kind in sample_a sample_b sample_c sample_d; do
-  ls build/out/art/art_prov_${kind}_template*.root > build/out/lists_template/${kind}_template.txt
-done
-```
+  mkdir -p "${list_dir}" "${sample_dir}"
 
-Aggregate each set and archive the outputs:
+  for kind in "${sample_kinds[@]}"; do
+    ls "build/out/art/art_prov_${kind}_${suffix}"*.root > "${list_dir}/${kind}_${suffix}.txt"
+    nuxsec sample "${kind}_${suffix}:${list_dir}/${kind}_${suffix}.txt"
+  done
 
-```bash
-# Training samples/TSV
-for kind in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${kind}_train:build/out/lists_train/${kind}_train.txt"
-done
-mkdir -p build/out/sample_train
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_train/
+  mv build/out/sample/sample_root_* build/out/sample/samples.tsv "${sample_dir}/"
+}
 
-# Template samples/TSV
-for kind in sample_a sample_b sample_c sample_d; do
-  nuxsec sample "${kind}_template:build/out/lists_template/${kind}_template.txt"
-done
-mkdir -p build/out/sample_template
-mv build/out/sample/sample_root_* build/out/sample/samples.tsv build/out/sample_template/
+build_sample_set train
+build_sample_set template
 ```
 
 Use the training snapshot for CNN workflows, and pass

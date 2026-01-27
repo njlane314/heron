@@ -16,6 +16,7 @@
 #include <system_error>
 #include <vector>
 
+#include <Compression.h>
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RSnapshotOptions.hxx>
 
@@ -146,7 +147,12 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     options.fMode = "UPDATE";
     options.fOverwriteIfExists = overwrite_if_exists;
     options.fLazy = true;
-    options.fAutoFlush = 100000;
+    // Make snapshot writing less bursty and less CPU-heavy:
+    //  - LZ4 is typically much faster than ZLIB for analysis ntuples
+    //  - negative AutoFlush => flush by buffer size (bytes), smoothing long stalls
+    options.fCompressionAlgorithm = ROOT::kLZ4;
+    options.fCompressionLevel = 1;
+    options.fAutoFlush = -50LL * 1024 * 1024; // ~50 MB
 
     auto count = filtered.Count();
     constexpr ULong64_t progress_every = 1000;

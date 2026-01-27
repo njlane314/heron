@@ -228,7 +228,7 @@ ULong64_t EventIO::snapshot_event_list_merged(ROOT::RDF::RNode node,
     ROOT::RDF::RSnapshotOptions options;
     options.fMode = "RECREATE";
     options.fOverwriteIfExists = false;
-    options.fLazy = false;
+    options.fLazy = true;
     options.fCompressionAlgorithm = ROOT::kLZ4;
     options.fCompressionLevel = 1;
     options.fAutoFlush = -50LL * 1024 * 1024; // ~50 MB
@@ -255,7 +255,6 @@ ULong64_t EventIO::snapshot_event_list_merged(ROOT::RDF::RNode node,
               << " sample=" << sample_name
               << " tmp_file=" << tmp_file
               << "\n";
-    ROOT::RDF::RunGraphs({count, snapshot});
     (void)snapshot.GetValue();
 
     std::cerr << "[EventIO] stage=append_begin"

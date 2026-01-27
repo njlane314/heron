@@ -20,6 +20,7 @@
 #include <TFile.h>
 #include <TTree.h>
 
+#include "AppLog.hh"
 #include "AppUtils.hh"
 #include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
@@ -36,39 +37,24 @@ namespace app
 namespace event
 {
 
-inline std::string format_count(const size_t count)
-{
-    std::ostringstream out;
-    if (count >= 1000000)
-    {
-        out << std::fixed << std::setprecision(1)
-            << (static_cast<double>(count) / 1000000.0) << "M";
-    }
-    else if (count >= 1000)
-    {
-        out << (count / 1000) << "k";
-    }
-    else
-    {
-        out << count;
-    }
-    return out.str();
-}
-
 inline void log_event_start(const std::string &log_prefix, const size_t sample_count)
 {
-    std::cerr << "[" << log_prefix << "] "
-              << "Building events for " << format_count(sample_count) << " samples\n";
+    nuxsec::app::log::log_info(
+        log_prefix,
+        "Building events for " + nuxsec::app::log::format_count(static_cast<long long>(sample_count)) +
+            " samples");
 }
 
 inline void log_event_finish(const std::string &log_prefix,
                              const size_t sample_count,
                              const double elapsed_seconds)
 {
-    std::cerr << "[" << log_prefix << "] "
-              << "Completed event build for " << format_count(sample_count) << " samples in "
-              << std::fixed << std::setprecision(1)
-              << elapsed_seconds << "s\n";
+    std::ostringstream out;
+    out << "Completed event build for "
+        << nuxsec::app::log::format_count(static_cast<long long>(sample_count))
+        << " samples in " << std::fixed << std::setprecision(1)
+        << elapsed_seconds << "s";
+    nuxsec::app::log::log_success(log_prefix, out.str());
 }
 
 inline void ensure_tree_present(const nuxsec::sample::SampleIO::Sample &sample,

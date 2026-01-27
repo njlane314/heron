@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "AppLog.hh"
+
 namespace nuxsec
 {
 
@@ -93,7 +95,7 @@ inline std::filesystem::path stage_output_dir(const char *override_env, const st
     return out_base_dir() / workspace_set() / stage;
 }
 
-inline int run_guarded(const std::function<int()> &func)
+inline int run_guarded(const std::string &log_prefix, const std::function<int()> &func)
 {
     try
     {
@@ -101,9 +103,14 @@ inline int run_guarded(const std::function<int()> &func)
     }
     catch (const std::exception &e)
     {
-        std::cerr << "FATAL: " << e.what() << "\n";
+        nuxsec::app::log::log_error(log_prefix, std::string("FATAL: ") + e.what());
         return 1;
     }
+}
+
+inline int run_guarded(const std::function<int()> &func)
+{
+    return run_guarded("nuxsec", func);
 }
 
 inline std::vector<std::string> read_paths(const std::string &filelist_path)

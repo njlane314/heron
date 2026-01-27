@@ -628,6 +628,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
 int main(int argc, char **argv)
 {
     return nuxsec::app::run_guarded(
+        "nuxsec",
         [argc, argv]()
         {
             int i = 1;

@@ -2,7 +2,8 @@
 # Copy a single line as needed for a specific partition/sample or an entire input.
 
 # Input 0: build filelists for each partition (uses scripts/partition-lists.sh defaults)
-USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 scripts/partition-lists.sh
+USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 
+source scripts/partition-lists.sh
 
 # Input 1: art (single partition)
 nuxsec art "beam_s0:scratch/out/filelists/beam_s0.list:overlay:numi"

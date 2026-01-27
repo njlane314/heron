@@ -98,7 +98,8 @@ inline std::string format_count(const long long count)
     }
     else if (count >= 1000)
     {
-        out << (count / 1000) << "k";
+        out << std::fixed << std::setprecision(1)
+            << (static_cast<double>(count) / 1000.0) << "k";
     }
     else
     {
@@ -116,7 +117,7 @@ inline void log_line(const std::string &log_prefix,
     const std::string level_label = level_name(level);
     if (use_colour())
     {
-        out << decorate(prefix, "\033[1;35m") << " "
+        out << decorate(prefix, "\033[1;34m") << " "
             << decorate(level_label, level_colour(level)) << " ";
     }
     else

@@ -5,26 +5,26 @@
 USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 scripts/partition-lists.sh
 
 # Input 1: art (single partition)
-nuxsec art "beam_s0:build/out/filelists/beam_s0.list:overlay:numi"
-nuxsec art "beam_s1:build/out/filelists/beam_s1.list:overlay:numi"
-nuxsec art "beam_s2:build/out/filelists/beam_s2.list:overlay:numi"
-nuxsec art "beam_s3:build/out/filelists/beam_s3.list:overlay:numi"
-nuxsec art "dirt_s0:build/out/filelists/dirt_s0.list:dirt:numi"
-nuxsec art "dirt_s1:build/out/filelists/dirt_s1.list:dirt:numi"
-nuxsec art "strangeness_run1_fhc:build/out/filelists/strangeness_run1_fhc.list:strangeness:numi"
-nuxsec art "ext_p0:build/out/filelists/ext_p0.list:ext:numi"
-nuxsec art "ext_p1:build/out/filelists/ext_p1.list:ext:numi"
-nuxsec art "ext_p2:build/out/filelists/ext_p2.list:ext:numi"
+nuxsec art "beam_s0:scratch/out/filelists/beam_s0.list:overlay:numi"
+nuxsec art "beam_s1:scratch/out/filelists/beam_s1.list:overlay:numi"
+nuxsec art "beam_s2:scratch/out/filelists/beam_s2.list:overlay:numi"
+nuxsec art "beam_s3:scratch/out/filelists/beam_s3.list:overlay:numi"
+nuxsec art "dirt_s0:scratch/out/filelists/dirt_s0.list:dirt:numi"
+nuxsec art "dirt_s1:scratch/out/filelists/dirt_s1.list:dirt:numi"
+nuxsec art "strangeness_run1_fhc:scratch/out/filelists/strangeness_run1_fhc.list:strangeness:numi"
+nuxsec art "ext_p0:scratch/out/filelists/ext_p0.list:ext:numi"
+nuxsec art "ext_p1:scratch/out/filelists/ext_p1.list:ext:numi"
+nuxsec art "ext_p2:scratch/out/filelists/ext_p2.list:ext:numi"
 
 # Input 2: sample lists (group art outputs into logical samples)
 bash scripts/sample-lists.sh
 
 # Input 2: sample (single sample)
-nuxsec sample "beam:build/out/sample-lists/numi_fhc_run1_sample_beam.list"
-nuxsec sample "strangeness:build/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
+nuxsec sample "beam:scratch/out/sample-lists/numi_fhc_run1_sample_beam.list"
+nuxsec sample "strangeness:scratch/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
 
 # Input 2 (batch): run all sample entries
-nuxsec sample "beam:build/out/sample-lists/numi_fhc_run1_sample_beam.list"
+nuxsec sample "beam:scratch/out/sample-lists/numi_fhc_run1_sample_beam.list"
 
 # Input 4: event (build event lists from sample list)
-nuxsec event build/out/sample/samples.tsv build/out/ana/events.root 8
+nuxsec event scratch/out/sample/samples.tsv scratch/out/ana/events.root 8

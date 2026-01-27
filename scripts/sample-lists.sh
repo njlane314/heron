@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_DIR="build/out/sample-lists"
-ART_DIR="build/out/art"
+OUTPUT_DIR="scratch/out/sample-lists"
+ART_DIR="scratch/out/art"
 
 mkdir -p "${OUTPUT_DIR}"
 

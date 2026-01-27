@@ -196,8 +196,8 @@ inline Args parse_input(const std::string &input)
         throw std::runtime_error("Bad sample definition: " + input);
     }
 
-    out.output_path = "build/out/sample/sample_root_" + out.sample_name + ".root";
-    out.sample_list_path = "build/out/sample/samples.tsv";
+    out.output_path = "scratch/out/sample/sample_root_" + out.sample_name + ".root";
+    out.sample_list_path = "scratch/out/sample/samples.tsv";
 
     return out;
 }

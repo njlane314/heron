@@ -125,7 +125,7 @@ inline Args parse_input(const std::string &input)
         throw std::runtime_error("Bad input definition (expected NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]): " + input);
     }
 
-    out.art_path = "build/out/art/art_prov_" + out.input.input_name + ".root";
+    out.art_path = "scratch/out/art/art_prov_" + out.input.input_name + ".root";
 
     return out;
 }

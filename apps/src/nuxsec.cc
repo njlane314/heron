@@ -34,6 +34,14 @@ const char *kUsageMacro =
     "  NUXSEC_PLOT_FORMAT  Output extension (default: pdf)\n"
     "  NUXSEC_SET          Workspace selector (default: template)\n";
 
+const char *kMainBanner =
+    "███╗   ██╗██╗   ██╗██╗  ██╗███████╗███████╗ ██████╗\n"
+    "████╗  ██║██║   ██║╚██╗██╔╝██╔════╝██╔════╝██╔════╝\n"
+    "██╔██╗ ██║██║   ██║ ╚███╔╝ ███████╗█████╗  ██║     \n"
+    "██║╚██╗██║██║   ██║ ██╔██╗ ╚════██║██╔══╝  ██║     \n"
+    "██║ ╚████║╚██████╔╝██╔╝ ██╗███████║███████╗╚██████╗\n"
+    "╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝\n";
+
 bool is_help_arg(const std::string &arg)
 {
     return arg == "-h" || arg == "--help";
@@ -82,7 +90,8 @@ GlobalOptions parse_global(int &i, int argc, char **argv)
 
 void print_main_help(std::ostream &out)
 {
-    out << "Usage: nuxsec <command> [args]\n\n"
+    out << kMainBanner << "\n"
+        << "Usage: nuxsec <command> [args]\n\n"
         << "Commands:\n"
         << "  art         Aggregate art provenance for an input\n"
         << "  sample      Aggregate Sample ROOT files from art provenance\n"

@@ -128,57 +128,61 @@ const char *getenv_cstr(const char *name)
     return value;
 }
 
-std::string workspace_set()
+std::string string_from_env_or_default(const char *name,
+                                       const std::string &fallback)
 {
-    if (const char *value = getenv_cstr("NUXSEC_SET"))
+    if (const char *value = getenv_cstr(name))
     {
         return std::string(value);
     }
-    return "template";
+    return fallback;
+}
+
+std::filesystem::path path_from_env_or_default(
+    const char *name,
+    const std::filesystem::path &fallback)
+{
+    if (const char *value = getenv_cstr(name))
+    {
+        return std::filesystem::path(value);
+    }
+    return fallback;
+}
+
+std::string workspace_set()
+{
+    return string_from_env_or_default("NUXSEC_SET", "template");
 }
 
 std::filesystem::path out_base_dir(const std::filesystem::path &repo_root)
 {
-    if (const char *value = getenv_cstr("NUXSEC_OUT_BASE"))
-    {
-        return std::filesystem::path(value);
-    }
-    return repo_root / "scratch" / "out";
+    return path_from_env_or_default("NUXSEC_OUT_BASE",
+                                    repo_root / "scratch" / "out");
 }
 
 std::filesystem::path plot_base_dir(const std::filesystem::path &repo_root)
 {
-    if (const char *value = getenv_cstr("NUXSEC_PLOT_BASE"))
-    {
-        return std::filesystem::path(value);
-    }
-    return repo_root / "scratch" / "plot";
+    return path_from_env_or_default("NUXSEC_PLOT_BASE",
+                                    repo_root / "scratch" / "plot");
 }
 
 std::filesystem::path stage_dir(const std::filesystem::path &repo_root,
                                 const char *override_env,
                                 const std::string &stage)
 {
-    if (const char *value = getenv_cstr(override_env))
-    {
-        return std::filesystem::path(value);
-    }
-    return out_base_dir(repo_root) / workspace_set() / stage;
+    const auto fallback = out_base_dir(repo_root) / workspace_set() / stage;
+    return path_from_env_or_default(override_env, fallback);
 }
 
 std::filesystem::path plot_dir(const std::filesystem::path &repo_root)
 {
-    if (const char *value = getenv_cstr("NUXSEC_PLOT_DIR"))
-    {
-        return std::filesystem::path(value);
-    }
     std::filesystem::path out = plot_base_dir(repo_root);
     const std::string set = workspace_set();
     if (!set.empty())
     {
         out /= set;
     }
-    return out;
+    return path_from_env_or_default("NUXSEC_PLOT_DIR", out);
 }
 
 std::filesystem::path default_samples_tsv(const std::filesystem::path &repo_root)

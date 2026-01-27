@@ -214,7 +214,7 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
               << "\n";
     {
         TFileMerger merger(kTRUE, kTRUE);
-        merger.SetFastMethod(kTRUE);
+        merger.SetFastMethod(kFALSE);
         if (!merger.OutputFile(m_path.c_str(), "UPDATE"))
             throw std::runtime_error("EventIO: failed to open output for merge: " + m_path);
         if (!merger.AddFile(tmp_file.c_str()))

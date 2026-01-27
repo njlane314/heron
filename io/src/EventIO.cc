@@ -7,6 +7,7 @@
 
 #include "EventIO.hh"
 
+#include <algorithm>
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
@@ -25,6 +26,7 @@
 #include <TFile.h>
 #include <TFileMerger.h>
 #include <TObjString.h>
+#include <TObject.h>
 #include <TROOT.h>
 #include <TTree.h>
 
@@ -44,6 +46,51 @@ std::string EventIO::sanitise_root_key(std::string s)
         s = "sample";
     return s;
 }
+
+namespace
+{
+// Append entries from tmp_file:tree_name into out_path:tree_name.
+// If the output tree does not exist yet, clone the tmp tree into the output file.
+void append_tree_fast(const std::string &out_path,
+                      const std::string &tmp_file,
+                      const std::string &tree_name)
+{
+    std::unique_ptr<TFile> fin(TFile::Open(tmp_file.c_str(), "READ"));
+    if (!fin || fin->IsZombie())
+        throw std::runtime_error("EventIO: failed to open tmp snapshot file: " + tmp_file);
+
+    TTree *tin = dynamic_cast<TTree *>(fin->Get(tree_name.c_str()));
+    if (!tin)
+        throw std::runtime_error("EventIO: tmp snapshot missing tree: " + tree_name + " in " + tmp_file);
+
+    std::unique_ptr<TFile> fout(TFile::Open(out_path.c_str(), "UPDATE"));
+    if (!fout || fout->IsZombie())
+        throw std::runtime_error("EventIO: failed to open output for append: " + out_path);
+
+    TTree *tout = dynamic_cast<TTree *>(fout->Get(tree_name.c_str()));
+    fout->cd();
+
+    if (!tout)
+    {
+        // First sample: clone the entire tree into the output file.
+        std::unique_ptr<TTree> cloned(tin->CloneTree(-1, "fast"));
+        cloned->SetName(tree_name.c_str());
+        cloned->Write(tree_name.c_str(), TObject::kOverwrite);
+    }
+    else
+    {
+        // Subsequent samples: append entries.
+        // This requires identical branch structure & types across all samples.
+        tout->SetDirectory(fout.get());
+        const Long64_t n = tout->CopyEntries(tin, -1, "fast");
+        (void)n;
+        tout->Write("", TObject::kOverwrite);
+    }
+
+    fout->Close();
+    fin->Close();
+}
+} // namespace
 
 void EventIO::init(const std::string &out_path,
                    const Header &header,
@@ -82,6 +129,7 @@ void EventIO::init(const std::string &out_path,
     }
 
     TTree tref("sample_refs", "Sample references (source + POT/triggers)");
+    int sample_id = -1;
     std::string sample_name;
     std::string sample_rootio_path;
     int sample_origin = -1;
@@ -90,6 +138,7 @@ void EventIO::init(const std::string &out_path,
     double db_tortgt_pot_sum = 0.0;
     double db_tor101_pot_sum = 0.0;
 
+    tref.Branch("sample_id", &sample_id);
     tref.Branch("sample_name", &sample_name);
     tref.Branch("sample_rootio_path", &sample_rootio_path);
     tref.Branch("sample_origin", &sample_origin);
@@ -98,8 +147,10 @@ void EventIO::init(const std::string &out_path,
     tref.Branch("db_tortgt_pot_sum", &db_tortgt_pot_sum);
     tref.Branch("db_tor101_pot_sum", &db_tor101_pot_sum);
 
-    for (const auto &r : sample_refs)
+    for (size_t i = 0; i < sample_refs.size(); ++i)
     {
+        const auto &r = sample_refs[i];
+        sample_id = static_cast<int>(i);
         sample_name = r.sample_name;
         sample_rootio_path = r.sample_rootio_path;
         sample_origin = r.sample_origin;
@@ -129,6 +180,94 @@ std::string EventIO::sample_tree_name(const std::string &sample_name,
 {
     const std::string p = tree_prefix.empty() ? "events" : tree_prefix;
     return sanitise_root_key(p) + "_" + sanitise_root_key(sample_name);
+}
+
+ULong64_t EventIO::snapshot_event_list_merged(ROOT::RDF::RNode node,
+                                              int sample_id,
+                                              const std::string &sample_name,
+                                              const std::vector<std::string> &columns,
+                                              const std::string &selection,
+                                              const std::string &tree_name_in) const
+{
+    ROOT::RDF::RNode filtered = std::move(node);
+    if (!selection.empty() && selection != "true")
+        filtered = filtered.Filter(selection, "eventio_selection");
+
+    const std::string tree_name = sanitise_root_key(tree_name_in.empty() ? "events" : tree_name_in);
+
+    // Tag every row with the sample id so you can recover per-sample slices later.
+    filtered = filtered.Define("sample_id", [sample_id]() { return sample_id; });
+
+    // Ensure sample_id is actually persisted.
+    std::vector<std::string> snapshot_cols = columns;
+    if (std::find(snapshot_cols.begin(), snapshot_cols.end(), "sample_id") == snapshot_cols.end())
+        snapshot_cols.push_back("sample_id");
+
+    // Snapshot each sample to a fresh temp file (RECREATE), then append into out tree.
+    std::filesystem::path tmp_dir;
+    if (const char *p = std::getenv("NUXSEC_TMPDIR"); p && *p)
+        tmp_dir = p;
+    else if (const char *p = std::getenv("TMPDIR"); p && *p)
+        tmp_dir = p;
+    else
+        tmp_dir = std::filesystem::temp_directory_path();
+
+    const std::string tmp_file =
+        (tmp_dir / ("nuxsec_snapshot_" + tree_name + "_" + sanitise_root_key(sample_name) + "_"
+                    + std::to_string(::getpid()) + ".root"))
+            .string();
+
+    ROOT::RDF::RSnapshotOptions options;
+    options.fMode = "RECREATE";
+    options.fOverwriteIfExists = false;
+    options.fLazy = false;
+    options.fCompressionAlgorithm = ROOT::kLZ4;
+    options.fCompressionLevel = 1;
+    options.fAutoFlush = -50LL * 1024 * 1024; // ~50 MB
+    options.fSplitLevel = 0;
+
+    auto count = filtered.Count();
+    constexpr ULong64_t progress_every = 1000;
+    const auto start_time = std::chrono::steady_clock::now();
+    count.OnPartialResult(progress_every,
+                          [sample_name, start_time](ULong64_t processed)
+                          {
+                              const auto now = std::chrono::steady_clock::now();
+                              const double elapsed_seconds =
+                                  std::chrono::duration_cast<std::chrono::duration<double>>(now - start_time).count();
+                              std::cerr << "[EventIO] stage=snapshot_progress"
+                                        << " sample=" << sample_name
+                                        << " processed=" << processed
+                                        << " elapsed_seconds=" << elapsed_seconds
+                                        << "\n";
+                          });
+
+    auto snapshot = filtered.Snapshot(tree_name, tmp_file, snapshot_cols, options);
+    std::cerr << "[EventIO] stage=snapshot_run"
+              << " sample=" << sample_name
+              << " tmp_file=" << tmp_file
+              << "\n";
+    ROOT::RDF::RunGraphs({count, snapshot});
+    (void)snapshot.GetValue();
+
+    std::cerr << "[EventIO] stage=append_begin"
+              << " sample=" << sample_name
+              << " tmp_file=" << tmp_file
+              << " out_file=" << m_path
+              << " tree=" << tree_name
+              << "\n";
+    append_tree_fast(m_path, tmp_file, tree_name);
+    std::cerr << "[EventIO] stage=append_done sample=" << sample_name << "\n";
+
+    {
+        std::error_code ec;
+        std::filesystem::remove(tmp_file, ec);
+        if (ec)
+            std::cerr << "[EventIO] warning=failed_to_remove_tmp_file path=" << tmp_file
+                      << " err=" << ec.message() << "\n";
+    }
+
+    return count.GetValue();
 }
 
 ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,

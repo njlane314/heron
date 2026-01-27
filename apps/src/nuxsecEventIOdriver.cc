@@ -88,9 +88,11 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     nuxsec::event::EventIO event_io(event_args.output_root,
                                     nuxsec::event::EventIO::OpenMode::kUpdate);
 
-    for (const auto &input : inputs)
+    for (size_t i = 0; i < inputs.size(); ++i)
     {
+        const auto &input = inputs[i];
         const nuxsec::sample::SampleIO::Sample &sample = input.sample;
+        const int sample_id = static_cast<int>(i);
         
         std::cerr << "[" << log_prefix << "]"
                   << " stage=ensure_tree sample=" << sample.sample_name
@@ -141,10 +143,12 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                   << "\n";
 
         const ULong64_t n_written =
-            event_io.snapshot_event_list(node,
-                                         sample.sample_name,
-                                         columns,
-                                         "");
+            event_io.snapshot_event_list_merged(node,
+                                                sample_id,
+                                                sample.sample_name,
+                                                columns,
+                                                "",
+                                                "events");
 
         std::cerr << "[" << log_prefix << "] analysis=" << analysis.name()
                   << " sample=" << sample.sample_name

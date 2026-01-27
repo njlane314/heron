@@ -66,6 +66,15 @@ public:
                                   const std::string &tree_prefix = "events",
                                   bool overwrite_if_exists = true) const;
 
+    // Write ALL samples into a single tree (default name: "events") by snapshotting each
+    // sample to a temp file and then appending its tree entries into the output file.
+    ULong64_t snapshot_event_list_merged(ROOT::RDF::RNode node,
+                                         int sample_id,
+                                         const std::string &sample_name,
+                                         const std::vector<std::string> &columns,
+                                         const std::string &selection,
+                                         const std::string &tree_name = "events") const;
+
 private:
     static std::string sanitise_root_key(std::string s);
 

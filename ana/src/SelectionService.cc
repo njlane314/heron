@@ -124,7 +124,8 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
     auto define_if_missing = [&](const char *name, auto &&f, std::initializer_list<const char *> deps) {
         if (has(name))
             return;
-        node = node.Define(name, std::forward<decltype(f)>(f), deps);
+        const std::vector<std::string> columns{deps.begin(), deps.end()};
+        node = node.Define(name, std::forward<decltype(f)>(f), columns);
         names.emplace_back(name);
     };
 
@@ -198,7 +199,8 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const Entry &
     auto define_if_missing = [&](const char *name, auto &&f, std::initializer_list<const char *> deps) {
         if (has(name))
             return;
-        node = node.Define(name, std::forward<decltype(f)>(f), deps);
+        const std::vector<std::string> columns{deps.begin(), deps.end()};
+        node = node.Define(name, std::forward<decltype(f)>(f), columns);
         names.emplace_back(name);
     };
 

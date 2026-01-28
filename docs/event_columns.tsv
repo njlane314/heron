@@ -2,6 +2,8 @@ type	name
 int	run
 int	sub
 int	evt
+bool	is_signal
+double	w_nominal
 vector<float>	detector_image_u
 vector<float>	detector_image_v
 vector<float>	detector_image_w

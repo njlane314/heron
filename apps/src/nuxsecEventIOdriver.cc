@@ -66,6 +66,8 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         "run",
         "sub",
         "evt",
+        "is_signal",
+        "w_nominal",
         "detector_image_u",
         "detector_image_v",
         "detector_image_w"
@@ -75,6 +77,8 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         {"int", "run"},
         {"int", "sub"},
         {"int", "evt"},
+        {"bool", "is_signal"},
+        {"double", "w_nominal"},
         {"vector<float>", "detector_image_u"},
         {"vector<float>", "detector_image_v"},
         {"vector<float>", "detector_image_w"}

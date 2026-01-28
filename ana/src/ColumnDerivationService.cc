@@ -217,27 +217,6 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
             {"count_strange"});
 
         node = node.Define(
-            "scattering_mode",
-            [](int mode) {
-                switch (mode)
-                {
-                case 0:
-                    return 0;
-                case 1:
-                    return 1;
-                case 2:
-                    return 2;
-                case 3:
-                    return 3;
-                case 10:
-                    return 10;
-                default:
-                    return -1;
-                }
-            },
-            {"int_mode"});
-
-        node = node.Define(
             "analysis_channels",
             [](bool fv, int nu, int ccnc, int s, int np, int npim, int npip, int npi0, int ngamma) {
                 const int npi = npim + npip;
@@ -303,7 +282,6 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
 
         node = node.Define("in_fiducial", [] { return false; });
         node = node.Define("is_strange", [] { return false; });
-        node = node.Define("scattering_mode", [] { return -1; });
         node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
         node = node.Define("is_signal", [] { return false; });
         node = node.Define("recognised_signal", [] { return false; });

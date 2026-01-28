@@ -111,7 +111,7 @@ ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const 
     }
     default:
     {
-        return apply(node, Preset::Muon, rec);
+        return node;
     }
     }
 }

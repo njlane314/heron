@@ -49,8 +49,6 @@ std::string EventIO::sanitise_root_key(std::string s)
 
 namespace
 {
-// Append entries from tmp_file:tree_name into out_path:tree_name.
-// If the output tree does not exist yet, clone the tmp tree into the output file.
 void append_tree_fast(const std::string &out_path,
                       const std::string &tmp_file,
                       const std::string &tree_name)
@@ -72,15 +70,12 @@ void append_tree_fast(const std::string &out_path,
 
     if (!tout)
     {
-        // First sample: clone the entire tree into the output file.
         std::unique_ptr<TTree> cloned(tin->CloneTree(-1, "fast"));
         cloned->SetName(tree_name.c_str());
         cloned->Write(tree_name.c_str(), TObject::kOverwrite);
     }
     else
     {
-        // Subsequent samples: append entries.
-        // This requires identical branch structure & types across all samples.
         tout->SetDirectory(fout.get());
         const Long64_t n = tout->CopyEntries(tin, -1, "fast");
         (void)n;
@@ -90,7 +85,7 @@ void append_tree_fast(const std::string &out_path,
     fout->Close();
     fin->Close();
 }
-} // namespace
+}
 
 void EventIO::init(const std::string &out_path,
                    const Header &header,
@@ -203,15 +198,12 @@ ULong64_t EventIO::snapshot_event_list_merged(ROOT::RDF::RNode node,
 
     const std::string tree_name = sanitise_root_key(tree_name_in.empty() ? "events" : tree_name_in);
 
-    // Tag every row with the sample id so you can recover per-sample slices later.
     filtered = filtered.Define("sample_id", [sample_id]() { return sample_id; });
 
-    // Ensure sample_id is actually persisted.
     std::vector<std::string> snapshot_cols = columns;
     if (std::find(snapshot_cols.begin(), snapshot_cols.end(), "sample_id") == snapshot_cols.end())
         snapshot_cols.push_back("sample_id");
 
-    // Snapshot each sample to a fresh temp file (RECREATE), then append into out tree.
     std::filesystem::path tmp_dir;
     if (const char *p = std::getenv("NUXSEC_TMPDIR"); p && *p)
         tmp_dir = p;
@@ -231,7 +223,7 @@ ULong64_t EventIO::snapshot_event_list_merged(ROOT::RDF::RNode node,
     options.fLazy = true;
     options.fCompressionAlgorithm = ROOT::kLZ4;
     options.fCompressionLevel = 1;
-    options.fAutoFlush = -50LL * 1024 * 1024; // ~50 MB
+    options.fAutoFlush = -50LL * 1024 * 1024;
     options.fSplitLevel = 0;
 
     auto count = filtered.Count();
@@ -305,8 +297,6 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
         }
     }
 
-    // Snapshot to a fresh temp file (RECREATE) to avoid Snapshot+UPDATE corner-cases.
-    // Then merge the temp file into the real output file with TFileMerger.
     std::filesystem::path tmp_dir;
     if (const char *p = std::getenv("NUXSEC_TMPDIR"); p && *p)
         tmp_dir = p;
@@ -320,15 +310,11 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
 
     ROOT::RDF::RSnapshotOptions options;
     options.fMode = "RECREATE";
-    options.fOverwriteIfExists = false; // irrelevant for RECREATE
+    options.fOverwriteIfExists = false;
     options.fLazy = true;
-    // Make snapshot writing less bursty and less CPU-heavy:
-    //  - LZ4 is typically much faster than ZLIB for analysis ntuples
-    //  - negative AutoFlush => flush by buffer size (bytes), smoothing long stalls
     options.fCompressionAlgorithm = ROOT::kLZ4;
     options.fCompressionLevel = 1;
-    options.fAutoFlush = -50LL * 1024 * 1024; // ~50 MB
-    // Avoid deep splitting (default is 99) which can explode branch count/cost for complex types.
+    options.fAutoFlush = -50LL * 1024 * 1024;
     options.fSplitLevel = 0;
 
     auto count = filtered.Count();
@@ -352,8 +338,6 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
               << " tmp_file=" << tmp_file
               << "\n";
     ROOT::RDF::RunGraphs({count, snapshot});
-    // Some ROOT builds still warn about lazy Snapshot not triggered unless the
-    // result is explicitly materialised.
     (void)snapshot.GetValue();
 
     std::cerr << "[EventIO] stage=snapshot_merge_begin"
@@ -362,9 +346,7 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
               << " out_file=" << m_path
               << "\n";
     {
-        // Avoid useCP (2nd ctor arg) which routes through TFile::Cp using "file.root:/"
-        // and can trigger spurious TUrl complaints on some ROOT versions.
-        TFileMerger merger(kTRUE, kFALSE); // local merge; disable TFile::Cp ("*.root:/") path
+        TFileMerger merger(kTRUE, kFALSE);
         merger.SetFastMethod(kFALSE);
         if (!merger.OutputFile(m_path.c_str(), "UPDATE"))
             throw std::runtime_error("EventIO: failed to open output for merge: " + m_path);
@@ -396,5 +378,5 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
     return count.GetValue();
 }
 
-} // namespace event
-} // namespace nuxsec
+}
+}

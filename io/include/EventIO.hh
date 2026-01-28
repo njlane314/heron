@@ -68,8 +68,6 @@ public:
                                   const std::string &tree_prefix = "events",
                                   bool overwrite_if_exists = true) const;
 
-    // Write ALL samples into a single tree (default name: "events") by snapshotting each
-    // sample to a temp file and then appending its tree entries into the output file.
     ULong64_t snapshot_event_list_merged(ROOT::RDF::RNode node,
                                          int sample_id,
                                          const std::string &sample_name,
@@ -85,7 +83,7 @@ private:
     OpenMode m_mode;
 };
 
-} // namespace event
-} // namespace nuxsec
+}
+}
 
-#endif // NUXSEC_EVENT_EVENTIO_H
+#endif

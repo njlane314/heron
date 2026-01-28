@@ -2,14 +2,10 @@
 #ifndef NUXSEC_APPS_APPLOG_H
 #define NUXSEC_APPS_APPLOG_H
 
-#include <cstdio>
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
-
-#include <unistd.h>
 
 namespace nuxsec
 {
@@ -28,23 +24,6 @@ enum class Level
     kError
 };
 
-inline bool use_colour()
-{
-    static int enabled = -1;
-    if (enabled >= 0)
-    {
-        return enabled != 0;
-    }
-    if (std::getenv("NO_COLOR") != nullptr ||
-        std::getenv("NUXSEC_NO_COLOUR") != nullptr)
-    {
-        enabled = 0;
-        return false;
-    }
-    enabled = (::isatty(::fileno(stderr)) != 0) ? 1 : 0;
-    return enabled != 0;
-}
-
 inline const char *level_name(const Level level)
 {
     switch (level)
@@ -59,33 +38,6 @@ inline const char *level_name(const Level level)
     default:
         return "INFO";
     }
-}
-
-inline const char *level_colour(const Level level)
-{
-    switch (level)
-    {
-    case Level::kSuccess:
-        return "\033[0;32m";
-    case Level::kWarn:
-        return "\033[0;33m";
-    case Level::kError:
-        return "\033[1;31m";
-    case Level::kInfo:
-    default:
-        return "\033[0;36m";
-    }
-}
-
-inline std::string decorate(const std::string &text, const char *colour)
-{
-    if (!use_colour())
-    {
-        return text;
-    }
-    std::ostringstream out;
-    out << colour << text << "\033[0m";
-    return out.str();
 }
 
 inline std::string format_count(const long long count)
@@ -115,15 +67,7 @@ inline void log_line(const std::string &log_prefix,
     std::ostringstream out;
     const std::string prefix = "[" + log_prefix + "]";
     const std::string level_label = level_name(level);
-    if (use_colour())
-    {
-        out << decorate(prefix, "\033[1;34m") << " "
-            << decorate(level_label, level_colour(level)) << " ";
-    }
-    else
-    {
-        out << prefix << " " << level_label << " ";
-    }
+    out << prefix << " " << level_label << " ";
     out << message;
     std::cerr << out.str() << "\n";
 }

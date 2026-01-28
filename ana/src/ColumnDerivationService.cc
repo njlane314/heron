@@ -13,59 +13,10 @@
 
 #include <ROOT/RVec.hxx>
 
+#include "Selection.hh"
+
 namespace nuxsec
 {
-
-namespace
-{
-
-constexpr float min_x = 5.f;
-constexpr float max_x = 251.f;
-constexpr float min_y = -110.f;
-constexpr float max_y = 110.f;
-constexpr float min_z = 20.f;
-constexpr float max_z = 986.f;
-
-constexpr float reco_gap_min_z = 675.f;
-constexpr float reco_gap_max_z = 775.f;
-
-template <typename T>
-inline bool is_within(const T &value, float low, float high)
-{
-    return value > low && value < high;
-}
-
-template <typename X, typename Y, typename Z>
-inline bool is_in_active_volume(const X &x, const Y &y, const Z &z)
-{
-    return is_within(x, min_x, max_x) &&
-           is_within(y, min_y, max_y) &&
-           is_within(z, min_z, max_z);
-}
-
-template <typename X, typename Y, typename Z>
-inline bool is_in_truth_volume(const X &x, const Y &y, const Z &z)
-{
-    return is_in_active_volume(x, y, z);
-}
-
-template <typename X, typename Y, typename Z>
-inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z)
-{
-    return is_in_active_volume(x, y, z) && (z < reco_gap_min_z || z > reco_gap_max_z);
-}
-
-}
-
-bool ColumnDerivationService::is_in_truth_volume(float x, float y, float z) noexcept
-{
-    return is_in_truth_volume(x, y, z);
-}
-
-bool ColumnDerivationService::is_in_reco_volume(float x, float y, float z) noexcept
-{
-    return is_in_reco_volume(x, y, z);
-}
 
 //____________________________________________________________________________
 ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
@@ -141,7 +92,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         node = node.Define(
             "in_fiducial",
             [](float x, float y, float z) {
-                return is_in_truth_volume(x, y, z);
+                return selection::SelectionService::is_in_truth_volume(x, y, z);
             },
             {"nu_vtx_x", "nu_vtx_y", "nu_vtx_z"});
 
@@ -221,9 +172,84 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
     node = node.Define(
         "in_reco_fiducial",
         [](float x, float y, float z) {
-            return is_in_reco_volume(x, y, z);
+            return selection::SelectionService::is_in_reco_volume(x, y, z);
         },
         {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
+
+    node = node.Define(
+        "sel_trigger",
+        [is_mc](float pe_beam, float pe_veto, int sw) {
+            const bool requires_dataset_gate = is_mc;
+            const bool dataset_gate = requires_dataset_gate
+                                          ? (pe_beam > selection::SelectionService::trigger_min_beam_pe &&
+                                             pe_veto < selection::SelectionService::trigger_max_veto_pe && sw > 0)
+                                          : true;
+            return dataset_gate;
+        },
+        {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
+
+    node = node.Define(
+        "sel_slice",
+        [](bool trigger, int ns, float topo) {
+            if (!trigger)
+                return false;
+            return ns == selection::SelectionService::slice_required_count &&
+                   topo > selection::SelectionService::slice_min_topology_score;
+        },
+        {"sel_trigger", "num_slices", "topological_score"});
+
+    node = node.Define(
+        "sel_fiducial",
+        [](bool slice, bool fv) {
+            if (!slice)
+                return false;
+            return fv;
+        },
+        {"sel_slice", "in_reco_fiducial"});
+
+    node = node.Define(
+        "sel_topology",
+        [](bool fiducial, float cf, float cl) {
+            if (!fiducial)
+                return false;
+            return cf >= selection::SelectionService::topology_min_contained_fraction &&
+                   cl >= selection::SelectionService::topology_min_cluster_fraction;
+        },
+        {"sel_fiducial", "contained_fraction", "slice_cluster_fraction"});
+
+    node = node.Define(
+        "sel_muon",
+        [](bool topology,
+           const ROOT::RVec<float> &scores,
+           const ROOT::RVec<float> &lengths,
+           const ROOT::RVec<float> &distances,
+           const ROOT::RVec<unsigned> &generations) {
+            if (!topology)
+                return false;
+            const auto n = scores.size();
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                const bool passes = scores[i] > selection::SelectionService::muon_min_track_score &&
+                                    lengths[i] > selection::SelectionService::muon_min_track_length &&
+                                    distances[i] < selection::SelectionService::muon_max_track_distance &&
+                                    generations[i] == selection::SelectionService::muon_required_generation;
+                if (passes)
+                {
+                    return true;
+                }
+            }
+            return false;
+        },
+        {"sel_topology",
+         "track_shower_scores",
+         "track_length",
+         "track_distance_to_vertex",
+         "pfp_generations"});
+
+    node = node.Define(
+        "sel_inclusive_mu_cc",
+        [](bool muon) { return muon; },
+        {"sel_muon"});
 
     node = node.Define(
         "sel_reco_fv",

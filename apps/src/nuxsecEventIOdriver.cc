@@ -13,6 +13,7 @@
 
 #include "AppUtils.hh"
 #include "EventCLI.hh"
+#include "EventColumnProvider.hh"
 #include "RDataFrameService.hh"
 
 namespace nuxsec
@@ -61,7 +62,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         inputs.push_back(std::move(input));
     }
 
-    const std::vector<std::string> columns = {
+    const std::vector<std::string> default_columns = {
         "run",
         "sub",
         "evt",
@@ -70,7 +71,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
         "detector_image_w"
     };
 
-    const std::vector<std::pair<std::string, std::string>> schema_columns = {
+    const std::vector<std::pair<std::string, std::string>> default_schema_columns = {
         {"int", "run"},
         {"int", "sub"},
         {"int", "evt"},
@@ -97,16 +98,16 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     if (!output_path.parent_path().empty())
         std::filesystem::create_directories(output_path.parent_path());
 
-    std::ostringstream schema;
-    schema << "type\tname\n";
-    for (const auto &c : schema_columns)
-        schema << c.first << "\t" << c.second << "\n";
+    const nuxsec::app::event::EventColumnProvider column_provider(
+        default_columns,
+        default_schema_columns,
+        event_args.columns_tsv_path);
 
     nuxsec::event::EventIO::init(event_args.output_root,
                                  header,
                                  sample_infos,
-                                 schema.str(),
-                                 "compiled");
+                                 column_provider.schema_tsv(),
+                                 column_provider.schema_tag());
     nuxsec::event::EventIO event_io(event_args.output_root,
                                     nuxsec::event::EventIO::OpenMode::kUpdate);
 
@@ -179,7 +180,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
             event_io.snapshot_event_list_merged(node,
                                                 sample_id,
                                                 sample.sample_name,
-                                                columns,
+                                                column_provider.columns(),
                                                 event_args.selection,
                                                 "events");
 
@@ -219,7 +220,8 @@ int main(int argc, char **argv)
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
             const nuxsec::app::event::Args event_args =
                 nuxsec::app::event::parse_args(
-                    args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [SELECTION]");
+                    args,
+                    "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
             return nuxsec::app::run(event_args, "nuxsecEventIOdriver");
         });
 }

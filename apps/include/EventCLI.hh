@@ -94,6 +94,7 @@ struct Args
     std::string list_path;
     std::string output_root;
     std::string selection;
+    std::string columns_tsv_path;
 };
 
 struct Input
@@ -104,7 +105,7 @@ struct Input
 
 inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
 {
-    if (args.size() < 2 || args.size() > 3)
+    if (args.size() < 2 || args.size() > 4)
     {
         throw std::runtime_error(usage);
     }
@@ -115,6 +116,10 @@ inline Args parse_args(const std::vector<std::string> &args, const std::string &
     if (args.size() > 2)
     {
         out.selection = nuxsec::app::trim(args.at(2));
+    }
+    if (args.size() > 3)
+    {
+        out.columns_tsv_path = nuxsec::app::trim(args.at(3));
     }
 
     if (out.list_path.empty() || out.output_root.empty())

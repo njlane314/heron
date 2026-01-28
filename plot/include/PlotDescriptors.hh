@@ -18,7 +18,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <TMatrixDSym.h>
 
-#include "../../ana/include/Selection.hh"
+#include "../../ana/include/SelectionService.hh"
 
 namespace nuxsec
 {
@@ -85,7 +85,7 @@ struct TH1DModel
     int nbins = 1;
     double xmin = 0.0;
     double xmax = 1.0;
-    selection::Preset sel = selection::Preset::InclusiveMuCC;
+    selection::Preset sel = selection::Preset::Muon;
 
     ROOT::RDF::TH1DModel model(const std::string &suffix = "") const
     {

@@ -70,8 +70,6 @@ std::string selection_label(nuxsec::selection::Preset preset)
         return "Topology Selection";
     case Preset::Muon:
         return "Muon Selection";
-    case Preset::InclusiveMuCC:
-        return "Inclusive Muon CC Selection";
     case Preset::Empty:
     default:
         return "Empty Selection";

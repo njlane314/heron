@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "AppUtils.hh"
@@ -63,7 +64,19 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     const std::vector<std::string> columns = {
         "run",
         "sub",
-        "evt"
+        "evt",
+        "detector_image_u",
+        "detector_image_v",
+        "detector_image_w"
+    };
+
+    const std::vector<std::pair<std::string, std::string>> schema_columns = {
+        {"int", "run"},
+        {"int", "sub"},
+        {"int", "evt"},
+        {"vector<float>", "detector_image_u"},
+        {"vector<float>", "detector_image_v"},
+        {"vector<float>", "detector_image_w"}
     };
 
     const std::string provenance_tree = "nuxsec_art_provenance/run_subrun";
@@ -86,8 +99,8 @@ int run(const event::Args &event_args, const std::string &log_prefix)
 
     std::ostringstream schema;
     schema << "type\tname\n";
-    for (const auto &c : columns)
-        schema << "int\t" << c << "\n";
+    for (const auto &c : schema_columns)
+        schema << c.first << "\t" << c.second << "\n";
 
     nuxsec::event::EventIO::init(event_args.output_root,
                                  header,

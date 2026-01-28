@@ -50,6 +50,12 @@ bool is_help_arg(const std::string &arg)
     return arg == "-h" || arg == "--help";
 }
 
+bool has_suffix(const std::string &value, const std::string &suffix)
+{
+    return value.size() >= suffix.size() &&
+           value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 struct GlobalOptions
 {
     std::string set;
@@ -808,6 +814,17 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
                 rewritten.push_back(default_samples_tsv(repo_root).string());
                 rewritten.push_back(args[0]);
                 return dispatch_driver_command("nuxsecEventIOdriver", rewritten);
+            }
+            if (args.size() == 2 && !is_help_arg(args[0]) && !is_help_arg(args[1]))
+            {
+                if (has_suffix(args[0], ".root"))
+                {
+                    std::vector<std::string> rewritten;
+                    rewritten.push_back(default_samples_tsv(repo_root).string());
+                    rewritten.push_back(args[0]);
+                    rewritten.push_back(args[1]);
+                    return dispatch_driver_command("nuxsecEventIOdriver", rewritten);
+                }
             }
             return dispatch_driver_command("nuxsecEventIOdriver", args);
         },

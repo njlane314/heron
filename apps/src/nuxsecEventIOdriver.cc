@@ -152,17 +152,22 @@ int run(const event::Args &event_args, const std::string &log_prefix)
             node = node.Filter([](int strange) { return strange > 0; }, {"count_strange"});
         }
 
+        std::string snapshot_message = "sample=" + sample.sample_name;
+        if (!event_args.selection.empty())
+        {
+            snapshot_message += " selection=" + event_args.selection;
+        }
         nuxsec::app::log::log_stage(
             log_prefix,
             "snapshot",
-            "sample=" + sample.sample_name);
+            snapshot_message);
 
         const ULong64_t n_written =
             event_io.snapshot_event_list_merged(node,
                                                 sample_id,
                                                 sample.sample_name,
                                                 columns,
-                                                "",
+                                                event_args.selection,
                                                 "events");
 
         std::ostringstream log_message;
@@ -172,6 +177,10 @@ int run(const event::Args &event_args, const std::string &log_prefix)
                     << " beam=" << nuxsec::sample::SampleIO::beam_mode_name(sample.beam)
                     << " events_written=" << n_written
                     << " output=" << event_args.output_root;
+        if (!event_args.selection.empty())
+        {
+            log_message << " selection=" << event_args.selection;
+        }
         nuxsec::app::log::log_success(log_prefix, log_message.str());
     }
     status_monitor.stop();
@@ -197,7 +206,7 @@ int main(int argc, char **argv)
             const std::vector<std::string> args = nuxsec::app::collect_args(argc, argv);
             const nuxsec::app::event::Args event_args =
                 nuxsec::app::event::parse_args(
-                    args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root");
+                    args, "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [SELECTION]");
             return nuxsec::app::run(event_args, "nuxsecEventIOdriver");
         });
 }

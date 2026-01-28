@@ -57,9 +57,6 @@ inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z)
 
 }
 
-const double ColumnDerivationService::kRecognisedPurityMin = 0.5;
-const double ColumnDerivationService::kRecognisedCompletenessMin = 0.1;
-
 bool ColumnDerivationService::is_in_truth_volume(float x, float y, float z) noexcept
 {
     return is_in_truth_volume(x, y, z);
@@ -194,8 +191,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
                 }
                 return static_cast<int>(Channel::Unknown);
             },
-            {"in_fiducial", "nu_pdg", "int_ccnc", "count_strange",
-             "n_p", "n_pi_minus", "n_pi_plus", "n_pi0", "n_gamma"});
+            {"in_fiducial", "nu_pdg", "int_ccnc", "count_strange", "n_p", "n_pi_minus", "n_pi_plus", "n_pi0", "n_gamma"});
 
         node = node.Define(
             "is_signal",
@@ -208,21 +204,12 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
                 return false;
             },
             {"is_nu_mu_cc", "lambda_decay_in_fid"});
-
-        node = node.Define(
-            "recognised_signal",
-            [](bool is_sig, float purity, float completeness) {
-                return is_sig && purity > static_cast<float>(kRecognisedPurityMin) &&
-                       completeness > static_cast<float>(kRecognisedCompletenessMin);
-            },
-            {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
     }
     else
     {
-        const int nonmc_channel =
-            is_ext ? static_cast<int>(Channel::External)
-                   : (is_data ? static_cast<int>(Channel::DataInclusive)
-                              : static_cast<int>(Channel::Unknown));
+        const int nonmc_channel = is_ext ? static_cast<int>(Channel::External)
+                                : (is_data ? static_cast<int>(Channel::DataInclusive)
+                                : static_cast<int>(Channel::Unknown));
 
         node = node.Define("in_fiducial", [] { return false; });
         node = node.Define("is_strange", [] { return false; });
@@ -239,23 +226,9 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
     node = node.Define(
-        "sel_template",
-        [] { return true; });
-
-    node = node.Define(
         "sel_reco_fv",
         [](bool reco_fv) { return reco_fv; },
         {"in_reco_fiducial"});
-
-    node = node.Define(
-        "sel_signal",
-        [](bool reco_fv, bool recognised_signal) { return reco_fv && recognised_signal; },
-        {"in_reco_fiducial", "recognised_signal"});
-
-    node = node.Define(
-        "sel_bkg",
-        [](bool reco_fv, bool recognised_signal) { return reco_fv && !recognised_signal; },
-        {"in_reco_fiducial", "recognised_signal"});
 
     return node;
 }

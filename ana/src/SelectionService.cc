@@ -7,6 +7,10 @@
 
 #include "SelectionService.hh"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 namespace nuxsec
 {
 namespace selection
@@ -50,70 +54,159 @@ bool is_in_active_volume(const X &x, const Y &y, const Z &z)
            is_within(z, min_z, max_z);
 }
 
+inline bool passes_trigger(SourceKind src, float pe_beam, float pe_veto, int sw)
+{
+    const bool requires_dataset_gate = (src == SourceKind::kMC);
+    return requires_dataset_gate ? (pe_beam > SelectionService::trigger_min_beam_pe &&
+                                    pe_veto < SelectionService::trigger_max_veto_pe && sw > 0)
+                                 : true;
+}
+
+inline bool passes_slice(int ns, float topo)
+{
+    return ns == SelectionService::slice_required_count &&
+           topo > SelectionService::slice_min_topology_score;
+}
+
+inline bool passes_muon(const ROOT::RVec<float> &scores,
+                        const ROOT::RVec<float> &lengths,
+                        const ROOT::RVec<float> &distances,
+                        const ROOT::RVec<unsigned> &generations)
+{
+    const auto n = scores.size();
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const bool ok = scores[i] > SelectionService::muon_min_track_score &&
+                        lengths[i] > SelectionService::muon_min_track_length &&
+                        distances[i] < SelectionService::muon_max_track_distance &&
+                        generations[i] == SelectionService::muon_required_generation;
+        if (ok)
+            return true;
+    }
+    return false;
+}
+
+inline ROOT::RDF::RNode filter_on(ROOT::RDF::RNode node, const char *col)
+{
+    return node.Filter([](bool pass) { return pass; }, {col});
+}
+
 }
 
 ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const Entry &rec)
 {
+    node = decorate(node, p, rec);
     switch (p)
     {
     case Preset::Empty:
         return node;
     case Preset::Trigger:
-        return node.Filter(
-            [src = rec.source](float pe_beam, float pe_veto, int sw) {
-                const bool requires_dataset_gate = (src == SourceKind::kMC);
-                const bool dataset_gate = requires_dataset_gate
-                                              ? (pe_beam > trigger_min_beam_pe &&
-                                                 pe_veto < trigger_max_veto_pe && sw > 0)
-                                              : true;
-                return dataset_gate;
-            },
-            {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
+        return filter_on(node, "sel_trigger");
     case Preset::Slice:
-        return node.Filter(
-            [](int ns, float topo) {
-                return ns == slice_required_count && topo > slice_min_topology_score;
-            },
-            {"num_slices", "topological_score"});
+        return filter_on(node, "sel_slice");
     case Preset::Fiducial:
-    {
-        auto filtered = apply(node, Preset::Slice, rec);
-        return filtered.Filter([](bool fv) { return fv; }, {"in_reco_fiducial"});
-    }
+        return filter_on(node, "sel_fiducial");
     case Preset::Topology:
-        return apply(node, Preset::Fiducial, rec);
+        return filter_on(node, "sel_topology");
     case Preset::Muon:
-    {
-        auto filtered = apply(node, Preset::Topology, rec);
-        return filtered.Filter(
-            [](const ROOT::RVec<float> &scores,
-               const ROOT::RVec<float> &lengths,
-               const ROOT::RVec<float> &distances,
-               const ROOT::RVec<unsigned> &generations) {
-                const auto n = scores.size();
-                for (std::size_t i = 0; i < n; ++i)
-                {
-                    const bool passes = scores[i] > muon_min_track_score &&
-                                        lengths[i] > muon_min_track_length &&
-                                        distances[i] < muon_max_track_distance &&
-                                        generations[i] == muon_required_generation;
-                    if (passes)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            },
-            {"track_shower_scores",
-             "track_length",
-             "track_distance_to_vertex",
-             "pfp_generations"});
-    }
+        return filter_on(node, "sel_muon");
     default:
-    {
         return node;
     }
+}
+
+ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, const Entry &rec)
+{
+    std::vector<std::string> names = node.GetColumnNames();
+    auto has = [&](const std::string &name) {
+        return std::find(names.begin(), names.end(), name) != names.end();
+    };
+    auto define_if_missing = [&](const char *name, auto &&f, std::initializer_list<const char *> deps) {
+        if (has(name))
+            return;
+        node = node.Define(name, std::forward<decltype(f)>(f), deps);
+        names.emplace_back(name);
+    };
+
+    switch (p)
+    {
+    case Preset::Empty:
+        return node;
+    case Preset::Trigger:
+        define_if_missing(
+            "sel_trigger",
+            [src = rec.source](float pe_beam, float pe_veto, int sw) {
+                return passes_trigger(src, pe_beam, pe_veto, sw);
+            },
+            {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
+        return node;
+    case Preset::Slice:
+        define_if_missing(
+            "sel_slice",
+            [](int ns, float topo) { return passes_slice(ns, topo); },
+            {"num_slices", "topological_score"});
+        return node;
+    case Preset::Fiducial:
+    case Preset::Topology:
+    case Preset::Muon:
+        define_if_missing(
+            "sel_slice",
+            [](int ns, float topo) { return passes_slice(ns, topo); },
+            {"num_slices", "topological_score"});
+        define_if_missing(
+            "sel_fiducial",
+            [](bool slice, bool fv) { return slice && fv; },
+            {"sel_slice", "in_reco_fiducial"});
+        define_if_missing(
+            "sel_topology",
+            [](bool fid) { return fid; },
+            {"sel_fiducial"});
+        if (p == Preset::Muon)
+        {
+            define_if_missing(
+                "sel_muon",
+                [](bool topo,
+                   const ROOT::RVec<float> &scores,
+                   const ROOT::RVec<float> &lengths,
+                   const ROOT::RVec<float> &distances,
+                   const ROOT::RVec<unsigned> &generations) {
+                    if (!topo)
+                        return false;
+                    return passes_muon(scores, lengths, distances, generations);
+                },
+                {"sel_topology",
+                 "track_shower_scores",
+                 "track_length",
+                 "track_distance_to_vertex",
+                 "pfp_generations"});
+        }
+        return node;
+    default:
+        return node;
     }
+}
+
+ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const Entry &rec)
+{
+    node = decorate(node, Preset::Trigger, rec);
+    node = decorate(node, Preset::Muon, rec);
+
+    std::vector<std::string> names = node.GetColumnNames();
+    auto has = [&](const std::string &name) {
+        return std::find(names.begin(), names.end(), name) != names.end();
+    };
+    auto define_if_missing = [&](const char *name, auto &&f, std::initializer_list<const char *> deps) {
+        if (has(name))
+            return;
+        node = node.Define(name, std::forward<decltype(f)>(f), deps);
+        names.emplace_back(name);
+    };
+
+    define_if_missing("sel_inclusive_mu_cc", [](bool mu) { return mu; }, {"sel_muon"});
+    define_if_missing("sel_reco_fv", [](bool fv) { return fv; }, {"in_reco_fiducial"});
+    define_if_missing("sel_triggered_slice", [](bool t, bool s) { return t && s; }, {"sel_trigger", "sel_slice"});
+    define_if_missing("sel_triggered_muon", [](bool t, bool m) { return t && m; }, {"sel_trigger", "sel_muon"});
+    return node;
 }
 
 bool SelectionService::is_in_truth_volume(float x, float y, float z) noexcept

@@ -176,75 +176,11 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         },
         {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
-    node = node.Define(
-        "sel_trigger",
-        [is_mc](float pe_beam, float pe_veto, int sw) {
-            const bool requires_dataset_gate = is_mc;
-            const bool dataset_gate = requires_dataset_gate
-                                          ? (pe_beam > selection::SelectionService::trigger_min_beam_pe &&
-                                             pe_veto < selection::SelectionService::trigger_max_veto_pe && sw > 0)
-                                          : true;
-            return dataset_gate;
-        },
-        {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
-
-    node = node.Define(
-        "sel_slice",
-        [](bool trigger, int ns, float topo) {
-            if (!trigger)
-                return false;
-            return ns == selection::SelectionService::slice_required_count &&
-                   topo > selection::SelectionService::slice_min_topology_score;
-        },
-        {"sel_trigger", "num_slices", "topological_score"});
-
-    node = node.Define(
-        "sel_fiducial",
-        [](bool slice, bool fv) {
-            if (!slice)
-                return false;
-            return fv;
-        },
-        {"sel_slice", "in_reco_fiducial"});
-
-    node = node.Define(
-        "sel_muon",
-        [](bool fiducial,
-           const ROOT::RVec<float> &scores,
-           const ROOT::RVec<float> &lengths,
-           const ROOT::RVec<float> &distances,
-           const ROOT::RVec<unsigned> &generations) {
-            if (!fiducial)
-                return false;
-            const auto n = scores.size();
-            for (std::size_t i = 0; i < n; ++i)
-            {
-                const bool passes = scores[i] > selection::SelectionService::muon_min_track_score &&
-                                    lengths[i] > selection::SelectionService::muon_min_track_length &&
-                                    distances[i] < selection::SelectionService::muon_max_track_distance &&
-                                    generations[i] == selection::SelectionService::muon_required_generation;
-                if (passes)
-                {
-                    return true;
-                }
-            }
-            return false;
-        },
-        {"sel_fiducial",
-         "track_shower_scores",
-         "track_length",
-         "track_distance_to_vertex",
-         "pfp_generations"});
-
-    node = node.Define(
-        "sel_inclusive_mu_cc",
-        [](bool muon) { return muon; },
-        {"sel_muon"});
-
-    node = node.Define(
-        "sel_reco_fv",
-        [](bool reco_fv) { return reco_fv; },
-        {"in_reco_fiducial"});
+    {
+        selection::SelectionService::Entry srec{};
+        srec.source = rec.source;
+        node = selection::SelectionService::decorate(node, srec);
+    }
 
     return node;
 }

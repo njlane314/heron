@@ -59,6 +59,8 @@ class SelectionService
     static const unsigned muon_required_generation;
 
     static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const Entry &rec);
+    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, Preset p, const Entry &rec);
+    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, const Entry &rec);
     static bool is_in_truth_volume(float x, float y, float z) noexcept;
     static bool is_in_reco_volume(float x, float y, float z) noexcept;
 };

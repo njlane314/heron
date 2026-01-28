@@ -13,7 +13,7 @@
 
 #include <ROOT/RVec.hxx>
 
-#include "Selection.hh"
+#include "SelectionService.hh"
 
 namespace nuxsec
 {
@@ -208,23 +208,13 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         {"sel_slice", "in_reco_fiducial"});
 
     node = node.Define(
-        "sel_topology",
-        [](bool fiducial, float cf, float cl) {
-            if (!fiducial)
-                return false;
-            return cf >= selection::SelectionService::topology_min_contained_fraction &&
-                   cl >= selection::SelectionService::topology_min_cluster_fraction;
-        },
-        {"sel_fiducial", "contained_fraction", "slice_cluster_fraction"});
-
-    node = node.Define(
         "sel_muon",
-        [](bool topology,
+        [](bool fiducial,
            const ROOT::RVec<float> &scores,
            const ROOT::RVec<float> &lengths,
            const ROOT::RVec<float> &distances,
            const ROOT::RVec<unsigned> &generations) {
-            if (!topology)
+            if (!fiducial)
                 return false;
             const auto n = scores.size();
             for (std::size_t i = 0; i < n; ++i)
@@ -240,7 +230,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
             }
             return false;
         },
-        {"sel_topology",
+        {"sel_fiducial",
          "track_shower_scores",
          "track_length",
          "track_distance_to_vertex",

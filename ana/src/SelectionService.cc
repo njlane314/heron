@@ -5,7 +5,7 @@
  *  @brief Selection helpers for analysis filters and summaries.
  */
 
-#include "Selection.hh"
+#include "SelectionService.hh"
 
 namespace nuxsec
 {
@@ -17,9 +17,6 @@ const float SelectionService::trigger_max_veto_pe = 20.f;
 
 const int SelectionService::slice_required_count = 1;
 const float SelectionService::slice_min_topology_score = 0.06f;
-
-const float SelectionService::topology_min_contained_fraction = 0.0f;
-const float SelectionService::topology_min_cluster_fraction = 0.5f;
 
 const float SelectionService::muon_min_track_score = 0.5f;
 const float SelectionService::muon_min_track_length = 10.0f;
@@ -79,16 +76,16 @@ ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const 
             },
             {"num_slices", "topological_score"});
     case Preset::Fiducial:
-        return node.Filter([](bool fv) { return fv; }, {"in_reco_fiducial"});
+    {
+        auto filtered = apply(node, Preset::Slice, rec);
+        return filtered.Filter([](bool fv) { return fv; }, {"in_reco_fiducial"});
+    }
     case Preset::Topology:
-        return node.Filter(
-            [](float cf, float cl) {
-                return cf >= topology_min_contained_fraction &&
-                       cl >= topology_min_cluster_fraction;
-            },
-            {"contained_fraction", "slice_cluster_fraction"});
+        return apply(node, Preset::Fiducial, rec);
     case Preset::Muon:
-        return node.Filter(
+    {
+        auto filtered = apply(node, Preset::Topology, rec);
+        return filtered.Filter(
             [](const ROOT::RVec<float> &scores,
                const ROOT::RVec<float> &lengths,
                const ROOT::RVec<float> &distances,
@@ -111,14 +108,10 @@ ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const 
              "track_length",
              "track_distance_to_vertex",
              "pfp_generations"});
-    case Preset::InclusiveMuCC:
+    }
     default:
     {
-        auto filtered = apply(node, Preset::Trigger, rec);
-        filtered = apply(filtered, Preset::Slice, rec);
-        filtered = apply(filtered, Preset::Fiducial, rec);
-        filtered = apply(filtered, Preset::Topology, rec);
-        return apply(filtered, Preset::Muon, rec);
+        return apply(node, Preset::Muon, rec);
     }
     }
 }

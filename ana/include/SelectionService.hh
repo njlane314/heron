@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/Selection.hh
+ *  @file  ana/include/SelectionService.hh
  *
  *  @brief Selection helpers for analysis filters and summaries.
  */
 
-#ifndef NUXSEC_ANA_SELECTION_H
-#define NUXSEC_ANA_SELECTION_H
+#ifndef NUXSEC_ANA_SELECTION_SERVICE_H
+#define NUXSEC_ANA_SELECTION_SERVICE_H
 
 #include <cstddef>
 
@@ -40,8 +40,7 @@ enum class Preset
     Slice,
     Fiducial,
     Topology,
-    Muon,
-    InclusiveMuCC
+    Muon
 };
 
 /** \brief Selection helpers for analysis filters and summaries. */
@@ -53,9 +52,6 @@ class SelectionService
 
     static const int slice_required_count;
     static const float slice_min_topology_score;
-
-    static const float topology_min_contained_fraction;
-    static const float topology_min_cluster_fraction;
 
     static const float muon_min_track_score;
     static const float muon_min_track_length;
@@ -75,4 +71,4 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const Entry &rec)
 } // namespace selection
 } // namespace nuxsec
 
-#endif // NUXSEC_ANA_SELECTION_H
+#endif // NUXSEC_ANA_SELECTION_SERVICE_H

@@ -190,10 +190,23 @@ name `Events` by default. Override the input tree name by exporting `NUXSEC_TREE
 before running the CLI. The event builder writes a single ROOT file containing the
 event-level tree plus metadata for the aggregated samples.
 If you provide only the output path, the CLI uses the active workspace's
-`samples.tsv` automatically.
+`samples.tsv` automatically. Provide a selection expression as the final
+argument to filter events before writing the output.
 
 ```bash
 nuxsec --set template event scratch/out/template/event/events.root
+```
+
+Example with an explicit selection:
+
+```bash
+nuxsec --set template event scratch/out/template/event/events.root "sel_triggered_muon"
+```
+
+Muon-neutrino selection example:
+
+```bash
+nuxsec --set template event scratch/out/template/event/events.root "sel_inclusive_mu_cc"
 ```
 
 4) **Plotting via macros**

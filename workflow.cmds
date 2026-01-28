@@ -23,3 +23,9 @@ nuxsec sample "strangeness:scratch/out/sample-lists/numi_fhc_run1_sample_strange
 
 # skim events from persistent samples
 nuxsec event scratch/out/template/event/events.root
+
+# skim events with a selection expression
+nuxsec event scratch/out/template/event/events_selected.root "sel_triggered_muon"
+
+# skim muon-neutrino events
+nuxsec event scratch/out/template/event/events_numu.root "sel_inclusive_mu_cc"

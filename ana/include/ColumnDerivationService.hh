@@ -59,9 +59,6 @@ class ColumnDerivationService
     static const double kRecognisedPurityMin;
     static const double kRecognisedCompletenessMin;
 
-    static const float kTrainingFraction;
-    static const bool kTrainingIncludeExt;
-
     static bool is_in_truth_volume(float x, float y, float z) noexcept;
     static bool is_in_reco_volume(float x, float y, float z) noexcept;
 };

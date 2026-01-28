@@ -60,9 +60,6 @@ inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z)
 const double ColumnDerivationService::kRecognisedPurityMin = 0.5;
 const double ColumnDerivationService::kRecognisedCompletenessMin = 0.1;
 
-const float ColumnDerivationService::kTrainingFraction = 0.10f;
-const bool ColumnDerivationService::kTrainingIncludeExt = true;
-
 bool ColumnDerivationService::is_in_truth_volume(float x, float y, float z) noexcept
 {
     return is_in_truth_volume(x, y, z);
@@ -140,59 +137,6 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
     else
     {
         node = node.Define("w_nominal", [](double w) -> double { return w; }, {"w_base"});
-    }
-
-    {
-        const bool trainable = is_mc || (is_ext && kTrainingIncludeExt);
-
-        const auto cnames = node.GetColumnNames();
-        auto has = [&](const std::string &name) {
-            return std::find(cnames.begin(), cnames.end(), name) != cnames.end();
-        };
-
-        const bool have_ml_u = has("ml_u");
-
-        if (!have_ml_u)
-        {
-            node = node.Define("ml_u", [] { return 0.0f; });
-        }
-
-        if (!has("is_training"))
-        {
-            node = node.Define(
-                "is_training",
-                [trainable, have_ml_u](float u) {
-                    if (!trainable || !have_ml_u)
-                        return false;
-                    return u < kTrainingFraction;
-                },
-                {"ml_u"});
-        }
-
-        if (!has("is_template"))
-        {
-            node = node.Define(
-                "is_template",
-                [trainable](bool t) { return !trainable || !t; },
-                {"is_training"});
-        }
-
-        if (!has("w_template"))
-        {
-            node = node.Define(
-                "w_template",
-                [trainable, have_ml_u](double w, bool t) {
-                    if (!trainable || !have_ml_u)
-                        return w;
-                    if (t)
-                        return 0.0;
-                    const double keep = 1.0 - static_cast<double>(kTrainingFraction);
-                    if (keep <= 0.0)
-                        return 0.0;
-                    return w / keep;
-                },
-                {"w_nominal", "is_training"});
-        }
     }
 
     if (is_mc)
@@ -318,27 +262,22 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
 
     node = node.Define(
         "sel_template",
-        [](bool is_template) { return is_template; },
-        {"is_template"});
+        [] { return true; });
 
     node = node.Define(
         "sel_reco_fv",
-        [](bool is_template, bool reco_fv) { return is_template && reco_fv; },
-        {"is_template", "in_reco_fiducial"});
+        [](bool reco_fv) { return reco_fv; },
+        {"in_reco_fiducial"});
 
     node = node.Define(
         "sel_signal",
-        [](bool is_template, bool reco_fv, bool recognised_signal) {
-            return is_template && reco_fv && recognised_signal;
-        },
-        {"is_template", "in_reco_fiducial", "recognised_signal"});
+        [](bool reco_fv, bool recognised_signal) { return reco_fv && recognised_signal; },
+        {"in_reco_fiducial", "recognised_signal"});
 
     node = node.Define(
         "sel_bkg",
-        [](bool is_template, bool reco_fv, bool recognised_signal) {
-            return is_template && reco_fv && !recognised_signal;
-        },
-        {"is_template", "in_reco_fiducial", "recognised_signal"});
+        [](bool reco_fv, bool recognised_signal) { return reco_fv && !recognised_signal; },
+        {"in_reco_fiducial", "recognised_signal"});
 
     return node;
 }

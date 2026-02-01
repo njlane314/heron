@@ -7,7 +7,7 @@ NAME="${NAME:-numi_fhc_run1}"
 
 BASE="/pnfs/uboone/scratch/users/${USER_NAME}/ntuples/${RELEASE}/${NAME}"
 OUTPUT_DIR="scratch/out/filelists"
-FILE_PATTERN="${FILE_PATTERN:-nu_selection.root}"
+FILE_PATTERN="${FILE_PATTERN:-nu_selection_data.root,nu_selection.root}"
 
 mkdir -p "${OUTPUT_DIR}"
 
@@ -16,6 +16,9 @@ write_list() {
     local dir="$2"
     local list="${OUTPUT_DIR}/${stage}.list"
     local tmp_list
+    local pattern
+    local find_args=()
+    local patterns=()
     tmp_list="$(mktemp)"
 
     if [[ ! -d "${dir}" ]]
@@ -25,7 +28,29 @@ write_list() {
         return 0
     fi
 
-    find "${dir}" -type f -name "${FILE_PATTERN}" | sort > "${tmp_list}"
+    IFS=',' read -r -a patterns <<< "${FILE_PATTERN}"
+    for pattern in "${patterns[@]}"
+    do
+        if [[ -z "${pattern}" ]]
+        then
+            continue
+        fi
+
+        if [[ ${#find_args[@]} -gt 0 ]]
+        then
+            find_args+=(-o)
+        fi
+        find_args+=(-name "${pattern}")
+    done
+
+    if [[ ${#find_args[@]} -eq 0 ]]
+    then
+        echo "Warning: no file patterns supplied" >&2
+        rm -f "${tmp_list}"
+        return 0
+    fi
+
+    find "${dir}" -type f \( "${find_args[@]}" \) | sort > "${tmp_list}"
 
     if [[ ! -s "${tmp_list}" ]]
     then

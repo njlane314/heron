@@ -16,27 +16,27 @@ namespace nuxsec
 
 enum class Type
 {
-    kUnknown = 0,
-    kData,
-    kExt,
-    kMC
+    kUnknown = 0, ///< Unknown or unset source type.
+    kData,        ///< On-beam data sample.
+    kExt,         ///< Off-beam external/background data sample.
+    kMC           ///< Simulated Monte Carlo sample.
 };
 
 enum class Channel
 {
-    Unknown = 0,
-    OutFV,
-    External,
-    NC,
-    CCS1,
-    CCSgt1,
-    ECCC,
-    MuCC0pi_ge1p,
-    MuCC1pi,
-    MuCCPi0OrGamma,
-    MuCCNpi,
-    MuCCOther,
-    DataInclusive
+    Unknown = 0,      ///< Unclassified channel (fallback for unknown categorisation).
+    OutFV,            ///< Interaction outside the truth fiducial volume.
+    External,         ///< External (non-neutrino) or out-of-volume background.
+    NC,               ///< Neutral-current interaction in fiducial volume.
+    CCS1,             ///< Charged-current interaction with exactly one strange hadron.
+    CCSgt1,           ///< Charged-current interaction with multiple strange hadrons.
+    ECCC,             ///< Electron-neutrino charged-current interaction.
+    MuCC0pi_ge1p,     ///< Muon-neutrino charged-current with 0 pions and ≥1 proton.
+    MuCC1pi,          ///< Muon-neutrino charged-current with exactly one charged pion.
+    MuCCPi0OrGamma,   ///< Muon-neutrino charged-current with π0 or photon activity.
+    MuCCNpi,          ///< Muon-neutrino charged-current with more than one pion.
+    MuCCOther,        ///< Other muon-neutrino charged-current topologies.
+    DataInclusive     ///< Inclusive data channel (non-MC).
 };
 
 struct ProcessorEntry

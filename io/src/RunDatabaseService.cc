@@ -129,6 +129,7 @@ RunInfoSums RunDatabaseService::sum_run_info(const std::vector<art::Subrun> &pai
     out.Gate2Trig_sum = sqlite3_column_int64(q, 8);
 
     sqlite3_finalize(q);
+    
     return out;
 }
 

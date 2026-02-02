@@ -1,5 +1,6 @@
 # nuxsec workflow commands
 
+
 # build filelists for each partition
 USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1 
 source scripts/partition-lists.sh

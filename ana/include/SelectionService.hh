@@ -9,6 +9,7 @@
 #define NUXSEC_ANA_SELECTION_SERVICE_H
 
 #include <cstddef>
+#include <string>
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
@@ -60,6 +61,7 @@ class SelectionService
     static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const Entry &rec);
     static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, Preset p, const Entry &rec);
     static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, const Entry &rec);
+    static std::string selection_label(Preset p);
     static bool is_in_truth_volume(float x, float y, float z) noexcept;
     static bool is_in_reco_volume(float x, float y, float z) noexcept;
 };

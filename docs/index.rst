@@ -16,6 +16,11 @@ headers and ``src/`` implementations, with executables living in ``apps/``.
 Documentation is built with Sphinx, and this index provides a map of the
 repository so newcomers can quickly locate relevant components.
 
+The documentation is written for analysts, developers, and reviewers who need
+both a quick orientation and a precise map of the repository. It aims to
+highlight module responsibilities, establish shared conventions, and provide a
+repeatable workflow for extending the toolkit.
+
 Repository layout
 -----------------
 
@@ -44,6 +49,25 @@ Supporting folders include:
 * ``scripts/`` for helper scripts and workflows.
 * ``lib/`` for build outputs (shared libraries).
 
+Architecture at a glance
+------------------------
+
+Nuxsec takes a layered approach to analysis development:
+
+* **Data access and layout** live in ``io/`` and ``rdf/`` to provide a consistent
+  interface to ROOT trees and ``RDataFrame`` workflows.
+* **Selections and corrections** are captured in ``sel/`` and ``syst/`` so they
+  can be reused across analyses and systematics studies.
+* **Analysis orchestration** is grouped under ``ana/``, typically responsible
+  for stitching together datasets, selections, and outputs.
+* **Statistical tools** in ``stat/`` provide shared machinery for inference and
+  limit-setting workflows.
+* **Plots and presentation** live in ``plot/`` to keep visualisation logic
+  separate from event processing.
+
+This separation keeps low-level data access stable while allowing higher-level
+analysis code to iterate rapidly.
+
 Conventions
 -----------
 
@@ -55,6 +79,20 @@ The codebase follows consistent style rules:
   ``lowercase_with_underscores``.
 * Member variables often use ``m_`` or ``p_`` prefixes, depending on ownership.
 * British-English spelling is preferred in code and documentation.
+
+Navigating the documentation
+----------------------------
+
+The Sphinx site is designed to be scanned quickly:
+
+* **Overview pages** explain the structure of the repository and how modules
+  relate to each other.
+* **Usage guides** provide step-by-step workflows for development tasks.
+* **Reference material** (when present) captures module-specific classes,
+  functions, and data conventions.
+
+Use the left navigation menu to jump between sections. When adding new pages,
+ensure they appear in the ``toctree`` above so they are discoverable.
 
 Building documentation
 ----------------------

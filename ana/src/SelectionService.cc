@@ -206,12 +206,8 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const Entry &
 
     define_if_missing(
         "sel_inclusive_mu_cc",
-        [](bool mu, int u, int v, int y) {
-            if (!mu)
-                return false;
-            return u > 1 && v > 1 && y > 1;
-        },
-        {"sel_muon", "pfp_num_subclusters_U", "pfp_num_subclusters_V", "pfp_num_subclusters_Y"});
+        [](bool mu) { return mu; },
+        {"sel_muon"});
     define_if_missing("sel_reco_fv", [](bool fv) { return fv; }, {"in_reco_fiducial"});
     define_if_missing("sel_triggered_slice", [](bool t, bool s) { return t && s; }, {"sel_trigger", "sel_slice"});
     define_if_missing("sel_triggered_muon", [](bool t, bool m) { return t && m; }, {"sel_trigger", "sel_muon"});

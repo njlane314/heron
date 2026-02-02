@@ -1,6 +1,12 @@
 Nuxsec Documentation
 ====================
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents
+
+   usage
+
 Overview
 --------
 
@@ -60,3 +66,13 @@ From the repository root, the documentation can be built with:
    sphinx-build docs _build
 
 The generated HTML will be located in ``_build/``.
+
+Documentation deployment
+------------------------
+
+Documentation is automatically deployed to GitHub Pages from the default
+branch. The GitHub Actions workflow builds the Sphinx site, adds the
+``.nojekyll`` marker, and publishes the ``_build/`` directory to the
+``gh-pages`` branch on every push to the default branch. That means
+documentation changes must be merged to the default branch before the
+public site is updated.

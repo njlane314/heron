@@ -1,5 +1,7 @@
 # nuxsec
 
+Documentation: https://nuxsec.github.io/nuxsec/
+
 ROOT-based utilities for a neutrino cross-section analysis pipeline. The codebase formalises the analysis
 entities (aggregation → sample → dataset/RDF → channel/category → selection → template/plot) and provides
 compiled drivers to move between them.

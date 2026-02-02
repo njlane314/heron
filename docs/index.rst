@@ -13,6 +13,7 @@ Nuxsec Documentation
    usage
    modules
    api
+   class_reference/index
 
 Overview
 --------

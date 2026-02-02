@@ -26,14 +26,12 @@ void ArtFileProvenanceIO::write(const art::Provenance &r, const std::string &out
     d->cd();
 
     TNamed("input_name", r.input.input_name.c_str()).Write("input_name", TObject::kOverwrite);
-    TNamed("sample_origin", sample::SampleIO::sample_origin_name(r.kind))
-        .Write("sample_origin", TObject::kOverwrite);
+    TNamed("sample_origin", sample::SampleIO::sample_origin_name(r.kind)).Write("sample_origin", TObject::kOverwrite);
     TNamed("beam_mode", sample::SampleIO::beam_mode_name(r.beam)).Write("beam_mode", TObject::kOverwrite);
 
     TParameter<double>("subrun_pot_sum", r.summary.pot_sum).Write("subrun_pot_sum", TObject::kOverwrite);
     TParameter<long long>("subrun_entries", r.summary.n_entries).Write("subrun_entries", TObject::kOverwrite);
-    TParameter<long long>("unique_run_subrun_pairs", static_cast<long long>(r.summary.unique_pairs.size()))
-        .Write("unique_run_subrun_pairs", TObject::kOverwrite);
+    TParameter<long long>("unique_run_subrun_pairs", static_cast<long long>(r.summary.unique_pairs.size())).Write("unique_run_subrun_pairs", TObject::kOverwrite);
 
     TParameter<double>("scale_factor", r.scale).Write("scale_factor", TObject::kOverwrite);
 
@@ -132,6 +130,7 @@ art::Provenance ArtFileProvenanceIO::read_directory(TDirectory *d,
 
     r.input_files = read_input_files(d);
     r.summary.unique_pairs = read_run_subrun_pairs(d);
+    
     return r;
 }
 
@@ -143,6 +142,7 @@ std::string ArtFileProvenanceIO::read_named_string(TDirectory *d, const char *ke
     {
         throw std::runtime_error("Missing TNamed for key: " + std::string(key));
     }
+    
     return std::string(named->GetTitle());
 }
 
@@ -154,6 +154,7 @@ sample::SampleIO::SampleOrigin ArtFileProvenanceIO::read_sample_origin(TDirector
     {
         return sample::SampleIO::parse_sample_origin(named->GetTitle());
     }
+    
     return sample::SampleIO::parse_sample_origin(read_named_string(d, "sample_kind"));
 }
 
@@ -166,8 +167,10 @@ std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)
     {
         throw std::runtime_error("Missing input_files array");
     }
+    
     const int n = arr->GetEntries();
     files.reserve(static_cast<size_t>(n));
+    
     for (int i = 0; i < n; ++i)
     {
         auto *entry = dynamic_cast<TObjString *>(arr->At(i));
@@ -177,6 +180,7 @@ std::vector<std::string> ArtFileProvenanceIO::read_input_files(TDirectory *d)
         }
         files.emplace_back(entry->GetString().Data());
     }
+    
     return files;
 }
 
@@ -191,6 +195,7 @@ std::vector<art::Subrun> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *
 
     Int_t run = 0;
     Int_t subrun = 0;
+    
     tree->SetBranchAddress("run", &run);
     tree->SetBranchAddress("subrun", &subrun);
 
@@ -202,6 +207,7 @@ std::vector<art::Subrun> ArtFileProvenanceIO::read_run_subrun_pairs(TDirectory *
         tree->GetEntry(i);
         pairs.push_back(art::Subrun{static_cast<int>(run), static_cast<int>(subrun)});
     }
+    
     return pairs;
 }
 

@@ -1,105 +1,62 @@
-GitHub Actions
-==============
+Nuxsec Documentation
+====================
 
-Automatically runs code when your repository changes.
-We will let it run ``sphinx-build`` and make the result available to GitHub Pages.
+Overview
+--------
 
-Our goal: putting it all together
----------------------------------
+Nuxsec is a C++ analysis toolkit organised into top-level modules that each
+provide a focused slice of functionality. Source code is split into ``include/``
+headers and ``src/`` implementations, with executables living in ``apps/``.
+Documentation is built with Sphinx, and this index provides a map of the
+repository so newcomers can quickly locate relevant components.
 
-* Host source code with documentation sources on a public Git repository.
-* Each time we git push to the repository, a GitHub action triggers to rebuild the documentation.
-* The documentation is pushed to a separate branch called ``gh-pages``.
+Repository layout
+-----------------
 
-Exercise - Deploy Sphinx documentation to GitHub Pages
-------------------------------------------------------
+Modules live at the repository root and follow a consistent layout:
 
-GH-Pages-1: Deploy Sphinx documentation to GitHub Pages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``ana/``: analysis-level utilities and orchestration.
+* ``io/``: input/output helpers and data access.
+* ``plot/``: plotting utilities and presentation helpers.
+* ``sample/``: sample definitions and metadata management.
+* ``pot/``: probability or potential-related utilities.
+* ``rdf/``: ROOT RDataFrame integrations.
+* ``sel/``: selection logic and filtering.
+* ``syst/``: systematic variation handling.
+* ``stat/``: statistical tooling.
 
-In this exercise we will create an example repository on GitHub and deploy it to GitHub Pages.
+Each module typically contains:
 
-Step 1: Go to the documentation-example project template on GitHub and create a copy to your namespace.
+* ``include/`` for public headers (``.hh``).
+* ``src/`` for implementations (``.cc``).
+* ``macro/`` for ROOT-style macros and scripts.
 
-* Give it a name, for instance ``documentation-example``.
-* You do not need to "Include all branches".
-* Click on "Create a repository".
+Supporting folders include:
 
-Step 2: Browse the new repository.
+* ``apps/`` for small executables and command-line entry points.
+* ``docs/`` for Sphinx configuration and documentation sources.
+* ``scripts/`` for helper scripts and workflows.
+* ``lib/`` for build outputs (shared libraries).
 
-It will look very familiar to the previous episode.
-However, we have moved the documentation part under ``doc/`` (many projects do it this way). But it is still a
-Sphinx documentation project.
-The source code for your project could then go under ``src/``.
+Conventions
+-----------
 
-Step 3: Add the GitHub Action to your new Git repository.
+The codebase follows consistent style rules:
 
-Add a new file at ``.github/workflows/documentation.yml`` (either through terminal or web interface), containing:
+* Headers begin with ``/* -- C++ -- */`` and use concise include guards.
+* Library code lives in the ``nuxsec`` namespace.
+* Class names use descriptive PascalCase, while functions prefer
+  ``lowercase_with_underscores``.
+* Member variables often use ``m_`` or ``p_`` prefixes, depending on ownership.
+* British-English spelling is preferred in code and documentation.
 
-.. code-block:: yaml
+Building documentation
+----------------------
 
-   name: documentation
+From the repository root, the documentation can be built with:
 
-   on: [push, pull_request, workflow_dispatch]
+.. code-block:: console
 
-   permissions:
-     contents: write
+   sphinx-build docs _build
 
-   jobs:
-     docs:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-         - uses: actions/setup-python@v5
-         - name: Install dependencies
-           run: |
-             pip install sphinx sphinx_rtd_theme myst_parser
-         - name: Sphinx build
-           run: |
-             sphinx-build doc _build
-         - name: Deploy to GitHub Pages
-           uses: peaceiris/actions-gh-pages@v3
-           if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-           with:
-             publish_branch: gh-pages
-             github_token: ${{ secrets.GITHUB_TOKEN }}
-             publish_dir: _build/
-             force_orphan: true
-
-You do not need to understand all of the above, but you might spot familiar commands in the ``run`` sections.
-After the file has been committed (and pushed), check the action at
-``https://github.com/USER/documentation-example/actions`` (replace USER with your GitHub username).
-
-Step 4: Enable GitHub Pages
-
-On GitHub go to "Settings" -> "Pages".
-In the "Source" section, choose "Deploy from a branch" in the dropdown menu.
-In the "Branch" section choose "gh-pages" and "/root" in the dropdown menus and click save.
-You should now be able to verify the pages deployment in the Actions list).
-
-Step 5: Verify the result
-
-Your site should now be live on ``https://USER.github.io/documentation-example/`` (replace USER).
-
-Step 6: Verify refreshing the documentation
-
-Commit some changes to your documentation.
-Verify that the documentation website refreshes after your changes (can take few seconds or a minute).
-
-Alternatives to GitHub Pages
-----------------------------
-
-* GitLab Pages and GitLab CI can create a very similar workflow.
-* Read the Docs is the most common alternative to hosting in GitHub Pages.
-* Sphinx builds HTML files (this is what static site generators do), and you can host them anywhere, for example
-  your university's web space or own web server.
-
-Migrating your own documentation to Sphinx
--------------------------------------------
-
-1. First convert your documentation to Markdown using Pandoc.
-2. Create a file ``index.rst`` which lists all other Markdown files and provides the table of contents.
-3. Add a ``conf.py`` file. You can generate a starting point for ``conf.py`` and ``index.rst`` with
-   ``sphinx-quickstart``, or you can take the examples in this lesson as inspiration.
-4. Test building the documentation locally with ``sphinx-build``.
-5. Once this works, follow the above steps to build and deploy to GitHub Pages or some other web space.
+The generated HTML will be located in ``_build/``.

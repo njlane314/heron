@@ -16,3 +16,8 @@ source "${NUXSEC_ROOT}/scripts/nuxsec-completion.bash"
 export PATH="${NUXSEC_ROOT}/build/bin:${PATH}"
 export LD_LIBRARY_PATH="${NUXSEC_ROOT}/build/lib:${NUXSEC_ROOT}/build/framework:${LD_LIBRARY_PATH}"
 export ROOT_INCLUDE_PATH="${NUXSEC_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"
+
+if [ -d "/exp/uboone/data/users/${USER}/cache" ]; then
+  export NUXSEC_TMPDIR="/exp/uboone/data/users/${USER}/cache/nuxsec_tmp"
+  mkdir -p "${NUXSEC_TMPDIR}"
+fi

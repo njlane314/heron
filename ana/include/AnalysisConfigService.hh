@@ -11,12 +11,11 @@
 #include <string>
 #include <vector>
 
+#include "ColumnDerivationService.hh"
 #include "SampleIO.hh"
 
 namespace nuxsec
 {
-
-struct ProcessorEntry;
 
 class AnalysisConfigService final
 {

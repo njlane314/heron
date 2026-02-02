@@ -29,7 +29,7 @@ struct Frame
 
 struct Entry
 {
-    SourceKind source = SourceKind::kUnknown;
+    Type source = Type::kUnknown;
     Frame nominal;
 };
 

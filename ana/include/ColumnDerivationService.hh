@@ -14,7 +14,7 @@
 namespace nuxsec
 {
 
-enum class SourceKind
+enum class Type
 {
     kUnknown = 0,
     kData,
@@ -41,7 +41,7 @@ enum class Channel
 
 struct ProcessorEntry
 {
-    SourceKind source = SourceKind::kUnknown;
+    Type source = Type::kUnknown;
     double pot_nom = 0.0;
     double pot_eqv = 0.0;
     double trig_nom = 0.0;

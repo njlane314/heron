@@ -28,6 +28,9 @@ namespace nuxsec
 namespace app
 {
 
+namespace sample
+{
+
 inline std::vector<std::string> split_tabs(const std::string &line)
 {
     std::vector<std::string> out;
@@ -134,9 +137,6 @@ inline void write_samples(const std::string &list_path, std::vector<SampleListEn
     }
 }
 
-namespace sample
-{
-
 inline void log_sample_start(const std::string &log_prefix, const size_t file_count)
 {
     nuxsec::app::log::log_info(
@@ -204,7 +204,7 @@ inline void update_sample_list(const std::string &list_path,
                                const nuxsec::sample::SampleIO::Sample &sample,
                                const std::string &output_path)
 {
-    auto entries = nuxsec::app::read_samples(list_path, true, false);
+    auto entries = read_samples(list_path, true, false);
     const std::string origin_name = nuxsec::sample::SampleIO::sample_origin_name(sample.origin);
     const std::string beam_name = nuxsec::sample::SampleIO::beam_mode_name(sample.beam);
 
@@ -222,7 +222,7 @@ inline void update_sample_list(const std::string &list_path,
     }
     if (!updated)
     {
-        nuxsec::app::SampleListEntry entry;
+        SampleListEntry entry;
         entry.sample_name = sample.sample_name;
         entry.sample_origin = origin_name;
         entry.beam_mode = beam_name;
@@ -230,7 +230,7 @@ inline void update_sample_list(const std::string &list_path,
         entries.push_back(std::move(entry));
     }
 
-    nuxsec::app::write_samples(list_path, std::move(entries));
+    write_samples(list_path, std::move(entries));
 }
 
 int run(const Args &sample_args, const std::string &log_prefix);

@@ -99,7 +99,7 @@ struct Args
 
 struct Input
 {
-    nuxsec::app::SampleListEntry entry;
+    nuxsec::app::sample::SampleListEntry entry;
     nuxsec::sample::SampleIO::Sample sample;
 };
 

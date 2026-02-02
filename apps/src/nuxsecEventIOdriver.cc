@@ -27,7 +27,7 @@ int run(const event::Args &event_args, const std::string &log_prefix)
     ROOT::EnableImplicitMT();
 
     const auto &analysis = nuxsec::AnalysisConfigService::instance();
-    const auto entries = nuxsec::app::read_samples(event_args.list_path);
+    const auto entries = nuxsec::app::sample::read_samples(event_args.list_path);
     
     const auto start_time = std::chrono::steady_clock::now();
     nuxsec::app::event::log_event_start(log_prefix, entries.size());

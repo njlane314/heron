@@ -214,6 +214,26 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const Entry &
     return node;
 }
 
+std::string SelectionService::selection_label(Preset p)
+{
+    switch (p)
+    {
+    case Preset::Trigger:
+        return "Trigger Selection";
+    case Preset::Slice:
+        return "Slice Selection";
+    case Preset::Fiducial:
+        return "Fiducial Selection";
+    case Preset::Topology:
+        return "Topology Selection";
+    case Preset::Muon:
+        return "Muon Selection";
+    case Preset::Empty:
+    default:
+        return "Empty Selection";
+    }
+}
+
 bool SelectionService::is_in_truth_volume(float x, float y, float z) noexcept
 {
     return is_in_active_volume(x, y, z);

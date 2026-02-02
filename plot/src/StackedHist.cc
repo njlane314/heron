@@ -55,27 +55,6 @@ void apply_total_errors(TH1D &h, const TMatrixDSym *cov, const std::vector<doubl
     }
 }
 
-std::string selection_label(nuxsec::selection::Preset preset)
-{
-    using nuxsec::selection::Preset;
-    switch (preset)
-    {
-    case Preset::Trigger:
-        return "Trigger Selection";
-    case Preset::Slice:
-        return "Slice Selection";
-    case Preset::Fiducial:
-        return "Fiducial Selection";
-    case Preset::Topology:
-        return "Topology Selection";
-    case Preset::Muon:
-        return "Muon Selection";
-    case Preset::Empty:
-    default:
-        return "Empty Selection";
-    }
-}
-
 } // namespace
 
 StackedHist::StackedHist(TH1DModel spec, Options opt, std::vector<const Entry *> mc, std::vector<const Entry *> data)
@@ -749,7 +728,7 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
     std::string region_label = opt_.analysis_region_label;
     if (region_label.empty())
     {
-        region_label = selection_label(spec_.sel);
+        region_label = selection::SelectionService::selection_label(spec_.sel);
     }
 
     const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +

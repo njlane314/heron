@@ -18,7 +18,7 @@
 namespace nuxsec
 {
 
-struct ColumnDefinition
+struct Column
 {
     std::string name;
     std::string expression;
@@ -32,7 +32,7 @@ class RDataFrameService
                                         const std::string &tree_name);
 
     static ROOT::RDF::RNode define_variables(ROOT::RDF::RNode node,
-                                             const std::vector<ColumnDefinition> &definitions);
+                                             const std::vector<Column> &definitions);
 };
 
 } // namespace nuxsec

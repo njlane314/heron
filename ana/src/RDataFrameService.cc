@@ -20,10 +20,10 @@ ROOT::RDataFrame RDataFrameService::load_sample(const sample::SampleIO::Sample &
 }
 
 ROOT::RDF::RNode RDataFrameService::define_variables(ROOT::RDF::RNode node,
-                                             const std::vector<ColumnDefinition> &definitions)
+                                             const std::vector<Column> &definitions)
 {
     ROOT::RDF::RNode updated_node = std::move(node);
-    for (const ColumnDefinition &definition : definitions)
+    for (const Column &definition : definitions)
     {
         updated_node = updated_node.Define(definition.name, definition.expression);
     }

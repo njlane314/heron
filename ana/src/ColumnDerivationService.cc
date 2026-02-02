@@ -21,9 +21,9 @@ namespace nuxsec
 //____________________________________________________________________________
 ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
 {
-    const bool is_data = (rec.source == SourceKind::kData);
-    const bool is_ext = (rec.source == SourceKind::kExt);
-    const bool is_mc = (rec.source == SourceKind::kMC);
+    const bool is_data = (rec.source == Type::kData);
+    const bool is_ext = (rec.source == Type::kExt);
+    const bool is_mc = (rec.source == Type::kMC);
 
     const double scale_mc =
         (is_mc && rec.pot_nom > 0.0 && rec.pot_eqv > 0.0) ? (rec.pot_nom / rec.pot_eqv) : 1.0;

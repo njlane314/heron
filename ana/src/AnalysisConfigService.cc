@@ -34,22 +34,22 @@ ProcessorEntry AnalysisConfigService::make_processor(const sample::SampleIO::Sam
     switch (sample.origin)
     {
     case sample::SampleIO::SampleOrigin::kData:
-        proc_entry.source = SourceKind::kData;
+        proc_entry.source = Type::kData;
         break;
     case sample::SampleIO::SampleOrigin::kEXT:
-        proc_entry.source = SourceKind::kExt;
+        proc_entry.source = Type::kExt;
         proc_entry.trig_nom = sample.db_tor101_pot_sum;
         proc_entry.trig_eqv = sample.subrun_pot_sum;
         break;
     case sample::SampleIO::SampleOrigin::kOverlay:
     case sample::SampleIO::SampleOrigin::kDirt:
     case sample::SampleIO::SampleOrigin::kStrangeness:
-        proc_entry.source = SourceKind::kMC;
+        proc_entry.source = Type::kMC;
         proc_entry.pot_nom = sample.db_tortgt_pot_sum;
         proc_entry.pot_eqv = sample.subrun_pot_sum;
         break;
     default:
-        proc_entry.source = SourceKind::kUnknown;
+        proc_entry.source = Type::kUnknown;
         break;
     }
 

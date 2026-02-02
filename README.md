@@ -200,11 +200,11 @@ nuxsec --set template event scratch/out/template/event/events.root
 ```
 
 To override the event output schema, pass a columns TSV as the final positional
-argument. The TSV expects `type` and `name` columns (see `docs/event_columns.tsv`).
+argument. The TSV expects `type` and `name` columns (see `cols/event_columns.tsv`).
 If you only want to provide columns, pass `true` as the selection placeholder.
 
 ```bash
-nuxsec --set template event scratch/out/template/event/events.root true docs/event_columns.tsv
+nuxsec --set template event scratch/out/template/event/events.root true cols/event_columns.tsv
 ```
 
 Selection strings can reference selection columns derived by the SelectionService.

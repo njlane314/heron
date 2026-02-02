@@ -94,7 +94,7 @@ Some module-level cues to help orient a new contributor:
 
 If you need to locate column naming conventions or event layouts, search within
 the ``io/`` module first, then trace any references into ``rdf/`` or ``ana/``.
-The ``docs/event_columns.tsv`` file provides a reference list of tracked event
+The ``cols/event_columns.tsv`` file provides a reference list of tracked event
 columns.
 
 Contributing notes

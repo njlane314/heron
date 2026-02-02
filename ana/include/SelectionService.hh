@@ -21,7 +21,7 @@ namespace nuxsec
 namespace selection
 {
 
-struct FrameView
+struct Frame
 {
     ROOT::RDF::RNode node;
     ROOT::RDF::RNode rnode() const { return node; }
@@ -30,7 +30,7 @@ struct FrameView
 struct Entry
 {
     SourceKind source = SourceKind::kUnknown;
-    FrameView nominal;
+    Frame nominal;
 };
 
 enum class Preset

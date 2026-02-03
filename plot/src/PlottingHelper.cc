@@ -55,7 +55,7 @@ double pick_pot_nom(const sample::SampleIO::Sample &s)
 Entry make_entry(ROOT::RDF::RNode node, const ProcessorEntry &proc_entry)
 {
     selection::Entry selection{proc_entry.source, selection::Frame{std::move(node)}};
-    return Entry{std::move(selection)};
+    return Entry{std::move(selection), 0.0, 0.0, std::string(), std::string()};
 }
 
 TH1DModel make_spec(const std::string &expr,

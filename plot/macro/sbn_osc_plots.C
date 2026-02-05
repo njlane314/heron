@@ -9,6 +9,7 @@
 //   root -l -q 'sbn_osc_plots.C("bias")'
 //   root -l -q 'sbn_osc_plots.C("nearfar")'
 //   root -l -q 'sbn_osc_plots.C("dm2_sin22_template")'
+//   root -l -q 'sbn_osc_plots.C("all")'
 //
 // Each mode writes a PDF in the current directory.
 
@@ -461,6 +462,16 @@ void sbn_dm2_sin22_template() {
   c->SaveAs("sbn_dm2_sin22_template.pdf");
 }
 
+void sbn_plot_all() {
+  sbn_prob_vs_LE();
+  sbn_prob_vs_E();
+  sbn_oscillogram();
+  sbn_smear();
+  sbn_bias();
+  sbn_nearfar();
+  sbn_dm2_sin22_template();
+}
+
 void sbn_osc_plots(const char* which = "prob_le") {
   std::string w(which ? which : "prob_le");
 
@@ -471,8 +482,9 @@ void sbn_osc_plots(const char* which = "prob_le") {
   else if (w == "bias")               sbn_bias();
   else if (w == "nearfar")            sbn_nearfar();
   else if (w == "dm2_sin22_template") sbn_dm2_sin22_template();
+  else if (w == "all")                sbn_plot_all();
   else {
     std::cout << "Unknown mode: " << w << "\n"
-              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template\n";
+              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, all\n";
   }
 }

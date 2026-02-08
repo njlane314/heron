@@ -16,6 +16,15 @@
 //   root -l -q 'sbn_osc_plots.C("fig1p9_e")' // log y (SBL)
 //   root -l -q 'sbn_osc_plots.C("fig1p9_f")' // log x + log y (SBL)
 //   root -l -q 'sbn_osc_plots.C("fig1p9_all")'
+//   root -l -q 'sbn_osc_plots.C("3fl_LE_overview")'            // wide-range L/E with experiment markers
+//   root -l -q 'sbn_osc_plots.C("3fl_LE_long_mu_channels")'     // long-baseline regime: P(νμ→νe,νμ,ντ) vs L/E
+//   root -l -q 'sbn_osc_plots.C("3fl_LE_ordering_vac")'         // NO vs IO comparison (vacuum)
+//   root -l -q 'sbn_osc_plots.C("3fl_T2K_app_CP")'              // Pμe(E) at T2K baseline, δCP scan (ν and ν̄)
+//   root -l -q 'sbn_osc_plots.C("3fl_NOvA_app_CP")'             // Pμe(E) at NOvA baseline, δCP scan (ν and ν̄)
+//   root -l -q 'sbn_osc_plots.C("3fl_DUNE_app_CP")'             // Pμe(E) at DUNE baseline, δCP scan (ν and ν̄)
+//   root -l -q 'sbn_osc_plots.C("3fl_DUNE_matter_ordering")'     // constant-density matter: ordering + ν/ν̄
+//   root -l -q 'sbn_osc_plots.C("3fl_lbl_oscillogram")'          // 3-flavour (vacuum) oscillogram (Pμe vs L,E)
+//   root -l -q 'sbn_osc_plots.C("3fl_all")'
 //   root -l -q 'sbn_osc_plots.C("all")'
 //
 // Each mode writes a PDF in the current directory.
@@ -40,6 +49,10 @@
 #include "TMultiGraph.h"
 #include "TAxis.h"
 #include "TStyle.h"
+#include "TMatrixD.h"
+#include "TMatrixDSym.h"
+#include "TMatrixDSymEigen.h"
+#include "TVectorD.h"
 
 static double sinsq(double x) {
   const double s = std::sin(x);
@@ -102,6 +115,9 @@ static double toy_xsec(double E_GeV) {
   return std::max(0.0, E_GeV);
 }
 
+// Phase factor for exp(-i m^2 L / (2E)) with m^2[eV^2], L[km], E[GeV]
+static double phase_mass2(double m2_eV2, double L_km, double E_GeV) { return 2.534 * m2_eV2 * L_km / E_GeV; }
+
 // ---------------------------
 // 3-flavour vacuum oscillations helper code
 //   P_{α→β} = δ_{αβ}
@@ -156,12 +172,31 @@ struct OscParams3fl {
   double dm31 = 2.517e-3;  // eV^2 (NO: m3^2 - m1^2)
 };
 
+enum class MassOrdering { kNO, kIO };
+
+static OscParams3fl ParamsNO(double delta_deg = -90.0) {
+  OscParams3fl p;
+  p.d13 = deg2rad(delta_deg);
+  p.dm31 = +std::abs(p.dm31);
+  return p;
+}
+static OscParams3fl ParamsIO(double delta_deg = -90.0) {
+  OscParams3fl p = ParamsNO(delta_deg);
+  p.dm31 = -std::abs(p.dm31);
+  return p;
+}
+
 static Mat3 BuildPMNS_3fl(const OscParams3fl& p) {
   Mat3 U = Identity3();
   LeftMultiplyRotation(U, 0, 1, p.th12, 0.0);
   LeftMultiplyRotation(U, 0, 2, p.th13, p.d13);
   LeftMultiplyRotation(U, 1, 2, p.th23, 0.0);
   return U;
+}
+
+static void BuildVacuumObjects(const OscParams3fl& p, std::array<double,3>& m2, Mat3& U) {
+  U  = BuildPMNS_3fl(p);
+  m2 = {0.0, p.dm21, p.dm31};
 }
 
 // Flavour indices: 0=e, 1=mu, 2=tau
@@ -179,6 +214,60 @@ static double P_vac_3fl(int alpha, int beta, double LE_km_per_GeV,
     }
   }
   return clamp01(P);
+}
+
+// Constant-density matter potential a = 2*sqrt(2)*G_F*N_e*E in eV^2:
+//   a[eV^2] ≈ 1.52e-4 * rho[g/cm^3] * Ye * E[GeV]
+static double MatterA_eV2(double E_GeV, double rho_gcm3, double Ye = 0.5) {
+  return 1.52e-4 * rho_gcm3 * Ye * E_GeV;
+}
+
+// 3-flavour constant-density matter probability (δCP forced to 0 so U is real and we can use a symmetric diagonaliser).
+// This is intended for *illustrative* long-baseline phenomenology (ordering + ν/ν̄ matter asymmetry).
+static double P_matter_3fl_const(int alpha, int beta,
+                                 double L_km, double E_GeV,
+                                 const OscParams3fl& pin,
+                                 double rho_gcm3, double Ye,
+                                 bool antineutrino)
+{
+  if (E_GeV <= 0.0) return (alpha == beta) ? 1.0 : 0.0;
+
+  // Force δ=0 for a real mixing matrix (keeps the matter treatment simple + robust in a ROOT macro).
+  OscParams3fl p = pin;
+  p.d13 = 0.0;
+
+  Mat3 Uc;
+  std::array<double,3> m2;
+  BuildVacuumObjects(p, m2, Uc);
+
+  // Build flavor-basis (mass^2) matrix: M = U diag(m^2) U^T  (U real when δ=0)
+  TMatrixDSym M(3);
+  for (int a = 0; a < 3; ++a) {
+    for (int b = 0; b <= a; ++b) {
+      double sum = 0.0;
+      for (int i = 0; i < 3; ++i) sum += std::real(Uc[a][i]) * std::real(Uc[b][i]) * m2[i];
+      M(a,b) = sum;
+      M(b,a) = sum;
+    }
+  }
+
+  const double A = MatterA_eV2(E_GeV, rho_gcm3, Ye) * (antineutrino ? -1.0 : +1.0);
+  M(0,0) += A;
+
+  // Diagonalise the symmetric matrix M = V diag(λ) V^T
+  TMatrixDSymEigen eig(M);
+  const TVectorD eval = eig.GetEigenValues();
+  const TMatrixD V    = eig.GetEigenVectors(); // columns are eigenvectors in flavour basis
+
+  // Evolution operator: S = V diag(exp(-i φ_k)) V^T, with φ_k = (m^2_eff)_k * L/(2E)
+  const double L_over_E = L_km / E_GeV;
+  cplx amp(0.0, 0.0);
+  for (int k = 0; k < 3; ++k) {
+    const double phi = 2.534 * eval[k] * L_over_E;
+    const cplx ex    = std::exp(cplx(0.0, -phi));
+    amp += V(beta, k) * V(alpha, k) * ex;
+  }
+  return clamp01(std::norm(amp));
 }
 
 static TGraph* MakeProbGraphLE(int alpha, int beta,
@@ -203,6 +292,47 @@ static TGraph* MakeProbGraphLE(int alpha, int beta,
     double y = oneMinus ? clamp01(1.0 - P) : P;
     if (yFloor > 0.0 && y < yFloor) y = yFloor; // avoid y<=0 points on log-y pads
     g->SetPoint(k, x, y);
+  }
+  return g;
+}
+
+static TGraph* MakeProbGraphE_vac(int alpha, int beta,
+                                  double L_km,
+                                  double Emin, double Emax, int N,
+                                  const std::array<double,3>& m2, const Mat3& U,
+                                  double yFloor = 0.0,
+                                  bool oneMinus = false)
+{
+  TGraph* g = new TGraph(N);
+  for (int i = 0; i < N; ++i) {
+    const double t = (N == 1) ? 0.0 : (double)i / (double)(N - 1);
+    const double E = Emin + (Emax - Emin) * t;
+    const double LE = (E > 0.0) ? (L_km / E) : 0.0;
+    const double P = P_vac_3fl(alpha, beta, LE, m2, U);
+    double y = oneMinus ? clamp01(1.0 - P) : P;
+    if (yFloor > 0.0 && y < yFloor) y = yFloor;
+    g->SetPoint(i, E, y);
+  }
+  return g;
+}
+
+static TGraph* MakeProbGraphE_matter(int alpha, int beta,
+                                     double L_km,
+                                     double Emin, double Emax, int N,
+                                     const OscParams3fl& p,
+                                     double rho_gcm3, double Ye,
+                                     bool antineutrino,
+                                     double yFloor = 0.0,
+                                     bool oneMinus = false)
+{
+  TGraph* g = new TGraph(N);
+  for (int i = 0; i < N; ++i) {
+    const double t = (N == 1) ? 0.0 : (double)i / (double)(N - 1);
+    const double E = Emin + (Emax - Emin) * t;
+    const double P = P_matter_3fl_const(alpha, beta, L_km, E, p, rho_gcm3, Ye, antineutrino);
+    double y = oneMinus ? clamp01(1.0 - P) : P;
+    if (yFloor > 0.0 && y < yFloor) y = yFloor;
+    g->SetPoint(i, E, y);
   }
   return g;
 }
@@ -241,9 +371,10 @@ static void DrawHeader(const char* line1, const char* line2 = nullptr) {
 }
 
 // 3-flavour SBL-focused plot as a standalone PDF (same styling as the other single-canvas outputs).
-// Plots:
-//   blue: P(νμ→νe)
-//   red : 1 - P(νμ→νμ)   (disappearance probability)
+// Plots (μ-flavour initial state):
+//   blue : P(νμ→νe)
+//   green: P(νμ→ντ)
+//   red  : 1 - P(νμ→νμ)   (disappearance probability, equals Pμe+Pμτ by unitarity)
 static void sbn_fig1p9_panel(const char* cname,
                              const char* outPdf,
                              double xMin, double xMax,
@@ -255,13 +386,14 @@ static void sbn_fig1p9_panel(const char* cname,
   SetNiceStyle();
   gROOT->SetBatch(kTRUE);
 
-  // 3-flavour physics inputs (edit as desired).
-  const OscParams3fl p;
-  const Mat3 U = BuildPMNS_3fl(p);
-  const std::array<double,3> m2 = {0.0, p.dm21, p.dm31};
+  // SBL: ordering/δ choices barely matter numerically; keep a simple NO benchmark.
+  const OscParams3fl p = ParamsNO(-90.0);
+  Mat3 U;
+  std::array<double,3> m2;
+  BuildVacuumObjects(p, m2, U);
 
   // For log-y pads: ensure we never feed y<=0 points to TGraph.
-  const double yFloor = (logY ? std::max(1e-12, 0.1*yMin) : 0.0);
+  const double yFloor = (logY ? std::max(1e-14, 0.1*yMin) : 0.0);
 
   TCanvas* c = new TCanvas(cname, "", 900, 650);
   c->SetLogx(logX);
@@ -269,17 +401,22 @@ static void sbn_fig1p9_panel(const char* cname,
 
   TMultiGraph* mg = new TMultiGraph();
 
-  // Curves (SBL-relevant): appearance and disappearance
+  // Curves: Pμe, Pμτ, and 1-Pμμ
   TGraph* g_mue  = MakeProbGraphLE(1, 0, xMin, xMax, N, logX, m2, U, yFloor, false);
+  TGraph* g_mut  = MakeProbGraphLE(1, 2, xMin, xMax, N, logX, m2, U, yFloor, false);
   TGraph* g_dis  = MakeProbGraphLE(1, 1, xMin, xMax, N, logX, m2, U, yFloor, true);
 
   g_mue->SetLineColor(kBlue+1);
   g_mue->SetLineWidth(3);
 
+  g_mut->SetLineColor(kGreen+2);
+  g_mut->SetLineWidth(3);
+
   g_dis->SetLineColor(kRed+1);
   g_dis->SetLineWidth(3);
 
   mg->Add(g_mue, "L");
+  mg->Add(g_mut, "L");
   mg->Add(g_dis, "L");
 
   mg->SetTitle(";L/E  [km/GeV];Probability");
@@ -299,18 +436,19 @@ static void sbn_fig1p9_panel(const char* cname,
 
   // Legend placement similar to other single-canvas plots.
   TLegend* leg = (!logX && !logY) ? new TLegend(0.56, 0.72, 0.88, 0.88)
-                                  : new TLegend(0.52, 0.18, 0.88, 0.38);
+                                  : new TLegend(0.52, 0.18, 0.88, 0.42);
   leg->SetTextFont(42);
   leg->SetTextSize(0.035);
   leg->SetFillStyle(0);
   leg->AddEntry(g_mue, "P_{#mu e}", "l");
-  leg->AddEntry(g_dis, "1 - P_{#mu#mu}", "l");
+  leg->AddEntry(g_mut, "P_{#mu #tau}", "l");
+  leg->AddEntry(g_dis, "1 - P_{#mu#mu} (=P_{#mu e}+P_{#mu #tau})", "l");
   leg->Draw();
 
   const double rad2deg = 180.0 / std::acos(-1.0);
-  DrawHeader("3-flavour vacuum: standard oscillations at short baseline",
-             Form("NO: #Delta m^{2}_{31}=%.3e eV^{2}, #Delta m^{2}_{21}=%.3e eV^{2};  #theta_{13}=%.2f^{#circ}, #theta_{23}=%.2f^{#circ}",
-                  p.dm31, p.dm21, p.th13*rad2deg, p.th23*rad2deg));
+  DrawHeader("3-flavour vacuum: short-baseline limit (standard oscillations are small)",
+             Form("#Delta m^{2}_{31}=%.3e eV^{2},  #theta_{13}=%.2f^{#circ},  #theta_{23}=%.2f^{#circ}   (note: #mu-disappearance dominated by #nu_{#tau})",
+                  p.dm31, p.th13*rad2deg, p.th23*rad2deg));
 
   c->SaveAs(outPdf);
 }
@@ -332,6 +470,398 @@ void sbn_fig1p9_all() {
   sbn_fig1p9_d();
   sbn_fig1p9_e();
   sbn_fig1p9_f();
+}
+
+// ------------------------------------------------------------
+// More informative 3-flavour phenomenology plots
+// ------------------------------------------------------------
+
+static void DrawLEMarker(double x, const char* label, double yNDC = 0.82) {
+  // Assumes current pad uses log-x optionally; draw a vertical line in user coords and a label in NDC.
+  TLine* ln = new TLine(x, gPad->GetUymin(), x, gPad->GetUymax());
+  ln->SetLineStyle(2);
+  ln->SetLineWidth(2);
+  ln->SetLineColor(kGray+2);
+  ln->Draw("SAME");
+
+  // Convert x in user coordinates to NDC for label placement
+  const double xNDC = gPad->XtoPad(x);
+  TLatex lat;
+  lat.SetNDC(true);
+  lat.SetTextFont(42);
+  lat.SetTextSize(0.030);
+  lat.SetTextAngle(90);
+  lat.DrawLatex(xNDC + 0.01, yNDC, label);
+}
+
+void sbn_3fl_LE_overview() {
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Wide-range L/E overview: show both the SBL regime and the atmospheric/solar-scale structure.
+  const OscParams3fl p = ParamsNO(-90.0);
+  Mat3 U;
+  std::array<double,3> m2;
+  BuildVacuumObjects(p, m2, U);
+
+  const int    N    = 8000;
+  const double xMin = 1e-2;
+  const double xMax = 3e4;
+
+  TCanvas* c = new TCanvas("c_3fl_LE_overview", "", 950, 650);
+  c->SetLogx();
+
+  TMultiGraph* mg = new TMultiGraph();
+  TGraph* g_mue  = MakeProbGraphLE(1, 0, xMin, xMax, N, true, m2, U, 0.0, false);
+  TGraph* g_mumu = MakeProbGraphLE(1, 1, xMin, xMax, N, true, m2, U, 0.0, false);
+  TGraph* g_mut  = MakeProbGraphLE(1, 2, xMin, xMax, N, true, m2, U, 0.0, false);
+
+  g_mue->SetLineColor(kBlue+1);   g_mue->SetLineWidth(3);
+  g_mumu->SetLineColor(kRed+1);   g_mumu->SetLineWidth(3);
+  g_mut->SetLineColor(kGreen+2);  g_mut->SetLineWidth(3);
+
+  mg->Add(g_mue,  "L");
+  mg->Add(g_mumu, "L");
+  mg->Add(g_mut,  "L");
+
+  mg->SetTitle(";L/E  [km/GeV];P(#nu_{#mu} #rightarrow #nu_{#alpha})");
+  mg->Draw("A");
+  mg->GetXaxis()->SetMoreLogLabels(true);
+  mg->GetXaxis()->SetNoExponent(true);
+  mg->GetYaxis()->SetRangeUser(0.0, 1.0);
+
+  TLegend* leg = new TLegend(0.58, 0.70, 0.90, 0.88);
+  leg->SetTextFont(42);
+  leg->SetTextSize(0.035);
+  leg->SetFillStyle(0);
+  leg->AddEntry(g_mue,  "#nu_{#mu}#rightarrow#nu_{e}",   "l");
+  leg->AddEntry(g_mumu, "#nu_{#mu}#rightarrow#nu_{#mu}", "l");
+  leg->AddEntry(g_mut,  "#nu_{#mu}#rightarrow#nu_{#tau}","l");
+  leg->Draw();
+
+  // Context markers (typical L/E for well-known setups)
+  // SBN-like: L~0.5 km, E~0.7 GeV -> ~0.7
+  DrawLEMarker(0.7,  "SBN (~0.5 km / 0.7 GeV)", 0.78);
+  // T2K: 295 km / 0.6 GeV -> ~492
+  DrawLEMarker(295.0/0.60, "T2K (295/0.6)", 0.78);
+  // NOvA: 810 km / 2.0 GeV -> 405
+  DrawLEMarker(810.0/2.0,  "NOvA (810/2.0)", 0.78);
+  // DUNE: 1300 km / 2.5 GeV -> 520
+  DrawLEMarker(1300.0/2.5, "DUNE (1300/2.5)", 0.78);
+
+  DrawHeader("3-flavour vacuum: wide-range L/E overview (from SBL to atmospheric/solar scales)",
+             "Colours = final flavour; markers = typical experimental L/E");
+
+  c->SaveAs("sbn_3fl_LE_overview.pdf");
+}
+
+void sbn_3fl_LE_long_mu_channels() {
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Long-baseline regime in L/E: show full three-channel unitarity dance.
+  const OscParams3fl p = ParamsNO(-90.0);
+  Mat3 U;
+  std::array<double,3> m2;
+  BuildVacuumObjects(p, m2, U);
+
+  const int    N    = 20000;
+  const double xMin = 0.0;
+  const double xMax = 2000.0; // covers the atmospheric-scale maxima around ~500 km/GeV
+
+  TCanvas* c = new TCanvas("c_3fl_LE_long_mu_channels", "", 950, 650);
+  TMultiGraph* mg = new TMultiGraph();
+
+  TGraph* g_mue  = MakeProbGraphLE(1, 0, xMin, xMax, N, false, m2, U, 0.0, false);
+  TGraph* g_mumu = MakeProbGraphLE(1, 1, xMin, xMax, N, false, m2, U, 0.0, false);
+  TGraph* g_mut  = MakeProbGraphLE(1, 2, xMin, xMax, N, false, m2, U, 0.0, false);
+
+  g_mue->SetLineColor(kBlue+1);   g_mue->SetLineWidth(3);
+  g_mumu->SetLineColor(kRed+1);   g_mumu->SetLineWidth(3);
+  g_mut->SetLineColor(kGreen+2);  g_mut->SetLineWidth(3);
+
+  mg->Add(g_mue,  "L");
+  mg->Add(g_mumu, "L");
+  mg->Add(g_mut,  "L");
+
+  mg->SetTitle(";L/E  [km/GeV];P(#nu_{#mu} #rightarrow #nu_{#alpha})");
+  mg->Draw("A");
+  mg->GetXaxis()->SetNdivisions(510);
+  mg->GetYaxis()->SetRangeUser(0.0, 1.0);
+
+  TLegend* leg = new TLegend(0.58, 0.70, 0.90, 0.88);
+  leg->SetTextFont(42);
+  leg->SetTextSize(0.035);
+  leg->SetFillStyle(0);
+  leg->AddEntry(g_mue,  "#nu_{#mu}#rightarrow#nu_{e}",   "l");
+  leg->AddEntry(g_mumu, "#nu_{#mu}#rightarrow#nu_{#mu}", "l");
+  leg->AddEntry(g_mut,  "#nu_{#mu}#rightarrow#nu_{#tau}","l");
+  leg->Draw();
+
+  // Mark the atmospheric first maximum in L/E for |Δm^2_31|
+  const double LE_atm1 = (0.5 * std::acos(-1.0)) / (1.267 * std::abs(p.dm31)); // π/2 / (1.267*dm31)
+  TLine* lmax = new TLine(LE_atm1, 0.0, LE_atm1, 1.0);
+  lmax->SetLineStyle(2);
+  lmax->SetLineWidth(2);
+  lmax->SetLineColor(kGray+2);
+  lmax->Draw("SAME");
+  TLatex lat;
+  lat.SetNDC(true);
+  lat.SetTextFont(42);
+  lat.SetTextSize(0.032);
+  lat.DrawLatex(0.16, 0.84, Form("Atmospheric 1st max: L/E #approx %.0f km/GeV", LE_atm1));
+
+  DrawHeader("3-flavour vacuum: long-baseline regime in L/E (NO, #delta_{CP}=-90^{#circ})",
+             "Shows the full μ-flavour unitarity (Pμe+Pμμ+Pμτ=1)");
+
+  c->SaveAs("sbn_3fl_LE_long_mu_channels.pdf");
+}
+
+void sbn_3fl_LE_ordering_vac() {
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Vacuum ordering comparison (illustrative; in matter the separation becomes much stronger).
+  const OscParams3fl pNO = ParamsNO(-90.0);
+  const OscParams3fl pIO = ParamsIO(-90.0);
+
+  Mat3 U_NO, U_IO;
+  std::array<double,3> m2_NO, m2_IO;
+  BuildVacuumObjects(pNO, m2_NO, U_NO);
+  BuildVacuumObjects(pIO, m2_IO, U_IO);
+
+  const int    N    = 20000;
+  const double xMin = 0.0;
+  const double xMax = 2000.0;
+
+  TCanvas* c = new TCanvas("c_3fl_LE_ordering_vac", "", 950, 650);
+  TMultiGraph* mg = new TMultiGraph();
+
+  // Focus on the appearance channel where hierarchy/δ interplay is most visible.
+  TGraph* gNO = MakeProbGraphLE(1, 0, xMin, xMax, N, false, m2_NO, U_NO, 0.0, false);
+  TGraph* gIO = MakeProbGraphLE(1, 0, xMin, xMax, N, false, m2_IO, U_IO, 0.0, false);
+
+  gNO->SetLineColor(kBlue+1); gNO->SetLineWidth(3); gNO->SetLineStyle(1);
+  gIO->SetLineColor(kRed+1);  gIO->SetLineWidth(3); gIO->SetLineStyle(2);
+
+  mg->Add(gNO, "L");
+  mg->Add(gIO, "L");
+
+  mg->SetTitle(";L/E  [km/GeV];P_{#mu e}");
+  mg->Draw("A");
+  mg->GetXaxis()->SetNdivisions(510);
+  mg->GetYaxis()->SetRangeUser(0.0, 0.12);
+
+  TLegend* leg = new TLegend(0.58, 0.74, 0.90, 0.88);
+  leg->SetTextFont(42);
+  leg->SetTextSize(0.035);
+  leg->SetFillStyle(0);
+  leg->AddEntry(gNO, "Normal ordering (NO), #delta_{CP}=-90^{#circ}", "l");
+  leg->AddEntry(gIO, "Inverted ordering (IO), #delta_{CP}=-90^{#circ}", "l");
+  leg->Draw();
+
+  DrawHeader("3-flavour vacuum: ordering comparison (illustrative; matter enhances separation)",
+             "Line style encodes ordering (solid=NO, dashed=IO)");
+
+  c->SaveAs("sbn_3fl_LE_ordering_vac.pdf");
+}
+
+static void StyleDeltaCurves(std::vector<TGraph*>& gs, const std::vector<int>& cols, bool dashed = false) {
+  for (size_t i = 0; i < gs.size(); ++i) {
+    gs[i]->SetLineColor(cols[i]);
+    gs[i]->SetLineWidth(3);
+    gs[i]->SetLineStyle(dashed ? 2 : 1);
+  }
+}
+
+static void PlotAppCP_vsE(const char* cname, const char* outPdf,
+                          double L_km, double Emin, double Emax,
+                          const char* titleLine,
+                          bool showAntinu)
+{
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Use vacuum here to isolate “geometry”: oscillation peaks and CP interference in a clean way.
+  // (Matter effects are handled in a separate dedicated plot below.)
+  const std::vector<double> deltas = {-90.0, 0.0, +90.0};
+  const std::vector<int>    cols   = {kBlue+1, kBlack, kRed+1};
+
+  const int N = 2000;
+
+  TCanvas* c = new TCanvas(cname, "", 950, 650);
+  TMultiGraph* mg = new TMultiGraph();
+
+  std::vector<TGraph*> g_nu;
+  std::vector<TGraph*> g_nub;
+  g_nu.reserve(deltas.size());
+  g_nub.reserve(deltas.size());
+
+  for (size_t i = 0; i < deltas.size(); ++i) {
+    const OscParams3fl pnu  = ParamsNO(deltas[i]);
+    const OscParams3fl pnub = ParamsNO(-deltas[i]); // vacuum: ν̄ equivalent to δ -> -δ
+
+    Mat3 U_nu, U_nub;
+    std::array<double,3> m2_nu, m2_nub;
+    BuildVacuumObjects(pnu,  m2_nu,  U_nu);
+    BuildVacuumObjects(pnub, m2_nub, U_nub);
+
+    TGraph* g1 = MakeProbGraphE_vac(1, 0, L_km, Emin, Emax, N, m2_nu,  U_nu);
+    g_nu.push_back(g1);
+    mg->Add(g1, "L");
+
+    if (showAntinu) {
+      TGraph* g2 = MakeProbGraphE_vac(1, 0, L_km, Emin, Emax, N, m2_nub, U_nub);
+      g_nub.push_back(g2);
+      mg->Add(g2, "L");
+    }
+  }
+
+  StyleDeltaCurves(g_nu, cols, false);
+  if (showAntinu) StyleDeltaCurves(g_nub, cols, true);
+
+  mg->SetTitle(";E_{#nu}  [GeV];P_{#mu e}");
+  mg->Draw("A");
+  mg->GetXaxis()->SetNdivisions(510);
+  mg->GetYaxis()->SetRangeUser(0.0, 0.20);
+
+  TLegend* leg = new TLegend(0.52, 0.62, 0.90, 0.88);
+  leg->SetTextFont(42);
+  leg->SetTextSize(0.033);
+  leg->SetFillStyle(0);
+  leg->AddEntry(g_nu[0],  "#nu,  #delta_{CP}=-90^{#circ}", "l");
+  leg->AddEntry(g_nu[1],  "#nu,  #delta_{CP}=0",           "l");
+  leg->AddEntry(g_nu[2],  "#nu,  #delta_{CP}=+90^{#circ}", "l");
+  if (showAntinu) {
+    leg->AddEntry(g_nub[0], "#bar{#nu},  #delta_{CP}=-90^{#circ}  (dashed)", "l");
+  }
+  leg->Draw();
+
+  DrawHeader(titleLine,
+             showAntinu ? "Vacuum; dashed = #bar{#nu} (implemented as #delta_{CP}#rightarrow-#delta_{CP})"
+                        : "Vacuum; shows CP-phase modulation of the appearance peak structure");
+
+  c->SaveAs(outPdf);
+}
+
+void sbn_3fl_T2K_app_CP()  { PlotAppCP_vsE("c_3fl_T2K_app_CP",  "sbn_3fl_T2K_app_CP.pdf",  295.0, 0.2, 1.5, "3-flavour vacuum: T2K-like baseline (L=295 km) — P_{#mu e}(E) vs #delta_{CP}", true); }
+void sbn_3fl_NOvA_app_CP() { PlotAppCP_vsE("c_3fl_NOvA_app_CP", "sbn_3fl_NOvA_app_CP.pdf", 810.0, 0.5, 4.0, "3-flavour vacuum: NOvA-like baseline (L=810 km) — P_{#mu e}(E) vs #delta_{CP}", true); }
+void sbn_3fl_DUNE_app_CP() { PlotAppCP_vsE("c_3fl_DUNE_app_CP", "sbn_3fl_DUNE_app_CP.pdf", 1300.0,0.5, 6.0, "3-flavour vacuum: DUNE-like baseline (L=1300 km) — P_{#mu e}(E) vs #delta_{CP}", true); }
+
+void sbn_3fl_DUNE_matter_ordering() {
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Constant-density matter comparison at DUNE baseline.
+  // Here we *intentionally* set δ=0 in the matter calculation to keep the treatment exact and stable
+  // with a real-symmetric diagonalisation. This isolates the ordering + ν/ν̄ matter asymmetry.
+  const double L_km = 1300.0;
+  const double Emin = 0.5;
+  const double Emax = 6.0;
+  const int    N    = 2000;
+
+  const double rho = 2.8; // g/cm^3 (schematic mantle/crust scale)
+  const double Ye  = 0.5;
+
+  OscParams3fl pNO = ParamsNO(0.0);
+  OscParams3fl pIO = ParamsIO(0.0);
+
+  TCanvas* c = new TCanvas("c_3fl_DUNE_matter_ordering", "", 950, 650);
+  TMultiGraph* mg = new TMultiGraph();
+
+  // Colour encodes ordering; line style encodes ν vs ν̄.
+  TGraph* gNO_nu  = MakeProbGraphE_matter(1, 0, L_km, Emin, Emax, N, pNO, rho, Ye, false);
+  TGraph* gNO_nub = MakeProbGraphE_matter(1, 0, L_km, Emin, Emax, N, pNO, rho, Ye, true );
+  TGraph* gIO_nu  = MakeProbGraphE_matter(1, 0, L_km, Emin, Emax, N, pIO, rho, Ye, false);
+  TGraph* gIO_nub = MakeProbGraphE_matter(1, 0, L_km, Emin, Emax, N, pIO, rho, Ye, true );
+
+  gNO_nu ->SetLineColor(kBlue+1); gNO_nu ->SetLineWidth(3); gNO_nu ->SetLineStyle(1);
+  gNO_nub->SetLineColor(kBlue+1); gNO_nub->SetLineWidth(3); gNO_nub->SetLineStyle(2);
+  gIO_nu ->SetLineColor(kRed+1);  gIO_nu ->SetLineWidth(3); gIO_nu ->SetLineStyle(1);
+  gIO_nub->SetLineColor(kRed+1);  gIO_nub->SetLineWidth(3); gIO_nub->SetLineStyle(2);
+
+  mg->Add(gNO_nu,  "L");
+  mg->Add(gNO_nub, "L");
+  mg->Add(gIO_nu,  "L");
+  mg->Add(gIO_nub, "L");
+
+  mg->SetTitle(";E_{#nu}  [GeV];P_{#mu e}");
+  mg->Draw("A");
+  mg->GetXaxis()->SetNdivisions(510);
+  mg->GetYaxis()->SetRangeUser(0.0, 0.25);
+
+  TLegend* leg = new TLegend(0.50, 0.62, 0.90, 0.88);
+  leg->SetTextFont(42);
+  leg->SetTextSize(0.033);
+  leg->SetFillStyle(0);
+  leg->AddEntry(gNO_nu,  "NO: #nu (solid),  #delta_{CP}=0", "l");
+  leg->AddEntry(gNO_nub, "NO: #bar{#nu} (dashed)",          "l");
+  leg->AddEntry(gIO_nu,  "IO: #nu (solid),  #delta_{CP}=0", "l");
+  leg->AddEntry(gIO_nub, "IO: #bar{#nu} (dashed)",          "l");
+  leg->Draw();
+
+  DrawHeader("3-flavour constant-density matter: DUNE-like baseline (L=1300 km)",
+             Form("rho=%.1f g/cm^{3}, Ye=%.2f; illustrates ordering + #nu/#bar{#nu} matter asymmetry (δ forced to 0 here)", rho, Ye));
+
+  c->SaveAs("sbn_3fl_DUNE_matter_ordering.pdf");
+}
+
+void sbn_3fl_lbl_oscillogram() {
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Vacuum oscillogram for Pμe over a long-baseline-like L and E range.
+  const OscParams3fl p = ParamsNO(-90.0);
+  Mat3 U;
+  std::array<double,3> m2;
+  BuildVacuumObjects(p, m2, U);
+
+  const int nE = 260;
+  const int nL = 260;
+  const double Emin = 0.2, Emax = 6.0;   // GeV
+  const double Lmin = 50.0, Lmax = 2000.0; // km
+
+  TCanvas* c = new TCanvas("c_3fl_lbl_oscillogram", "", 950, 700);
+  c->SetRightMargin(0.18);
+
+  TH2D* h = new TH2D("h_3fl_lbl_osc",
+                     ";E_{#nu}  [GeV];Baseline L  [km];P_{#mu e}  (vacuum, NO, #delta_{CP}=-90^{#circ})",
+                     nE, Emin, Emax,
+                     nL, Lmin, Lmax);
+
+  for (int ix = 1; ix <= nE; ++ix) {
+    const double E = h->GetXaxis()->GetBinCenter(ix);
+    for (int iy = 1; iy <= nL; ++iy) {
+      const double L = h->GetYaxis()->GetBinCenter(iy);
+      const double LE = L / E;
+      h->SetBinContent(ix, iy, P_vac_3fl(1, 0, LE, m2, U));
+    }
+  }
+
+  h->SetMinimum(0.0);
+  h->SetMaximum(0.25);
+  h->GetZaxis()->SetTitleOffset(1.25);
+  h->Draw("COLZ");
+
+  DrawHeader("3-flavour vacuum oscillogram (appearance channel)",
+             "Constant L/E structures appear as diagonal bands; useful for intuition across baselines/energies");
+
+  c->SaveAs("sbn_3fl_lbl_oscillogram.pdf");
+}
+
+void sbn_3fl_all() {
+  // Keep the original “SBL zoom” set (now with Pμτ added).
+  sbn_fig1p9_all();
+
+  // Add richer, more global phenomenology views.
+  sbn_3fl_LE_overview();
+  sbn_3fl_LE_long_mu_channels();
+  sbn_3fl_LE_ordering_vac();
+  sbn_3fl_T2K_app_CP();
+  sbn_3fl_NOvA_app_CP();
+  sbn_3fl_DUNE_app_CP();
+  sbn_3fl_DUNE_matter_ordering();
+  sbn_3fl_lbl_oscillogram();
 }
 
 void sbn_prob_vs_LE() {
@@ -701,6 +1231,7 @@ void sbn_plot_all() {
   sbn_nearfar();
   sbn_dm2_sin22_template();
   sbn_fig1p9_all();
+  sbn_3fl_all();
 }
 
 void sbn_osc_plots(const char* which = "all") {
@@ -720,9 +1251,22 @@ void sbn_osc_plots(const char* which = "all") {
   else if (w == "fig1p9_e")           sbn_fig1p9_e();
   else if (w == "fig1p9_f")           sbn_fig1p9_f();
   else if (w == "fig1p9_all")         sbn_fig1p9_all();
+  else if (w == "3fl_LE_overview")            sbn_3fl_LE_overview();
+  else if (w == "3fl_LE_long_mu_channels")     sbn_3fl_LE_long_mu_channels();
+  else if (w == "3fl_LE_ordering_vac")         sbn_3fl_LE_ordering_vac();
+  else if (w == "3fl_T2K_app_CP")              sbn_3fl_T2K_app_CP();
+  else if (w == "3fl_NOvA_app_CP")             sbn_3fl_NOvA_app_CP();
+  else if (w == "3fl_DUNE_app_CP")             sbn_3fl_DUNE_app_CP();
+  else if (w == "3fl_DUNE_matter_ordering")    sbn_3fl_DUNE_matter_ordering();
+  else if (w == "3fl_lbl_oscillogram")         sbn_3fl_lbl_oscillogram();
+  else if (w == "3fl_all")                     sbn_3fl_all();
   else if (w == "all")                sbn_plot_all();
   else {
     std::cout << "Unknown mode: " << w << "\n"
-              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, fig1p9_a, fig1p9_b, fig1p9_c, fig1p9_d, fig1p9_e, fig1p9_f, fig1p9_all, all\n";
+              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, "
+              << "fig1p9_a, fig1p9_b, fig1p9_c, fig1p9_d, fig1p9_e, fig1p9_f, fig1p9_all, "
+              << "3fl_LE_overview, 3fl_LE_long_mu_channels, 3fl_LE_ordering_vac, "
+              << "3fl_T2K_app_CP, 3fl_NOvA_app_CP, 3fl_DUNE_app_CP, 3fl_DUNE_matter_ordering, 3fl_lbl_oscillogram, 3fl_all, "
+              << "all\n";
   }
 }

@@ -28,9 +28,6 @@
 #include "NormalisationService.hh"
 #include "SampleIO.hh"
 
-
-
-
 inline std::vector<std::string> split_tabs(const std::string &line)
 {
     std::vector<std::string> out;
@@ -234,11 +231,5 @@ inline void update_sample_list(const std::string &list_path,
 }
 
 int run(const Args &sample_args, const std::string &log_prefix);
-
-}
-
-}
-
-}
 
 #endif

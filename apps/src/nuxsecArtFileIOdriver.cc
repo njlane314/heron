@@ -13,9 +13,6 @@
 #include "AppUtils.hh"
 #include "ArtCLI.hh"
 #include "StatusMonitor.hh"
-
-
-
 int run(const Args &art_args, const std::string &log_prefix)
 {
     ROOT::EnableImplicitMT();
@@ -66,10 +63,6 @@ int run(const Args &art_args, const std::string &log_prefix)
     ArtFileProvenanceIO::write(rec, art_args.art_path);
 
     return 0;
-}
-
-}
-
 }
 
 int main(int argc, char **argv)

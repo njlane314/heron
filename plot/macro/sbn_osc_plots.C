@@ -9,12 +9,15 @@
 //   root -l -q 'sbn_osc_plots.C("bias")'
 //   root -l -q 'sbn_osc_plots.C("nearfar")'
 //   root -l -q 'sbn_osc_plots.C("dm2_sin22_template")'
+//   root -l -q 'sbn_osc_plots.C("fig1p9")'   // 3+1 multi-panel P(νμ→να) vs L/E, like the example figure
 //   root -l -q 'sbn_osc_plots.C("all")'
 //
 // Each mode writes a PDF in the current directory.
 
+#include <array>
 #include <algorithm>
 #include <cmath>
+#include <complex>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -93,6 +96,120 @@ static double toy_xsec(double E_GeV) {
   return std::max(0.0, E_GeV);
 }
 
+// ---------------------------
+// 3+1 vacuum oscillations (4-flavour) helper code
+//   P_{α→β} = δ_{αβ}
+//            -4 Σ_{i>j} Re(U_{αi}U*_{βi}U*_{αj}U_{βj}) sin^2(Δij)
+//            +2 Σ_{i>j} Im(...) sin(2Δij),
+// where Δij = 1.267 Δm^2_ij [eV^2] * (L/E) [km/GeV]
+// ---------------------------
+using cplx = std::complex<double>;
+using Mat4 = std::array<std::array<cplx,4>,4>;
+
+static double deg2rad(double deg) { return deg * (std::acos(-1.0) / 180.0); }
+
+static double clamp01(double x) {
+  if (x < 0.0) return 0.0;
+  if (x > 1.0) return 1.0;
+  return x;
+}
+
+static Mat4 Identity4() {
+  Mat4 U{};
+  for (int r = 0; r < 4; ++r) {
+    for (int c = 0; c < 4; ++c) U[r][c] = (r == c) ? cplx(1.0,0.0) : cplx(0.0,0.0);
+  }
+  return U;
+}
+
+// Left-multiply U by a complex rotation R_ij(theta, delta) in the (i,j) subspace.
+// This reproduces the usual PDG-like build order when applied as:
+//   U = R34 * R24 * R14 * R23 * R13 * R12
+static void LeftMultiplyRotation(Mat4& U, int i, int j, double theta, double delta) {
+  const double c = std::cos(theta);
+  const double s = std::sin(theta);
+  const cplx e_m = std::exp(cplx(0.0, -delta));
+  const cplx e_p = std::exp(cplx(0.0, +delta));
+
+  // Build the 2x2 block action on rows i and j of U: U <- R * U
+  for (int col = 0; col < 4; ++col) {
+    const cplx Ui = U[i][col];
+    const cplx Uj = U[j][col];
+    U[i][col] =  c*Ui + s*e_m*Uj;
+    U[j][col] = -s*e_p*Ui + c*Uj;
+  }
+}
+
+struct OscParams3p1 {
+  // Standard 3-flavour (NO) parameters
+  double th12 = deg2rad(33.44);
+  double th13 = deg2rad(8.57);
+  double th23 = deg2rad(49.20);
+  double d13  = deg2rad(195.0);
+  double dm21 = 7.42e-5;   // eV^2
+  double dm31 = 2.517e-3;  // eV^2 (NO: m3^2 - m1^2)
+
+  // Sterile (3+1) parameters (example close to LSND-style best-fit quoted in the screenshot caption)
+  double dm41 = 1.20;              // eV^2
+  double th14 = deg2rad(18.4);     // degrees -> radians
+  double th24 = deg2rad(5.2);
+  double th34 = deg2rad(0.0);
+  double d24  = deg2rad(0.0);
+  double d34  = deg2rad(0.0);
+};
+
+static Mat4 BuildPMNS_3p1(const OscParams3p1& p) {
+  Mat4 U = Identity4();
+
+  // Build U = R34 * R24 * R14 * R23 * R13 * R12 (PDG-like extension).
+  LeftMultiplyRotation(U, 0, 1, p.th12, 0.0);
+  LeftMultiplyRotation(U, 0, 2, p.th13, p.d13);
+  LeftMultiplyRotation(U, 1, 2, p.th23, 0.0);
+  LeftMultiplyRotation(U, 0, 3, p.th14, 0.0);
+  LeftMultiplyRotation(U, 1, 3, p.th24, p.d24);
+  LeftMultiplyRotation(U, 2, 3, p.th34, p.d34);
+  return U;
+}
+
+// Flavour indices: 0=e, 1=mu, 2=tau, 3=sterile
+static double P_vac_3p1(int alpha, int beta, double LE_km_per_GeV,
+                        const std::array<double,4>& m2, const Mat4& U)
+{
+  double P = (alpha == beta) ? 1.0 : 0.0;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < i; ++j) {
+      const double dm2 = m2[i] - m2[j];
+      const double Dij = 1.267 * dm2 * LE_km_per_GeV;
+      const cplx X = U[alpha][i] * std::conj(U[beta][i]) * std::conj(U[alpha][j]) * U[beta][j];
+      P -= 4.0 * std::real(X) * sinsq(Dij);
+      P += 2.0 * std::imag(X) * std::sin(2.0 * Dij);
+    }
+  }
+  return clamp01(P);
+}
+
+static TGraph* MakeProbGraphLE(int alpha, int beta,
+                               double xMin, double xMax, int N,
+                               bool logX,
+                               const std::array<double,4>& m2, const Mat4& U)
+{
+  TGraph* g = new TGraph(N);
+  for (int k = 0; k < N; ++k) {
+    double x = 0.0;
+    if (logX) {
+      const double lx0 = std::log10(xMin);
+      const double lx1 = std::log10(xMax);
+      const double t   = (N == 1) ? 0.0 : (double)k / (double)(N - 1);
+      x = std::pow(10.0, lx0 + (lx1 - lx0) * t);
+    } else {
+      x = xMin + (xMax - xMin) * (double)k / (double)(N - 1);
+    }
+    const double P = P_vac_3p1(alpha, beta, x, m2, U);
+    g->SetPoint(k, x, P);
+  }
+  return g;
+}
+
 static void SetNiceStyle() {
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);
@@ -124,6 +241,130 @@ static void DrawHeader(const char* line1, const char* line2 = nullptr) {
     lat.SetTextSize(0.034);
     lat.DrawLatex(0.15, 0.925, line2);
   }
+}
+
+// Multi-panel (a)-(f) P(νμ→να) vs L/E figure (3+1 vacuum), similar to the screenshot layout:
+//   (a) 0..40000, (b) 0..4000, (c) 0..200, (d) 0..20 (y-zoom),
+//   (e) logx + logy (0.1..1e5), (f) logx (0.1..1e5).
+void sbn_fig1p9() {
+  SetNiceStyle();
+  gROOT->SetBatch(kTRUE);
+
+  // Physics inputs (edit as desired).
+  const OscParams3p1 p; // defaults set above
+  const Mat4 U_3p1 = BuildPMNS_3p1(p);
+  const std::array<double,4> m2 = {0.0, p.dm21, p.dm31, p.dm41};
+
+  // “No sterile” comparison: same 3-flavour parameters, but θ14=θ24=θ34=0.
+  OscParams3p1 p0 = p;
+  p0.th14 = 0.0; p0.th24 = 0.0; p0.th34 = 0.0;
+  p0.d24  = 0.0; p0.d34  = 0.0;
+  const Mat4 U_3fl = BuildPMNS_3p1(p0);
+
+  struct PanelSpec {
+    double xMin, xMax;
+    double yMin, yMax;
+    int    N;
+    bool   logX;
+    bool   logY;
+    bool   drawNoSterile;
+    const char* tag;
+  };
+
+  const PanelSpec panels[6] = {
+    {0.0,   40000.0, 0.0,   1.0,   40000, false, false, false, "(a)"},
+    {0.0,    4000.0, 0.0,   1.0,   16000, false, false, false, "(b)"},
+    {0.0,     200.0, 0.0,   1.0,    4000, false, false, false, "(c)"},
+    {0.0,      20.0, 0.0,   0.020,  4000, false, false, false, "(d)"},
+    {1e-1,   1e5,    1e-9,  1.0,    6000, true,  true,  true,  "(e)"},
+    {1e-1,   1e5,    0.0,   1.0,    6000, true,  false, true,  "(f)"},
+  };
+
+  // Colors roughly matching the screenshot: blue (μ→e), orange (μ→μ), green (μ→τ)
+  const int col_mue  = kBlue+1;
+  const int col_mumu = kOrange+7;
+  const int col_mut  = kGreen+2;
+
+  TCanvas* c = new TCanvas("c_fig1p9", "", 1200, 1500);
+  c->Divide(2, 3, 0.01, 0.02);
+
+  for (int ip = 0; ip < 6; ++ip) {
+    c->cd(ip + 1);
+    TPad* pad = (TPad*)gPad;
+    pad->SetLeftMargin(0.14);
+    pad->SetRightMargin(0.05);
+    pad->SetTopMargin(0.06);
+    pad->SetBottomMargin(0.18);
+    pad->SetLogx(panels[ip].logX);
+    pad->SetLogy(panels[ip].logY);
+
+    TMultiGraph* mg = new TMultiGraph();
+
+    // νμ -> να, with α = {e, μ, τ}
+    TGraph* g_mue  = MakeProbGraphLE(1, 0, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3p1);
+    TGraph* g_mumu = MakeProbGraphLE(1, 1, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3p1);
+    TGraph* g_mut  = MakeProbGraphLE(1, 2, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3p1);
+
+    g_mue->SetLineColor(col_mue);
+    g_mue->SetLineWidth(2);
+
+    g_mumu->SetLineColor(col_mumu);
+    g_mumu->SetLineWidth(2);
+
+    g_mut->SetLineColor(col_mut);
+    g_mut->SetLineWidth(2);
+
+    mg->Add(g_mue,  "L");
+    mg->Add(g_mumu, "L");
+    mg->Add(g_mut,  "L");
+
+    // Optional “no sterile” dashed reference (matches the screenshot: shown in (e) and (f))
+    TGraph* g_mue_3fl = nullptr;
+    if (panels[ip].drawNoSterile) {
+      g_mue_3fl = MakeProbGraphLE(1, 0, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3fl);
+      g_mue_3fl->SetLineColor(kBlack);
+      g_mue_3fl->SetLineStyle(2);
+      g_mue_3fl->SetLineWidth(2);
+      mg->Add(g_mue_3fl, "L");
+    }
+
+    mg->SetTitle(";L / E (km / GeV);P(#nu_{#mu} #rightarrow #nu)");
+    mg->Draw("A");
+    mg->GetXaxis()->SetLimits(panels[ip].xMin, panels[ip].xMax);
+    mg->GetYaxis()->SetRangeUser(panels[ip].yMin, panels[ip].yMax);
+    mg->GetXaxis()->SetNdivisions(510);
+
+    if (panels[ip].logX) {
+      mg->GetXaxis()->SetMoreLogLabels(true);
+      mg->GetXaxis()->SetNoExponent(true);
+    }
+    if (panels[ip].logY) {
+      mg->GetYaxis()->SetMoreLogLabels(true);
+      mg->GetYaxis()->SetNoExponent(true);
+    }
+
+    // Legend placement (tuned for readability; adjust to taste)
+    TLegend* leg = nullptr;
+    if (ip < 4)      leg = new TLegend(0.70, 0.74, 0.93, 0.93);
+    else             leg = new TLegend(0.60, 0.18, 0.93, 0.45);
+    leg->SetTextFont(42);
+    leg->SetTextSize(0.040);
+    leg->SetFillStyle(0);
+    leg->AddEntry(g_mue,  "#nu_{#mu} #rightarrow #nu_{e}",   "l");
+    leg->AddEntry(g_mumu, "#nu_{#mu} #rightarrow #nu_{#mu}", "l");
+    leg->AddEntry(g_mut,  "#nu_{#mu} #rightarrow #nu_{#tau}","l");
+    if (g_mue_3fl) leg->AddEntry(g_mue_3fl, "Oscillations Without A Sterile Neutrino", "l");
+    leg->Draw();
+
+    // Panel tag (a)-(f) placed in the bottom margin band.
+    TLatex tag;
+    tag.SetNDC(true);
+    tag.SetTextFont(42);
+    tag.SetTextSize(0.060);
+    tag.DrawLatex(0.47, 0.03, panels[ip].tag);
+  }
+
+  c->SaveAs("sbn_fig1p9_mu_LE_3p1.pdf");
 }
 
 void sbn_prob_vs_LE() {
@@ -492,6 +733,7 @@ void sbn_plot_all() {
   sbn_bias();
   sbn_nearfar();
   sbn_dm2_sin22_template();
+  // sbn_fig1p9(); // uncomment if you want the multi-panel 3+1 figure in the "all" bundle
 }
 
 void sbn_osc_plots(const char* which = "all") {
@@ -504,9 +746,10 @@ void sbn_osc_plots(const char* which = "all") {
   else if (w == "bias")               sbn_bias();
   else if (w == "nearfar")            sbn_nearfar();
   else if (w == "dm2_sin22_template") sbn_dm2_sin22_template();
+  else if (w == "fig1p9")             sbn_fig1p9();
   else if (w == "all")                sbn_plot_all();
   else {
     std::cout << "Unknown mode: " << w << "\n"
-              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, all\n";
+              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, fig1p9, all\n";
   }
 }

@@ -11,8 +11,11 @@ ifneq ($(strip $(NLOHMANN_JSON_INC)),)
 NLOHMANN_JSON_CFLAGS := -isystem $(NLOHMANN_JSON_INC)
 endif
 
+ROOT_LIBDIR ?= $(shell $(ROOT_CONFIG) --libdir)
+
 CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell $(ROOT_CONFIG) --cflags) $(NLOHMANN_JSON_CFLAGS)
-LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -lsqlite3
+LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -L$(ROOT_LIBDIR) -Wl,-rpath,$(ROOT_LIBDIR) \
+	-Wl,-rpath-link,$(ROOT_LIBDIR) -lsqlite3 -lssl -lcrypto -lxxhash
 
 IO_LIB_NAME = build/lib/libNuxsecIO.so
 IO_SRC = io/src/ArtFileProvenanceIO.cc \

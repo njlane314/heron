@@ -11,6 +11,7 @@
 
 #include "AppUtils.hh"
 #include "SampleCLI.hh"
+#include "StatusMonitor.hh"
 
 
 

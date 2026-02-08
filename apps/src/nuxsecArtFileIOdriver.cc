@@ -12,6 +12,7 @@
 
 #include "AppUtils.hh"
 #include "ArtCLI.hh"
+#include "StatusMonitor.hh"
 
 
 

@@ -15,6 +15,7 @@
 #include "EventCLI.hh"
 #include "EventColumnProvider.hh"
 #include "RDataFrameService.hh"
+#include "StatusMonitor.hh"
 
 
 

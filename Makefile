@@ -19,6 +19,7 @@ IO_SRC = io/src/ArtFileProvenanceIO.cc \
          io/src/EventIO.cc \
          io/src/NormalisationService.cc \
          io/src/RunDatabaseService.cc \
+         io/src/SnapshotService.cc \
          io/src/SampleIO.cc \
          io/src/SubRunInventoryService.cc
 OBJ_DIR = build/obj
@@ -27,6 +28,7 @@ IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)
 ANA_LIB_NAME = build/lib/libNuxsecAna.so
 ANA_SRC = ana/src/AnalysisConfigService.cc \
           ana/src/ColumnDerivationService.cc \
+          ana/src/EventSampleFilterService.cc \
           ana/src/RDataFrameService.cc \
           ana/src/SelectionService.cc
 ANA_OBJ = $(ANA_SRC:%.cc=$(OBJ_DIR)/%.o)

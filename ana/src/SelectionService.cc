@@ -23,6 +23,7 @@ const float SelectionService::muon_min_track_length = 10.0f;
 const float SelectionService::muon_max_track_distance = 4.0f;
 const unsigned SelectionService::muon_required_generation = 2u;
 
+namespace
 {
 
 constexpr float min_x = 5.f;
@@ -86,7 +87,7 @@ inline ROOT::RDF::RNode filter_on(ROOT::RDF::RNode node, const char *col)
     return node.Filter([](bool pass) { return pass; }, {col});
 }
 
-}
+} // namespace
 
 ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const Entry &rec)
 {
@@ -238,4 +239,3 @@ bool SelectionService::is_in_reco_volume(float x, float y, float z) noexcept
 {
     return is_in_active_volume(x, y, z) && (z < reco_gap_min_z || z > reco_gap_max_z);
 }
-

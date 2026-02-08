@@ -39,7 +39,7 @@ struct SampleInfo
 
 class EventIO final
 {
-public:
+  public:
     enum class OpenMode
     {
         kRead,
@@ -72,12 +72,9 @@ public:
                                          const std::string &selection,
                                          const std::string &tree_name = "events") const;
 
-private:
+  private:
     std::string m_path;
     OpenMode m_mode;
 };
-
-}
-}
 
 #endif

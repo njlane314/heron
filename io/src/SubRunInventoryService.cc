@@ -104,8 +104,6 @@ Summary SubRunInventoryService::scan_subruns(const std::vector<std::string> &fil
                 pairs.end());
 
     out.unique_pairs = std::move(pairs);
-    
-    return out;
-}
 
+    return out;
 }

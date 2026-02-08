@@ -14,14 +14,11 @@
 
 
 struct Summary;
-}
 
 class SubRunInventoryService
 {
   public:
     static Summary scan_subruns(const std::vector<std::string> &files);
 };
-
-}
 
 #endif // NUXSEC_IO_SUBRUN_INVENTORY_SERVICE_H

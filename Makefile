@@ -20,6 +20,7 @@ IO_SRC = io/src/ArtFileProvenanceIO.cc \
          io/src/NormalisationService.cc \
          io/src/RunDatabaseService.cc \
          io/src/SampleIO.cc \
+         io/src/SnapshotService.cc \
          io/src/SubRunInventoryService.cc
 OBJ_DIR = build/obj
 IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)

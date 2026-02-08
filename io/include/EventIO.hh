@@ -72,9 +72,6 @@ public:
                                          const std::string &tree_name = "events") const;
 
 private:
-    static std::string sanitise_root_key(std::string s);
-
-private:
     std::string m_path;
     OpenMode m_mode;
 };

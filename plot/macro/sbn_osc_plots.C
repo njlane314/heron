@@ -9,7 +9,13 @@
 //   root -l -q 'sbn_osc_plots.C("bias")'
 //   root -l -q 'sbn_osc_plots.C("nearfar")'
 //   root -l -q 'sbn_osc_plots.C("dm2_sin22_template")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9")'   // 3+1 multi-panel P(νμ→να) vs L/E, like the example figure
+//   root -l -q 'sbn_osc_plots.C("fig1p9_a")' // 3+1 P(νμ→να) vs L/E, panel-style ranges (separate PDFs)
+//   root -l -q 'sbn_osc_plots.C("fig1p9_b")'
+//   root -l -q 'sbn_osc_plots.C("fig1p9_c")'
+//   root -l -q 'sbn_osc_plots.C("fig1p9_d")'
+//   root -l -q 'sbn_osc_plots.C("fig1p9_e")' // log x + log y
+//   root -l -q 'sbn_osc_plots.C("fig1p9_f")' // log x
+//   root -l -q 'sbn_osc_plots.C("fig1p9_all")'
 //   root -l -q 'sbn_osc_plots.C("all")'
 //
 // Each mode writes a PDF in the current directory.
@@ -191,7 +197,8 @@ static double P_vac_3p1(int alpha, int beta, double LE_km_per_GeV,
 static TGraph* MakeProbGraphLE(int alpha, int beta,
                                double xMin, double xMax, int N,
                                bool logX,
-                               const std::array<double,4>& m2, const Mat4& U)
+                               const std::array<double,4>& m2, const Mat4& U,
+                               double yFloor = 0.0)
 {
   TGraph* g = new TGraph(N);
   for (int k = 0; k < N; ++k) {
@@ -204,7 +211,8 @@ static TGraph* MakeProbGraphLE(int alpha, int beta,
     } else {
       x = xMin + (xMax - xMin) * (double)k / (double)(N - 1);
     }
-    const double P = P_vac_3p1(alpha, beta, x, m2, U);
+    double P = P_vac_3p1(alpha, beta, x, m2, U);
+    if (yFloor > 0.0 && P < yFloor) P = yFloor; // avoid y<=0 points on log-y pads
     g->SetPoint(k, x, P);
   }
   return g;
@@ -243,10 +251,17 @@ static void DrawHeader(const char* line1, const char* line2 = nullptr) {
   }
 }
 
-// Multi-panel (a)-(f) P(νμ→να) vs L/E figure (3+1 vacuum), similar to the screenshot layout:
-//   (a) 0..40000, (b) 0..4000, (c) 0..200, (d) 0..20 (y-zoom),
-//   (e) logx + logy (0.1..1e5), (f) logx (0.1..1e5).
-void sbn_fig1p9() {
+// One “panel-style” plot as a standalone PDF (same styling as the other single-canvas outputs).
+static void sbn_fig1p9_panel(const char* cname,
+                             const char* outPdf,
+                             const char* panelTag,
+                             double xMin, double xMax,
+                             double yMin, double yMax,
+                             int N,
+                             bool logX,
+                             bool logY,
+                             bool drawNoSterile)
+{
   SetNiceStyle();
   gROOT->SetBatch(kTRUE);
 
@@ -261,110 +276,106 @@ void sbn_fig1p9() {
   p0.d24  = 0.0; p0.d34  = 0.0;
   const Mat4 U_3fl = BuildPMNS_3p1(p0);
 
-  struct PanelSpec {
-    double xMin, xMax;
-    double yMin, yMax;
-    int    N;
-    bool   logX;
-    bool   logY;
-    bool   drawNoSterile;
-    const char* tag;
-  };
-
-  const PanelSpec panels[6] = {
-    {0.0,   40000.0, 0.0,   1.0,   40000, false, false, false, "(a)"},
-    {0.0,    4000.0, 0.0,   1.0,   16000, false, false, false, "(b)"},
-    {0.0,     200.0, 0.0,   1.0,    4000, false, false, false, "(c)"},
-    {0.0,      20.0, 0.0,   0.020,  4000, false, false, false, "(d)"},
-    {1e-1,   1e5,    1e-9,  1.0,    6000, true,  true,  true,  "(e)"},
-    {1e-1,   1e5,    0.0,   1.0,    6000, true,  false, true,  "(f)"},
-  };
-
   // Colors roughly matching the screenshot: blue (μ→e), orange (μ→μ), green (μ→τ)
   const int col_mue  = kBlue+1;
   const int col_mumu = kOrange+7;
   const int col_mut  = kGreen+2;
 
-  TCanvas* c = new TCanvas("c_fig1p9", "", 1200, 1500);
-  c->Divide(2, 3, 0.01, 0.02);
+  // For log-y pads: ensure we never feed y<=0 points to TGraph.
+  const double yFloor = (logY ? std::max(1e-12, 0.1*yMin) : 0.0);
 
-  for (int ip = 0; ip < 6; ++ip) {
-    c->cd(ip + 1);
-    TPad* pad = (TPad*)gPad;
-    pad->SetLeftMargin(0.14);
-    pad->SetRightMargin(0.05);
-    pad->SetTopMargin(0.06);
-    pad->SetBottomMargin(0.18);
-    pad->SetLogx(panels[ip].logX);
-    pad->SetLogy(panels[ip].logY);
+  TCanvas* c = new TCanvas(cname, "", 900, 650);
+  c->SetLogx(logX);
+  c->SetLogy(logY);
 
-    TMultiGraph* mg = new TMultiGraph();
+  TMultiGraph* mg = new TMultiGraph();
 
-    // νμ -> να, with α = {e, μ, τ}
-    TGraph* g_mue  = MakeProbGraphLE(1, 0, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3p1);
-    TGraph* g_mumu = MakeProbGraphLE(1, 1, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3p1);
-    TGraph* g_mut  = MakeProbGraphLE(1, 2, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3p1);
+  // νμ -> να, with α = {e, μ, τ}
+  TGraph* g_mue  = MakeProbGraphLE(1, 0, xMin, xMax, N, logX, m2, U_3p1, yFloor);
+  TGraph* g_mumu = MakeProbGraphLE(1, 1, xMin, xMax, N, logX, m2, U_3p1, yFloor);
+  TGraph* g_mut  = MakeProbGraphLE(1, 2, xMin, xMax, N, logX, m2, U_3p1, yFloor);
 
-    g_mue->SetLineColor(col_mue);
-    g_mue->SetLineWidth(2);
+  g_mue->SetLineColor(col_mue);
+  g_mue->SetLineWidth(2);
 
-    g_mumu->SetLineColor(col_mumu);
-    g_mumu->SetLineWidth(2);
+  g_mumu->SetLineColor(col_mumu);
+  g_mumu->SetLineWidth(2);
 
-    g_mut->SetLineColor(col_mut);
-    g_mut->SetLineWidth(2);
+  g_mut->SetLineColor(col_mut);
+  g_mut->SetLineWidth(2);
 
-    mg->Add(g_mue,  "L");
-    mg->Add(g_mumu, "L");
-    mg->Add(g_mut,  "L");
+  mg->Add(g_mue,  "L");
+  mg->Add(g_mumu, "L");
+  mg->Add(g_mut,  "L");
 
-    // Optional “no sterile” dashed reference (matches the screenshot: shown in (e) and (f))
-    TGraph* g_mue_3fl = nullptr;
-    if (panels[ip].drawNoSterile) {
-      g_mue_3fl = MakeProbGraphLE(1, 0, panels[ip].xMin, panels[ip].xMax, panels[ip].N, panels[ip].logX, m2, U_3fl);
-      g_mue_3fl->SetLineColor(kBlack);
-      g_mue_3fl->SetLineStyle(2);
-      g_mue_3fl->SetLineWidth(2);
-      mg->Add(g_mue_3fl, "L");
-    }
-
-    mg->SetTitle(";L / E (km / GeV);P(#nu_{#mu} #rightarrow #nu)");
-    mg->Draw("A");
-    mg->GetXaxis()->SetLimits(panels[ip].xMin, panels[ip].xMax);
-    mg->GetYaxis()->SetRangeUser(panels[ip].yMin, panels[ip].yMax);
-    mg->GetXaxis()->SetNdivisions(510);
-
-    if (panels[ip].logX) {
-      mg->GetXaxis()->SetMoreLogLabels(true);
-      mg->GetXaxis()->SetNoExponent(true);
-    }
-    if (panels[ip].logY) {
-      mg->GetYaxis()->SetMoreLogLabels(true);
-      mg->GetYaxis()->SetNoExponent(true);
-    }
-
-    // Legend placement (tuned for readability; adjust to taste)
-    TLegend* leg = nullptr;
-    if (ip < 4)      leg = new TLegend(0.70, 0.74, 0.93, 0.93);
-    else             leg = new TLegend(0.60, 0.18, 0.93, 0.45);
-    leg->SetTextFont(42);
-    leg->SetTextSize(0.040);
-    leg->SetFillStyle(0);
-    leg->AddEntry(g_mue,  "#nu_{#mu} #rightarrow #nu_{e}",   "l");
-    leg->AddEntry(g_mumu, "#nu_{#mu} #rightarrow #nu_{#mu}", "l");
-    leg->AddEntry(g_mut,  "#nu_{#mu} #rightarrow #nu_{#tau}","l");
-    if (g_mue_3fl) leg->AddEntry(g_mue_3fl, "Oscillations Without A Sterile Neutrino", "l");
-    leg->Draw();
-
-    // Panel tag (a)-(f) placed in the bottom margin band.
-    TLatex tag;
-    tag.SetNDC(true);
-    tag.SetTextFont(42);
-    tag.SetTextSize(0.060);
-    tag.DrawLatex(0.47, 0.03, panels[ip].tag);
+  // Optional “no sterile” dashed reference (shown in the screenshot-style wide-range panels).
+  TGraph* g_mue_3fl = nullptr;
+  if (drawNoSterile) {
+    g_mue_3fl = MakeProbGraphLE(1, 0, xMin, xMax, N, logX, m2, U_3fl, yFloor);
+    g_mue_3fl->SetLineColor(kBlack);
+    g_mue_3fl->SetLineStyle(2);
+    g_mue_3fl->SetLineWidth(2);
+    mg->Add(g_mue_3fl, "L");
   }
 
-  c->SaveAs("sbn_fig1p9_mu_LE_3p1.pdf");
+  mg->SetTitle(";L / E (km / GeV);P(#nu_{#mu} #rightarrow #nu)");
+  mg->Draw("A");
+  mg->GetXaxis()->SetLimits(xMin, xMax);
+  mg->GetYaxis()->SetRangeUser(yMin, yMax);
+  mg->GetXaxis()->SetNdivisions(510);
+
+  if (logX) {
+    mg->GetXaxis()->SetMoreLogLabels(true);
+    mg->GetXaxis()->SetNoExponent(true);
+  }
+  if (logY) {
+    mg->GetYaxis()->SetMoreLogLabels(true);
+    mg->GetYaxis()->SetNoExponent(true);
+  }
+
+  // Legend placement similar to other single-canvas plots.
+  TLegend* leg = nullptr;
+  if (!logX && !logY) leg = new TLegend(0.56, 0.70, 0.88, 0.88);
+  else                leg = new TLegend(0.52, 0.18, 0.88, 0.45);
+  leg->SetTextFont(42);
+  leg->SetTextSize(0.035);
+  leg->SetFillStyle(0);
+  leg->AddEntry(g_mue,  "#nu_{#mu} #rightarrow #nu_{e}",   "l");
+  leg->AddEntry(g_mumu, "#nu_{#mu} #rightarrow #nu_{#mu}", "l");
+  leg->AddEntry(g_mut,  "#nu_{#mu} #rightarrow #nu_{#tau}","l");
+  if (g_mue_3fl) leg->AddEntry(g_mue_3fl, "Oscillations Without A Sterile Neutrino", "l");
+  leg->Draw();
+
+  // Panel tag (a)-(f) for later figure assembly.
+  TLatex tag;
+  tag.SetNDC(true);
+  tag.SetTextFont(42);
+  tag.SetTextSize(0.060);
+  tag.DrawLatex(0.48, 0.04, panelTag);
+
+  const double rad2deg = 180.0 / std::acos(-1.0);
+  DrawHeader("3+1 vacuum: P(#nu_{#mu}#rightarrow#nu_{#alpha}) vs L/E",
+             Form("%s   #Delta m^{2}_{41}=%.2f eV^{2},   #theta_{14}=%.1f^{#circ},   #theta_{24}=%.1f^{#circ}",
+                  panelTag, p.dm41, p.th14*rad2deg, p.th24*rad2deg));
+
+  c->SaveAs(outPdf);
+}
+
+// Panel-style ranges (separate PDFs).
+void sbn_fig1p9_a() { sbn_fig1p9_panel("c_fig1p9_a", "sbn_mu_LE_a.pdf",           "(a)", 0.0, 40000.0, 0.0,   1.0,    40000, false, false, false); }
+void sbn_fig1p9_b() { sbn_fig1p9_panel("c_fig1p9_b", "sbn_mu_LE_b.pdf",           "(b)", 0.0,  4000.0, 0.0,   1.0,    16000, false, false, false); }
+void sbn_fig1p9_c() { sbn_fig1p9_panel("c_fig1p9_c", "sbn_mu_LE_c.pdf",           "(c)", 0.0,   200.0, 0.0,   1.0,     4000, false, false, false); }
+void sbn_fig1p9_d() { sbn_fig1p9_panel("c_fig1p9_d", "sbn_mu_LE_d.pdf",           "(d)", 0.0,    20.0, 0.0,   0.020,   4000, false, false, false); }
+void sbn_fig1p9_e() { sbn_fig1p9_panel("c_fig1p9_e", "sbn_mu_LE_e_loglog.pdf",    "(e)", 1e-1,   1e5,  1e-7,  1.0,     6000, true,  true,  true ); }
+void sbn_fig1p9_f() { sbn_fig1p9_panel("c_fig1p9_f", "sbn_mu_LE_f_logx.pdf",      "(f)", 1e-1,   1e5,  0.0,   1.0,     6000, true,  false, true ); }
+
+void sbn_fig1p9_all() {
+  sbn_fig1p9_a();
+  sbn_fig1p9_b();
+  sbn_fig1p9_c();
+  sbn_fig1p9_d();
+  sbn_fig1p9_e();
+  sbn_fig1p9_f();
 }
 
 void sbn_prob_vs_LE() {
@@ -733,7 +744,7 @@ void sbn_plot_all() {
   sbn_bias();
   sbn_nearfar();
   sbn_dm2_sin22_template();
-  sbn_fig1p9(); 
+  sbn_fig1p9_all();
 }
 
 void sbn_osc_plots(const char* which = "all") {
@@ -746,10 +757,16 @@ void sbn_osc_plots(const char* which = "all") {
   else if (w == "bias")               sbn_bias();
   else if (w == "nearfar")            sbn_nearfar();
   else if (w == "dm2_sin22_template") sbn_dm2_sin22_template();
-  else if (w == "fig1p9")             sbn_fig1p9();
+  else if (w == "fig1p9_a")           sbn_fig1p9_a();
+  else if (w == "fig1p9_b")           sbn_fig1p9_b();
+  else if (w == "fig1p9_c")           sbn_fig1p9_c();
+  else if (w == "fig1p9_d")           sbn_fig1p9_d();
+  else if (w == "fig1p9_e")           sbn_fig1p9_e();
+  else if (w == "fig1p9_f")           sbn_fig1p9_f();
+  else if (w == "fig1p9_all")         sbn_fig1p9_all();
   else if (w == "all")                sbn_plot_all();
   else {
     std::cout << "Unknown mode: " << w << "\n"
-              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, fig1p9, all\n";
+              << "Options: prob_le, prob_E, oscillogram, smear, bias, nearfar, dm2_sin22_template, fig1p9_a, fig1p9_b, fig1p9_c, fig1p9_d, fig1p9_e, fig1p9_f, fig1p9_all, all\n";
   }
 }

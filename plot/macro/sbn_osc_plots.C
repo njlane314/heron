@@ -733,7 +733,7 @@ void sbn_plot_all() {
   sbn_bias();
   sbn_nearfar();
   sbn_dm2_sin22_template();
-  // sbn_fig1p9(); // uncomment if you want the multi-panel 3+1 figure in the "all" bundle
+  sbn_fig1p9(); 
 }
 
 void sbn_osc_plots(const char* which = "all") {

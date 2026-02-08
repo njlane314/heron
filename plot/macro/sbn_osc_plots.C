@@ -47,6 +47,7 @@
 #include "TLegend.h"
 #include "TLine.h"
 #include "TMultiGraph.h"
+#include "TGaxis.h"
 #include "TAxis.h"
 #include "TStyle.h"
 #include "TMatrixD.h"
@@ -355,6 +356,10 @@ static void SetNiceStyle() {
   gStyle->SetLineWidth(2);
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
+  // Smoother 2D colour plots (oscillograms).
+  gStyle->SetNumberContours(60);
+  // Help avoid unreadable "0" labels when axes span many decades.
+  TGaxis::SetMaxDigits(4);
 }
 
 // Two-line header drawn in the *top margin* (so it doesn't collide with top ticks).
@@ -430,8 +435,11 @@ static void sbn_fig1p9_panel(const char* cname,
     mg->GetXaxis()->SetNoExponent(true);
   }
   if (logY) {
-    mg->GetYaxis()->SetMoreLogLabels(true);
-    mg->GetYaxis()->SetNoExponent(true);
+    // For tiny probabilities, forcing fixed-point labels produces "0" due to rounding.
+    // Use scientific/exponent-style labels on log-y.
+    mg->GetYaxis()->SetMoreLogLabels(false);
+    mg->GetYaxis()->SetNoExponent(false);
+    mg->GetYaxis()->SetTitleOffset(1.55);
   }
 
   // Legend placement similar to other single-canvas plots.
@@ -476,22 +484,37 @@ void sbn_fig1p9_all() {
 // More informative 3-flavour phenomenology plots
 // ------------------------------------------------------------
 
-static void DrawLEMarker(double x, const char* label, double yNDC = 0.82) {
-  // Assumes current pad uses log-x optionally; draw a vertical line in user coords and a label in NDC.
-  TLine* ln = new TLine(x, gPad->GetUymin(), x, gPad->GetUymax());
+static double YUserAtFrac(double frac) {
+  // frac in [0,1] of the visible y-range; handles log-y and linear-y pads.
+  const double y1 = gPad->GetUymin();
+  const double y2 = gPad->GetUymax();
+  if (gPad->GetLogy()) {
+    const double ly1 = std::log10(std::max(1e-300, y1));
+    const double ly2 = std::log10(std::max(1e-300, y2));
+    return std::pow(10.0, ly1 + frac * (ly2 - ly1));
+  }
+  return y1 + frac * (y2 - y1);
+}
+
+static void DrawLEMarker(double x, const char* label, double yFrac = 0.86) {
+  // Draw vertical marker and label in *user coordinates* (robust for log-x).
+  gPad->Update();
+  const double y1 = gPad->GetUymin();
+  const double y2 = gPad->GetUymax();
+
+  TLine* ln = new TLine(x, y1, x, y2);
   ln->SetLineStyle(2);
   ln->SetLineWidth(2);
   ln->SetLineColor(kGray+2);
   ln->Draw("SAME");
 
-  // Convert x in user coordinates to NDC for label placement
-  const double xNDC = gPad->XtoPad(x);
   TLatex lat;
-  lat.SetNDC(true);
+  lat.SetNDC(false);
   lat.SetTextFont(42);
   lat.SetTextSize(0.030);
   lat.SetTextAngle(90);
-  lat.DrawLatex(xNDC + 0.01, yNDC, label);
+  lat.SetTextAlign(12);
+  lat.DrawLatex(x, YUserAtFrac(yFrac), label);
 }
 
 void sbn_3fl_LE_overview() {
@@ -526,11 +549,15 @@ void sbn_3fl_LE_overview() {
 
   mg->SetTitle(";L/E  [km/GeV];P(#nu_{#mu} #rightarrow #nu_{#alpha})");
   mg->Draw("A");
-  mg->GetXaxis()->SetMoreLogLabels(true);
-  mg->GetXaxis()->SetNoExponent(true);
+  // Very wide log-x ranges become unreadable if minor labels are printed as decimals.
+  // Prefer decade-style labels (10^{n}) here.
+  mg->GetXaxis()->SetMoreLogLabels(false);
+  mg->GetXaxis()->SetNoExponent(false);
+  mg->GetXaxis()->SetNdivisions(505);
   mg->GetYaxis()->SetRangeUser(0.0, 1.0);
 
-  TLegend* leg = new TLegend(0.58, 0.70, 0.90, 0.88);
+  // Pull legend left a bit to avoid any clipping on narrow canvases/PDF viewers.
+  TLegend* leg = new TLegend(0.56, 0.70, 0.86, 0.88);
   leg->SetTextFont(42);
   leg->SetTextSize(0.035);
   leg->SetFillStyle(0);
@@ -541,16 +568,16 @@ void sbn_3fl_LE_overview() {
 
   // Context markers (typical L/E for well-known setups)
   // SBN-like: L~0.5 km, E~0.7 GeV -> ~0.7
-  DrawLEMarker(0.7,  "SBN (~0.5 km / 0.7 GeV)", 0.78);
+  DrawLEMarker(0.7,        "SBN (~0.5 km / 0.7 GeV)", 0.84);
   // T2K: 295 km / 0.6 GeV -> ~492
-  DrawLEMarker(295.0/0.60, "T2K (295/0.6)", 0.78);
+  DrawLEMarker(295.0/0.60, "T2K (295/0.6)", 0.86);
   // NOvA: 810 km / 2.0 GeV -> 405
-  DrawLEMarker(810.0/2.0,  "NOvA (810/2.0)", 0.78);
+  DrawLEMarker(810.0/2.0,  "NOvA (810/2.0)", 0.88);
   // DUNE: 1300 km / 2.5 GeV -> 520
-  DrawLEMarker(1300.0/2.5, "DUNE (1300/2.5)", 0.78);
+  DrawLEMarker(1300.0/2.5, "DUNE (1300/2.5)", 0.90);
 
-  DrawHeader("3-flavour vacuum: wide-range L/E overview (from SBL to atmospheric/solar scales)",
-             "Colours = final flavour; markers = typical experimental L/E");
+  DrawHeader("3-flavour vacuum: wide-range L/E overview",
+             "Colours = final flavour; markers = typical experimental L/E (SBL and LBL)");
 
   c->SaveAs("sbn_3fl_LE_overview.pdf");
 }
@@ -652,7 +679,8 @@ void sbn_3fl_LE_ordering_vac() {
   mg->GetXaxis()->SetNdivisions(510);
   mg->GetYaxis()->SetRangeUser(0.0, 0.12);
 
-  TLegend* leg = new TLegend(0.58, 0.74, 0.90, 0.88);
+  // Shift left so legend text cannot clip on the right border.
+  TLegend* leg = new TLegend(0.50, 0.74, 0.86, 0.88);
   leg->SetTextFont(42);
   leg->SetTextSize(0.035);
   leg->SetFillStyle(0);
@@ -660,8 +688,8 @@ void sbn_3fl_LE_ordering_vac() {
   leg->AddEntry(gIO, "Inverted ordering (IO), #delta_{CP}=-90^{#circ}", "l");
   leg->Draw();
 
-  DrawHeader("3-flavour vacuum: ordering comparison (illustrative; matter enhances separation)",
-             "Line style encodes ordering (solid=NO, dashed=IO)");
+  DrawHeader("3-flavour vacuum: ordering comparison in P_{#mu e}",
+             "Line style encodes ordering (solid=NO, dashed=IO); matter effects amplify separation");
 
   c->SaveAs("sbn_3fl_LE_ordering_vac.pdf");
 }
@@ -825,7 +853,7 @@ void sbn_3fl_lbl_oscillogram() {
   c->SetRightMargin(0.18);
 
   TH2D* h = new TH2D("h_3fl_lbl_osc",
-                     ";E_{#nu}  [GeV];Baseline L  [km];P_{#mu e}  (vacuum, NO, #delta_{CP}=-90^{#circ})",
+                     ";E_{#nu}  [GeV];Baseline L  [km];P_{#mu e}",
                      nE, Emin, Emax,
                      nL, Lmin, Lmax);
 
@@ -838,13 +866,14 @@ void sbn_3fl_lbl_oscillogram() {
     }
   }
 
+  h->SetContour(60);
   h->SetMinimum(0.0);
   h->SetMaximum(0.25);
   h->GetZaxis()->SetTitleOffset(1.25);
   h->Draw("COLZ");
 
-  DrawHeader("3-flavour vacuum oscillogram (appearance channel)",
-             "Constant L/E structures appear as diagonal bands; useful for intuition across baselines/energies");
+  DrawHeader("3-flavour vacuum oscillogram: P_{#mu e}(L,E)",
+             "Vacuum, NO, #delta_{CP}=-90^{#circ}; constant L/E structures appear as diagonal bands");
 
   c->SaveAs("sbn_3fl_lbl_oscillogram.pdf");
 }
@@ -1230,7 +1259,6 @@ void sbn_plot_all() {
   sbn_bias();
   sbn_nearfar();
   sbn_dm2_sin22_template();
-  sbn_fig1p9_all();
   sbn_3fl_all();
 }
 

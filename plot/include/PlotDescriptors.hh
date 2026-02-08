@@ -36,7 +36,7 @@ struct CutSpec
 
 struct Entry
 {
-    Entry selection;
+    SelectionEntry selection;
     double pot_nom = 0.0;
     double pot_eqv = 0.0;
     std::string beamline;

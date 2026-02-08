@@ -25,7 +25,7 @@ struct Frame
     ROOT::RDF::RNode rnode() const { return node; }
 };
 
-struct Entry
+struct SelectionEntry
 {
     Type source = Type::kUnknown;
     Frame nominal;
@@ -55,15 +55,15 @@ class SelectionService
     static const float muon_max_track_distance;
     static const unsigned muon_required_generation;
 
-    static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const Entry &rec);
-    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, Preset p, const Entry &rec);
-    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, const Entry &rec);
+    static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec);
+    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec);
+    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node, const SelectionEntry &rec);
     static std::string selection_label(Preset p);
     static bool is_in_truth_volume(float x, float y, float z) noexcept;
     static bool is_in_reco_volume(float x, float y, float z) noexcept;
 };
 
-inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const Entry &rec)
+inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec)
 {
     return SelectionService::apply(node, p, rec);
 }

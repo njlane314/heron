@@ -147,5 +147,3 @@ ULong64_t EventIO::snapshot_event_list(ROOT::RDF::RNode node,
                                                 tree_prefix,
                                                 overwrite_if_exists);
 }
-
-}

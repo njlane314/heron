@@ -89,7 +89,7 @@ inline ROOT::RDF::RNode filter_on(ROOT::RDF::RNode node, const char *col)
 
 } // namespace
 
-ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const Entry &rec)
+ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec)
 {
     node = decorate(node, p, rec);
     switch (p)
@@ -111,7 +111,7 @@ ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const 
     }
 }
 
-ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, const Entry &rec)
+ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec)
 {
     std::vector<std::string> names = node.GetColumnNames();
     auto has = [&](const std::string &name) {
@@ -183,7 +183,7 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
     }
 }
 
-ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const Entry &rec)
+ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const SelectionEntry &rec)
 {
     node = decorate(node, Preset::Trigger, rec);
     node = decorate(node, Preset::Muon, rec);

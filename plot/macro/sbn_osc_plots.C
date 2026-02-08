@@ -9,12 +9,12 @@
 //   root -l -q 'sbn_osc_plots.C("bias")'
 //   root -l -q 'sbn_osc_plots.C("nearfar")'
 //   root -l -q 'sbn_osc_plots.C("dm2_sin22_template")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9_a")' // 3+1 P(νμ→να) vs L/E, panel-style ranges (separate PDFs)
+//   root -l -q 'sbn_osc_plots.C("fig1p9_a")' // 3-flavour SBL: P(νμ→νe) and (1-P(νμ→νμ)) vs L/E (separate PDFs)
 //   root -l -q 'sbn_osc_plots.C("fig1p9_b")'
 //   root -l -q 'sbn_osc_plots.C("fig1p9_c")'
 //   root -l -q 'sbn_osc_plots.C("fig1p9_d")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9_e")' // log x + log y
-//   root -l -q 'sbn_osc_plots.C("fig1p9_f")' // log x
+//   root -l -q 'sbn_osc_plots.C("fig1p9_e")' // log y (SBL)
+//   root -l -q 'sbn_osc_plots.C("fig1p9_f")' // log x + log y (SBL)
 //   root -l -q 'sbn_osc_plots.C("fig1p9_all")'
 //   root -l -q 'sbn_osc_plots.C("all")'
 //
@@ -103,14 +103,14 @@ static double toy_xsec(double E_GeV) {
 }
 
 // ---------------------------
-// 3+1 vacuum oscillations (4-flavour) helper code
+// 3-flavour vacuum oscillations helper code
 //   P_{α→β} = δ_{αβ}
 //            -4 Σ_{i>j} Re(U_{αi}U*_{βi}U*_{αj}U_{βj}) sin^2(Δij)
 //            +2 Σ_{i>j} Im(...) sin(2Δij),
 // where Δij = 1.267 Δm^2_ij [eV^2] * (L/E) [km/GeV]
 // ---------------------------
 using cplx = std::complex<double>;
-using Mat4 = std::array<std::array<cplx,4>,4>;
+using Mat3 = std::array<std::array<cplx,3>,3>;
 
 static double deg2rad(double deg) { return deg * (std::acos(-1.0) / 180.0); }
 
@@ -120,25 +120,25 @@ static double clamp01(double x) {
   return x;
 }
 
-static Mat4 Identity4() {
-  Mat4 U{};
-  for (int r = 0; r < 4; ++r) {
-    for (int c = 0; c < 4; ++c) U[r][c] = (r == c) ? cplx(1.0,0.0) : cplx(0.0,0.0);
-  }
+static Mat3 Identity3() {
+  Mat3 U{};
+  for (int r = 0; r < 3; ++r)
+    for (int c = 0; c < 3; ++c)
+      U[r][c] = (r == c) ? cplx(1.0,0.0) : cplx(0.0,0.0);
   return U;
 }
 
 // Left-multiply U by a complex rotation R_ij(theta, delta) in the (i,j) subspace.
-// This reproduces the usual PDG-like build order when applied as:
-//   U = R34 * R24 * R14 * R23 * R13 * R12
-static void LeftMultiplyRotation(Mat4& U, int i, int j, double theta, double delta) {
+// PDG-like 3-flavour build order:
+//   U = R23 * R13(δ) * R12
+static void LeftMultiplyRotation(Mat3& U, int i, int j, double theta, double delta) {
   const double c = std::cos(theta);
   const double s = std::sin(theta);
   const cplx e_m = std::exp(cplx(0.0, -delta));
   const cplx e_p = std::exp(cplx(0.0, +delta));
 
   // Build the 2x2 block action on rows i and j of U: U <- R * U
-  for (int col = 0; col < 4; ++col) {
+  for (int col = 0; col < 3; ++col) {
     const cplx Ui = U[i][col];
     const cplx Uj = U[j][col];
     U[i][col] =  c*Ui + s*e_m*Uj;
@@ -146,43 +146,30 @@ static void LeftMultiplyRotation(Mat4& U, int i, int j, double theta, double del
   }
 }
 
-struct OscParams3p1 {
-  // Standard 3-flavour (NO) parameters
+struct OscParams3fl {
+  // Standard 3-flavour vacuum parameters (NO defaults; tweak as desired)
   double th12 = deg2rad(33.44);
   double th13 = deg2rad(8.57);
   double th23 = deg2rad(49.20);
   double d13  = deg2rad(195.0);
   double dm21 = 7.42e-5;   // eV^2
   double dm31 = 2.517e-3;  // eV^2 (NO: m3^2 - m1^2)
-
-  // Sterile (3+1) parameters (example close to LSND-style best-fit quoted in the screenshot caption)
-  double dm41 = 1.20;              // eV^2
-  double th14 = deg2rad(18.4);     // degrees -> radians
-  double th24 = deg2rad(5.2);
-  double th34 = deg2rad(0.0);
-  double d24  = deg2rad(0.0);
-  double d34  = deg2rad(0.0);
 };
 
-static Mat4 BuildPMNS_3p1(const OscParams3p1& p) {
-  Mat4 U = Identity4();
-
-  // Build U = R34 * R24 * R14 * R23 * R13 * R12 (PDG-like extension).
+static Mat3 BuildPMNS_3fl(const OscParams3fl& p) {
+  Mat3 U = Identity3();
   LeftMultiplyRotation(U, 0, 1, p.th12, 0.0);
   LeftMultiplyRotation(U, 0, 2, p.th13, p.d13);
   LeftMultiplyRotation(U, 1, 2, p.th23, 0.0);
-  LeftMultiplyRotation(U, 0, 3, p.th14, 0.0);
-  LeftMultiplyRotation(U, 1, 3, p.th24, p.d24);
-  LeftMultiplyRotation(U, 2, 3, p.th34, p.d34);
   return U;
 }
 
-// Flavour indices: 0=e, 1=mu, 2=tau, 3=sterile
-static double P_vac_3p1(int alpha, int beta, double LE_km_per_GeV,
-                        const std::array<double,4>& m2, const Mat4& U)
+// Flavour indices: 0=e, 1=mu, 2=tau
+static double P_vac_3fl(int alpha, int beta, double LE_km_per_GeV,
+                        const std::array<double,3>& m2, const Mat3& U)
 {
   double P = (alpha == beta) ? 1.0 : 0.0;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < i; ++j) {
       const double dm2 = m2[i] - m2[j];
       const double Dij = 1.267 * dm2 * LE_km_per_GeV;
@@ -197,8 +184,9 @@ static double P_vac_3p1(int alpha, int beta, double LE_km_per_GeV,
 static TGraph* MakeProbGraphLE(int alpha, int beta,
                                double xMin, double xMax, int N,
                                bool logX,
-                               const std::array<double,4>& m2, const Mat4& U,
-                               double yFloor = 0.0)
+                               const std::array<double,3>& m2, const Mat3& U,
+                               double yFloor = 0.0,
+                               bool oneMinus = false)
 {
   TGraph* g = new TGraph(N);
   for (int k = 0; k < N; ++k) {
@@ -211,9 +199,10 @@ static TGraph* MakeProbGraphLE(int alpha, int beta,
     } else {
       x = xMin + (xMax - xMin) * (double)k / (double)(N - 1);
     }
-    double P = P_vac_3p1(alpha, beta, x, m2, U);
-    if (yFloor > 0.0 && P < yFloor) P = yFloor; // avoid y<=0 points on log-y pads
-    g->SetPoint(k, x, P);
+    double P = P_vac_3fl(alpha, beta, x, m2, U);
+    double y = oneMinus ? clamp01(1.0 - P) : P;
+    if (yFloor > 0.0 && y < yFloor) y = yFloor; // avoid y<=0 points on log-y pads
+    g->SetPoint(k, x, y);
   }
   return g;
 }
@@ -251,35 +240,25 @@ static void DrawHeader(const char* line1, const char* line2 = nullptr) {
   }
 }
 
-// One “panel-style” plot as a standalone PDF (same styling as the other single-canvas outputs).
+// 3-flavour SBL-focused plot as a standalone PDF (same styling as the other single-canvas outputs).
+// Plots:
+//   blue: P(νμ→νe)
+//   red : 1 - P(νμ→νμ)   (disappearance probability)
 static void sbn_fig1p9_panel(const char* cname,
                              const char* outPdf,
-                             const char* panelTag,
                              double xMin, double xMax,
                              double yMin, double yMax,
                              int N,
                              bool logX,
-                             bool logY,
-                             bool drawNoSterile)
+                             bool logY)
 {
   SetNiceStyle();
   gROOT->SetBatch(kTRUE);
 
-  // Physics inputs (edit as desired).
-  const OscParams3p1 p; // defaults set above
-  const Mat4 U_3p1 = BuildPMNS_3p1(p);
-  const std::array<double,4> m2 = {0.0, p.dm21, p.dm31, p.dm41};
-
-  // “No sterile” comparison: same 3-flavour parameters, but θ14=θ24=θ34=0.
-  OscParams3p1 p0 = p;
-  p0.th14 = 0.0; p0.th24 = 0.0; p0.th34 = 0.0;
-  p0.d24  = 0.0; p0.d34  = 0.0;
-  const Mat4 U_3fl = BuildPMNS_3p1(p0);
-
-  // Colors roughly matching the screenshot: blue (μ→e), orange (μ→μ), green (μ→τ)
-  const int col_mue  = kBlue+1;
-  const int col_mumu = kOrange+7;
-  const int col_mut  = kGreen+2;
+  // 3-flavour physics inputs (edit as desired).
+  const OscParams3fl p;
+  const Mat3 U = BuildPMNS_3fl(p);
+  const std::array<double,3> m2 = {0.0, p.dm21, p.dm31};
 
   // For log-y pads: ensure we never feed y<=0 points to TGraph.
   const double yFloor = (logY ? std::max(1e-12, 0.1*yMin) : 0.0);
@@ -290,35 +269,20 @@ static void sbn_fig1p9_panel(const char* cname,
 
   TMultiGraph* mg = new TMultiGraph();
 
-  // νμ -> να, with α = {e, μ, τ}
-  TGraph* g_mue  = MakeProbGraphLE(1, 0, xMin, xMax, N, logX, m2, U_3p1, yFloor);
-  TGraph* g_mumu = MakeProbGraphLE(1, 1, xMin, xMax, N, logX, m2, U_3p1, yFloor);
-  TGraph* g_mut  = MakeProbGraphLE(1, 2, xMin, xMax, N, logX, m2, U_3p1, yFloor);
+  // Curves (SBL-relevant): appearance and disappearance
+  TGraph* g_mue  = MakeProbGraphLE(1, 0, xMin, xMax, N, logX, m2, U, yFloor, false);
+  TGraph* g_dis  = MakeProbGraphLE(1, 1, xMin, xMax, N, logX, m2, U, yFloor, true);
 
-  g_mue->SetLineColor(col_mue);
-  g_mue->SetLineWidth(2);
+  g_mue->SetLineColor(kBlue+1);
+  g_mue->SetLineWidth(3);
 
-  g_mumu->SetLineColor(col_mumu);
-  g_mumu->SetLineWidth(2);
+  g_dis->SetLineColor(kRed+1);
+  g_dis->SetLineWidth(3);
 
-  g_mut->SetLineColor(col_mut);
-  g_mut->SetLineWidth(2);
+  mg->Add(g_mue, "L");
+  mg->Add(g_dis, "L");
 
-  mg->Add(g_mue,  "L");
-  mg->Add(g_mumu, "L");
-  mg->Add(g_mut,  "L");
-
-  // Optional “no sterile” dashed reference (shown in the screenshot-style wide-range panels).
-  TGraph* g_mue_3fl = nullptr;
-  if (drawNoSterile) {
-    g_mue_3fl = MakeProbGraphLE(1, 0, xMin, xMax, N, logX, m2, U_3fl, yFloor);
-    g_mue_3fl->SetLineColor(kBlack);
-    g_mue_3fl->SetLineStyle(2);
-    g_mue_3fl->SetLineWidth(2);
-    mg->Add(g_mue_3fl, "L");
-  }
-
-  mg->SetTitle(";L / E (km / GeV);P(#nu_{#mu} #rightarrow #nu)");
+  mg->SetTitle(";L/E  [km/GeV];Probability");
   mg->Draw("A");
   mg->GetXaxis()->SetLimits(xMin, xMax);
   mg->GetYaxis()->SetRangeUser(yMin, yMax);
@@ -334,40 +298,32 @@ static void sbn_fig1p9_panel(const char* cname,
   }
 
   // Legend placement similar to other single-canvas plots.
-  TLegend* leg = nullptr;
-  if (!logX && !logY) leg = new TLegend(0.56, 0.70, 0.88, 0.88);
-  else                leg = new TLegend(0.52, 0.18, 0.88, 0.45);
+  TLegend* leg = (!logX && !logY) ? new TLegend(0.56, 0.72, 0.88, 0.88)
+                                  : new TLegend(0.52, 0.18, 0.88, 0.38);
   leg->SetTextFont(42);
   leg->SetTextSize(0.035);
   leg->SetFillStyle(0);
-  leg->AddEntry(g_mue,  "#nu_{#mu} #rightarrow #nu_{e}",   "l");
-  leg->AddEntry(g_mumu, "#nu_{#mu} #rightarrow #nu_{#mu}", "l");
-  leg->AddEntry(g_mut,  "#nu_{#mu} #rightarrow #nu_{#tau}","l");
-  if (g_mue_3fl) leg->AddEntry(g_mue_3fl, "Oscillations Without A Sterile Neutrino", "l");
+  leg->AddEntry(g_mue, "P_{#mu e}", "l");
+  leg->AddEntry(g_dis, "1 - P_{#mu#mu}", "l");
   leg->Draw();
 
-  // Panel tag (a)-(f) for later figure assembly.
-  TLatex tag;
-  tag.SetNDC(true);
-  tag.SetTextFont(42);
-  tag.SetTextSize(0.060);
-  tag.DrawLatex(0.48, 0.04, panelTag);
-
   const double rad2deg = 180.0 / std::acos(-1.0);
-  DrawHeader("3+1 vacuum: P(#nu_{#mu}#rightarrow#nu_{#alpha}) vs L/E",
-             Form("%s   #Delta m^{2}_{41}=%.2f eV^{2},   #theta_{14}=%.1f^{#circ},   #theta_{24}=%.1f^{#circ}",
-                  panelTag, p.dm41, p.th14*rad2deg, p.th24*rad2deg));
+  DrawHeader("3-flavour vacuum: standard oscillations at short baseline",
+             Form("NO: #Delta m^{2}_{31}=%.3e eV^{2}, #Delta m^{2}_{21}=%.3e eV^{2};  #theta_{13}=%.2f^{#circ}, #theta_{23}=%.2f^{#circ}",
+                  p.dm31, p.dm21, p.th13*rad2deg, p.th23*rad2deg));
 
   c->SaveAs(outPdf);
 }
 
-// Panel-style ranges (separate PDFs).
-void sbn_fig1p9_a() { sbn_fig1p9_panel("c_fig1p9_a", "sbn_mu_LE_a.pdf",           "(a)", 0.0, 40000.0, 0.0,   1.0,    40000, false, false, false); }
-void sbn_fig1p9_b() { sbn_fig1p9_panel("c_fig1p9_b", "sbn_mu_LE_b.pdf",           "(b)", 0.0,  4000.0, 0.0,   1.0,    16000, false, false, false); }
-void sbn_fig1p9_c() { sbn_fig1p9_panel("c_fig1p9_c", "sbn_mu_LE_c.pdf",           "(c)", 0.0,   200.0, 0.0,   1.0,     4000, false, false, false); }
-void sbn_fig1p9_d() { sbn_fig1p9_panel("c_fig1p9_d", "sbn_mu_LE_d.pdf",           "(d)", 0.0,    20.0, 0.0,   0.020,   4000, false, false, false); }
-void sbn_fig1p9_e() { sbn_fig1p9_panel("c_fig1p9_e", "sbn_mu_LE_e_loglog.pdf",    "(e)", 1e-1,   1e5,  1e-7,  1.0,     6000, true,  true,  true ); }
-void sbn_fig1p9_f() { sbn_fig1p9_panel("c_fig1p9_f", "sbn_mu_LE_f_logx.pdf",      "(f)", 1e-1,   1e5,  0.0,   1.0,     6000, true,  false, true ); }
+// SBL-focused ranges (separate PDFs).
+// Typical accelerator SBL (SBN-like): L ~ 0.1–1 km, E ~ 0.2–3 GeV  =>  L/E ~ O(0.05–5) km/GeV.
+// We extend to 10 km/GeV to show the (still small) rise of standard 3-flavour effects.
+void sbn_fig1p9_a() { sbn_fig1p9_panel("c_fig1p9_a", "sbn_3fl_sbl_LE_0to10.pdf",        0.0, 10.0, 0.0,   1.2e-3, 5000, false, false); }
+void sbn_fig1p9_b() { sbn_fig1p9_panel("c_fig1p9_b", "sbn_3fl_sbl_LE_0to5.pdf",         0.0,  5.0, 0.0,   3.2e-4, 5000, false, false); }
+void sbn_fig1p9_c() { sbn_fig1p9_panel("c_fig1p9_c", "sbn_3fl_sbl_LE_0to2.pdf",         0.0,  2.0, 0.0,   6.0e-5, 5000, false, false); }
+void sbn_fig1p9_d() { sbn_fig1p9_panel("c_fig1p9_d", "sbn_3fl_sbl_LE_0to1.pdf",         0.0,  1.0, 0.0,   1.6e-5, 5000, false, false); }
+void sbn_fig1p9_e() { sbn_fig1p9_panel("c_fig1p9_e", "sbn_3fl_sbl_LE_logy.pdf",         0.05, 10.0, 1e-10, 2.0e-3, 6000, false, true ); }
+void sbn_fig1p9_f() { sbn_fig1p9_panel("c_fig1p9_f", "sbn_3fl_sbl_LE_logx_logy.pdf",    0.05, 10.0, 1e-10, 2.0e-3, 6000, true,  true ); }
 
 void sbn_fig1p9_all() {
   sbn_fig1p9_a();

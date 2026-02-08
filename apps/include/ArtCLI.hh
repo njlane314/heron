@@ -25,9 +25,6 @@
 #include "SampleIO.hh"
 #include "SubRunInventoryService.hh"
 
-
-
-
 inline void log_scan_start(const std::string &log_prefix)
 {
     log_info(log_prefix, "action=subrun_scan status=start");
@@ -127,11 +124,5 @@ inline Args parse_args(const std::vector<std::string> &args, const std::string &
 }
 
 int run(const Args &art_args, const std::string &log_prefix);
-
-}
-
-}
-
-}
 
 #endif

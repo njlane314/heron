@@ -12,9 +12,6 @@
 #include "AppUtils.hh"
 #include "SampleCLI.hh"
 #include "StatusMonitor.hh"
-
-
-
 int run(const Args &sample_args, const std::string &log_prefix)
 {
     const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
@@ -64,10 +61,6 @@ int run(const Args &sample_args, const std::string &log_prefix)
     log_success(log_prefix, log_message.str());
 
     return 0;
-}
-
-}
-
 }
 
 int main(int argc, char **argv)

@@ -23,9 +23,6 @@
 #include <vector>
 
 #include "AppLog.hh"
-
-
-
 inline std::string trim(std::string s)
 {
     auto notspace = [](unsigned char c)
@@ -141,10 +138,6 @@ inline std::vector<std::string> read_paths(const std::string &filelist_path)
         throw std::runtime_error("Filelist is empty: " + filelist_path);
     }
     return files;
-}
-
-}
-
 }
 
 #endif

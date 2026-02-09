@@ -39,6 +39,10 @@ PLOT_SRC = plot/src/Plotter.cc \
            plot/src/PlottingHelper.cc
 PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
+EVD_LIB_NAME = build/lib/libNuxsecEvd.so
+EVD_SRC = evd/src/EventDisplay.cc
+EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
+
 NUXSEC_NAME = build/bin/nuxsec
 NUXSEC_SRC = apps/src/nuxsec.cc
 
@@ -51,9 +55,9 @@ NUXSEC_EVENT_DRIVER_SRC = apps/src/nuxsecEventIOdriver.cc
 NUXSEC_SAMPLE_DRIVER_NAME = build/bin/nuxsecSampleIOdriver
 NUXSEC_SAMPLE_DRIVER_SRC = apps/src/nuxsecSampleIOdriver.cc
 
-INCLUDES = -I./io/include -I./ana/include -I./plot/include -I./apps/include
+INCLUDES = -I./io/include -I./ana/include -I./plot/include -I./evd/include -I./apps/include
 
-all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) \
+all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) \
 	 $(NUXSEC_NAME) $(NUXSEC_ART_DRIVER_NAME) $(NUXSEC_EVENT_DRIVER_NAME) \
 	 $(NUXSEC_SAMPLE_DRIVER_NAME)
 
@@ -68,6 +72,10 @@ $(ANA_LIB_NAME): $(ANA_OBJ)
 $(PLOT_LIB_NAME): $(PLOT_OBJ)
 	mkdir -p $(dir $(PLOT_LIB_NAME))
 	$(CXX) -shared $(CXXFLAGS) $(PLOT_OBJ) $(LDFLAGS) -o $(PLOT_LIB_NAME)
+
+$(EVD_LIB_NAME): $(EVD_OBJ)
+	mkdir -p $(dir $(EVD_LIB_NAME))
+	$(CXX) -shared $(CXXFLAGS) $(EVD_OBJ) $(LDFLAGS) -o $(EVD_LIB_NAME)
 
 $(NUXSEC_NAME): $(NUXSEC_SRC) $(IO_LIB_NAME) $(ANA_LIB_NAME)
 	mkdir -p $(dir $(NUXSEC_NAME))

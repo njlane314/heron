@@ -11,6 +11,7 @@
 //   - The stack is grouped by "analysis_channels"; expr controls the x-axis variable only.
 //   - MC yields are scaled by w_nominal unless an alternative weight is provided.
 //   - Output dir/format follow PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
+//   - Default input uses the generated event list (event_list_<analysis>.root).
 
 #include <iostream>
 #include <memory>
@@ -65,7 +66,7 @@ int plot_stacked_hist_impl(const std::string &expr,
 {
     ROOT::EnableImplicitMT();
 
-    const std::string list_path = samples_tsv.empty() ? default_samples_tsv() : samples_tsv;
+    const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotStackedHist] input=" << list_path << "\n";
 
     if (!looks_like_event_list_root(list_path))

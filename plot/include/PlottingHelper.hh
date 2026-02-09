@@ -22,6 +22,7 @@ namespace nu
 
 std::string env_or(const char *key, const std::string &fallback);
 std::string default_samples_tsv();
+std::string default_event_list_root();
 
 bool is_data_origin(SampleIO::SampleOrigin o);
 

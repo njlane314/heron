@@ -1,13 +1,25 @@
 #include "EventListIO.hh"
 
+#include <iostream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <TFile.h>
 #include <TObjString.h>
 #include <TTree.h>
+
+#include "AnalysisConfigService.hh"
+#include "ColumnDerivationService.hh"
+#include "EventIO.hh"
+#include "PlottingHelper.hh"
+#include "RDataFrameService.hh"
+#include "SampleCLI.hh"
+#include "SampleIO.hh"
 
 namespace
 {
@@ -18,6 +30,34 @@ std::string read_objstring_optional(TFile &f, const char *key)
     if (!s)
         return {};
     return s->GetString().Data();
+}
+
+void require_columns(const ROOT::RDF::RNode &node,
+                     const std::vector<std::string> &cols,
+                     const std::string &sample_name)
+{
+    const auto names = node.GetColumnNames();
+    std::unordered_set<std::string> have(names.begin(), names.end());
+
+    std::vector<std::string> missing;
+    missing.reserve(cols.size());
+    for (const auto &c : cols)
+    {
+        if (c == "sample_id")
+            continue;
+        if (have.find(c) == have.end())
+            missing.push_back(c);
+    }
+
+    if (!missing.empty())
+    {
+        std::ostringstream err;
+        err << "make_event_list: missing columns after derivation for sample '" << sample_name << "':\n";
+        for (const auto &m : missing)
+            err << "  - " << m << "\n";
+        err << "Fix: ensure they exist/are defined for all sample types.\n";
+        throw std::runtime_error(err.str());
+    }
 }
 }
 
@@ -178,5 +218,86 @@ std::string EventListIO::beamline_label() const
     if (seen == static_cast<int>(SampleIO::BeamMode::kBNB))
         return "bnb";
     return "unknown";
+}
+
+int EventListIO::build_event_list(const std::string &out_root,
+                                  const std::string &samples_tsv,
+                                  const std::string &base_sel,
+                                  const std::vector<std::string> &columns)
+{
+    ROOT::EnableImplicitMT();
+
+    const std::string list_path = samples_tsv.empty() ? default_samples_tsv() : samples_tsv;
+    std::cout << "[make_event_list] samples_tsv=" << list_path << "\n";
+    std::cout << "[make_event_list] out_root=" << out_root << "\n";
+    std::cout << "[make_event_list] base_sel=" << base_sel << "\n";
+
+    const auto sample_list = read_samples(list_path);
+
+    const auto &analysis = AnalysisConfigService::instance();
+    const std::string tree_name = analysis.tree_name();
+
+    std::vector<SampleInfo> refs;
+    refs.reserve(sample_list.size());
+
+    for (const auto &sl : sample_list)
+    {
+        SampleIO::Sample s = SampleIO::read(sl.output_path);
+
+        SampleInfo si;
+        si.sample_name = s.sample_name;
+        si.sample_rootio_path = sl.output_path;
+        si.sample_origin = static_cast<int>(s.origin);
+        si.beam_mode = static_cast<int>(s.beam);
+        si.subrun_pot_sum = s.subrun_pot_sum;
+        si.db_tortgt_pot_sum = s.db_tortgt_pot_sum;
+        si.db_tor101_pot_sum = s.db_tor101_pot_sum;
+
+        refs.push_back(std::move(si));
+    }
+
+    Header header;
+    header.analysis_name = analysis.name();
+    header.provenance_tree = tree_name;
+    header.event_tree = "events";
+    header.sample_list_source = list_path;
+
+    std::ostringstream schema;
+    schema << "# nuxsec event list columns (macro make_event_list.C)\n";
+    for (const auto &c : columns)
+        schema << c << "\n";
+
+    EventIO::init(out_root, header, refs, schema.str(), "plot");
+
+    EventIO out(out_root, EventIO::OpenMode::kUpdate);
+
+    for (size_t i = 0; i < sample_list.size(); ++i)
+    {
+        SampleIO::Sample sample = SampleIO::read(sample_list[i].output_path);
+
+        std::cout << "[make_event_list] sample=" << sample.sample_name
+                  << " id=" << i
+                  << " origin=" << SampleIO::sample_origin_name(sample.origin)
+                  << " beam=" << SampleIO::beam_mode_name(sample.beam)
+                  << "\n";
+
+        ROOT::RDataFrame rdf = RDataFrameService::load_sample(sample, tree_name);
+
+        const ProcessorEntry proc = analysis.make_processor(sample);
+
+        ROOT::RDF::RNode node = ColumnDerivationService::instance().define(rdf, proc);
+
+        require_columns(node, columns, sample.sample_name);
+
+        out.snapshot_event_list_merged(std::move(node),
+                                       static_cast<int>(i),
+                                       sample.sample_name,
+                                       columns,
+                                       base_sel,
+                                       header.event_tree);
+    }
+
+    std::cout << "[make_event_list] done: " << out_root << "\n";
+    return 0;
 }
 }

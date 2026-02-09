@@ -37,6 +37,11 @@ class EventListIO
 
     std::string beamline_label() const;
 
+    static int build_event_list(const std::string &out_root,
+                                const std::string &samples_tsv,
+                                const std::string &base_sel,
+                                const std::vector<std::string> &columns);
+
   private:
     std::string m_path;
     Header m_header{};

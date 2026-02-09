@@ -37,14 +37,14 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     std::vector<EventInput> inputs;
     inputs.reserve(entries.size());
     
-    std::vector<SampleInfo> sample_infos;
+    std::vector<nu::SampleInfo> sample_infos;
     sample_infos.reserve(entries.size());
 
     for (const auto &entry : entries)
     {
         SampleIO::Sample sample = SampleIO::read(entry.output_path);
 
-        SampleInfo info;
+        nu::SampleInfo info;
         info.sample_name = sample.sample_name;
         info.sample_rootio_path = entry.output_path;
         info.sample_origin = static_cast<int>(sample.origin);
@@ -85,7 +85,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     const std::string provenance_tree = "nuxsec_art_provenance/run_subrun";
     const std::string event_tree = analysis.tree_name();
 
-    Header header;
+    nu::EventListHeader header;
     header.analysis_name = analysis.name();
     header.provenance_tree = provenance_tree;
     header.event_tree = event_tree;
@@ -105,13 +105,13 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         default_schema_columns,
         event_args.columns_tsv_path);
 
-    EventIO::init(event_args.output_root,
-                                 header,
-                                 sample_infos,
-                                 column_provider.schema_tsv(),
-                                 column_provider.schema_tag());
-    EventIO event_io(event_args.output_root,
-                                    EventIO::OpenMode::kUpdate);
+    nu::EventListIO::init(event_args.output_root,
+                          header,
+                          sample_infos,
+                          column_provider.schema_tsv(),
+                          column_provider.schema_tag());
+    nu::EventListIO event_io(event_args.output_root,
+                             nu::EventListIO::OpenMode::kUpdate);
 
     for (size_t i = 0; i < inputs.size(); ++i)
     {

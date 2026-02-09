@@ -20,7 +20,7 @@ Input/output utilities (io/)
 * ``ArtFileProvenanceIO``: reads and writes art provenance summaries.
 * ``SampleIO``: stores sample metadata and resolves input ROOT files.
 * ``NormalisationService``: builds sample normalisation and POT totals.
-* ``EventIO``: writes event-level output trees and metadata.
+* ``EventListIO``: writes event-level output trees and metadata.
 * ``RunDatabaseService``: queries run database information.
 * ``SubRunInventoryService``: scans input files to collect run/subrun totals.
 

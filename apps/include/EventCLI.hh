@@ -30,7 +30,7 @@
 #include "AppUtils.hh"
 #include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
-#include "EventIO.hh"
+#include "EventListIO.hh"
 #include "SampleCLI.hh"
 #include "SampleIO.hh"
 

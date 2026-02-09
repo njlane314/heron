@@ -2,7 +2,7 @@
 /**
  *  @file  plot/include/PlottingHelper.hh
  *
- *  @brief Plotting helper utilities and stack_samples implementation, providing
+ *  @brief Plotting helper utilities and plotStackedSamples implementation, providing
  *         reusable routines for assembling stacked histograms.
  */
 

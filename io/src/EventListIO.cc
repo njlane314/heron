@@ -34,7 +34,7 @@ std::string read_objstring_optional(TFile &f, const char *key)
     return s->GetString().Data();
 }
 
-void require_columns(const ROOT::RDF::RNode &node,
+void require_columns(ROOT::RDF::RNode &node,
                      const std::vector<std::string> &cols,
                      const std::string &sample_name)
 {

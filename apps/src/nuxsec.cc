@@ -107,7 +107,7 @@ void print_main_help(std::ostream &out)
         << "  art         Aggregate art provenance for an input\n"
         << "  sample      Aggregate Sample ROOT files from art provenance\n"
         << "  event       Build event-level output from aggregated samples\n"
-        << "  macro       Run plot macros\n"
+        << "  macro       Run ROOT macros (plotting or standalone)\n"
         << "  status      Log status for executable binaries\n"
         << "  paths       Print resolved workspace paths\n"
         << "  env         Print environment exports for a workspace\n"
@@ -330,6 +330,11 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
         {
             return repo_candidate;
         }
+        const auto standalone_candidate = repo_root / "standalone" / "macro" / candidate;
+        if (std::filesystem::exists(standalone_candidate))
+        {
+            return standalone_candidate;
+        }
         const auto macro_candidate = repo_root / "plot" / "macro" / candidate;
         if (std::filesystem::exists(macro_candidate))
         {
@@ -432,13 +437,38 @@ int handle_env_command(const std::vector<std::string> &args,
     return 0;
 }
 
+bool is_plot_macro(const std::filesystem::path &repo_root,
+                   const std::filesystem::path &macro_path)
+{
+    std::error_code ec;
+    const auto rel = std::filesystem::relative(macro_path, repo_root, ec);
+    if (ec)
+    {
+        return false;
+    }
+    if (rel.empty())
+    {
+        return false;
+    }
+    auto it = rel.begin();
+    if (it == rel.end() || *it != "plot")
+    {
+        return false;
+    }
+    ++it;
+    return it != rel.end() && *it == "macro";
+}
+
 int exec_root_macro(const std::filesystem::path &repo_root,
                     const std::filesystem::path &macro_path,
                     const std::string &call_cmd)
 {
     ensure_plot_env(repo_root);
     add_plot_include_paths(repo_root);
-    ensure_plot_lib_loaded(repo_root);
+    if (is_plot_macro(repo_root, macro_path))
+    {
+        ensure_plot_lib_loaded(repo_root);
+    }
 
     if (!std::filesystem::exists(macro_path))
     {
@@ -460,33 +490,41 @@ int exec_root_macro(const std::filesystem::path &repo_root,
 
 void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
 {
-    const auto macro_dir = repo_root / "plot" / "macro";
-    out << "Plot macros in " << macro_dir.string() << ":\n";
-    if (!std::filesystem::exists(macro_dir))
+    auto list_macros = [&](const std::filesystem::path &dir,
+                           const std::string &label,
+                           const std::string &prefix)
     {
-        out << "  (none; directory not found)\n";
-        return;
-    }
-
-    std::vector<std::string> macros;
-    for (const auto &entry : std::filesystem::directory_iterator(macro_dir))
-    {
-        if (!entry.is_regular_file())
+        out << label << " " << dir.string() << ":\n";
+        if (!std::filesystem::exists(dir))
         {
-            continue;
+            out << "  (none; directory not found)\n";
+            return;
         }
-        const auto &path = entry.path();
-        if (path.extension() == ".C")
-        {
-            macros.push_back(path.filename().string());
-        }
-    }
 
-    std::sort(macros.begin(), macros.end());
-    for (const auto &macro : macros)
-    {
-        out << "  " << macro << "\n";
-    }
+        std::vector<std::string> macros;
+        for (const auto &entry : std::filesystem::directory_iterator(dir))
+        {
+            if (!entry.is_regular_file())
+            {
+                continue;
+            }
+            const auto &path = entry.path();
+            if (path.extension() == ".C")
+            {
+                macros.push_back(prefix + path.filename().string());
+            }
+        }
+
+        std::sort(macros.begin(), macros.end());
+        for (const auto &macro : macros)
+        {
+            out << "  " << macro << "\n";
+        }
+    };
+
+    list_macros(repo_root / "plot" / "macro", "Plot macros in", "");
+    list_macros(repo_root / "standalone" / "macro", "Standalone macros in", "");
+    list_macros(repo_root / "evd" / "macro", "Event-display macros in", "evd/macro/");
 }
 
 int handle_macro_command(const std::vector<std::string> &args)

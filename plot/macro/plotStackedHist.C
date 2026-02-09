@@ -1,9 +1,9 @@
-// plot/macro/stack_samples.C
+// plot/macro/plotStackedHist.C
 //
 // Run with:
-//   ./nuxsec macro stack_samples.C
-//   ./nuxsec macro stack_samples.C 'stack_samples("reco_neutrino_vertex_sce_z")'
-//   ./nuxsec macro stack_samples.C 'stack_samples("reco_neutrino_vertex_sce_z","/path/to/samples.tsv",50,0,1200,"w_nominal","true",false)'
+//   ./nuxsec macro plotStackedHist.C
+//   ./nuxsec macro plotStackedHist.C 'plotStackedHist("reco_neutrino_vertex_sce_z")'
+//   ./nuxsec macro plotStackedHist.C 'plotStackedHist("reco_neutrino_vertex_sce_z","/path/to/samples.tsv",50,0,1200,"w_nominal","true",false)'
 //
 // Notes:
 //   - This macro loads aggregated samples (samples.tsv -> SampleIO -> original analysis tree)
@@ -54,27 +54,27 @@ bool looks_like_event_list_root(const std::string &p)
 }
 } // namespace
 
-int stack_samples_impl(const std::string &expr,
-                       const std::string &samples_tsv,
-                       int nbins,
-                       double xmin,
-                       double xmax,
-                       const std::string &mc_weight,
-                       const std::string &extra_sel,
-                       bool use_logy)
+int plot_stacked_hist_impl(const std::string &expr,
+                           const std::string &samples_tsv,
+                           int nbins,
+                           double xmin,
+                           double xmax,
+                           const std::string &mc_weight,
+                           const std::string &extra_sel,
+                           bool use_logy)
 {
     ROOT::EnableImplicitMT();
 
     const std::string list_path = samples_tsv.empty() ? default_samples_tsv() : samples_tsv;
-    std::cout << "[stack_samples] input=" << list_path << "\n";
+    std::cout << "[plotStackedHist] input=" << list_path << "\n";
 
     if (!looks_like_event_list_root(list_path))
     {
-        std::cerr << "[stack_samples] input is not an event list root file: " << list_path << "\n";
+        std::cerr << "[plotStackedHist] input is not an event list root file: " << list_path << "\n";
         return 1;
     }
 
-    std::cout << "[stack_samples] mode=event_list\n";
+    std::cout << "[plotStackedHist] mode=event_list\n";
 
     EventListIO el(list_path);
     ROOT::RDataFrame rdf = el.rdf();
@@ -160,21 +160,21 @@ int stack_samples_impl(const std::string &expr,
 }
 
 
-int stack_samples(const std::string &expr = "reco_neutrino_vertex_sce_z",
-                  const std::string &samples_tsv = "",
-                  int nbins = 50,
-                  double xmin = 0.0,
-                  double xmax = 2.5,
-                  const std::string &mc_weight = "w_nominal",
-                  const std::string &extra_sel = "true",
-                  bool use_logy = false)
+int plotStackedHist(const std::string &expr = "reco_neutrino_vertex_sce_z",
+                    const std::string &samples_tsv = "",
+                    int nbins = 50,
+                    double xmin = 0.0,
+                    double xmax = 2.5,
+                    const std::string &mc_weight = "w_nominal",
+                    const std::string &extra_sel = "true",
+                    bool use_logy = false)
 {
-    return stack_samples_impl(expr,
-                              samples_tsv,
-                              nbins,
-                              xmin,
-                              xmax,
-                              mc_weight,
-                              extra_sel,
-                              use_logy);
+    return plot_stacked_hist_impl(expr,
+                                  samples_tsv,
+                                  nbins,
+                                  xmin,
+                                  xmax,
+                                  mc_weight,
+                                  extra_sel,
+                                  use_logy);
 }

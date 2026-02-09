@@ -2,7 +2,7 @@
 /**
  *  @file  plot/src/PlottingHelper.cc
  *
- *  @brief Plotting helper utilities and stack_samples implementation.
+ *  @brief Plotting helper utilities and plotStackedHist implementation.
  */
 
 #include "PlottingHelper.hh"

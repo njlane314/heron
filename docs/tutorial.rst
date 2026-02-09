@@ -39,7 +39,7 @@ ready for selections and plotting.
 Step 4: run a plotting macro
 ----------------------------
 
-Macros live under ``plot/macro`` and can be run directly:
+Plotting macros live under ``plot/macro`` and can be run directly:
 
 .. code-block:: console
 
@@ -48,6 +48,14 @@ Macros live under ``plot/macro`` and can be run directly:
 A macro is a ROOT C++ script that expects the event output and workspace
 configuration to be present. Adjust ``NUXSEC_PLOT_DIR`` or ``NUXSEC_PLOT_BASE``
 if you want to separate outputs per production set.
+
+Standalone ROOT macros that do not depend on the Nuxsec plotting, analysis, or
+input/output libraries live under ``standalone/macro`` and can be run the same
+way:
+
+.. code-block:: console
+
+   nuxsec macro plotOscPars.C
 
 Example macro snippet
 ---------------------

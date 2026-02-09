@@ -44,9 +44,14 @@ Quick start commands
    # 5) Run a plotting macro from plot/macro.
    nuxsec macro plotFluxMinimal.C
 
+   # 6) Run a standalone ROOT macro from standalone/macro.
+   nuxsec macro plotOscPars.C
+
 After step (4) you will have an event tree with analysis columns in the
 specified output ROOT file. After step (5) plots are written under the plot
-output directory (``scratch/plot/<set>`` by default).
+output directory (``scratch/plot/<set>`` by default). Step (6) shows a
+standalone ROOT macro from ``standalone/macro`` that does not require the
+Nuxsec plotting libraries.
 
 Workspace tips
 --------------

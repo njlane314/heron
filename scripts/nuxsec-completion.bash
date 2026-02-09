@@ -17,12 +17,12 @@ _nuxsec()
     local exe
     local exe_dir
 
-    if [[ -n "${NUXSEC_REPO_ROOT:-}" && -d "${NUXSEC_REPO_ROOT}/plot/macro" ]]; then
+    if [[ -n "${NUXSEC_REPO_ROOT:-}" && ( -d "${NUXSEC_REPO_ROOT}/plot/macro" || -d "${NUXSEC_REPO_ROOT}/evd/macro" ) ]]; then
       printf "%s" "${NUXSEC_REPO_ROOT}"
       return 0
     fi
 
-    if [[ -n "${NUXSEC_ROOT:-}" && -d "${NUXSEC_ROOT}/plot/macro" ]]; then
+    if [[ -n "${NUXSEC_ROOT:-}" && ( -d "${NUXSEC_ROOT}/plot/macro" || -d "${NUXSEC_ROOT}/evd/macro" ) ]]; then
       printf "%s" "${NUXSEC_ROOT}"
       return 0
     fi
@@ -32,7 +32,7 @@ _nuxsec()
       exe_dir="$(dirname "$(readlink -f "${exe}" 2>/dev/null || printf "%s" "${exe}")")"
       dir="${exe_dir}"
       while [[ -n "${dir}" && "${dir}" != "/" ]]; do
-        if [[ -d "${dir}/plot/macro" ]]; then
+        if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" ]]; then
           printf "%s" "${dir}"
           return 0
         fi
@@ -42,7 +42,7 @@ _nuxsec()
 
     dir="${PWD}"
     while [[ "${dir}" != "/" ]]; do
-      if [[ -d "${dir}/plot/macro" ]]; then
+      if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" ]]; then
         printf "%s" "${dir}"
         return 0
       fi
@@ -51,9 +51,13 @@ _nuxsec()
         printf "%s" "$(dirname "${dir}")"
         return 0
       fi
+      if [[ "${base}" == "evd" && -d "${dir}/macro" ]]; then
+        printf "%s" "$(dirname "${dir}")"
+        return 0
+      fi
       if [[ "${base}" == "macro" ]]; then
         parent="$(dirname "${dir}")"
-        if [[ "$(basename "${parent}")" == "plot" ]]; then
+        if [[ "$(basename "${parent}")" == "plot" || "$(basename "${parent}")" == "evd" ]]; then
           printf "%s" "$(dirname "${parent}")"
           return 0
         fi
@@ -68,6 +72,7 @@ _nuxsec()
     local repo_root
     local macro_dir
     local macro
+    local evd_dir
 
     repo_root="$(_nuxsec_find_root 2>/dev/null || true)"
     if [[ -n "${repo_root}" ]]; then
@@ -78,8 +83,16 @@ _nuxsec()
             basename "${macro}"
           fi
         done
-        return 0
       fi
+      evd_dir="${repo_root}/evd/macro"
+      if [[ -d "${evd_dir}" ]]; then
+        for macro in "${evd_dir}"/*.C; do
+          if [[ -f "${macro}" ]]; then
+            printf "evd/macro/%s\n" "$(basename "${macro}")"
+          fi
+        done
+      fi
+      return 0
     fi
 
     nuxsec macro list 2>/dev/null | awk '/\.C$/ {print $1}'

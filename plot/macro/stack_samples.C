@@ -2,12 +2,14 @@
 //
 // Run with:
 //   ./nuxsec macro stack_samples.C
-//   ./nuxsec macro stack_samples.C 'stack_samples("reco_muon_p")'
-//   ./nuxsec macro stack_samples.C 'stack_samples("reco_muon_p","/path/to/samples.tsv",50,0,2.5,"w_nominal","true",false)'
+//   ./nuxsec macro stack_samples.C 'stack_samples("reco_neutrino_vertex_sce_z")'
+//   ./nuxsec macro stack_samples.C 'stack_samples("reco_neutrino_vertex_sce_z","/path/to/samples.tsv",50,0,1200,"w_nominal","true",false)'
 //
 // Notes:
 //   - This macro loads aggregated samples (samples.tsv -> SampleIO -> original analysis tree)
 //   - It runs your analysis column derivations so that "analysis_channels" exists for stacking.
+//   - The stack is grouped by "analysis_channels"; expr controls the x-axis variable only.
+//   - MC yields are scaled by w_nominal unless an alternative weight is provided.
 //   - Output dir/format follow PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
 
 #include <iostream>
@@ -67,16 +69,6 @@ int stack_samples_impl(const std::string &expr,
         const auto &deriver = ColumnDerivationService::instance();
         ROOT::RDF::RNode node = deriver.define(rdf, proc_entry);
 
-        using SO = SampleIO::SampleOrigin;
-        if (sample.origin == SO::kOverlay)
-        {
-            node = node.Filter([](int strange) { return strange == 0; }, {"count_strange"});
-        }
-        else if (sample.origin == SO::kStrangeness)
-        {
-            node = node.Filter([](int strange) { return strange > 0; }, {"count_strange"});
-        }
-
         entries.emplace_back(make_entry(std::move(node), proc_entry));
         Entry &entry = entries.back();
         if (!extra_sel.empty())
@@ -98,7 +90,8 @@ int stack_samples_impl(const std::string &expr,
         }
     }
 
-    const TH1DModel spec = make_spec(expr, nbins, xmin, xmax, mc_weight);
+    const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
+    const TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
 
     Plotter plotter;
     auto &opt = plotter.options();
@@ -114,7 +107,7 @@ int stack_samples_impl(const std::string &expr,
 }
 
 
-int stack_samples(const std::string &expr = "reco_muon_p",
+int stack_samples(const std::string &expr = "reco_neutrino_vertex_sce_z",
                   const std::string &samples_tsv = "",
                   int nbins = 50,
                   double xmin = 0.0,

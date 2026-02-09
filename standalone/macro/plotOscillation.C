@@ -1,36 +1,37 @@
-// sbn_osc_plots.C
+// plotOscillation.C
 // Schematic short-baseline oscillation plots (ROOT macro).
+// Supersedes older standalone oscillation plotting macros.
 //
 // Usage examples (batch mode):
-//   root -l -q 'sbn_osc_plots.C("prob_le")'
-//   root -l -q 'sbn_osc_plots.C("prob_E")'
-//   root -l -q 'sbn_osc_plots.C("oscillogram")'
-//   root -l -q 'sbn_osc_plots.C("smear")'
-//   root -l -q 'sbn_osc_plots.C("bias")'
-//   root -l -q 'sbn_osc_plots.C("nearfar")'
-//   root -l -q 'sbn_osc_plots.C("dm2_sin22_template")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9_a")' // 3-flavour SBL: P(νμ→νe) and (1-P(νμ→νμ)) vs L/E (separate PDFs)
-//   root -l -q 'sbn_osc_plots.C("fig1p9_b")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9_c")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9_d")'
-//   root -l -q 'sbn_osc_plots.C("fig1p9_e")' // log y (SBL)
-//   root -l -q 'sbn_osc_plots.C("fig1p9_f")' // log x + log y (SBL)
-//   root -l -q 'sbn_osc_plots.C("fig1p9_all")'
-//   root -l -q 'sbn_osc_plots.C("3fl_LE_overview")'            // wide-range L/E with experiment markers
-//   root -l -q 'sbn_osc_plots.C("3fl_LE_long_mu_channels")'     // long-baseline regime: P(νμ→νe,νμ,ντ) vs L/E
-//   root -l -q 'sbn_osc_plots.C("3fl_LE_ordering_vac")'         // NO vs IO comparison (vacuum)
-//   root -l -q 'sbn_osc_plots.C("3fl_T2K_app_CP")'              // Pμe(E) at T2K baseline, δCP scan (ν and ν̄)
-//   root -l -q 'sbn_osc_plots.C("3fl_NOvA_app_CP")'             // Pμe(E) at NOvA baseline, δCP scan (ν and ν̄)
-//   root -l -q 'sbn_osc_plots.C("3fl_DUNE_app_CP")'             // Pμe(E) at DUNE baseline, δCP scan (ν and ν̄)
-//   root -l -q 'sbn_osc_plots.C("3fl_DUNE_matter_ordering")'     // constant-density matter: ordering + ν/ν̄
-//   root -l -q 'sbn_osc_plots.C("3fl_lbl_oscillogram")'          // 3-flavour (vacuum) oscillogram (Pμe vs L,E)
-//   root -l -q 'sbn_osc_plots.C("3fl_biprob_DUNE")'              // bi-probability (CP ellipse): DUNE-like
-//   root -l -q 'sbn_osc_plots.C("3fl_biprob_SBND")'              // bi-probability: SBND (SBN)
-//   root -l -q 'sbn_osc_plots.C("3fl_biprob_MicroBooNE")'         // bi-probability: MicroBooNE (SBN)
-//   root -l -q 'sbn_osc_plots.C("3fl_biprob_ICARUS")'            // bi-probability: ICARUS (SBN)
-//   root -l -q 'sbn_osc_plots.C("3fl_biprob_SBN")'               // all SBN bi-probability plots
-//   root -l -q 'sbn_osc_plots.C("3fl_all")'
-//   root -l -q 'sbn_osc_plots.C("all")'
+//   root -l -q 'plotOscillation.C("prob_le")'
+//   root -l -q 'plotOscillation.C("prob_E")'
+//   root -l -q 'plotOscillation.C("oscillogram")'
+//   root -l -q 'plotOscillation.C("smear")'
+//   root -l -q 'plotOscillation.C("bias")'
+//   root -l -q 'plotOscillation.C("nearfar")'
+//   root -l -q 'plotOscillation.C("dm2_sin22_template")'
+//   root -l -q 'plotOscillation.C("fig1p9_a")' // 3-flavour SBL: P(νμ→νe) and (1-P(νμ→νμ)) vs L/E (separate PDFs)
+//   root -l -q 'plotOscillation.C("fig1p9_b")'
+//   root -l -q 'plotOscillation.C("fig1p9_c")'
+//   root -l -q 'plotOscillation.C("fig1p9_d")'
+//   root -l -q 'plotOscillation.C("fig1p9_e")' // log y (SBL)
+//   root -l -q 'plotOscillation.C("fig1p9_f")' // log x + log y (SBL)
+//   root -l -q 'plotOscillation.C("fig1p9_all")'
+//   root -l -q 'plotOscillation.C("3fl_LE_overview")'            // wide-range L/E with experiment markers
+//   root -l -q 'plotOscillation.C("3fl_LE_long_mu_channels")'     // long-baseline regime: P(νμ→νe,νμ,ντ) vs L/E
+//   root -l -q 'plotOscillation.C("3fl_LE_ordering_vac")'         // NO vs IO comparison (vacuum)
+//   root -l -q 'plotOscillation.C("3fl_T2K_app_CP")'              // Pμe(E) at T2K baseline, δCP scan (ν and ν̄)
+//   root -l -q 'plotOscillation.C("3fl_NOvA_app_CP")'             // Pμe(E) at NOvA baseline, δCP scan (ν and ν̄)
+//   root -l -q 'plotOscillation.C("3fl_DUNE_app_CP")'             // Pμe(E) at DUNE baseline, δCP scan (ν and ν̄)
+//   root -l -q 'plotOscillation.C("3fl_DUNE_matter_ordering")'     // constant-density matter: ordering + ν/ν̄
+//   root -l -q 'plotOscillation.C("3fl_lbl_oscillogram")'          // 3-flavour (vacuum) oscillogram (Pμe vs L,E)
+//   root -l -q 'plotOscillation.C("3fl_biprob_DUNE")'              // bi-probability (CP ellipse): DUNE-like
+//   root -l -q 'plotOscillation.C("3fl_biprob_SBND")'              // bi-probability: SBND (SBN)
+//   root -l -q 'plotOscillation.C("3fl_biprob_MicroBooNE")'         // bi-probability: MicroBooNE (SBN)
+//   root -l -q 'plotOscillation.C("3fl_biprob_ICARUS")'            // bi-probability: ICARUS (SBN)
+//   root -l -q 'plotOscillation.C("3fl_biprob_SBN")'               // all SBN bi-probability plots
+//   root -l -q 'plotOscillation.C("3fl_all")'
+//   root -l -q 'plotOscillation.C("all")'
 //
 // Each mode writes a PDF in the current directory.
 

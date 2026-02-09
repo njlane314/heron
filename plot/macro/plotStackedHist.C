@@ -2,8 +2,7 @@
 //
 // Run with:
 //   ./nuxsec macro plotStackedHist.C
-//   ./nuxsec macro plotStackedHist.C 'plotStackedHist("reco_neutrino_vertex_sce_z")'
-//   ./nuxsec macro plotStackedHist.C 'plotStackedHist("reco_neutrino_vertex_sce_z","/path/to/samples.tsv",50,0,1200,"w_nominal","true",false)'
+//   ./nuxsec macro plotStackedHist.C 'plotStackedHist("/path/to/samples.tsv","true",false)'
 //
 // Notes:
 //   - This macro loads aggregated samples (samples.tsv -> SampleIO -> original analysis tree)
@@ -161,20 +160,42 @@ int plot_stacked_hist_impl(const std::string &expr,
 }
 
 
-int plotStackedHist(const std::string &expr = "reco_neutrino_vertex_sce_z",
-                    const std::string &samples_tsv = "",
-                    int nbins = 50,
-                    double xmin = 0.0,
-                    double xmax = 2.5,
-                    const std::string &mc_weight = "w_nominal",
+int plotStackedHist(const std::string &samples_tsv = "",
                     const std::string &extra_sel = "true",
                     bool use_logy = false)
 {
-    return plot_stacked_hist_impl(expr,
+    const int nbins = 50;
+    const std::string mc_weight = "w_nominal";
+
+    int status = 0;
+
+    status = plot_stacked_hist_impl("reco_neutrino_vertex_sce_z",
+                                    samples_tsv,
+                                    nbins,
+                                    0.0,
+                                    1000.0,
+                                    mc_weight,
+                                    extra_sel,
+                                    use_logy);
+    if (status != 0)
+        return status;
+
+    status = plot_stacked_hist_impl("reco_neutrino_vertex_sce_x",
+                                    samples_tsv,
+                                    nbins,
+                                    0.0,
+                                    250.0,
+                                    mc_weight,
+                                    extra_sel,
+                                    use_logy);
+    if (status != 0)
+        return status;
+
+    return plot_stacked_hist_impl("reco_neutrino_vertex_sce_y",
                                   samples_tsv,
                                   nbins,
-                                  xmin,
-                                  xmax,
+                                  -150.0,
+                                  150.0,
                                   mc_weight,
                                   extra_sel,
                                   use_logy);

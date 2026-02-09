@@ -340,6 +340,16 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
         {
             return macro_candidate;
         }
+        const auto evd_candidate = repo_root / "evd" / "macro" / candidate;
+        if (std::filesystem::exists(evd_candidate))
+        {
+            return evd_candidate;
+        }
+        const auto io_candidate = repo_root / "io" / "macro" / candidate;
+        if (std::filesystem::exists(io_candidate))
+        {
+            return io_candidate;
+        }
     }
     return candidate;
 }
@@ -524,7 +534,8 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
 
     list_macros(repo_root / "plot" / "macro", "Plot macros in", "");
     list_macros(repo_root / "standalone" / "macro", "Standalone macros in", "");
-    list_macros(repo_root / "evd" / "macro", "Event-display macros in", "evd/macro/");
+    list_macros(repo_root / "evd" / "macro", "Event-display macros in", "");
+    list_macros(repo_root / "io" / "macro", "IO macros in", "io/macro/");
 }
 
 int handle_macro_command(const std::vector<std::string> &args)

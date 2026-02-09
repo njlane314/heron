@@ -25,6 +25,8 @@ class EventListIO
 
     std::string event_tree() const;
 
+    std::vector<std::string> list_event_trees() const;
+
     ROOT::RDataFrame rdf() const;
 
     std::shared_ptr<const std::vector<char>> mask_for_origin(SampleIO::SampleOrigin origin) const;

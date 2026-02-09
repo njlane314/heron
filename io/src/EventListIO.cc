@@ -1,11 +1,14 @@
 #include "EventListIO.hh"
 
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <TFile.h>
+#include <TKey.h>
 #include <TObjString.h>
 #include <TTree.h>
 
@@ -85,6 +88,35 @@ EventListIO::EventListIO(std::string path) : m_path(std::move(path))
 std::string EventListIO::event_tree() const
 {
     return m_header.event_tree.empty() ? "events" : m_header.event_tree;
+}
+
+std::vector<std::string> EventListIO::list_event_trees() const
+{
+    std::vector<std::string> names;
+    std::unique_ptr<TFile> fin(TFile::Open(m_path.c_str(), "READ"));
+    if (!fin || fin->IsZombie())
+        throw std::runtime_error("EventListIO::list_event_trees: failed to open " + m_path);
+
+    const std::string provenance_tree = m_header.provenance_tree;
+    const TList *keys = fin->GetListOfKeys();
+    if (!keys)
+        return names;
+
+    TIter it(keys);
+    while (auto *key = dynamic_cast<TKey *>(it()))
+    {
+        if (!key->IsA() || std::string(key->GetClassName()) != "TTree")
+            continue;
+        const std::string name = key->GetName();
+        if (name == "sample_refs")
+            continue;
+        if (!provenance_tree.empty() && name == provenance_tree)
+            continue;
+        names.push_back(name);
+    }
+
+    std::sort(names.begin(), names.end());
+    return names;
 }
 
 ROOT::RDataFrame EventListIO::rdf() const

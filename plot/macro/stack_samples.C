@@ -24,7 +24,7 @@
 
 #include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
-#include "EventList.hh"
+#include "EventListIO.hh"
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "RDataFrameService.hh"
@@ -72,7 +72,7 @@ int stack_samples_impl(const std::string &expr,
     {
         std::cout << "[stack_samples] mode=event_list\n";
 
-        EventList el(list_path);
+        EventListIO el(list_path);
         ROOT::RDataFrame rdf = el.rdf();
 
         auto mask_data = el.mask_for_data();

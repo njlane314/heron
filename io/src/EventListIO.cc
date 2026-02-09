@@ -1,11 +1,11 @@
 /* -- C++ -- */
 /**
- *  @file  io/src/EventList.cc
+ *  @file  io/src/EventListIO.cc
  *
  *  @brief Implementation of the event list helper.
  */
 
-#include "EventList.hh"
+#include "EventListIO.hh"
 
 #include <memory>
 #include <stdexcept>
@@ -28,11 +28,11 @@ std::string read_objstring_optional(TFile &f, const char *key)
 }
 } // namespace
 
-EventList::EventList(std::string path) : m_path(std::move(path))
+EventListIO::EventListIO(std::string path) : m_path(std::move(path))
 {
     std::unique_ptr<TFile> fin(TFile::Open(m_path.c_str(), "READ"));
     if (!fin || fin->IsZombie())
-        throw std::runtime_error("EventList: failed to open " + m_path);
+        throw std::runtime_error("EventListIO: failed to open " + m_path);
 
     // These are written by EventIO::init (some may be optional).
     m_header.analysis_name = read_objstring_optional(*fin, "analysis_name");
@@ -44,7 +44,7 @@ EventList::EventList(std::string path) : m_path(std::move(path))
 
     auto *t = dynamic_cast<TTree *>(fin->Get("sample_refs"));
     if (!t)
-        throw std::runtime_error("EventList: missing sample_refs tree in " + m_path);
+        throw std::runtime_error("EventListIO: missing sample_refs tree in " + m_path);
 
     int sample_id = -1;
     std::string *sample_name = nullptr;
@@ -69,7 +69,7 @@ EventList::EventList(std::string path) : m_path(std::move(path))
     {
         t->GetEntry(i);
         if (!sample_name || !sample_rootio_path)
-            throw std::runtime_error("EventList: sample_refs missing string branches");
+            throw std::runtime_error("EventListIO: sample_refs missing string branches");
 
         SampleInfo info;
         info.sample_name = *sample_name;
@@ -88,17 +88,17 @@ EventList::EventList(std::string path) : m_path(std::move(path))
     fin->Close();
 }
 
-std::string EventList::event_tree() const
+std::string EventListIO::event_tree() const
 {
     return m_header.event_tree.empty() ? "events" : m_header.event_tree;
 }
 
-ROOT::RDataFrame EventList::rdf() const
+ROOT::RDataFrame EventListIO::rdf() const
 {
     return ROOT::RDataFrame(event_tree(), m_path);
 }
 
-std::shared_ptr<const std::vector<char>> EventList::mask_for_origin(SampleIO::SampleOrigin origin) const
+std::shared_ptr<const std::vector<char>> EventListIO::mask_for_origin(SampleIO::SampleOrigin origin) const
 {
     const int want = static_cast<int>(origin);
     auto mask = std::make_shared<std::vector<char>>(static_cast<size_t>(m_max_sample_id + 1), 0);
@@ -113,17 +113,17 @@ std::shared_ptr<const std::vector<char>> EventList::mask_for_origin(SampleIO::Sa
     return mask;
 }
 
-std::shared_ptr<const std::vector<char>> EventList::mask_for_data() const
+std::shared_ptr<const std::vector<char>> EventListIO::mask_for_data() const
 {
     return mask_for_origin(SampleIO::SampleOrigin::kData);
 }
 
-std::shared_ptr<const std::vector<char>> EventList::mask_for_ext() const
+std::shared_ptr<const std::vector<char>> EventListIO::mask_for_ext() const
 {
     return mask_for_origin(SampleIO::SampleOrigin::kEXT);
 }
 
-std::shared_ptr<const std::vector<char>> EventList::mask_for_mc_like() const
+std::shared_ptr<const std::vector<char>> EventListIO::mask_for_mc_like() const
 {
     // Treat everything except kData as "MC-like" for stacking (includes EXT).
     // If you want EXT separate (recommended), use mask_for_ext() separately.
@@ -141,7 +141,7 @@ std::shared_ptr<const std::vector<char>> EventList::mask_for_mc_like() const
     return mask;
 }
 
-double EventList::total_pot_data() const
+double EventListIO::total_pot_data() const
 {
     const int data_id = static_cast<int>(SampleIO::SampleOrigin::kData);
     double tot = 0.0;
@@ -154,7 +154,7 @@ double EventList::total_pot_data() const
     return tot;
 }
 
-double EventList::total_pot_mc() const
+double EventListIO::total_pot_mc() const
 {
     const int data_id = static_cast<int>(SampleIO::SampleOrigin::kData);
     double tot = 0.0;
@@ -167,7 +167,7 @@ double EventList::total_pot_mc() const
     return tot;
 }
 
-std::string EventList::beamline_label() const
+std::string EventListIO::beamline_label() const
 {
     int seen = -1;
     for (const auto &kv : m_sample_refs)

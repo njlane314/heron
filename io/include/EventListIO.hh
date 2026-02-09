@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  io/include/EventList.hh
+ *  @file  io/include/EventListIO.hh
  *
  *  @brief Event list helper for filtering and metadata access.
  */
 
-#ifndef NUXSEC_IO_EVENT_LIST_H
-#define NUXSEC_IO_EVENT_LIST_H
+#ifndef NUXSEC_IO_EVENT_LIST_IO_H
+#define NUXSEC_IO_EVENT_LIST_IO_H
 
 #include <memory>
 #include <string>
@@ -19,10 +19,10 @@
 #include "SampleIO.hh"  // SampleIO::SampleOrigin, BeamMode
 
 
-class EventList
+class EventListIO
 {
   public:
-    explicit EventList(std::string path);
+    explicit EventListIO(std::string path);
 
     const std::string &path() const noexcept { return m_path; }
     const Header &header() const noexcept { return m_header; }

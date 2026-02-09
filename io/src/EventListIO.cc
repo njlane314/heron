@@ -1,10 +1,3 @@
-/* -- C++ -- */
-/**
- *  @file  io/src/EventListIO.cc
- *
- *  @brief Implementation of the event list helper.
- */
-
 #include "EventListIO.hh"
 
 #include <memory>
@@ -26,15 +19,16 @@ std::string read_objstring_optional(TFile &f, const char *key)
         return {};
     return s->GetString().Data();
 }
-} // namespace
+}
 
+namespace nu
+{
 EventListIO::EventListIO(std::string path) : m_path(std::move(path))
 {
     std::unique_ptr<TFile> fin(TFile::Open(m_path.c_str(), "READ"));
     if (!fin || fin->IsZombie())
         throw std::runtime_error("EventListIO: failed to open " + m_path);
 
-    // These are written by EventIO::init (some may be optional).
     m_header.analysis_name = read_objstring_optional(*fin, "analysis_name");
     m_header.provenance_tree = read_objstring_optional(*fin, "provenance_tree");
     m_header.event_tree = read_objstring_optional(*fin, "event_tree");
@@ -125,8 +119,6 @@ std::shared_ptr<const std::vector<char>> EventListIO::mask_for_ext() const
 
 std::shared_ptr<const std::vector<char>> EventListIO::mask_for_mc_like() const
 {
-    // Treat everything except kData as "MC-like" for stacking (includes EXT).
-    // If you want EXT separate (recommended), use mask_for_ext() separately.
     auto mask = std::make_shared<std::vector<char>>(static_cast<size_t>(m_max_sample_id + 1), 0);
     const int data_id = static_cast<int>(SampleIO::SampleOrigin::kData);
 
@@ -186,4 +178,5 @@ std::string EventListIO::beamline_label() const
     if (seen == static_cast<int>(SampleIO::BeamMode::kBNB))
         return "bnb";
     return "unknown";
+}
 }

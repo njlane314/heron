@@ -68,139 +68,75 @@ int stack_samples_impl(const std::string &expr,
     const std::string list_path = samples_tsv.empty() ? default_samples_tsv() : samples_tsv;
     std::cout << "[stack_samples] input=" << list_path << "\n";
 
-    if (looks_like_event_list_root(list_path))
+    if (!looks_like_event_list_root(list_path))
     {
-        std::cout << "[stack_samples] mode=event_list\n";
-
-        EventListIO el(list_path);
-        ROOT::RDataFrame rdf = el.rdf();
-
-        auto mask_data = el.mask_for_data();
-        auto mask_ext = el.mask_for_ext();
-        auto mask_mc = el.mask_for_mc_like();
-
-        auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
-            return n.Filter(
-                [mask](int sid) {
-                    return sid >= 0
-                           && sid < static_cast<int>(mask->size())
-                           && (*mask)[static_cast<size_t>(sid)];
-                },
-                {"sample_id"});
-        };
-
-        ROOT::RDF::RNode base = rdf;
-        ROOT::RDF::RNode node_data = filter_by_mask(base, mask_data);
-        ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext);
-        ROOT::RDF::RNode node_mc = filter_by_mask(base, mask_mc)
-                                       .Filter([mask_ext](int sid) {
-                                           return !(sid >= 0
-                                                    && sid < static_cast<int>(mask_ext->size())
-                                                    && (*mask_ext)[static_cast<size_t>(sid)]);
-                                       },
-                                       {"sample_id"});
-
-        std::vector<Entry> entries;
-        entries.reserve(3);
-
-        std::vector<const Entry *> mc;
-        std::vector<const Entry *> data;
-
-        ProcessorEntry rec_mc;
-        rec_mc.source = Type::kMC;
-
-        ProcessorEntry rec_ext;
-        rec_ext.source = Type::kExt;
-
-        ProcessorEntry rec_data;
-        rec_data.source = Type::kData;
-
-        entries.emplace_back(make_entry(std::move(node_mc), rec_mc));
-        Entry &e_mc = entries.back();
-        mc.push_back(&e_mc);
-
-        entries.emplace_back(make_entry(std::move(node_ext), rec_ext));
-        Entry &e_ext = entries.back();
-        mc.push_back(&e_ext);
-
-        entries.emplace_back(make_entry(std::move(node_data), rec_data));
-        Entry &e_data = entries.back();
-        data.push_back(&e_data);
-
-        if (!extra_sel.empty())
-        {
-            e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(extra_sel);
-            e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(extra_sel);
-            e_data.selection.nominal.node = e_data.selection.nominal.node.Filter(extra_sel);
-        }
-
-        Plotter plotter;
-        auto &opt = plotter.options();
-        opt.use_log_y = use_logy;
-        opt.legend_on_top = true;
-        opt.annotate_numbers = true;
-        opt.show_ratio_band = true;
-        opt.x_title = expr;
-        opt.y_title = "Events";
-
-        const double pot_data = el.total_pot_data();
-        const double pot_mc = el.total_pot_mc();
-        opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
-        opt.beamline = el.beamline_label();
-
-        const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-        const TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
-
-        plotter.draw_stack(spec, mc, data);
-        return 0;
+        std::cerr << "[stack_samples] input is not an event list root file: " << list_path << "\n";
+        return 1;
     }
 
-    const auto sample_list = read_samples(list_path);
+    std::cout << "[stack_samples] mode=event_list\n";
 
-    const auto &analysis = AnalysisConfigService::instance();
-    const std::string tree_name = analysis.tree_name();
+    EventListIO el(list_path);
+    ROOT::RDataFrame rdf = el.rdf();
+
+    auto mask_data = el.mask_for_data();
+    auto mask_ext = el.mask_for_ext();
+    auto mask_mc = el.mask_for_mc_like();
+
+    auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
+        return n.Filter(
+            [mask](int sid) {
+                return sid >= 0
+                       && sid < static_cast<int>(mask->size())
+                       && (*mask)[static_cast<size_t>(sid)];
+            },
+            {"sample_id"});
+    };
+
+    ROOT::RDF::RNode base = rdf;
+    ROOT::RDF::RNode node_data = filter_by_mask(base, mask_data);
+    ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext);
+    ROOT::RDF::RNode node_mc = filter_by_mask(base, mask_mc)
+                                   .Filter([mask_ext](int sid) {
+                                       return !(sid >= 0
+                                                && sid < static_cast<int>(mask_ext->size())
+                                                && (*mask_ext)[static_cast<size_t>(sid)]);
+                                   },
+                                   {"sample_id"});
 
     std::vector<Entry> entries;
-    entries.reserve(sample_list.size());
+    entries.reserve(3);
 
     std::vector<const Entry *> mc;
     std::vector<const Entry *> data;
-    mc.reserve(sample_list.size());
-    data.reserve(sample_list.size());
 
-    for (const auto &sl : sample_list)
+    ProcessorEntry rec_mc;
+    rec_mc.source = Type::kMC;
+
+    ProcessorEntry rec_ext;
+    rec_ext.source = Type::kExt;
+
+    ProcessorEntry rec_data;
+    rec_data.source = Type::kData;
+
+    entries.emplace_back(make_entry(std::move(node_mc), rec_mc));
+    Entry &e_mc = entries.back();
+    mc.push_back(&e_mc);
+
+    entries.emplace_back(make_entry(std::move(node_ext), rec_ext));
+    Entry &e_ext = entries.back();
+    mc.push_back(&e_ext);
+
+    entries.emplace_back(make_entry(std::move(node_data), rec_data));
+    Entry &e_data = entries.back();
+    data.push_back(&e_data);
+
+    if (!extra_sel.empty())
     {
-        SampleIO::Sample sample = SampleIO::read(sl.output_path);
-
-        ROOT::RDataFrame rdf = RDataFrameService::load_sample(sample, tree_name);
-
-        const ProcessorEntry proc_entry = analysis.make_processor(sample);
-        const auto &deriver = ColumnDerivationService::instance();
-        ROOT::RDF::RNode node = deriver.define(rdf, proc_entry);
-
-        entries.emplace_back(make_entry(std::move(node), proc_entry));
-        Entry &entry = entries.back();
-        if (!extra_sel.empty())
-        {
-            entry.selection.nominal.node = entry.selection.nominal.node.Filter(extra_sel);
-        }
-        entry.pot_nom = pick_pot_nom(sample);
-        entry.beamline = SampleIO::beam_mode_name(sample.beam); // "numi" or "bnb"
-        entry.period = {};
-
-        const Entry *eptr = &entry;
-        if (is_data_origin(sample.origin))
-        {
-            data.push_back(eptr);
-        }
-        else
-        {
-            mc.push_back(eptr);
-        }
+        e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(extra_sel);
+        e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(extra_sel);
+        e_data.selection.nominal.node = e_data.selection.nominal.node.Filter(extra_sel);
     }
-
-    const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-    const TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
 
     Plotter plotter;
     auto &opt = plotter.options();
@@ -210,6 +146,14 @@ int stack_samples_impl(const std::string &expr,
     opt.show_ratio_band = true;
     opt.x_title = expr;
     opt.y_title = "Events";
+
+    const double pot_data = el.total_pot_data();
+    const double pot_mc = el.total_pot_mc();
+    opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
+    opt.beamline = el.beamline_label();
+
+    const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
+    const TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
 
     plotter.draw_stack(spec, mc, data);
     return 0;

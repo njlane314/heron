@@ -4,10 +4,10 @@
 //
 // Usage examples:
 //   ./nuxsec macro make_event_list.C
-//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list.root")'
-//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list.root","/path/to/samples.tsv")'
-//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list.root","/path/to/samples.tsv","true","reco_neutrino_vertex_sce_z,reco_neutrino_vertex_sce_x,reco_neutrino_vertex_sce_y")'
-//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list.root","/path/to/samples.tsv","sel_muon","reco_neutrino_vertex_sce_z")'
+//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list_myana.root")'
+//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list_myana.root","/path/to/samples.tsv")'
+//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list_myana.root","/path/to/samples.tsv","true","reco_neutrino_vertex_sce_z,reco_neutrino_vertex_sce_x,reco_neutrino_vertex_sce_y")'
+//   ./nuxsec macro make_event_list.C 'make_event_list("scratch/out/event_list_myana.root","/path/to/samples.tsv","sel_muon","reco_neutrino_vertex_sce_z")'
 //
 // What it writes:
 //   - TObjString keys: analysis_name, provenance_tree, event_tree, sample_list_source
@@ -21,13 +21,15 @@
 //   - extra_columns_csv lets you add plot variables beyond the defaults.
 //
 // After this, you can plot from the event list using:
-//   ROOT::RDataFrame("events", "scratch/out/event_list.root")
+//   ROOT::RDataFrame("events", "scratch/out/event_list_myana.root")
 //
 // Or modify stack_samples.C to detect ".root" input and use the event list directly.
 
+#include <sstream>
 #include <string>
 #include <vector>
 
+#include "AnalysisConfigService.hh"
 #include "EventListIO.hh"
 
 static std::vector<std::string> default_event_columns()
@@ -56,11 +58,20 @@ static std::vector<std::string> default_event_columns()
     };
 }
 
-int make_event_list(const std::string &out_root = "scratch/out/event_list.root",
+int make_event_list(const std::string &out_root = "",
                     const std::string &samples_tsv = "",
                     const std::string &base_sel = "true")
 {
-    return nu::EventListIO::build_event_list(out_root,
+    std::string out_path = out_root;
+    if (out_path.empty())
+    {
+        const auto &analysis = AnalysisConfigService::instance();
+        std::ostringstream name;
+        name << "scratch/out/event_list_" << analysis.name() << ".root";
+        out_path = name.str();
+    }
+
+    return nu::EventListIO::build_event_list(out_path,
                                              samples_tsv,
                                              base_sel,
                                              default_event_columns());

@@ -63,8 +63,8 @@ class StackedHist
     std::vector<int> chan_order_;
     double signal_events_ = 0.0;
     double signal_scale_ = 1.0;
-    mutable std::unique_ptr<TLegend> legend_;
     mutable std::vector<std::unique_ptr<TH1D>> legend_proxies_;
+    mutable std::unique_ptr<TLegend> legend_;
 };
 
 } // namespace nu

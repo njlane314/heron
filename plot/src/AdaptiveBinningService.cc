@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include <TAxis.h>
@@ -25,6 +26,17 @@ namespace nu
 namespace
 {
 constexpr double kEdgeEps = 1e-12;
+
+// ROOT histograms are, by default, registered in the current directory (gDirectory).
+// In batch workflows where we own histograms via std::unique_ptr, that implicit ownership
+// can lead to double-deletes during teardown (often observed right after TCanvas::Print).
+// Guard against that by disabling directory auto-registration in these helpers.
+struct AddDirectoryGuard
+{
+    const Bool_t prev = TH1::AddDirectoryStatus();
+    AddDirectoryGuard() { TH1::AddDirectory(kFALSE); }
+    ~AddDirectoryGuard() { TH1::AddDirectory(prev); }
+};
 
 inline void ensure_sumw2(TH1D &h)
 {
@@ -151,23 +163,56 @@ inline void log_adaptive_bin_sizes(std::string_view hist_name,
                                    const std::vector<double> &edges)
 {
     if (edges.size() < 2)
-    {
         return;
+
+    const std::size_t nbins = edges.size() - 1;
+    const auto width = [&](std::size_t i) { return edges[i + 1] - edges[i]; };
+
+    double wmin = width(0);
+    double wmax = wmin;
+    double wsum = wmin;
+    for (std::size_t i = 1; i < nbins; ++i)
+    {
+        const double w = width(i);
+        wmin = std::min(wmin, w);
+        wmax = std::max(wmax, w);
+        wsum += w;
     }
+    const double wmean = wsum / static_cast<double>(nbins);
 
     std::ostringstream msg;
     msg << "[AdaptiveBinningService] Adaptive bins settled for '" << hist_name << "': "
-        << (edges.size() - 1) << " bins; widths [";
+        << nbins << " bins; width min/max/mean = " << wmin << "/" << wmax << "/" << wmean;
 
-    for (std::size_t i = 1; i < edges.size(); ++i)
+    // Avoid dumping thousands of widths to the terminal (hard to read, and can trigger
+    // ROOT/Cling instability on some batch nodes).
+    constexpr std::size_t kShow = 12;
+    msg << "; widths [";
+    if (nbins <= 2 * kShow)
     {
-        if (i > 1)
+        for (std::size_t i = 0; i < nbins; ++i)
         {
-            msg << ", ";
+            if (i > 0)
+                msg << ", ";
+            msg << width(i);
         }
-        msg << (edges[i] - edges[i - 1]);
     }
-
+    else
+    {
+        for (std::size_t i = 0; i < kShow; ++i)
+        {
+            if (i > 0)
+                msg << ", ";
+            msg << width(i);
+        }
+        msg << ", ..., ";
+        for (std::size_t i = nbins - kShow; i < nbins; ++i)
+        {
+            if (i > nbins - kShow)
+                msg << ", ";
+            msg << width(i);
+        }
+    }
     msg << "]";
     std::clog << msg.str() << '\n';
 }
@@ -241,8 +286,10 @@ std::unique_ptr<TH1D> AdaptiveBinningService::sum_hists(const std::vector<const 
     }
 
     const std::string name(new_name);
+    AddDirectoryGuard adguard;
     auto out = std::unique_ptr<TH1D>(static_cast<TH1D *>(first->Clone(name.c_str())));
     out->SetDirectory(nullptr);
+    out->ResetBit(kCanDelete);
     ensure_sumw2(*out);
     out->Reset("ICES");
 
@@ -283,8 +330,10 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
     if (cfg.fold_overflow)
     {
         const std::string tname = std::string(fine.GetName()) + "_minstat_tmp";
+        AddDirectoryGuard adguard;
         tmp.reset(static_cast<TH1D *>(fine.Clone(tname.c_str())));
         tmp->SetDirectory(nullptr);
+        tmp->ResetBit(kCanDelete);
         ensure_sumw2(*tmp);
         const auto [first_bin, last_bin] = interior_bins_for_overflow(*tmp, cfg.edge_bins);
         fold_overflow_into(*tmp, first_bin, last_bin);
@@ -422,8 +471,10 @@ std::unique_ptr<TH1D> AdaptiveBinningService::rebin_to_edges(const TH1D &h,
     }
 
     const std::string tmp_name = out_name + "_tmp";
+    AddDirectoryGuard adguard;
     auto tmp = std::unique_ptr<TH1D>(static_cast<TH1D *>(h.Clone(tmp_name.c_str())));
     tmp->SetDirectory(nullptr);
+    tmp->ResetBit(kCanDelete);
     ensure_sumw2(*tmp);
 
     if (cfg.fold_overflow)
@@ -433,10 +484,33 @@ std::unique_ptr<TH1D> AdaptiveBinningService::rebin_to_edges(const TH1D &h,
     }
 
     const int nnew = static_cast<int>(edges.size()) - 1;
-    auto *reb = tmp->Rebin(nnew, out_name.c_str(), edges.data());
+    TH1 *reb = tmp->Rebin(nnew, out_name.c_str(), edges.data());
+    if (!reb)
+    {
+        // ROOT couldn't rebin (invalid edges, etc.). Return the tmp clone (renamed) so callers
+        // still get a valid histogram instead of crashing.
+        tmp->SetName(out_name.c_str());
+        tmp->SetDirectory(nullptr);
+        tmp->ResetBit(kCanDelete);
+        ensure_sumw2(*tmp);
+        return tmp;
+    }
 
-    auto out = std::unique_ptr<TH1D>(static_cast<TH1D *>(reb));
+    std::unique_ptr<TH1D> out;
+    if (reb == tmp.get())
+    {
+        // ROOT rebinned in place. Transfer ownership out of tmp to avoid double-free.
+        out.reset(tmp.release());
+    }
+    else
+    {
+        out.reset(static_cast<TH1D *>(reb));
+        // tmp is just a helper clone; let it go now.
+        tmp.reset();
+    }
+
     out->SetDirectory(nullptr);
+    out->ResetBit(kCanDelete);
     ensure_sumw2(*out);
     return out;
 }

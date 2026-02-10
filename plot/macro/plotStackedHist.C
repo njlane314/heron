@@ -143,7 +143,12 @@ int plot_stacked_hist_impl(const std::string &expr,
     opt.use_log_y = use_logy;
     opt.legend_on_top = true;
     opt.annotate_numbers = true;
+    opt.show_ratio = true;
     opt.show_ratio_band = true;
+    opt.adaptive_binning = true;
+    opt.adaptive_min_sumw = 25.0;
+    opt.adaptive_max_relerr = 0.30;
+    opt.adaptive_fold_overflow = true;
     opt.x_title = expr;
     opt.y_title = "Events";
 

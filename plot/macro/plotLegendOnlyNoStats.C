@@ -29,20 +29,20 @@ struct LegendEntry
 std::vector<LegendEntry> default_entries()
 {
     std::vector<LegendEntry> entries;
-    entries.push_back({"Out FV : 20,859.04", kYellow - 7, 1001});
-    entries.push_back({"#nu_{#mu}CC #pi^{0}/#gamma#gamma : 1,781.26", kOrange, 1001});
-    entries.push_back({"#nu_{#mu}CC 0p1#pi^{#pm} : 5,680.95", kRed - 7, 1001});
-    entries.push_back({"#nu_{#mu}CC Np0#pi : 4,486.91", kRed, 1001});
-    entries.push_back({"#nu_{#mu}CC multi-#pi^{#pm} : 328.67", kViolet, 1001});
-    entries.push_back({"#nu_{x}NC : 3,536.21", kBlue, 1001});
-    entries.push_back({"#nu_{#mu}CC multi-strange : 73.41", kGreen + 2, 1001});
-    entries.push_back({"Cosmic : 0.00", kTeal + 2, 3345});
-    entries.push_back({"#nu_{#mu}CC Other : 468.59", kCyan + 2, 1001});
-    LegendEntry dirt_entry = {"Dirt : 1,111.52", kYellow, 1001};
+    entries.push_back({"Out FV", kYellow - 7, 1001});
+    entries.push_back({"#nu_{#mu}CC #pi^{0}/#gamma#gamma", kOrange, 1001});
+    entries.push_back({"#nu_{#mu}CC 0p1#pi^{#pm}", kRed - 7, 1001});
+    entries.push_back({"#nu_{#mu}CC Np0#pi", kRed, 1001});
+    entries.push_back({"#nu_{#mu}CC multi-#pi^{#pm}", kViolet, 1001});
+    entries.push_back({"#nu_{x}NC", kBlue, 1001});
+    entries.push_back({"#nu_{#mu}CC multi-strange", kGreen + 2, 1001});
+    entries.push_back({"Cosmic", kTeal + 2, 3345});
+    entries.push_back({"#nu_{#mu}CC Other", kCyan + 2, 1001});
+    LegendEntry dirt_entry = {"Dirt", kYellow, 1001};
     dirt_entry.colour = TColor::GetColor("#f6d32d");
     entries.push_back(dirt_entry);
-    entries.push_back({"Other : 0.00", kCyan, 1001});
-    entries.push_back({"#nu_{#mu}CC single-strange : 83.05", kSpring + 5, 1001});
+    entries.push_back({"Other", kCyan, 1001});
+    entries.push_back({"#nu_{#mu}CC single-strange", kSpring + 5, 1001});
     return entries;
 }
 } // namespace
@@ -84,8 +84,8 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.png")
         proxy->SetDirectory(nullptr);
         proxy->SetFillColor(entries[i].colour);
         proxy->SetFillStyle(entries[i].fill_style);
-        proxy->SetLineColor(kBlack);
-        proxy->SetLineWidth(1);
+        proxy->SetLineColor(entries[i].colour);
+        proxy->SetLineWidth(0);
         proxies.push_back(proxy);
         legend.AddEntry(proxy, entries[i].label.c_str(), "f");
     }

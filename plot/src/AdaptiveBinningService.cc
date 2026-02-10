@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -27,14 +28,32 @@ constexpr double kEdgeEps = 1e-12;
 
 inline void ensure_sumw2(TH1D &h)
 {
-    // Avoid ROOT warnings: "Sum of squares of weights structure already created"
+    // Avoid ROOT warnings: "Sum of squares of weights structure already created".
+    // Also guarantees GetSumw2() is meaningful when using weighted fills.
     if (h.GetSumw2N() == 0)
     {
         h.Sumw2(kTRUE);
     }
 }
 
-inline std::pair<int, int> fold_target_bins(const TH1D &h, int edge_bins)
+inline double bin_sumw2(const TH1D &h, int bin)
+{
+    // Prefer the real stored sumw2 (true for weighted histograms).
+    if (h.GetSumw2N() > 0)
+    {
+        const auto &arr = h.GetSumw2();
+        if (bin >= 0 && bin < arr.GetSize())
+        {
+            return arr.At(bin);
+        }
+    }
+
+    // Fallback: assume Poisson (unweighted) => sumw2 ~= sumw.
+    // Use abs to be safe if content can be negative.
+    return std::abs(h.GetBinContent(bin));
+}
+
+inline std::pair<int, int> interior_bins_for_overflow(const TH1D &h, int edge_bins)
 {
     const int nb = h.GetNbinsX();
     if (nb <= 0)
@@ -48,7 +67,7 @@ inline std::pair<int, int> fold_target_bins(const TH1D &h, int edge_bins)
     last = std::max(1, std::min(last, nb));
     if (first > last)
     {
-        // Degenerate: no interior bins; fall back to outermost bins.
+        // Degenerate: if edge_bins is too large, just fold to the edges.
         first = 1;
         last = nb;
     }
@@ -199,6 +218,7 @@ void AdaptiveBinningService::fold_overflow(TH1D &h) const
     {
         return;
     }
+    ensure_sumw2(h);
     fold_overflow_into(h, 1, nb);
 }
 
@@ -236,8 +256,9 @@ std::unique_ptr<TH1D> AdaptiveBinningService::sum_hists(const std::vector<const 
 
     if (cfg.fold_overflow)
     {
-        const auto [first_dst, last_dst] = fold_target_bins(*out, cfg.edge_bins);
-        fold_overflow_into(*out, first_dst, last_dst);
+        const auto [first_bin, last_bin] = interior_bins_for_overflow(*out, cfg.edge_bins);
+        // Fold into first/last *interior* bin so edge padding bins can remain empty.
+        fold_overflow_into(*out, first_bin, last_bin);
     }
     return out;
 }
@@ -265,8 +286,8 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
         tmp.reset(static_cast<TH1D *>(fine.Clone(tname.c_str())));
         tmp->SetDirectory(nullptr);
         ensure_sumw2(*tmp);
-        const auto [first_dst, last_dst] = fold_target_bins(*tmp, cfg.edge_bins);
-        fold_overflow_into(*tmp, first_dst, last_dst);
+        const auto [first_bin, last_bin] = interior_bins_for_overflow(*tmp, cfg.edge_bins);
+        fold_overflow_into(*tmp, first_bin, last_bin);
         hptr = tmp.get();
     }
     const TH1D &h = *hptr;
@@ -291,7 +312,8 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
     const int left_keep = std::min(edge_bins, nb);
     const int right_keep = std::min(edge_bins, nb - left_keep);
 
-    // Keep fixed-width edge bins (often empty padding bins).
+    // Keep N fixed-width edge bins on each side (constant small size).
+    // These are defined in terms of the *fine* binning.
     for (int i = 1; i <= left_keep; ++i)
     {
         const double up = ax->GetBinUpEdge(i);
@@ -310,9 +332,10 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
     for (int i = first_bin; i <= last_bin; ++i)
     {
         const double w = h.GetBinContent(i);
-        const double e = h.GetBinError(i);
         acc_w += w;
-        acc_w2 += e * e;
+        // Use explicit sumw2 so this always reflects event weights (and their normalisation),
+        // rather than relying on whatever GetBinError currently represents.
+        acc_w2 += bin_sumw2(h, i);
 
         if (pass_bin(acc_w, acc_w2, cfg))
         {
@@ -337,17 +360,7 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
         }
     }
 
-    // Append fixed-width bins at the high edge.
-    for (int i = last_bin + 1; i <= nb; ++i)
-    {
-        const double up = ax->GetBinUpEdge(i);
-        if (up > edges.back() + kEdgeEps)
-        {
-            edges.push_back(up);
-        }
-    }
-
-    // Backward-merge only the interior bins until the *last interior* bin passes.
+    // Ensure the last *interior* bin passes; do not merge into right edge padding bins.
     while (stats.size() >= 2)
     {
         const auto &last = stats.back();
@@ -359,14 +372,23 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
         stats[stats.size() - 2].sumw += last.sumw;
         stats[stats.size() - 2].sumw2 += last.sumw2;
 
-        // Remove the boundary edge between the last two interior bins.
-        // Edge layout: [xmin] + left_keep edges + stats.size() interior edges + right_keep edges.
-        const std::size_t boundary_idx = 1u + static_cast<std::size_t>(left_keep) + (stats.size() - 2u);
-        if (boundary_idx < edges.size())
+        // Remove the boundary between the last two interior bins:
+        // edges currently ends with the interior xmax, so the boundary to remove is edges.end()-2.
+        if (edges.size() >= static_cast<std::size_t>(left_keep) + 2u)
         {
-            edges.erase(edges.begin() + static_cast<std::ptrdiff_t>(boundary_idx));
+            edges.erase(edges.end() - 2);
         }
         stats.pop_back();
+    }
+
+    // Append fixed-width right edge bins.
+    for (int i = last_bin + 1; i <= nb; ++i)
+    {
+        const double up = ax->GetBinUpEdge(i);
+        if (up > edges.back() + kEdgeEps)
+        {
+            edges.push_back(up);
+        }
     }
 
     edges.erase(std::unique(edges.begin(), edges.end(),
@@ -406,8 +428,8 @@ std::unique_ptr<TH1D> AdaptiveBinningService::rebin_to_edges(const TH1D &h,
 
     if (cfg.fold_overflow)
     {
-        const auto [first_dst, last_dst] = fold_target_bins(*tmp, cfg.edge_bins);
-        fold_overflow_into(*tmp, first_dst, last_dst);
+        const auto [first_bin, last_bin] = interior_bins_for_overflow(*tmp, cfg.edge_bins);
+        fold_overflow_into(*tmp, first_bin, last_bin);
     }
 
     const int nnew = static_cast<int>(edges.size()) - 1;

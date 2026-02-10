@@ -8,6 +8,7 @@
 #ifndef NUXSEC_PLOT_ADAPTIVE_BINNING_SERVICE_H
 #define NUXSEC_PLOT_ADAPTIVE_BINNING_SERVICE_H
 
+#include <cstddef>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -38,7 +39,7 @@ class AdaptiveBinningService
         /// Use |sumw| in checks (recommended when negative weights are possible).
         bool use_abs_sumw = true;
 
-        // Keep this many *fine* bins fixed (unmerged) at each edge.
+        // Keep N *fine* bins fixed on each edge (unmerged).
         int edge_bins = 0;
     };
 
@@ -48,24 +49,24 @@ class AdaptiveBinningService
 
     std::vector<double> edges_min_stat(const TH1D &fine, const MinStatConfig &cfg) const;
 
-    // Rebin a histogram to the provided edges. If edges.size()<2, returns a clone.
+    // Preferred API: use cfg (so edge_bins + overflow folding behave consistently).
     std::unique_ptr<TH1D> rebin_to_edges(const TH1D &h,
                                          const std::vector<double> &edges,
                                          std::string_view new_name,
                                          const MinStatConfig &cfg) const;
 
-    // Backwards-compatible wrapper (no edge padding bins).
+    // Backwards-compatible wrapper.
     std::unique_ptr<TH1D> rebin_to_edges(const TH1D &h,
                                          const std::vector<double> &edges,
                                          std::string_view new_name,
                                          bool fold_overflow) const;
 
-    // Sum same-binning histograms (detached) into one TH1D.
+    // Preferred API: use cfg (so edge_bins + overflow folding behave consistently).
     std::unique_ptr<TH1D> sum_hists(const std::vector<const TH1D *> &parts,
                                     std::string_view new_name,
                                     const MinStatConfig &cfg) const;
 
-    // Backwards-compatible wrapper (no edge padding bins).
+    // Backwards-compatible wrapper.
     std::unique_ptr<TH1D> sum_hists(const std::vector<const TH1D *> &parts,
                                     std::string_view new_name,
                                     bool fold_overflow) const;

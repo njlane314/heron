@@ -73,28 +73,20 @@ struct Options
     std::vector<std::string> run_numbers;
     std::vector<std::string> periods;
     std::string analysis_region_label;
-    // Adaptive ("minimum-stat-per-bin") binning.
-    // Implementation: fill a fine uniform histogram, then merge bins into variable-width bins
-    // derived from TOTAL MC, and rebin all MC/data hists to the same edges.
+    // --- Adaptive ("minimum-stat-per-bin") binning ---
     bool adaptive_binning = false;
-    double adaptive_min_sumw = 0.0;       // Wmin
-    double adaptive_max_relerr = 0.0;     // relErrMax
+    double adaptive_min_sumw = 0.0;       // Wmin (sum of weights; <=0 disables)
+    double adaptive_max_relerr = 0.0;     // relErrMax (sqrt(sumw2)/|sumw|; <=0 disables)
     bool adaptive_fold_overflow = true;   // fold under/overflow before edge-making + rebin
 
-    // IMPORTANT: the min-stat algorithm can only MERGE bins. If you fill with the same
-    // coarse binning you intend to plot, the output will look almost uniform because
-    // each coarse bin already passes. This factor controls how much finer we fill
-    // before merging.
-    //
-    // Filled bins = nbins * adaptive_fine_bin_factor (clamped internally).
-    int adaptive_fine_bin_factor = 5;
-
-    // Keep N *fine* bins fixed (unmerged) on each edge. This is useful to leave
-    // constant-width padding bins at the low/high ends (often empty).
-    //
-    // When adaptive_fold_overflow=true, under/overflow are folded into the first/last
-    // NON-edge bin so these edge padding bins can remain empty.
+    // Keep this many *fine* bins fixed (unmerged) at each edge of the plot.
+    // This gives you constant-width leading/trailing bins (often intentionally empty padding).
     int adaptive_edge_bins = 0;
+
+    // IMPORTANT: the min-stat algorithm only MERGES bins. If you fill with your final coarse
+    // binning, results will look uniform. Fill finer, then merge.
+    // Filled nbins = spec.nbins * adaptive_fine_bin_factor (clamped).
+    int adaptive_fine_bin_factor = 10;
 };
 
 struct TH1DModel

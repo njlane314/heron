@@ -359,9 +359,9 @@ DynamicAxis build_dynamic_axis(const std::string &expr,
                               int fallback_nbins,
                               double fallback_xmin,
                               double fallback_xmax,
-                              const ROOT::RDF::RNode &n1,
-                              const ROOT::RDF::RNode &n2,
-                              const ROOT::RDF::RNode *n3 = nullptr)
+                              ROOT::RDF::RNode &n1,
+                              ROOT::RDF::RNode &n2,
+                              ROOT::RDF::RNode *n3 = nullptr)
 {
     DynamicAxis out;
     out.nbins = fallback_nbins;
@@ -371,7 +371,7 @@ DynamicAxis build_dynamic_axis(const std::string &expr,
     double global_min = std::numeric_limits<double>::infinity();
     double global_max = -std::numeric_limits<double>::infinity();
 
-    const auto update_minmax = [&](const ROOT::RDF::RNode &node) {
+    const auto update_minmax = [&](ROOT::RDF::RNode &node) {
         const auto n_evt = node.Count().GetValue();
         if (n_evt == 0)
             return;

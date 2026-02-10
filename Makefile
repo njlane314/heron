@@ -37,7 +37,8 @@ PLOT_LIB_NAME = build/lib/libNuxsecPlot.so
 PLOT_SRC = plot/src/Plotter.cc \
            plot/src/StackedHist.cc \
            plot/src/PlottingHelper.cc \
-           plot/src/AdaptiveBinningService.cc
+           plot/src/AdaptiveBinningService.cc \
+           plot/src/EfficiencyPlot.cc
 PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 EVD_LIB_NAME = build/lib/libNuxsecEvd.so

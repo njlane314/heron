@@ -61,6 +61,7 @@ class StackedHist
     std::unique_ptr<TH1D> data_hist_;
     std::unique_ptr<TH1D> sig_hist_;
     std::vector<int> chan_order_;
+    double signal_events_ = 0.0;
     double signal_scale_ = 1.0;
     mutable std::unique_ptr<TLegend> legend_;
     mutable std::vector<std::unique_ptr<TH1D>> legend_proxies_;

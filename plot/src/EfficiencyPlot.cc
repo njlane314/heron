@@ -97,6 +97,11 @@ void set_global_style_like_plotter()
 
 } // namespace
 
+EfficiencyPlot::EfficiencyPlot(TH1DModel spec, Options opt)
+    : EfficiencyPlot(std::move(spec), std::move(opt), Config())
+{
+}
+
 EfficiencyPlot::EfficiencyPlot(TH1DModel spec, Options opt, Config cfg)
     : spec_(std::move(spec)), opt_(std::move(opt)), cfg_(std::move(cfg))
 {

@@ -57,7 +57,8 @@ class EfficiencyPlot
         std::vector<std::string> extra_text_lines;
     };
 
-    EfficiencyPlot(TH1DModel spec, Options opt = Options{}, Config cfg = Config{});
+    EfficiencyPlot(TH1DModel spec, Options opt = Options{});
+    EfficiencyPlot(TH1DModel spec, Options opt, Config cfg);
 
     const TH1DModel &spec() const noexcept { return spec_; }
     const Options &options() const noexcept { return opt_; }

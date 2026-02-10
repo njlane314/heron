@@ -73,6 +73,13 @@ struct Options
     std::vector<std::string> run_numbers;
     std::vector<std::string> periods;
     std::string analysis_region_label;
+    // Adaptive ("minimum-stat-per-bin") binning.
+    // Implementation: fill a fine uniform histogram, then merge bins into variable-width bins
+    // derived from TOTAL MC, and rebin all MC/data hists to the same edges.
+    bool adaptive_binning = false;
+    double adaptive_min_sumw = 0.0;     // Wmin (<=0 disables this requirement)
+    double adaptive_max_relerr = 0.0;   // relErrMax (<=0 disables this requirement)
+    bool adaptive_fold_overflow = true; // fold under/overflow into first/last in-range bins
 };
 
 struct TH1DModel

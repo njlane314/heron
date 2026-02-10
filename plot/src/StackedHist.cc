@@ -8,6 +8,7 @@
 #include "StackedHist.hh"
 
 #include <algorithm>
+#include <cstdlib>
 #include <cctype>
 #include <cmath>
 #include <filesystem>
@@ -34,6 +35,25 @@
 
 namespace nu
 {
+
+namespace
+{
+bool stack_debug_enabled()
+{
+    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    return env != nullptr && std::string(env) != "0";
+}
+
+void stack_debug_log(const std::string &msg)
+{
+    if (!stack_debug_enabled())
+    {
+        return;
+    }
+    std::cout << "[StackedHist][debug] " << msg << "\n";
+    std::cout.flush();
+}
+} // namespace
 
 void apply_total_errors(TH1D &h,
                         const TMatrixDSym *cov,
@@ -1052,12 +1072,18 @@ void StackedHist::draw(TCanvas &canvas)
 void StackedHist::draw_and_save(const std::string &image_format)
 {
     std::filesystem::create_directories(output_directory_);
+    stack_debug_log("draw_and_save enter: plot='" + plot_name_ +
+                    "', out_dir='" + output_directory_ + "'");
     TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
+    stack_debug_log("canvas constructed: plot='" + plot_name_ + "'");
     draw(canvas);
+    stack_debug_log("draw finished: plot='" + plot_name_ + "'");
     const std::string fmt = image_format.empty() ? "png" : image_format;
     const std::string out = output_directory_ + "/" + plot_name_ + "." + fmt;
 
+    stack_debug_log("SaveAs start: plot='" + plot_name_ + "', file='" + out + "'");
     canvas.SaveAs(out.c_str());
+    stack_debug_log("SaveAs done: plot='" + plot_name_ + "'");
 }
 
 } // namespace nu

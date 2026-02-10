@@ -7,8 +7,10 @@
 
 #include "Plotter.hh"
 
+#include <cstdlib>
 #include <cctype>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <utility>
@@ -24,6 +26,25 @@
 
 namespace nu
 {
+
+namespace
+{
+bool stack_debug_enabled()
+{
+    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    return env != nullptr && std::string(env) != "0";
+}
+
+void stack_debug_log(const std::string &msg)
+{
+    if (!stack_debug_enabled())
+    {
+        return;
+    }
+    std::cout << "[Plotter][debug] " << msg << "\n";
+    std::cout.flush();
+}
+} // namespace
 
 void apply_env_defaults(Options &opt)
 {
@@ -70,9 +91,16 @@ void Plotter::draw_stack(const TH1DModel &spec,
                          const std::vector<const Entry *> &mc,
                          const std::vector<const Entry *> &data) const
 {
+    stack_debug_log("draw_stack enter: hist='" + spec.name +
+                    "', expr='" + spec.expr +
+                    "', mc_entries=" + std::to_string(mc.size()) +
+                    ", data_entries=" + std::to_string(data.size()));
     set_global_style();
+    stack_debug_log("global style set for hist='" + spec.name + "'");
     StackedHist plot(spec, opt_, mc, data);
+    stack_debug_log("StackedHist constructed for hist='" + spec.name + "'");
     plot.draw_and_save(opt_.image_format);
+    stack_debug_log("draw_stack exit: hist='" + spec.name + "'");
 }
 
 void Plotter::draw_stack_cov(const TH1DModel &spec,

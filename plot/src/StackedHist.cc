@@ -78,6 +78,40 @@ double integral_in_visible_range(const TH1D &h, double xmin, double xmax)
     return h.Integral(first_bin, last_bin);
 }
 
+double maximum_in_visible_range(const TH1D &h, double xmin, double xmax, bool include_error)
+{
+    const TAxis *axis = h.GetXaxis();
+    if (!axis)
+    {
+        return include_error ? h.GetMaximum() + h.GetBinError(h.GetMaximumBin()) : h.GetMaximum();
+    }
+
+    int first_bin = 1;
+    int last_bin = h.GetNbinsX();
+    if (xmin < xmax)
+    {
+        first_bin = std::max(1, axis->FindFixBin(xmin));
+        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
+        if (xmax <= axis->GetBinLowEdge(last_bin))
+        {
+            last_bin = std::max(first_bin, last_bin - 1);
+        }
+    }
+
+    if (first_bin > last_bin)
+    {
+        return 0.0;
+    }
+
+    double max_y = 0.0;
+    for (int i = first_bin; i <= last_bin; ++i)
+    {
+        const double y = h.GetBinContent(i) + (include_error ? h.GetBinError(i) : 0.0);
+        max_y = std::max(max_y, y);
+    }
+    return max_y;
+}
+
 
 StackedHist::StackedHist(TH1DModel spec, Options opt, std::vector<const Entry *> mc, std::vector<const Entry *> data)
     : spec_(std::move(spec)),
@@ -407,7 +441,11 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
             apply_total_errors(*mc_total_, opt_.total_cov.get(), opt_.syst_bin.empty() ? nullptr : &opt_.syst_bin);
         }
 
-        max_y = mc_total_->GetMaximum() + mc_total_->GetBinError(mc_total_->GetMaximumBin());
+        max_y = maximum_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax, true);
+        if (sig_hist_)
+        {
+            max_y = std::max(max_y, maximum_in_visible_range(*sig_hist_, spec_.xmin, spec_.xmax, false));
+        }
         if (opt_.y_max > 0)
         {
             max_y = opt_.y_max;

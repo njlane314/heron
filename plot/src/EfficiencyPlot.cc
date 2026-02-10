@@ -306,7 +306,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     const int bright_green = TColor::GetColor("#00cc00");
     const int bright_red = TColor::GetColor("#ff0000");
 
-    TCanvas c(("c_" + stem).c_str(), "", 900, 700);
+    TCanvas c(("c_" + stem).c_str(), "", 990, 700);
 
     TPad p_plot("p_plot", "p_plot", 0.0, 0.0, 1.0, 0.88);
     TPad p_leg("p_leg", "p_leg", 0.0, 0.88, 1.0, 1.0);
@@ -386,6 +386,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         }
 
         hs.Draw("nostack HIST");
+
         hs.GetYaxis()->SetNoExponent(cfg_.no_exponent_y);
 
         if (!cfg_.logy)
@@ -407,6 +408,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     {
         g_eff_->SetTitle((";" + x_title + ";" + cfg_.y_eff_title).c_str());
         g_eff_->Draw("AP");
+
         g_eff_->GetYaxis()->SetRangeUser(cfg_.eff_ymin, cfg_.eff_ymax);
         p_plot.Update();
     }

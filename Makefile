@@ -44,22 +44,15 @@ EVD_SRC = evd/src/EventDisplay.cc
 EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 NUXSEC_NAME = build/bin/nuxsec
-NUXSEC_SRC = apps/src/nuxsec.cc
-
-NUXSEC_ART_DRIVER_NAME = build/bin/nuxsecArtFileIOdriver
-NUXSEC_ART_DRIVER_SRC = apps/src/nuxsecArtFileIOdriver.cc
-
-NUXSEC_EVENT_DRIVER_NAME = build/bin/nuxsecEventIOdriver
-NUXSEC_EVENT_DRIVER_SRC = apps/src/nuxsecEventIOdriver.cc
-
-NUXSEC_SAMPLE_DRIVER_NAME = build/bin/nuxsecSampleIOdriver
-NUXSEC_SAMPLE_DRIVER_SRC = apps/src/nuxsecSampleIOdriver.cc
+APPS_SRC = apps/src/nuxsec.cc \
+           apps/src/ArtWorkflow.cc \
+           apps/src/SampleWorkflow.cc \
+           apps/src/EventWorkflow.cc
+APPS_OBJ = $(APPS_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 INCLUDES = -I./io/include -I./ana/include -I./plot/include -I./evd/include -I./apps/include
 
-all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) \
-	 $(NUXSEC_NAME) $(NUXSEC_ART_DRIVER_NAME) $(NUXSEC_EVENT_DRIVER_NAME) \
-	 $(NUXSEC_SAMPLE_DRIVER_NAME)
+all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) $(NUXSEC_NAME)
 
 $(IO_LIB_NAME): $(IO_OBJ)
 	mkdir -p $(dir $(IO_LIB_NAME))
@@ -77,25 +70,10 @@ $(EVD_LIB_NAME): $(EVD_OBJ)
 	mkdir -p $(dir $(EVD_LIB_NAME))
 	$(CXX) -shared $(CXXFLAGS) $(EVD_OBJ) $(LDFLAGS) -o $(EVD_LIB_NAME)
 
-$(NUXSEC_NAME): $(NUXSEC_SRC) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
+$(NUXSEC_NAME): $(APPS_OBJ) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
 	mkdir -p $(dir $(NUXSEC_NAME))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_SRC) -Lbuild/lib -lNuxsecIO \
+	$(CXX) $(CXXFLAGS) $(APPS_OBJ) -Lbuild/lib -lNuxsecIO \
 		-lNuxsecAna -lNuxsecPlot $(LDFLAGS) -o $(NUXSEC_NAME)
-
-$(NUXSEC_ART_DRIVER_NAME): $(NUXSEC_ART_DRIVER_SRC) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
-	mkdir -p $(dir $(NUXSEC_ART_DRIVER_NAME))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_ART_DRIVER_SRC) -Lbuild/lib -lNuxsecIO \
-		-lNuxsecAna -lNuxsecPlot $(LDFLAGS) -o $(NUXSEC_ART_DRIVER_NAME)
-
-$(NUXSEC_EVENT_DRIVER_NAME): $(NUXSEC_EVENT_DRIVER_SRC) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
-	mkdir -p $(dir $(NUXSEC_EVENT_DRIVER_NAME))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_EVENT_DRIVER_SRC) -Lbuild/lib -lNuxsecIO \
-		-lNuxsecAna -lNuxsecPlot $(LDFLAGS) -o $(NUXSEC_EVENT_DRIVER_NAME)
-
-$(NUXSEC_SAMPLE_DRIVER_NAME): $(NUXSEC_SAMPLE_DRIVER_SRC) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
-	mkdir -p $(dir $(NUXSEC_SAMPLE_DRIVER_NAME))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NUXSEC_SAMPLE_DRIVER_SRC) -Lbuild/lib -lNuxsecIO \
-		-lNuxsecAna -lNuxsecPlot $(LDFLAGS) -o $(NUXSEC_SAMPLE_DRIVER_NAME)
 
 $(OBJ_DIR)/%.o: %.cc
 	mkdir -p $(dir $@)

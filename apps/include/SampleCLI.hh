@@ -154,7 +154,7 @@ inline void log_sample_finish(const std::string &log_prefix,
     log_success(log_prefix, out.str());
 }
 
-struct Args
+struct SampleArgs
 {
     std::string sample_name;
     std::string filelist_path;
@@ -162,7 +162,7 @@ struct Args
     std::string sample_list_path;
 };
 
-inline Args parse_input(const std::string &input)
+inline SampleArgs parse_sample_input(const std::string &input)
 {
     const auto pos = input.find(':');
     if (pos == std::string::npos)
@@ -170,7 +170,7 @@ inline Args parse_input(const std::string &input)
         throw std::runtime_error("Bad sample definition (expected NAME:FILELIST): " + input);
     }
 
-    Args out;
+    SampleArgs out;
     out.sample_name = trim(input.substr(0, pos));
     out.filelist_path = trim(input.substr(pos + 1));
 
@@ -187,14 +187,14 @@ inline Args parse_input(const std::string &input)
     return out;
 }
 
-inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
+inline SampleArgs parse_sample_args(const std::vector<std::string> &args, const std::string &usage)
 {
     if (args.size() != 1)
     {
         throw std::runtime_error(usage);
     }
 
-    return parse_input(args[0]);
+    return parse_sample_input(args[0]);
 }
 
 inline void update_sample_list(const std::string &list_path,
@@ -230,6 +230,6 @@ inline void update_sample_list(const std::string &list_path,
     write_samples(list_path, std::move(entries));
 }
 
-int run(const Args &sample_args, const std::string &log_prefix);
+int run(const SampleArgs &sample_args, const std::string &log_prefix);
 
 #endif

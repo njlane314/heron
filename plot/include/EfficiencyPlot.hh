@@ -62,9 +62,8 @@ class EfficiencyPlot
         // Print denom/numer/overall eff for each saved plot.
         bool print_stats = true;
 
-        // Avoid scientific-notation "×10^{n}" on the left (counts) axis.
-        // This also prevents the exponent from being clipped by small top margins.
-        bool no_exponent_y = true;
+        // Allow scientific-notation "×10^{n}" on the left (counts) axis by default.
+        bool no_exponent_y = false;
 
         std::vector<std::string> extra_text_lines;
     };

@@ -377,8 +377,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         }
 
         hs.Draw("nostack HIST");
-        if (cfg_.no_exponent_y)
-            hs.GetYaxis()->SetNoExponent(true);
+        hs.GetYaxis()->SetNoExponent(cfg_.no_exponent_y);
 
         if (!cfg_.logy)
         {

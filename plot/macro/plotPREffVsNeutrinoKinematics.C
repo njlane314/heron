@@ -2,9 +2,12 @@
 //
 // Plot pattern-recognition "assignment efficiency" vs true neutrino kinematics.
 //
-// Efficiency definition (default):
-//   denom_sel: mu_true_hits>0 && p_true_hits>0 && pi_true_hits>0
-//   pass_sel:  pr_valid_assignment
+// Pattern-recognition efficiency definition (default), matching the paper:
+//   - Denominator (eligible truth events):
+//       is_nu_mu_cc && nu_vtx_in_fv && (lam_pdg==3122) && (p_p>0) && (pi_p>0)
+//   - Numerator (pass):
+//       pr_valid_assignment AND, for each of (mu,p,pi),
+//       completeness>0.1 AND purity>0.5
 //
 // Run with:
 //   ./nuxsec macro plotPREffVsNeutrinoKinematics.C
@@ -222,8 +225,17 @@ int draw_efficiency(ROOT::RDF::RNode mc_base,
 
 int plotPREffVsNeutrinoKinematics(const std::string &samples_tsv = "",
                                   const std::string &extra_sel = "true",
-                                  const std::string &pass_sel = "pr_valid_assignment",
-                                  const std::string &denom_sel = "mu_true_hits>0 && p_true_hits>0 && pi_true_hits>0")
+                                  const std::string &pass_sel =
+                                      "pr_valid_assignment"
+                                      " && pr_mu_completeness>0.1 && pr_mu_purity>0.5"
+                                      " && pr_p_completeness>0.1 && pr_p_purity>0.5"
+                                      " && pr_pi_completeness>0.1 && pr_pi_purity>0.5",
+                                  const std::string &denom_sel =
+                                      "is_nu_mu_cc"
+                                      " && nu_vtx_in_fv"
+                                      " && (lam_pdg==3122)"
+                                      " && (p_p>0.0)"
+                                      " && (pi_p>0.0)")
 {
     ROOT::EnableImplicitMT();
 

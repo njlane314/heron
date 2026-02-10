@@ -2,14 +2,22 @@
 //
 // Plot pattern-recognition "assignment efficiency" vs Lambda kinematics.
 //
-// Efficiency definition (default):
-//   denom_sel: mu_true_hits>0 && p_true_hits>0 && pi_true_hits>0
-//   pass_sel:  pr_valid_assignment
+// Pattern-recognition efficiency definition (default), matching the paper:
+//   - Denominator (eligible truth events):
+//       * nu_mu / anti-nu_mu CC   (is_nu_mu_cc)
+//       * true neutrino vertex in fiducial volume (nu_vtx_in_fv)
+//       * an in-event truth Lambda candidate (lam_pdg==3122) with p/pi daughters
+//         (here approximated by requiring finite positive p_p and pi_p)
+//
+//   - Numerator (pass):
+//       * a one-to-one assignment exists (pr_valid_assignment)
+//       * for each (mu, p, pi): completeness > 0.1 and purity > 0.5
 //
 // Run with:
 //   ./nuxsec macro plotPREffVsLambdaKinematics.C
 //   ./nuxsec macro plotPREffVsLambdaKinematics.C 'plotPREffVsLambdaKinematics("./scratch/out/event_list_myana.root","sel_triggered_slice")'
-//   ./nuxsec macro plotPREffVsLambdaKinematics.C 'plotPREffVsLambdaKinematics("./scratch/out/event_list_myana.root","sel_triggered_slice","pr_valid_assignment && pr_mu_completeness>0.5 && pr_p_completeness>0.5 && pr_pi_completeness>0.5")'
+//   ./nuxsec macro plotPREffVsLambdaKinematics.C 'plotPREffVsLambdaKinematics("./scratch/out/event_list_myana.root","sel_triggered_slice")'
+//   ./nuxsec macro plotPREffVsLambdaKinematics.C 'plotPREffVsLambdaKinematics("./scratch/out/event_list_myana.root","sel_triggered_slice", "pr_valid_assignment && pr_mu_completeness>0.2 && pr_mu_purity>0.7 && pr_p_completeness>0.2 && pr_p_purity>0.7 && pr_pi_completeness>0.2 && pr_pi_purity>0.7")'
 //
 // Output:
 //   Saves one plot per x-variable to:
@@ -228,8 +236,17 @@ int draw_efficiency(ROOT::RDF::RNode mc_base,
 
 int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
                                 const std::string &extra_sel = "true",
-                                const std::string &pass_sel = "pr_valid_assignment",
-                                const std::string &denom_sel = "mu_true_hits>0 && p_true_hits>0 && pi_true_hits>0")
+                                const std::string &pass_sel =
+                                    "pr_valid_assignment"
+                                    " && pr_mu_completeness>0.1 && pr_mu_purity>0.5"
+                                    " && pr_p_completeness>0.1 && pr_p_purity>0.5"
+                                    " && pr_pi_completeness>0.1 && pr_pi_purity>0.5",
+                                const std::string &denom_sel =
+                                    "is_nu_mu_cc"
+                                    " && nu_vtx_in_fv"
+                                    " && (lam_pdg==3122)"
+                                    " && (p_p>0.0)"
+                                    " && (pi_p>0.0)")
 {
     ROOT::EnableImplicitMT();
 

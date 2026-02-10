@@ -339,6 +339,9 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     {
         p_plot.SetLogy(true);
     }
+    // Disable mirrored right-hand ticks from the primary (black) y-axis.
+    // The dedicated red efficiency axis is drawn explicitly on the right.
+    p_plot.SetTicky(0);
     p_plot.SetGrid(0, 0);
 
     std::unique_ptr<TH1D> h_tot_draw(static_cast<TH1D *>(h_total_->Clone("h_tot_draw")));

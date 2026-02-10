@@ -8,6 +8,7 @@
 #include "StackedHist.hh"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <filesystem>
 #include <iomanip>
@@ -659,15 +660,21 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
     {
         beam_name = first_non_empty(mc_, [](const auto &e) { return e.beamline; });
     }
-    if (beam_name == "numi")
+    std::string beam_key = beam_name;
+    std::transform(beam_key.begin(), beam_key.end(), beam_key.begin(),
+                   [](unsigned char c) {
+                       return static_cast<char>(std::tolower(c));
+                   });
+
+    if (beam_key == "numi")
     {
         beam_name = "NuMI";
     }
-    else if (beam_name == "numi_fhc")
+    else if (beam_key == "numi_fhc")
     {
         beam_name = "NuMI FHC";
     }
-    else if (beam_name == "numi_rhc")
+    else if (beam_key == "numi_rhc")
     {
         beam_name = "NuMI RHC";
     }

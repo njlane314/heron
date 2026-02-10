@@ -464,12 +464,12 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         auto *g_draw = static_cast<TGraphAsymmErrors *>(g_scaled.DrawClone("P SAME"));
         if (g_draw != nullptr)
         {
-            leg.AddEntry(g_draw, cfg_.legend_eff.c_str(), "P");
+            leg.AddEntry(g_draw, cfg_.legend_eff.c_str(), "LP");
         }
         else
         {
             // Fallback (shouldn't happen, but keeps legend sane if DrawClone fails)
-            leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "P");
+            leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "LP");
         }
     }
     else
@@ -479,7 +479,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         g_eff_->SetMarkerStyle(5);
         g_eff_->SetMarkerSize(1.2);
         g_eff_->SetLineWidth(2);
-        leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "P");
+        leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "LP");
     }
 
     // Remove "stats text" from the plot (cleaner) and print to stdout instead.

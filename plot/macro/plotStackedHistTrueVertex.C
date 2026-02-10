@@ -176,8 +176,8 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     opt.overlay_signal = true;
     opt.show_ratio_band = include_data;
     opt.adaptive_binning = true;
-    opt.adaptive_min_sumw = 25.0;
-    opt.adaptive_max_relerr = 0.30;
+    opt.adaptive_min_sumw = 80.0;
+    opt.adaptive_max_relerr = 0.20;
     opt.adaptive_fold_overflow = true;
     opt.adaptive_keep_edge_bins = true;
     opt.signal_channels = Channels::signal_keys();
@@ -194,22 +194,21 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
 
     struct DynamicAxis
     {
-        int nbins = 50;
+        int nbins = 1;
         double xmin = 0.0;
         double xmax = 1.0;
     };
 
     const auto build_dynamic_axis = [&](const std::string &expr,
-                                        int fallback_nbins,
                                         double fallback_xmin,
                                         double fallback_xmax) {
         DynamicAxis out;
-        out.nbins = fallback_nbins;
         out.xmin = fallback_xmin;
         out.xmax = fallback_xmax;
 
         double global_min = std::numeric_limits<double>::infinity();
         double global_max = -std::numeric_limits<double>::infinity();
+        unsigned long long total_events = 0ULL;
 
         const auto update_minmax = [&](ROOT::RDF::RNode node) {
             const auto n_evt = node.Count().GetValue();
@@ -218,6 +217,7 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
                 return;
             }
 
+            total_events += n_evt;
             const double local_min = static_cast<double>(node.Min(expr).GetValue());
             const double local_max = static_cast<double>(node.Max(expr).GetValue());
             global_min = std::min(global_min, local_min);
@@ -236,12 +236,14 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
             return out;
         }
 
-        const double fallback_span = std::max(1.0, fallback_xmax - fallback_xmin);
-        const double nominal_fine_width = fallback_span / static_cast<double>(fallback_nbins);
-        const double span = std::max(nominal_fine_width, global_max - global_min);
+        const double span = std::max(1e-6, global_max - global_min);
 
-        int dynamic_nbins = static_cast<int>(std::ceil(span / nominal_fine_width)) + 2;
-        dynamic_nbins = std::max(12, dynamic_nbins);
+        // Dynamic fine bin estimate from event statistics (Rice-style rule).
+        // This is used as the pre-adaptive histogram resolution only;
+        // final plotted bins remain variable-width from adaptive rebinning.
+        int dynamic_nbins = static_cast<int>(std::ceil(2.0 * std::cbrt(static_cast<double>(total_events))));
+        dynamic_nbins = std::max(30, dynamic_nbins);
+        dynamic_nbins = std::min(400, dynamic_nbins);
         out.nbins = dynamic_nbins;
 
         const double padded_width = span / static_cast<double>(std::max(1, dynamic_nbins - 2));
@@ -252,11 +254,10 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     };
 
     const auto draw_one = [&](const std::string &expr,
-                              int nbins,
                               double xmin,
                               double xmax,
                               const std::string &x_title) {
-        const DynamicAxis axis = build_dynamic_axis(expr, nbins, xmin, xmax);
+        const DynamicAxis axis = build_dynamic_axis(expr, xmin, xmax);
 
         opt.x_title = x_title.empty() ? expr : x_title;
         debug_log("drawing start: expr=" + expr +
@@ -281,10 +282,9 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
         debug_log("drawing done: expr=" + expr);
     };
 
-    const int nbins = 50;
-    draw_one("nu_vtx_z", nbins, -50.0, 1100.0, "True neutrino vertex z [cm]");
-    draw_one("nu_vtx_x", nbins, -50.0, 300.0, "True neutrino vertex x [cm]");
-    draw_one("nu_vtx_y", nbins, -180.0, 180.0, "True neutrino vertex y [cm]");
+    draw_one("nu_vtx_z", -50.0, 1100.0, "True neutrino vertex z [cm]");
+    draw_one("nu_vtx_x", -50.0, 300.0, "True neutrino vertex x [cm]");
+    draw_one("nu_vtx_y", -180.0, 180.0, "True neutrino vertex y [cm]");
 
     debug_log("completed all draw calls");
     return 0;

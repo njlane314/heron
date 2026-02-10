@@ -68,6 +68,9 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.png")
     TLegend legend(0.01, 0.05, 0.99, 0.95);
     legend.SetBorderSize(0);
     legend.SetFillStyle(0);
+    legend.SetLineColorAlpha(kWhite, 0.0);
+    legend.SetLineWidth(0);
+    legend.SetShadowColor(kWhite);
     legend.SetTextFont(42);
     legend.SetTextSize(0.14);
     legend.SetNColumns(4);
@@ -84,8 +87,8 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.png")
         proxy->SetDirectory(nullptr);
         proxy->SetFillColor(entries[i].colour);
         proxy->SetFillStyle(entries[i].fill_style);
-        proxy->SetLineColor(entries[i].colour);
-        proxy->SetLineWidth(0);
+        proxy->SetLineColor(kBlack);
+        proxy->SetLineWidth(1);
         proxies.push_back(proxy);
         legend.AddEntry(proxy, entries[i].label.c_str(), "f");
     }

@@ -8,9 +8,20 @@
 #include "TTree.h"
 
 #include <cstdio>
+#include <cctype>
 #include <map>
+#include <set>
 
 namespace {
+
+struct MultisimSummary {
+  std::set<int> universe_ids;
+  int histogram_count;
+  bool has_1d;
+  bool has_2d;
+
+  MultisimSummary() : histogram_count(0), has_1d(false), has_2d(false) {}
+};
 
 void print_indent(const int level) {
   for (int i = 0; i < level; ++i) {
@@ -46,14 +57,58 @@ void print_tree(const TString& object_path, TTree* tree) {
   print_branch_list(tree->GetListOfBranches(), 2);
 }
 
+int parse_universe_id(const TString& histogram_name) {
+  const Ssiz_t uni_position = histogram_name.Index("_Uni_");
+  if (uni_position < 0) {
+    return -1;
+  }
+
+  const Ssiz_t id_start = uni_position + 5;
+  Ssiz_t id_end = id_start;
+  while (id_end < histogram_name.Length() && std::isdigit(histogram_name[id_end])) {
+    ++id_end;
+  }
+
+  if (id_end == id_start) {
+    return -1;
+  }
+
+  return TString(histogram_name(id_start, id_end - id_start)).Atoi();
+}
+
+TString normalise_multisim_type(const TString& histogram_name) {
+  const Ssiz_t uni_position = histogram_name.Index("_Uni_");
+  if (uni_position < 0) {
+    return "";
+  }
+
+  TString prefix = histogram_name(0, uni_position);
+  const Ssiz_t id_start = uni_position + 5;
+  Ssiz_t suffix_start = id_start;
+  while (suffix_start < histogram_name.Length() && std::isdigit(histogram_name[suffix_start])) {
+    ++suffix_start;
+  }
+
+  TString suffix = histogram_name(suffix_start, histogram_name.Length() - suffix_start);
+  if (suffix.EndsWith("_2D")) {
+    suffix.Remove(suffix.Length() - 3);
+  }
+
+  return prefix + suffix;
+}
+
 void scan_directory(TDirectory* directory,
                     const TString& directory_path,
                     int& tree_count,
                     int& object_count,
-                    std::map<TString, int>& class_counts) {
+                    std::map<TString, int>& class_counts,
+                    std::set<TString>& directory_paths,
+                    std::map<TString, MultisimSummary>& multisim_summaries) {
   if (directory == NULL) {
     return;
   }
+
+  directory_paths.insert(directory_path);
 
   TIter next_key(directory->GetListOfKeys());
   TKey* key = NULL;
@@ -76,6 +131,26 @@ void scan_directory(TDirectory* directory,
     ++object_count;
     class_counts[key->GetClassName()] += 1;
 
+    if (object_path.Contains("/Multisims/")) {
+      const bool is_hist1d = object->InheritsFrom("TH1") && !object->InheritsFrom("TH2");
+      const bool is_hist2d = object->InheritsFrom("TH2");
+
+      if (is_hist1d || is_hist2d) {
+        const TString multisim_type = normalise_multisim_type(key->GetName());
+        if (!multisim_type.IsNull()) {
+          MultisimSummary& summary = multisim_summaries[multisim_type];
+          summary.histogram_count += 1;
+          summary.has_1d = summary.has_1d || is_hist1d;
+          summary.has_2d = summary.has_2d || is_hist2d;
+
+          const int universe_id = parse_universe_id(key->GetName());
+          if (universe_id >= 0) {
+            summary.universe_ids.insert(universe_id);
+          }
+        }
+      }
+    }
+
     if (is_tree_key || object->InheritsFrom(TTree::Class())) {
       TTree* tree = dynamic_cast<TTree*>(object);
       print_tree(object_path, tree);
@@ -85,8 +160,41 @@ void scan_directory(TDirectory* directory,
 
     if (is_directory_key || object->InheritsFrom(TDirectory::Class())) {
       TDirectory* sub_directory = dynamic_cast<TDirectory*>(object);
-      scan_directory(sub_directory, object_path, tree_count, object_count, class_counts);
+      scan_directory(sub_directory,
+                     object_path,
+                     tree_count,
+                     object_count,
+                     class_counts,
+                     directory_paths,
+                     multisim_summaries);
     }
+  }
+}
+
+void print_directory_summary(const std::set<TString>& directory_paths) {
+  std::printf("Directories:\n");
+  for (std::set<TString>::const_iterator it = directory_paths.begin(); it != directory_paths.end(); ++it) {
+    std::printf("  - %s\n", it->Data());
+  }
+}
+
+void print_multisim_summary(const std::map<TString, MultisimSummary>& multisim_summaries) {
+  std::printf("Multisim types:\n");
+  if (multisim_summaries.empty()) {
+    std::printf("  - none found\n");
+    return;
+  }
+
+  for (std::map<TString, MultisimSummary>::const_iterator it = multisim_summaries.begin();
+       it != multisim_summaries.end();
+       ++it) {
+    const MultisimSummary& summary = it->second;
+    std::printf("  - %s (universes=%lu, histograms=%d, 1D=%s, 2D=%s)\n",
+                it->first.Data(),
+                static_cast<unsigned long>(summary.universe_ids.size()),
+                summary.histogram_count,
+                summary.has_1d ? "yes" : "no",
+                summary.has_2d ? "yes" : "no");
   }
 }
 
@@ -116,8 +224,20 @@ void print_file_tree_summary(const char* file_path) {
   int tree_count = 0;
   int object_count = 0;
   std::map<TString, int> class_counts;
-  scan_directory(&input_file, input_file.GetName(), tree_count, object_count, class_counts);
+  std::set<TString> directory_paths;
+  std::map<TString, MultisimSummary> multisim_summaries;
+  scan_directory(&input_file,
+                 input_file.GetName(),
+                 tree_count,
+                 object_count,
+                 class_counts,
+                 directory_paths,
+                 multisim_summaries);
 
+  std::printf("\n");
+  print_directory_summary(directory_paths);
+  std::printf("\n");
+  print_multisim_summary(multisim_summaries);
   std::printf("\n");
   print_class_summary(class_counts);
   std::printf("\nSummary: objects=%d trees=%d\n", object_count, tree_count);

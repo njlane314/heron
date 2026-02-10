@@ -472,7 +472,6 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
     list_macros(repo_root / "plot" / "macro", "Plot macros in", "");
     list_macros(repo_root / "standalone" / "macro", "Standalone macros in", "");
     list_macros(repo_root / "evd" / "macro", "Event-display macros in", "");
-    list_macros(repo_root / "io" / "macro", "IO macros in", "");
 }
 
 int handle_macro_command(const std::vector<std::string> &args)

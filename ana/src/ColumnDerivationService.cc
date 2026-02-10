@@ -113,8 +113,8 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
                 if (!fv)
                 {
                     if (nu == 0)
-                        return static_cast<int>(Channel::OutFV);
-                    return static_cast<int>(Channel::External);
+                        return static_cast<int>(Channel::External);
+                    return static_cast<int>(Channel::OutFV);
                 }
                 if (ccnc == 1)
                     return static_cast<int>(Channel::NC);

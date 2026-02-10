@@ -393,7 +393,6 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         h->SetLineColor(kBlack);
         h->SetLineWidth(1);
         h->Draw("E2 SAME");
-        h->Draw("E1 SAME");
     }
     if (sig_hist_)
     {

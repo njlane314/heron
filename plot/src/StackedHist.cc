@@ -12,6 +12,7 @@
 #include <cmath>
 #include <filesystem>
 #include <iomanip>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -174,6 +175,31 @@ std::unique_ptr<TH1D> rebin_to_edges(const TH1D &h, const std::vector<double> &e
     auto out = std::unique_ptr<TH1D>(static_cast<TH1D *>(reb));
     out->SetDirectory(nullptr);
     return out;
+}
+
+void log_adaptive_bin_widths(const std::string &hist_id,
+                             const std::vector<double> &edges)
+{
+    if (edges.size() < 2)
+    {
+        return;
+    }
+
+    std::ostringstream msg;
+    msg << "[StackedHist] Adaptive bins settled for '" << hist_id << "': "
+        << (edges.size() - 1) << " bins; widths [";
+
+    for (std::size_t i = 1; i < edges.size(); ++i)
+    {
+        if (i > 1)
+        {
+            msg << ", ";
+        }
+        msg << (edges[i] - edges[i - 1]);
+    }
+
+    msg << "]";
+    std::clog << msg.str() << '\n';
 }
 
 } // namespace
@@ -497,6 +523,8 @@ void StackedHist::build_histograms()
                                                 opt_.adaptive_min_sumw,
                                                 opt_.adaptive_max_relerr,
                                                 opt_.adaptive_keep_edge_bins);
+
+            log_adaptive_bin_widths(spec_.id, adaptive_edges);
 
             if (adaptive_edges.size() >= 2)
             {

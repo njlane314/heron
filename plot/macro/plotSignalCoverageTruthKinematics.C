@@ -31,7 +31,6 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -40,7 +39,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH2D.h>
-#include <TPaveText.h>
+#include <TPad.h>
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TSystem.h>
@@ -154,48 +153,51 @@ void draw_truth_2d(ROOT::RDF::RNode node,
     ROOT::RDF::RNode n2 = node.Filter(v.x_expr + " == " + v.x_expr)
                              .Filter(v.y_expr + " == " + v.y_expr);
 
-    const auto n_evt = n2.Count().GetValue();
-    if (n_evt == 0)
+    const std::string hname = "h2_" + sanitize_for_filename(v.name);
+    auto h2 = n2.Histo2D({hname.c_str(), "", v.nx, v.xmin, v.xmax, v.ny, v.ymin, v.ymax},
+                         v.x_expr, v.y_expr, weight);
+
+    const auto n_entries = static_cast<long long>(h2->GetEntries());
+    if (n_entries == 0)
     {
         std::cout << "[plotSignalCoverageTruthKinematics] skip 2D " << v.name
                   << " (no entries after selections)\n";
         return;
     }
 
-    const std::string hname = "h2_" + sanitize_for_filename(v.name);
-    auto h2 = n2.Histo2D({hname.c_str(), "", v.nx, v.xmin, v.xmax, v.ny, v.ymin, v.ymax},
-                         v.x_expr, v.y_expr, weight);
+    // Print stats to terminal (match plotPRCompPurity2D style; no on-plot box)
+    {
+        const int nx = h2->GetNbinsX();
+        const int ny = h2->GetNbinsY();
+        const double sumw = h2->Integral(1, nx, 1, ny);
+        std::cout << "[plotSignalCoverageTruthKinematics] " << v.name << " 2D stats\n"
+                  << "  entries(fills): " << n_entries << ", sumw(in-range): " << sumw << "\n";
+    }
 
     gROOT->SetBatch(true);
     gStyle->SetOptStat(0);
 
-    TCanvas c(("c2_" + sanitize_for_filename(v.name)).c_str(), "", 900, 750);
-    c.SetRightMargin(0.14);
-    c.SetLogz(use_logz ? 1 : 0);
+    TCanvas c(("c2_" + sanitize_for_filename(v.name)).c_str(), "", 900, 800);
+    c.cd(); // ensure gPad is set
 
-    const std::string title = ";" + (v.x_title.empty() ? v.x_expr : v.x_title) +
-                              ";" + (v.y_title.empty() ? v.y_expr : v.y_title) +
-                              ";Events";
-    h2->SetTitle(title.c_str());
+    // Axis labels only (no title text block); z-title set explicitly
+    const std::string xlab = (v.x_title.empty() ? v.x_expr : v.x_title);
+    const std::string ylab = (v.y_title.empty() ? v.y_expr : v.y_title);
+    h2->SetTitle((";" + xlab + ";" + ylab).c_str());
+    h2->GetZaxis()->SetTitle("Events");
     h2->GetXaxis()->SetRangeUser(v.xmin, v.xmax);
     h2->GetYaxis()->SetRangeUser(v.ymin, v.ymax);
+
+    // Make the color bar fit; apply logz at the pad level (like plotPRCompPurity2D)
+    if (gPad)
+    {
+        gPad->SetRightMargin(0.14);
+        gPad->SetLogz(use_logz ? 1 : 0);
+    }
     if (use_logz)
         h2->SetMinimum(logz_min);
 
     h2->Draw("COLZ");
-
-    TPaveText *pt = new TPaveText(0.16, 0.16, 0.50, 0.27, "NDC");
-    pt->SetFillStyle(0);
-    pt->SetBorderSize(0);
-    pt->SetTextAlign(12);
-    pt->SetTextSize(0.034);
-
-    {
-        std::ostringstream os;
-        os << "N = " << static_cast<long long>(h2->GetEntries());
-        pt->AddText(os.str().c_str());
-    }
-    pt->Draw("same");
 
     gSystem->mkdir(out_dir.c_str(), /*recursive=*/true);
 

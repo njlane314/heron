@@ -68,6 +68,7 @@ static std::vector<std::string> default_event_columns()
         "int_mode",
         "int_type",
         "is_nu_mu_cc",
+        "nu_vtx_in_fv",
 
         "nu_E",
         "nu_theta",

@@ -32,45 +32,6 @@
 #include "PlotChannels.hh"
 #include "Plotter.hh"
 
-namespace
-{
-void log_adaptive_bin_widths(const std::string &hist_id,
-                             const std::vector<double> &edges)
-{
-    if (edges.size() < 2)
-    {
-        return;
-    }
-
-    std::ostringstream msg;
-    msg << "[StackedHist] Adaptive bins settled for '" << hist_id << "': "
-        << (edges.size() - 1) << " bins; widths [";
-
-    for (std::size_t i = 1; i < edges.size(); ++i)
-    {
-        if (i > 1)
-        {
-            msg << ", ";
-        }
-        msg << (edges[i] - edges[i - 1]);
-    }
-
-    msg << "]";
-    std::clog << msg.str() << '\n';
-
-    for (std::size_t i = 1; i < edges.size(); ++i)
-    {
-        const double low = edges[i - 1];
-        const double high = edges[i];
-        const double width = high - low;
-        std::clog << "[StackedHist]   bin " << i
-                  << ": [" << low << ", " << high << ")"
-                  << " width=" << width << '\n';
-    }
-}
-
-} // namespace
-
 namespace nu
 {
 
@@ -378,7 +339,6 @@ void StackedHist::build_histograms()
         {
             adaptive_edges = AdaptiveBinningService::instance().edges_min_stat(*mc_tot_fine, cfg);
 
-            log_adaptive_bin_widths(spec_.id, adaptive_edges);
 
             if (adaptive_edges.size() >= 2)
             {

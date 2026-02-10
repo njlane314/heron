@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -59,6 +61,31 @@ inline bool pass_bin(double sumw, double sumw2, const AdaptiveBinningService::Mi
     }
 
     return true;
+}
+
+inline void log_adaptive_bin_sizes(std::string_view hist_name,
+                                   const std::vector<double> &edges)
+{
+    if (edges.size() < 2)
+    {
+        return;
+    }
+
+    std::ostringstream msg;
+    msg << "[AdaptiveBinningService] Adaptive bins settled for '" << hist_name << "': "
+        << (edges.size() - 1) << " bins; widths [";
+
+    for (std::size_t i = 1; i < edges.size(); ++i)
+    {
+        if (i > 1)
+        {
+            msg << ", ";
+        }
+        msg << (edges[i] - edges[i - 1]);
+    }
+
+    msg << "]";
+    std::clog << msg.str() << '\n';
 }
 
 inline std::vector<double> uniform_edges_from(const TH1D &h)
@@ -179,7 +206,9 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
 
     if (!(cfg.min_sumw > 0.0) && !(cfg.max_rel_err > 0.0))
     {
-        return uniform_edges_from(fine);
+        auto edges = uniform_edges_from(fine);
+        log_adaptive_bin_sizes(fine.GetName(), edges);
+        return edges;
     }
 
     const TH1D *hptr = &fine;
@@ -274,6 +303,7 @@ std::vector<double> AdaptiveBinningService::edges_min_stat(const TH1D &fine,
         edges.push_back(ax->GetXmax());
     }
 
+    log_adaptive_bin_sizes(fine.GetName(), edges);
     return edges;
 }
 

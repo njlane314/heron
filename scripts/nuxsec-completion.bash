@@ -17,12 +17,12 @@ _nuxsec()
     local exe
     local exe_dir
 
-    if [[ -n "${NUXSEC_REPO_ROOT:-}" && ( -d "${NUXSEC_REPO_ROOT}/plot/macro" || -d "${NUXSEC_REPO_ROOT}/evd/macro" || -d "${NUXSEC_REPO_ROOT}/standalone/macro" || -d "${NUXSEC_REPO_ROOT}/io/macro" ) ]]; then
+    if [[ -n "${NUXSEC_REPO_ROOT:-}" && ( -d "${NUXSEC_REPO_ROOT}/plot/macro" || -d "${NUXSEC_REPO_ROOT}/evd/macro" || -d "${NUXSEC_REPO_ROOT}/standalone/macro" ) ]]; then
       printf "%s" "${NUXSEC_REPO_ROOT}"
       return 0
     fi
 
-    if [[ -n "${NUXSEC_ROOT:-}" && ( -d "${NUXSEC_ROOT}/plot/macro" || -d "${NUXSEC_ROOT}/evd/macro" || -d "${NUXSEC_ROOT}/standalone/macro" || -d "${NUXSEC_ROOT}/io/macro" ) ]]; then
+    if [[ -n "${NUXSEC_ROOT:-}" && ( -d "${NUXSEC_ROOT}/plot/macro" || -d "${NUXSEC_ROOT}/evd/macro" || -d "${NUXSEC_ROOT}/standalone/macro" ) ]]; then
       printf "%s" "${NUXSEC_ROOT}"
       return 0
     fi
@@ -32,7 +32,7 @@ _nuxsec()
       exe_dir="$(dirname "$(readlink -f "${exe}" 2>/dev/null || printf "%s" "${exe}")")"
       dir="${exe_dir}"
       while [[ -n "${dir}" && "${dir}" != "/" ]]; do
-        if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" || -d "${dir}/standalone/macro" || -d "${dir}/io/macro" ]]; then
+        if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" || -d "${dir}/standalone/macro" ]]; then
           printf "%s" "${dir}"
           return 0
         fi
@@ -42,7 +42,7 @@ _nuxsec()
 
     dir="${PWD}"
     while [[ "${dir}" != "/" ]]; do
-      if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" || -d "${dir}/standalone/macro" || -d "${dir}/io/macro" ]]; then
+      if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" || -d "${dir}/standalone/macro" ]]; then
         printf "%s" "${dir}"
         return 0
       fi
@@ -101,14 +101,6 @@ _nuxsec()
         for macro in "${evd_dir}"/*.C; do
           if [[ -f "${macro}" ]]; then
             basename "${macro}"
-          fi
-        done
-      fi
-      io_dir="${repo_root}/io/macro"
-      if [[ -d "${io_dir}" ]]; then
-        for macro in "${io_dir}"/*.C; do
-          if [[ -f "${macro}" ]]; then
-            printf "io/macro/%s\n" "$(basename "${macro}")"
           fi
         done
       fi

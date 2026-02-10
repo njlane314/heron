@@ -85,6 +85,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         node = node.Define("w_nominal", [](double w) -> double { return w; }, {"w_base"});
     }
 
+
     if (is_mc)
     {
         node = node.Define(
@@ -170,6 +171,10 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         const int nonmc_channel = is_ext ? static_cast<int>(Channel::External)
                                 : (is_data ? static_cast<int>(Channel::DataInclusive)
                                 : static_cast<int>(Channel::Unknown));
+
+        node = node.Define("nu_vtx_x", [] { return -9999.0f; });
+        node = node.Define("nu_vtx_y", [] { return -9999.0f; });
+        node = node.Define("nu_vtx_z", [] { return -9999.0f; });
 
         node = node.Define("in_fiducial", [] { return false; });
         node = node.Define("is_strange", [] { return false; });

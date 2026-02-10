@@ -53,6 +53,10 @@ static std::vector<std::string> default_event_columns()
         "reco_neutrino_vertex_sce_y",
         "reco_neutrino_vertex_sce_z",
 
+        "nu_vtx_x",
+        "nu_vtx_y",
+        "nu_vtx_z",
+
         "in_reco_fiducial",
         "is_signal"
     };

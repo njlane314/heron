@@ -640,12 +640,11 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
     const Int_t col_fhc   = TColor::GetColor("#ffb300"); // amber
     const Int_t col_rhc   = TColor::GetColor("#d81b60"); // magenta-ish
 
-    // Distinct line styles (and matching outlines) so beam modes remain readable
-    // with the black underlay.
+    // Solid lines for all cumulative curves (use colour + underlay for separation).
     const Int_t ls_total = 1; // solid
-    const Int_t ls_bnb   = 2; // dashed
-    const Int_t ls_fhc   = 3; // dotted
-    const Int_t ls_rhc   = 4; // dash-dot
+    const Int_t ls_bnb   = 1; // solid
+    const Int_t ls_fhc   = 1; // solid
+    const Int_t ls_rhc   = 1; // solid
 
     // Cumulative step curves
     TGraph g_total(d.x_step.size(), d.x_step.data(), d.y_total.data());

@@ -58,7 +58,63 @@ static std::vector<std::string> default_event_columns()
         "nu_vtx_z",
 
         "in_reco_fiducial",
-        "is_signal"
+        "is_signal",
+
+        // --------------------------------------------------------------------
+        // Truth neutrino kinematics (TruthAnalysis)
+        // --------------------------------------------------------------------
+        "nu_pdg",
+        "int_ccnc",
+        "int_mode",
+        "int_type",
+        "is_nu_mu_cc",
+
+        "nu_E",
+        "nu_theta",
+        "nu_pt",
+
+        "kin_W",
+        "bjorken_x",
+        "inelasticity_y",
+        "Q2",
+
+        // --------------------------------------------------------------------
+        // Lambda truth + decay kinematics (LambdaAnalysis_tool)
+        // --------------------------------------------------------------------
+        "mu_truth_trackid",
+        "mu_truth_pdg",
+        "mu_p",
+        "mu_theta",
+
+        "lam_trackid",
+        "lam_pdg",
+        "lam_E",
+        "lam_mass",
+        "lam_p_mag",
+        "lam_ct",
+        "lam_decay_sep",
+
+        "p_trackid",
+        "pi_trackid",
+        "p_p",
+        "pi_p",
+        "ppi_opening_angle",
+
+        // --------------------------------------------------------------------
+        // Pattern-recognition metrics (LambdaAnalysis_tool / slice-level)
+        // --------------------------------------------------------------------
+        "pr_valid_assignment",
+        "pr_mu_purity",
+        "pr_mu_completeness",
+        "pr_p_purity",
+        "pr_p_completeness",
+        "pr_pi_purity",
+        "pr_pi_completeness",
+
+        // Truth-hit content per slice (useful for defining the efficiency denom)
+        "mu_true_hits",
+        "p_true_hits",
+        "pi_true_hits"
     };
 }
 

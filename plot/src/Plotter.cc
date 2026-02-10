@@ -167,7 +167,7 @@ void Plotter::set_global_style() const
     style->SetLabelOffset(0.005, "Y");
     style->SetLabelOffset(0.005, "Z");
     style->SetTitleOffset(1.10, "X");
-    style->SetTitleOffset(1.10, "Y");
+    style->SetTitleOffset(1.25, "Y");
     style->SetOptStat(0);
     style->SetOptTitle(0);
     style->SetPadTickX(1);

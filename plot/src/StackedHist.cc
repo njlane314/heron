@@ -271,20 +271,16 @@ void StackedHist::build_histograms()
     const auto &channels = Channels::mc_keys();
     const auto cfg = AdaptiveBinningService::config_from(opt_);
 
-    // Adaptive binning can only *merge* bins. If we fill with the same coarse binning
-    // we intend to plot, the output will look nearly uniform because each coarse bin
-    // already satisfies the thresholds. Fill a finer histogram first, then merge.
-    TH1DModel book_spec = spec_;
+    // If adaptive binning is enabled, fill a finer histogram first and then merge.
+    // Otherwise the merge algorithm has nothing to do and bins will look uniform.
+    TH1DModel fill_spec = spec_;
     if (cfg.enabled)
     {
         const int factor = std::max(1, opt_.adaptive_fine_bin_factor);
-        long long desired = 1LL * book_spec.nbins * factor;
-        // Safety clamp: prevent pathological bin counts.
-        desired = std::min<long long>(desired, 5000);
-        if (desired > book_spec.nbins)
-        {
-            book_spec.nbins = static_cast<int>(desired);
-        }
+        long long nb = 1LL * fill_spec.nbins * factor;
+        // Clamp to something sane.
+        nb = std::max<long long>(1, std::min<long long>(nb, 5000));
+        fill_spec.nbins = static_cast<int>(nb);
     }
 
     for (size_t ie = 0; ie < mc_.size(); ++ie)
@@ -300,7 +296,7 @@ void StackedHist::build_histograms()
         for (int ch : channels)
         {
             auto nf = n.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
-            auto h = nf.Histo1D(book_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
+            auto h = nf.Histo1D(fill_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
             booked[ch].push_back(h);
         }
     }
@@ -440,7 +436,7 @@ void StackedHist::build_histograms()
             auto n0 = apply(e->rnode(), spec_.sel, e->selection);
             auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
             const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
-            parts.push_back(n.Histo1D(book_spec.model("_data_src" + std::to_string(ie)), var));
+            parts.push_back(n.Histo1D(fill_spec.model("_data_src" + std::to_string(ie)), var));
         }
         for (auto &rr : parts)
         {

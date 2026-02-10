@@ -63,3 +63,36 @@ void plot_detector_image_by_channel(const std::string &input_file,
 
     EventDisplay::render_from_rdf(picked, opt);
 }
+
+/// \brief ROOT entry-point matching this macro's CamelCase filename.
+///
+/// Call this overload explicitly for default behaviour:
+///   nuxsec macro plotDetectorImage.C \
+///     'plotDetectorImage("/path/to/event_list.root", 1, 1, 1)'
+void plotDetectorImage()
+{
+    std::cerr
+        << "Usage: plotDetectorImage(\"/path/to/event_list.root\", run, subrun, event"
+        << "[, out_dir[, tree_name]])\n"
+        << "       plotDetectorImageByChannel(\"/path/to/event_list.root\", channel"
+        << "[, out_dir[, tree_name]])\n";
+}
+
+void plotDetectorImage(const std::string &input_file,
+                       int run,
+                       int sub,
+                       int evt,
+                       const std::string &out_dir = "./plots/evd_detector",
+                       const std::string &tree_name = "events")
+{
+    plot_detector_image(input_file, run, sub, evt, out_dir, tree_name);
+}
+
+/// \brief Alternate entry-point using an analysis channel lookup.
+void plotDetectorImageByChannel(const std::string &input_file,
+                                int channel,
+                                const std::string &out_dir = "./plots/evd_detector",
+                                const std::string &tree_name = "events")
+{
+    plot_detector_image_by_channel(input_file, channel, out_dir, tree_name);
+}

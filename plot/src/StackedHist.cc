@@ -57,6 +57,16 @@ void log_adaptive_bin_widths(const std::string &hist_id,
 
     msg << "]";
     std::clog << msg.str() << '\n';
+
+    for (std::size_t i = 1; i < edges.size(); ++i)
+    {
+        const double low = edges[i - 1];
+        const double high = edges[i];
+        const double width = high - low;
+        std::clog << "[StackedHist]   bin " << i
+                  << ": [" << low << ", " << high << ")"
+                  << " width=" << width << '\n';
+    }
 }
 
 } // namespace

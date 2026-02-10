@@ -1,11 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsecEventIOdriver.cc
+ *  @file  apps/src/EventWorkflow.cc
  *
- *  @brief Build event-level output from aggregated samples.
+ *  @brief Event-level output builder (invoked by the unified nuxsec CLI).
  */
 
-#include <iostream>
+#include <chrono>
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -18,15 +19,13 @@
 #include "RDataFrameService.hh"
 #include "StatusMonitor.hh"
 
-
-
 int run(const EventArgs &event_args, const std::string &log_prefix)
 {
     ROOT::EnableImplicitMT();
 
     const auto &analysis = AnalysisConfigService::instance();
     const auto entries = read_samples(event_args.list_path);
-    
+
     const auto start_time = std::chrono::steady_clock::now();
     log_event_start(log_prefix, entries.size());
 
@@ -36,7 +35,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
 
     std::vector<EventInput> inputs;
     inputs.reserve(entries.size());
-    
+
     std::vector<nu::SampleInfo> sample_infos;
     sample_infos.reserve(entries.size());
 
@@ -98,7 +97,9 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         header.event_output_dir = output_path.parent_path().string();
     }
     if (!output_path.parent_path().empty())
+    {
         std::filesystem::create_directories(output_path.parent_path());
+    }
 
     const EventColumnProvider column_provider(
         default_columns,
@@ -118,7 +119,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         const auto &input = inputs[i];
         const SampleIO::Sample &sample = input.sample;
         const int sample_id = static_cast<int>(i);
-        
+
         log_stage(
             log_prefix,
             "ensure_tree",
@@ -192,26 +193,10 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     status_monitor.stop();
 
     const auto end_time = std::chrono::steady_clock::now();
-    const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
-    
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+
     log_event_finish(log_prefix, entries.size(), elapsed_seconds);
 
     return 0;
-}
-
-
-
-int main(int argc, char **argv)
-{
-    return run_guarded(
-        "nuxsecEventIOdriver",
-        [argc, argv]()
-        {
-            const std::vector<std::string> args = collect_args(argc, argv);
-            const EventArgs event_args =
-                parse_event_args(
-                    args,
-                    "Usage: nuxsecEventIOdriver SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
-            return run(event_args, "nuxsecEventIOdriver");
-        });
 }

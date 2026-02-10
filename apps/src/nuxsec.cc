@@ -19,13 +19,14 @@
 #include <utility>
 #include <vector>
 
-#include <sys/wait.h>
-
 #include <TInterpreter.h>
 #include <TROOT.h>
 #include <TSystem.h>
 
+#include "ArtCLI.hh"
+#include "EventCLI.hh"
 #include "AppUtils.hh"
+#include "SampleCLI.hh"
 
 
 const char *kUsageMacro =
@@ -228,37 +229,6 @@ std::string shell_quote(const std::string &value)
     return quoted;
 }
 
-std::filesystem::path resolve_driver_path(const std::string &driver_name)
-{
-    std::vector<std::filesystem::path> candidates;
-
-    if (const char *driver_dir = std::getenv("NUXSEC_DRIVER_DIR"))
-    {
-        candidates.emplace_back(driver_dir);
-    }
-
-    std::error_code ec;
-    const auto exe = std::filesystem::read_symlink("/proc/self/exe", ec);
-    if (!ec)
-    {
-        candidates.push_back(exe.parent_path());
-    }
-
-    const auto repo_root = find_repo_root();
-    candidates.push_back(repo_root / "build" / "bin");
-
-    for (const auto &base : candidates)
-    {
-        const auto candidate = base / driver_name;
-        if (std::filesystem::exists(candidate))
-        {
-            return candidate;
-        }
-    }
-
-    return driver_name;
-}
-
 bool is_executable(const std::filesystem::path &path)
 {
     std::error_code ec;
@@ -284,39 +254,6 @@ void ensure_plot_env(const std::filesystem::path &repo_root)
         const auto out = plot_dir(repo_root).string();
         gSystem->Setenv("NUXSEC_PLOT_DIR", out.c_str());
     }
-}
-
-int dispatch_driver_command(const std::string &driver_name,
-                            const std::vector<std::string> &args)
-{
-    const auto driver_path = resolve_driver_path(driver_name);
-    if (std::filesystem::exists(driver_path) && !is_executable(driver_path))
-    {
-        throw std::runtime_error("Driver is not executable: " + driver_path.string());
-    }
-    std::ostringstream command;
-    command << shell_quote(driver_path.string());
-    for (const auto &arg : args)
-    {
-        command << " " << shell_quote(arg);
-    }
-
-    const int result = std::system(command.str().c_str());
-    if (result == -1)
-    {
-        throw std::runtime_error("Failed to launch driver: " + driver_path.string());
-    }
-
-    if (WIFEXITED(result))
-    {
-        return WEXITSTATUS(result);
-    }
-    if (WIFSIGNALED(result))
-    {
-        return 128 + WTERMSIG(result);
-    }
-
-    return result;
 }
 
 std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
@@ -600,6 +537,65 @@ int handle_macro_command(const std::vector<std::string> &args)
     return exec_root_macro(repo_root, macro_path, call);
 }
 
+
+int handle_art_command(const std::vector<std::string> &args)
+{
+    return run_guarded(
+        "nuxsecArtFileIOdriver",
+        [&]()
+        {
+            const ArtArgs art_args =
+                parse_art_args(
+                    args,
+                    "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
+            return run(art_args, "nuxsecArtFileIOdriver");
+        });
+}
+
+int handle_sample_command(const std::vector<std::string> &args)
+{
+    return run_guarded(
+        "nuxsecSampleIOdriver",
+        [&]()
+        {
+            const SampleArgs sample_args =
+                parse_sample_args(
+                    args,
+                    "Usage: nuxsec sample NAME:FILELIST");
+            return run(sample_args, "nuxsecSampleIOdriver");
+        });
+}
+
+int handle_event_command(const std::vector<std::string> &args,
+                         const std::filesystem::path &repo_root)
+{
+    return run_guarded(
+        "nuxsecEventIOdriver",
+        [&]()
+        {
+            std::vector<std::string> rewritten = args;
+            if (args.size() == 1)
+            {
+                rewritten.clear();
+                rewritten.push_back(default_samples_tsv(repo_root).string());
+                rewritten.push_back(args[0]);
+            }
+            else if (args.size() == 2 && has_suffix(args[0], ".root"))
+            {
+                rewritten.clear();
+                rewritten.push_back(default_samples_tsv(repo_root).string());
+                rewritten.push_back(args[0]);
+                rewritten.push_back(args[1]);
+            }
+
+            const EventArgs event_args =
+                parse_event_args(
+                    rewritten,
+                    "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
+            return run(event_args, "nuxsecEventIOdriver");
+        });
+}
+
 struct StatusOptions
 {
     int interval_seconds = 60;
@@ -858,51 +854,33 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         "art",
         [](const std::vector<std::string> &args)
         {
-            return dispatch_driver_command("nuxsecArtFileIOdriver", args);
+            return handle_art_command(args);
         },
         []()
         {
-            std::cout << "Usage: nuxsec art <args>\n";
+            std::cout << "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]\n";
         }
     });
     table.push_back(CommandEntry{
         "sample",
         [](const std::vector<std::string> &args)
         {
-            return dispatch_driver_command("nuxsecSampleIOdriver", args);
+            return handle_sample_command(args);
         },
         []()
         {
-            std::cout << "Usage: nuxsec sample <args>\n";
+            std::cout << "Usage: nuxsec sample NAME:FILELIST\n";
         }
     });
     table.push_back(CommandEntry{
         "event",
         [repo_root](const std::vector<std::string> &args)
         {
-            if (args.size() == 1 && !is_help_arg(args[0]))
-            {
-                std::vector<std::string> rewritten;
-                rewritten.push_back(default_samples_tsv(repo_root).string());
-                rewritten.push_back(args[0]);
-                return dispatch_driver_command("nuxsecEventIOdriver", rewritten);
-            }
-            if (args.size() == 2 && !is_help_arg(args[0]) && !is_help_arg(args[1]))
-            {
-                if (has_suffix(args[0], ".root"))
-                {
-                    std::vector<std::string> rewritten;
-                    rewritten.push_back(default_samples_tsv(repo_root).string());
-                    rewritten.push_back(args[0]);
-                    rewritten.push_back(args[1]);
-                    return dispatch_driver_command("nuxsecEventIOdriver", rewritten);
-                }
-            }
-            return dispatch_driver_command("nuxsecEventIOdriver", args);
+            return handle_event_command(args, repo_root);
         },
         []()
         {
-            std::cout << "Usage: nuxsec event <args>\n";
+            std::cout << "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
         }
     });
     return table;

@@ -49,7 +49,7 @@ inline bool is_selection_data_file(const std::string &path)
     return name == "nuselection_data.root";
 }
 
-struct Args
+struct ArtArgs
 {
     std::string art_path;
     Input input;
@@ -58,7 +58,7 @@ struct Args
     SampleIO::BeamMode beam_mode = SampleIO::BeamMode::kUnknown;
 };
 
-inline Args parse_input(const std::string &input)
+inline ArtArgs parse_art_input(const std::string &input)
 {
     std::vector<std::string> fields;
     size_t start = 0;
@@ -79,7 +79,7 @@ inline Args parse_input(const std::string &input)
         throw std::runtime_error("Bad input definition (expected NAME:FILELIST): " + input);
     }
 
-    Args out;
+    ArtArgs out;
     out.input.input_name = fields[0];
     out.input.filelist_path = fields[1];
 
@@ -113,16 +113,16 @@ inline Args parse_input(const std::string &input)
     return out;
 }
 
-inline Args parse_args(const std::vector<std::string> &args, const std::string &usage)
+inline ArtArgs parse_art_args(const std::vector<std::string> &args, const std::string &usage)
 {
     if (args.size() != 1)
     {
         throw std::runtime_error(usage);
     }
 
-    return parse_input(args[0]);
+    return parse_art_input(args[0]);
 }
 
-int run(const Args &art_args, const std::string &log_prefix);
+int run(const ArtArgs &art_args, const std::string &log_prefix);
 
 #endif

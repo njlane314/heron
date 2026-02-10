@@ -1,10 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsecSampleIOdriver.cc
+ *  @file  apps/src/SampleWorkflow.cc
  *
- *  @brief Main entrypoint for Sample aggregation.
+ *  @brief Sample aggregation workflow (invoked by the unified nuxsec CLI).
  */
 
+#include <chrono>
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -12,7 +14,8 @@
 #include "AppUtils.hh"
 #include "SampleCLI.hh"
 #include "StatusMonitor.hh"
-int run(const Args &sample_args, const std::string &log_prefix)
+
+int run(const SampleArgs &sample_args, const std::string &log_prefix)
 {
     const std::string db_path = "/exp/uboone/data/uboonebeam/beamdb/run.db";
     const auto files = read_paths(sample_args.filelist_path);
@@ -22,7 +25,7 @@ int run(const Args &sample_args, const std::string &log_prefix)
     {
         std::filesystem::create_directories(output_path.parent_path());
     }
-    
+
     std::filesystem::path sample_list_path(sample_args.sample_list_path);
     if (!sample_list_path.parent_path().empty())
     {
@@ -37,15 +40,16 @@ int run(const Args &sample_args, const std::string &log_prefix)
         "action=sample_build status=running message=processing");
     SampleIO::Sample sample =
         NormalisationService::build_sample(sample_args.sample_name,
-                                                   files,
-                                                   db_path);
+                                           files,
+                                           db_path);
 
     status_monitor.stop();
 
     const auto end_time = std::chrono::steady_clock::now();
-    const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     log_sample_finish(log_prefix, sample.inputs.size(), elapsed_seconds);
-    
+
     SampleIO::write(sample, sample_args.output_path);
     update_sample_list(sample_args.sample_list_path, sample, sample_args.output_path);
 
@@ -61,18 +65,4 @@ int run(const Args &sample_args, const std::string &log_prefix)
     log_success(log_prefix, log_message.str());
 
     return 0;
-}
-
-int main(int argc, char **argv)
-{
-    return run_guarded(
-        "nuxsecSampleIOdriver",
-        [argc, argv]()
-        {
-            const std::vector<std::string> args = collect_args(argc, argv);
-            const Args sample_args =
-                parse_args(
-                    args, "Usage: nuxsecSampleIOdriver NAME:FILELIST");
-            return run(sample_args, "nuxsecSampleIOdriver");
-        });
 }

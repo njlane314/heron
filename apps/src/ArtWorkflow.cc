@@ -1,19 +1,23 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsecArtFileIOdriver.cc
+ *  @file  apps/src/ArtWorkflow.cc
  *
- *  @brief Main entrypoint for Art file provenance generation.
+ *  @brief Provenance generation workflow (invoked by the unified nuxsec CLI).
  */
 
 #include <chrono>
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include <ROOT/RDataFrame.hxx> // ROOT::EnableImplicitMT
+
 #include "AppUtils.hh"
 #include "ArtCLI.hh"
 #include "StatusMonitor.hh"
-int run(const Args &art_args, const std::string &log_prefix)
+
+int run(const ArtArgs &art_args, const std::string &log_prefix)
 {
     ROOT::EnableImplicitMT();
 
@@ -47,7 +51,8 @@ int run(const Args &art_args, const std::string &log_prefix)
     status_monitor.stop();
 
     const auto end_time = std::chrono::steady_clock::now();
-    const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
+    const double elapsed_seconds =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);
 
     rec.summary.pot_sum *= 1;
@@ -63,19 +68,4 @@ int run(const Args &art_args, const std::string &log_prefix)
     ArtFileProvenanceIO::write(rec, art_args.art_path);
 
     return 0;
-}
-
-int main(int argc, char **argv)
-{
-    return run_guarded(
-        "nuxsecArtFileIOdriver",
-        [argc, argv]()
-        {
-            const std::vector<std::string> args = collect_args(argc, argv);
-            const Args art_args =
-                parse_args(
-                    args,
-                    "Usage: nuxsecArtFileIOdriver INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-            return run(art_args, "nuxsecArtFileIOdriver");
-        });
 }

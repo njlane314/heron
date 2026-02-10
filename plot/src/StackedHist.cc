@@ -50,6 +50,33 @@ void apply_total_errors(TH1D &h, const TMatrixDSym *cov, const std::vector<doubl
     }
 }
 
+double integral_in_visible_range(const TH1D &h, double xmin, double xmax)
+{
+    const TAxis *axis = h.GetXaxis();
+    if (!axis)
+    {
+        return h.Integral();
+    }
+
+    int first_bin = 1;
+    int last_bin = h.GetNbinsX();
+    if (xmin < xmax)
+    {
+        first_bin = std::max(1, axis->FindFixBin(xmin));
+        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
+        if (xmax <= axis->GetBinLowEdge(last_bin))
+        {
+            last_bin = std::max(first_bin, last_bin - 1);
+        }
+    }
+
+    if (first_bin > last_bin)
+    {
+        return 0.0;
+    }
+    return h.Integral(first_bin, last_bin);
+}
+
 
 StackedHist::StackedHist(TH1DModel spec, Options opt, std::vector<const Entry *> mc, std::vector<const Entry *> data)
     : spec_(std::move(spec)),
@@ -168,6 +195,7 @@ void StackedHist::build_histograms()
     mc_total_.reset();
     data_hist_.reset();
     sig_hist_.reset();
+    signal_events_ = 0.0;
     signal_scale_ = 1.0;
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
     const auto &channels = Channels::mc_keys();
@@ -302,7 +330,7 @@ void StackedHist::build_histograms()
 
     if (opt_.overlay_signal && !opt_.signal_channels.empty() && !mc_ch_hists_.empty())
     {
-        double tot_sum = mc_total_ ? mc_total_->Integral() : 0.0;
+        double tot_sum = mc_total_ ? integral_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax) : 0.0;
         auto sig = std::make_unique<TH1D>(*mc_ch_hists_.front());
         sig->Reset();
         for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
@@ -313,7 +341,8 @@ void StackedHist::build_histograms()
                 sig->Add(mc_ch_hists_[i].get());
             }
         }
-        double sig_sum = sig->Integral();
+        signal_events_ = integral_in_visible_range(*sig, spec_.xmin, spec_.xmax);
+        double sig_sum = signal_events_;
         if (sig_sum > 0.0 && tot_sum > 0.0)
         {
             signal_scale_ = tot_sum / sig_sum;
@@ -528,7 +557,12 @@ void StackedHist::draw_legend(TPad *p)
 
     if (sig_hist_)
     {
-        leg->AddEntry(sig_hist_.get(), "Signal", "l");
+        std::ostringstream signal_label;
+        signal_label << "Signal";
+        signal_label << " : "
+                     << Plotter::fmt_commas(signal_events_, 2)
+                     << " (x" << std::fixed << std::setprecision(2) << signal_scale_ << ")";
+        leg->AddEntry(sig_hist_.get(), signal_label.str().c_str(), "l");
     }
 
     if (has_data())

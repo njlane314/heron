@@ -51,7 +51,7 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.pdf")
 {
     gStyle->SetOptStat(0);
 
-    TCanvas canvas("c_legend_only", "Legend only", 500, 125);
+    TCanvas canvas("c_legend_only", "Legend only", 600, 100);
     canvas.SetFillColor(kWhite);
     canvas.SetFrameFillColor(kWhite);
 

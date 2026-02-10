@@ -32,6 +32,7 @@
 #include "ColumnDerivationService.hh"
 #include "EventListIO.hh"
 #include "PlotChannels.hh"
+#include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 
 using namespace nu;

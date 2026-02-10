@@ -312,7 +312,9 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     p_plot.SetTopMargin(0.02);
     p_plot.SetBottomMargin(0.12);
     p_plot.SetLeftMargin(0.15);
-    p_plot.SetRightMargin(0.10);
+    // Leave enough space for the right-hand (efficiency) axis title/labels.
+    // (Too small and ROOT will clip them.)
+    p_plot.SetRightMargin(0.14);
 
     p_leg.Draw();
     p_plot.Draw();
@@ -418,24 +420,32 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         g_scaled.SetMarkerSize(1.6);
         g_scaled.SetLineWidth(2);
 
-        TGaxis axis(p_plot.GetUxmax(), left_min,
-                    p_plot.GetUxmax(), left_max,
-                    eff_min, eff_max, 510, "+L");
-        axis.SetTitle(cfg_.y_eff_title.c_str());
-        axis.SetTitleColor(kRed);
-        axis.SetLabelColor(kRed);
-        axis.SetTitleSize(0.04);
-        axis.SetLabelSize(0.045);
-        axis.SetTitleOffset(1.10);
-        axis.Draw();
+        // IMPORTANT:
+        // ROOT keeps pointers to drawn primitives in the pad. If we draw stack objects
+        // (like TGaxis/TGraphAsymmErrors locals) and they go out of scope before SaveAs(),
+        // the efficiency axis/graph can disappear (or crash). DrawClone() makes the pad
+        // own a heap clone with a safe lifetime.
+        TGaxis axis_tmp(p_plot.GetUxmax(), left_min,
+                        p_plot.GetUxmax(), left_max,
+                        eff_min, eff_max, 510, "+L");
+        axis_tmp.SetTitle(cfg_.y_eff_title.c_str());
+        axis_tmp.SetTitleColor(kRed);
+        axis_tmp.SetLabelColor(kRed);
+        axis_tmp.SetTitleSize(0.04);
+        axis_tmp.SetLabelSize(0.045);
+        axis_tmp.SetTitleOffset(1.10);
+        axis_tmp.DrawClone();
 
-        g_scaled.Draw("P SAME");
-        g_eff_->SetLineColor(kRed);
-        g_eff_->SetMarkerColor(kRed);
-        g_eff_->SetMarkerStyle(5);
-        g_eff_->SetMarkerSize(1.6);
-        g_eff_->SetLineWidth(2);
-        leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "P");
+        auto *g_draw = static_cast<TGraphAsymmErrors *>(g_scaled.DrawClone("P SAME"));
+        if (g_draw != nullptr)
+        {
+            leg.AddEntry(g_draw, cfg_.legend_eff.c_str(), "P");
+        }
+        else
+        {
+            // Fallback (shouldn't happen, but keeps legend sane if DrawClone fails)
+            leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "P");
+        }
     }
     else
     {

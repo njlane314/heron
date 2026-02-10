@@ -23,8 +23,7 @@
 //   - 1D stacked plots follow Plotter/PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
 //   - 2D plots are written explicitly to $NUXSEC_PLOT_DIR (default: ./scratch/plots).
 //
-// If your project uses a different boolean for the global CC0pi selection,
-// change the default `extra_sel` argument below.
+// You may pass an explicit selection expression via `extra_sel`.
 
 #include <algorithm>
 #include <cmath>
@@ -183,8 +182,8 @@ void draw_truth_2d(ROOT::RDF::RNode node,
 } // namespace
 
 int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
-                                      // Set this to your global CC0pi selection boolean if different.
-                                      const std::string &extra_sel = "sel_cc0pi",
+                                      // Optional additional selection expression (e.g. "sel_cc0pi").
+                                      const std::string &extra_sel = "true",
                                       bool make_2d = true)
 {
     if (implicit_mt_enabled())

@@ -153,7 +153,8 @@ int plot_stacked_hist_impl(const std::string &expr,
     opt.beamline = el.beamline_label();
 
     const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-    const TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
+    TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
+    spec.sel = Preset::Empty;
 
     plotter.draw_stack(spec, mc, data);
     return 0;

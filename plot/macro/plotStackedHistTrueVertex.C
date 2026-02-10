@@ -259,22 +259,25 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
                               bool add_leading_empty_bin = false) {
         DynamicAxis axis = build_dynamic_axis(expr, nbins, xmin, xmax);
 
+        std::string draw_expr = expr;
         if (add_leading_empty_bin && axis.nbins > 0)
         {
             const double bin_width = (axis.xmax - axis.xmin) / static_cast<double>(axis.nbins);
-            axis.xmin -= bin_width;
+            axis.xmax += bin_width;
             axis.nbins += 1;
+            draw_expr = "(" + expr + ") + " + std::to_string(bin_width);
         }
 
         opt.x_title = x_title.empty() ? expr : x_title;
         debug_log("drawing start: expr=" + expr +
+                  ", draw_expr=" + draw_expr +
                   ", x_title=" + opt.x_title +
                   ", nbins=" + std::to_string(axis.nbins) +
                   ", xmin=" + std::to_string(axis.xmin) +
                   ", xmax=" + std::to_string(axis.xmax));
 
         const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-        TH1DModel spec = make_spec(expr, axis.nbins, axis.xmin, axis.xmax, weight);
+        TH1DModel spec = make_spec(draw_expr, axis.nbins, axis.xmin, axis.xmax, weight);
         spec.sel = Preset::Empty;
 
         if (include_data)

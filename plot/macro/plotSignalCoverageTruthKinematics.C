@@ -40,7 +40,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH2D.h>
-#include <TLatex.h>
+#include <TPaveText.h>
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TSystem.h>
@@ -136,6 +136,9 @@ void draw_truth_2d(ROOT::RDF::RNode node,
                    const std::string &out_dir,
                    const std::string &out_fmt)
 {
+    const bool use_logz = true;
+    const double logz_min = 0.5;
+
     // Drop NaNs explicitly for both axes.
     ROOT::RDF::RNode n2 = node.Filter(v.x_expr + " == " + v.x_expr)
                              .Filter(v.y_expr + " == " + v.y_expr);
@@ -157,20 +160,31 @@ void draw_truth_2d(ROOT::RDF::RNode node,
 
     TCanvas c(("c2_" + sanitize_for_filename(v.name)).c_str(), "", 900, 750);
     c.SetRightMargin(0.14);
-    c.SetGrid();
+    c.SetLogz(use_logz ? 1 : 0);
 
     const std::string title = ";" + (v.x_title.empty() ? v.x_expr : v.x_title) +
                               ";" + (v.y_title.empty() ? v.y_expr : v.y_title) +
                               ";Events";
     h2->SetTitle(title.c_str());
+    h2->GetXaxis()->SetRangeUser(v.xmin, v.xmax);
+    h2->GetYaxis()->SetRangeUser(v.ymin, v.ymax);
+    if (use_logz)
+        h2->SetMinimum(logz_min);
+
     h2->Draw("COLZ");
 
-    TLatex lat;
-    lat.SetNDC(true);
-    lat.SetTextSize(0.032);
-    std::ostringstream os;
-    os << "Entries: " << n_evt;
-    lat.DrawLatex(0.14, 0.92, os.str().c_str());
+    TPaveText *pt = new TPaveText(0.16, 0.16, 0.50, 0.27, "NDC");
+    pt->SetFillStyle(0);
+    pt->SetBorderSize(0);
+    pt->SetTextAlign(12);
+    pt->SetTextSize(0.034);
+
+    {
+        std::ostringstream os;
+        os << "N = " << static_cast<long long>(h2->GetEntries());
+        pt->AddText(os.str().c_str());
+    }
+    pt->Draw("same");
 
     gSystem->mkdir(out_dir.c_str(), /*recursive=*/true);
 

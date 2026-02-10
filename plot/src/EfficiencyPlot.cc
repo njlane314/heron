@@ -450,7 +450,6 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         axis_tmp.SetTitleColor(kRed);
         axis_tmp.SetLabelColor(kRed);
         axis_tmp.SetLineColor(kRed);
-        axis_tmp.SetAxisColor(kRed);
         axis_tmp.SetTitleSize(0.04);
         axis_tmp.SetLabelSize(0.045);
         axis_tmp.SetTitleOffset(1.10);

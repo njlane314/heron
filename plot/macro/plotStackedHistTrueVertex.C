@@ -151,7 +151,7 @@ int plot_stacked_hist_impl(const std::string &expr,
     opt.legend_on_top = true;
     opt.annotate_numbers = true;
     opt.overlay_signal = true;
-    opt.show_ratio_band = true;
+    opt.show_ratio_band = include_data;
     opt.signal_channels = Channels::signal_keys();
     opt.x_title = x_title.empty() ? expr : x_title;
     opt.y_title = "Events/bin";

@@ -410,6 +410,14 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         }
     }
 
+    if (!opt_.x_title.empty() || !opt_.y_title.empty())
+    {
+        const std::string default_x = !spec_.name.empty() ? spec_.name : spec_.id;
+        const std::string x = opt_.x_title.empty() ? default_x : opt_.x_title;
+        const std::string y = opt_.y_title.empty() ? "Events" : opt_.y_title;
+        stack_->SetTitle((";" + x + ";" + y).c_str());
+    }
+
     stack_->Draw("HIST");
     TH1 *frame = stack_->GetHistogram();
     if (frame)

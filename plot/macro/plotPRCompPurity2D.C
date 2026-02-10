@@ -42,7 +42,6 @@
 #include <TFile.h>
 #include <TH2D.h>
 #include <TLine.h>
-#include <TPaveText.h>
 #include <TPad.h>
 #include <TROOT.h>
 #include <TStyle.h>
@@ -122,9 +121,6 @@ struct PlotCfg
     // Make low-occupancy structure visible.
     bool logz = true;
     double logz_min = 0.5; // must be > 0 for log scale
-
-    // Compact on-plot summary (not at top)
-    bool show_stats_box = true;
 };
 
 std::string finite_pair_sel(const std::string &x, const std::string &y)
@@ -143,8 +139,39 @@ std::string unit_interval_sel(const std::string &x, const std::string &y,
     return os.str();
 }
 
+void print_comp_pur_stats(TH2D &h,
+                          const std::string &label,
+                          const PlotCfg &cfg)
+{
+    const int nx = h.GetNbinsX();
+    const int ny = h.GetNbinsY();
+
+    // Strict ">" behaviour even if cut sits on a bin edge.
+    const int bx = h.GetXaxis()->FindBin(std::nextafter(cfg.cut_comp, cfg.xmax));
+    const int by = h.GetYaxis()->FindBin(std::nextafter(cfg.cut_pur, cfg.ymax));
+
+    const double n_tot = h.Integral(1, nx, 1, ny);
+    const double n_comp = h.Integral(bx, nx, 1, ny);
+    const double n_pur = h.Integral(1, nx, by, ny);
+    const double n_both = h.Integral(bx, nx, by, ny);
+
+    auto pct = [](double num, double den) -> double {
+        return (den > 0.0) ? (100.0 * num / den) : 0.0;
+    };
+
+    std::ostringstream os;
+    os << "[plotPRCompPurity2D] " << label << " comp/pur stats\n";
+    os << "  entries(fills): " << static_cast<long long>(h.GetEntries())
+       << ", sumw(in-range): " << n_tot << "\n";
+
+    os << std::fixed << std::setprecision(1);
+    os << "  comp > " << cfg.cut_comp << ": " << pct(n_comp, n_tot) << "% (sumw=" << n_comp << ")\n";
+    os << "  pur  > " << cfg.cut_pur << ": " << pct(n_pur, n_tot) << "% (sumw=" << n_pur << ")\n";
+    os << "  both: " << pct(n_both, n_tot) << "% (sumw=" << n_both << ")\n";
+    std::cout << os.str();
+}
+
 void draw_comp_pur_hist(TH2D &h,
-                        const std::string &label,
                         const PlotCfg &cfg)
 {
     // Axis labels only (no title text block)
@@ -170,66 +197,14 @@ void draw_comp_pur_hist(TH2D &h,
         TLine *lx = new TLine(cfg.cut_comp, cfg.ymin, cfg.cut_comp, cfg.ymax);
         lx->SetLineStyle(2);
         lx->SetLineWidth(2);
+        lx->SetLineColor(kRed);
         lx->Draw("same");
 
         TLine *ly = new TLine(cfg.xmin, cfg.cut_pur, cfg.xmax, cfg.cut_pur);
         ly->SetLineStyle(2);
         ly->SetLineWidth(2);
+        ly->SetLineColor(kRed);
         ly->Draw("same");
-    }
-
-    // Compact stats box (bottom-left; no top text)
-    if (cfg.show_stats_box)
-    {
-        const int nx = h.GetNbinsX();
-        const int ny = h.GetNbinsY();
-
-        // Strictly ">" cut handling even when cut is exactly on a bin edge.
-        const int bx = h.GetXaxis()->FindBin(std::nextafter(cfg.cut_comp, cfg.xmax));
-        const int by = h.GetYaxis()->FindBin(std::nextafter(cfg.cut_pur, cfg.ymax));
-
-        const double n_tot = h.Integral(1, nx, 1, ny);
-        const double n_comp = h.Integral(bx, nx, 1, ny);   // comp > cut
-        const double n_pur = h.Integral(1, nx, by, ny);    // pur > cut
-        const double n_both = h.Integral(bx, nx, by, ny);  // both
-
-        auto pct = [](double num, double den) -> double {
-            return (den > 0.0) ? (100.0 * num / den) : 0.0;
-        };
-
-        TPaveText *pt = new TPaveText(0.16, 0.16, 0.52, 0.33, "NDC");
-        pt->SetFillStyle(0);
-        pt->SetBorderSize(0);
-        pt->SetTextAlign(12); // left, vertical centre
-        pt->SetTextSize(0.034);
-
-        pt->AddText(label.c_str());
-
-        {
-            std::ostringstream os;
-            os << "N = " << static_cast<long long>(h.GetEntries());
-            pt->AddText(os.str().c_str());
-        }
-        {
-            std::ostringstream os;
-            os << std::fixed << std::setprecision(1)
-               << "comp > " << cfg.cut_comp << ": " << pct(n_comp, n_tot) << "%";
-            pt->AddText(os.str().c_str());
-        }
-        {
-            std::ostringstream os;
-            os << std::fixed << std::setprecision(1)
-               << "pur > " << cfg.cut_pur << ": " << pct(n_pur, n_tot) << "%";
-            pt->AddText(os.str().c_str());
-        }
-        {
-            std::ostringstream os;
-            os << std::fixed << std::setprecision(1)
-               << "both: " << pct(n_both, n_tot) << "%";
-            pt->AddText(os.str().c_str());
-        }
-
-        pt->Draw("same");
     }
 }
 
@@ -248,8 +223,7 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
                        double cut_comp = 0.1,
                        double cut_pur = 0.5,
                        bool filter_unit_interval = true,
-                       bool logz = true,
-                       bool show_stats_box = true)
+                       bool logz = true)
 {
     ROOT::EnableImplicitMT();
 
@@ -313,7 +287,6 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
     cfg.cut_pur = cut_pur;
     cfg.filter_unit_interval = filter_unit_interval;
     cfg.logz = logz;
-    cfg.show_stats_box = show_stats_box;
 
     const std::vector<PartSpec> parts = {
         {"mu", "Muon",   "pr_mu_completeness", "pr_mu_purity"},
@@ -344,10 +317,12 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
                              p.comp, p.pur);
         h2.push_back(hist);
 
+        // Print stats once per particle to terminal (no on-plot box)
+        print_comp_pur_stats(*hist, p.label, cfg);
+
         // Save individual plot
         TCanvas c(("c2_" + p.tag).c_str(), "", 900, 800);
-        c.SetGrid();
-        draw_comp_pur_hist(*hist, p.label, cfg);
+        draw_comp_pur_hist(*hist, cfg);
 
         const std::string out_path = out_dir + "/pr_comp_pur_2d_" + p.tag + "." + out_fmt;
         c.SaveAs(out_path.c_str());
@@ -362,8 +337,7 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
         for (size_t i = 0; i < parts.size(); ++i)
         {
             c_all.cd(static_cast<int>(i) + 1);
-            gPad->SetGrid();
-            draw_comp_pur_hist(*h2[i], parts[i].label, cfg);
+            draw_comp_pur_hist(*h2[i], cfg);
         }
 
         const std::string out_path = out_dir + "/pr_comp_pur_2d_all." + out_fmt;

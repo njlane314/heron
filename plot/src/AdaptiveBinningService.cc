@@ -41,10 +41,10 @@ inline double bin_sumw2(const TH1D &h, int bin)
     // Prefer the real stored sumw2 (true for weighted histograms).
     if (h.GetSumw2N() > 0)
     {
-        const auto &arr = h.GetSumw2();
-        if (bin >= 0 && bin < arr.GetSize())
+        const auto *const p_arr = h.GetSumw2();
+        if (p_arr != NULL && bin >= 0 && bin < p_arr->GetSize())
         {
-            return arr.At(bin);
+            return p_arr->At(bin);
         }
     }
 

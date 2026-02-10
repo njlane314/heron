@@ -399,7 +399,7 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     {
         sig_hist_->Draw("HIST SAME");
     }
-    if (data_hist_)
+    if (has_data())
     {
         data_hist_->Draw("E1 SAME");
     }
@@ -407,7 +407,7 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
 
 void StackedHist::draw_ratio(TPad *p_ratio)
 {
-    if (!p_ratio || !data_hist_ || !mc_total_)
+    if (!p_ratio || !has_data() || !mc_total_)
     {
         return;
     }
@@ -475,7 +475,7 @@ void StackedHist::draw_legend(TPad *p)
     {
         ++n_entries;
     }
-    if (data_hist_)
+    if (has_data())
     {
         ++n_entries;
     }
@@ -530,7 +530,7 @@ void StackedHist::draw_legend(TPad *p)
         leg->AddEntry(sig_hist_.get(), "Signal", "l");
     }
 
-    if (data_hist_)
+    if (has_data())
     {
         leg->AddEntry(data_hist_.get(), "Data", "lep");
     }
@@ -658,7 +658,11 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
     {
         beam_name = first_non_empty(mc_, [](const auto &e) { return e.beamline; });
     }
-    if (beam_name == "numi_fhc")
+    if (beam_name == "numi")
+    {
+        beam_name = "NuMI";
+    }
+    else if (beam_name == "numi_fhc")
     {
         beam_name = "NuMI FHC";
     }

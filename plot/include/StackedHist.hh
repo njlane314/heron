@@ -39,7 +39,8 @@ class StackedHist
     void draw(TCanvas &canvas);
 
   private:
-    bool want_ratio() const { return opt_.show_ratio && data_hist_ && mc_total_; }
+    bool has_data() const { return data_hist_ && data_hist_->GetEntries() > 0.0; }
+    bool want_ratio() const { return opt_.show_ratio && has_data() && mc_total_; }
     void build_histograms();
     void setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p_legend) const;
     void draw_stack_and_unc(TPad *p_main, double &max_y);

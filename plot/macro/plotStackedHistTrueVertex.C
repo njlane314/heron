@@ -59,6 +59,7 @@ int plot_stacked_hist_impl(const std::string &expr,
                            int nbins,
                            double xmin,
                            double xmax,
+                           const std::string &x_title,
                            const std::string &mc_weight,
                            const std::string &extra_sel,
                            bool use_logy)
@@ -144,8 +145,9 @@ int plot_stacked_hist_impl(const std::string &expr,
     opt.legend_on_top = true;
     opt.annotate_numbers = true;
     opt.show_ratio_band = true;
-    opt.x_title = expr;
+    opt.x_title = x_title.empty() ? expr : x_title;
     opt.y_title = "Events";
+    opt.run_numbers = {"1"};
 
     const double pot_data = el.total_pot_data();
     const double pot_mc = el.total_pot_mc();
@@ -171,8 +173,9 @@ int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
     int status = plot_stacked_hist_impl("nu_vtx_z",
                                         samples_tsv,
                                         nbins,
-                                        -20.0,
-                                        1050.0,
+                                        -50.0,
+                                        1100.0,
+                                        "True neutrino vertex z [cm]",
                                         mc_weight,
                                         extra_sel,
                                         use_logy);
@@ -182,8 +185,9 @@ int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
     status = plot_stacked_hist_impl("nu_vtx_x",
                                     samples_tsv,
                                     nbins,
-                                    -10.0,
-                                    270.0,
+                                    -50.0,
+                                    300.0,
+                                    "True neutrino vertex x [cm]",
                                     mc_weight,
                                     extra_sel,
                                     use_logy);
@@ -193,8 +197,9 @@ int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
     return plot_stacked_hist_impl("nu_vtx_y",
                                   samples_tsv,
                                   nbins,
-                                  -150.0,
-                                  150.0,
+                                  -180.0,
+                                  180.0,
+                                  "True neutrino vertex y [cm]",
                                   mc_weight,
                                   extra_sel,
                                   use_logy);

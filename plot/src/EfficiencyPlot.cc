@@ -311,8 +311,9 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     // Too much top margin makes the legend pad look "floaty".
     p_leg.SetTopMargin(0.05);
 
-    // Give some room so axis offsets / exponents never clip at the top.
-    p_plot.SetTopMargin(0.06);
+    // Keep the top gap small so the plot frame sits close to the legend strip.
+    // (Large values create an obvious white band between legend and frame.)
+    p_plot.SetTopMargin(0.02);
     p_plot.SetBottomMargin(0.12);
     p_plot.SetLeftMargin(0.15);
     // Leave enough space for the right-hand (efficiency) axis title/labels.

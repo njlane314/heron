@@ -172,6 +172,10 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     opt.annotate_numbers = true;
     opt.overlay_signal = true;
     opt.show_ratio_band = include_data;
+    opt.adaptive_binning = true;
+    opt.adaptive_min_sumw = 25.0;
+    opt.adaptive_max_relerr = 0.30;
+    opt.adaptive_fold_overflow = true;
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events/bin";
     opt.run_numbers = {"1"};

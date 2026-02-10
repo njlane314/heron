@@ -1,8 +1,8 @@
-// plot/macro/plotStackedHist.C
+// plot/macro/plotStackedHistTrueVertex.C
 //
 // Run with:
-//   ./nuxsec macro plotStackedHist.C
-//   ./nuxsec macro plotStackedHist.C 'plotStackedHist("/path/to/samples.tsv","true",false)'
+//   ./nuxsec macro plotStackedHistTrueVertex.C
+//   ./nuxsec macro plotStackedHistTrueVertex.C 'plotStackedHistTrueVertex("/path/to/samples.tsv","true",false)'
 //
 // Notes:
 //   - This macro loads aggregated samples (samples.tsv -> SampleIO -> original analysis tree)
@@ -66,15 +66,15 @@ int plot_stacked_hist_impl(const std::string &expr,
     ROOT::EnableImplicitMT();
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
-    std::cout << "[plotStackedHist] input=" << list_path << "\n";
+    std::cout << "[plotStackedHistTrueVertex] input=" << list_path << "\n";
 
     if (!looks_like_event_list_root(list_path))
     {
-        std::cerr << "[plotStackedHist] input is not an event list root file: " << list_path << "\n";
+        std::cerr << "[plotStackedHistTrueVertex] input is not an event list root file: " << list_path << "\n";
         return 1;
     }
 
-    std::cout << "[plotStackedHist] mode=event_list\n";
+    std::cout << "[plotStackedHistTrueVertex] mode=event_list\n";
 
     EventListIO el(list_path);
     ROOT::RDataFrame rdf = el.rdf();
@@ -161,36 +161,36 @@ int plot_stacked_hist_impl(const std::string &expr,
 }
 
 
-int plotStackedHist(const std::string &samples_tsv = "",
-                    const std::string &extra_sel = "true",
-                    bool use_logy = false)
+int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
+                              const std::string &extra_sel = "true",
+                              bool use_logy = false)
 {
     const int nbins = 50;
     const std::string mc_weight = "w_nominal";
 
-    int status = plot_stacked_hist_impl("reco_neutrino_vertex_sce_z",
+    int status = plot_stacked_hist_impl("nu_vtx_z",
                                         samples_tsv,
                                         nbins,
-                                        0.0,
-                                        1000.0,
+                                        -20.0,
+                                        1050.0,
                                         mc_weight,
                                         extra_sel,
                                         use_logy);
     if (status != 0)
         return status;
 
-    status = plot_stacked_hist_impl("reco_neutrino_vertex_sce_x",
+    status = plot_stacked_hist_impl("nu_vtx_x",
                                     samples_tsv,
                                     nbins,
-                                    0.0,
-                                    250.0,
+                                    -10.0,
+                                    270.0,
                                     mc_weight,
                                     extra_sel,
                                     use_logy);
     if (status != 0)
         return status;
 
-    return plot_stacked_hist_impl("reco_neutrino_vertex_sce_y",
+    return plot_stacked_hist_impl("nu_vtx_y",
                                   samples_tsv,
                                   nbins,
                                   -150.0,

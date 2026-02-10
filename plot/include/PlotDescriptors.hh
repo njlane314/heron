@@ -58,6 +58,7 @@ struct Options
     bool annotate_numbers = false;
     bool overlay_signal = false;
     bool legend_on_top = false;
+    bool show_legend = true;
     bool show_cuts = false;
     double legend_split = 0.75;
     double y_min = 0.0;

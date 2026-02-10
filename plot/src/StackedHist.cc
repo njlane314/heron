@@ -962,7 +962,10 @@ void StackedHist::draw(TCanvas &canvas)
     draw_stack_and_unc(p_main, max_y);
     draw_cuts(p_main, max_y);
     draw_watermark(p_main, mc_total_ ? mc_total_->Integral() : 0.0);
-    draw_legend(p_legend ? p_legend : p_main);
+    if (opt_.show_legend)
+    {
+        draw_legend(p_legend ? p_legend : p_main);
+    }
     if (want_ratio())
     {
         draw_ratio(p_ratio);

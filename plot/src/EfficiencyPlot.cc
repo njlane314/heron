@@ -308,8 +308,8 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
 
     TCanvas c(("c_" + stem).c_str(), "", 900, 700);
 
-    TPad p_plot("p_plot", "p_plot", 0.0, 0.0, 1.0, 0.85);
-    TPad p_leg("p_leg", "p_leg", 0.0, 0.85, 1.0, 1.0);
+    TPad p_plot("p_plot", "p_plot", 0.0, 0.0, 1.0, 0.88);
+    TPad p_leg("p_leg", "p_leg", 0.0, 0.88, 1.0, 1.0);
 
     p_leg.SetBottomMargin(0.0);
     // Too much top margin makes the legend pad look "floaty".
@@ -317,7 +317,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
 
     // Keep the top gap small so the plot frame sits close to the legend strip.
     // (Large values create an obvious white band between legend and frame.)
-    p_plot.SetTopMargin(0.02);
+    p_plot.SetTopMargin(0.01);
     p_plot.SetBottomMargin(0.12);
     p_plot.SetLeftMargin(0.15);
     // Leave enough space for the right-hand (efficiency) axis title/labels.
@@ -385,7 +385,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         if (!cfg_.logy)
         {
             const double ymax = std::max(1.0, hs.GetMaximum("nostack"));
-            hs.SetMaximum(1.25 * ymax);
+            hs.SetMaximum(1.20 * ymax);
             hs.SetMinimum(0.0);
         }
         else

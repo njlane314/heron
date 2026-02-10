@@ -35,7 +35,10 @@
 namespace nu
 {
 
-void apply_total_errors(TH1D &h, const TMatrixDSym *cov, const std::vector<double> *syst_bin)
+void apply_total_errors(TH1D &h,
+                        const TMatrixDSym *cov,
+                        const std::vector<double> *syst_bin,
+                        bool density_mode)
 {
     const int nb = h.GetNbinsX();
     for (int i = 1; i <= nb; ++i)
@@ -50,6 +53,20 @@ void apply_total_errors(TH1D &h, const TMatrixDSym *cov, const std::vector<doubl
         {
             syst = std::max(0.0, (*syst_bin)[i - 1]);
         }
+
+        // If the histogram content has been scaled to a density (events / unit-x)
+        // via h.Scale(1, "width"), then the systematic uncertainties must be put
+        // in the same units. For diagonal-only usage, that is a 1/width factor.
+        // (Full covariance needs V'_{ij} = V_{ij} / (w_i w_j).)
+        if (density_mode)
+        {
+            const double w = h.GetXaxis() ? h.GetXaxis()->GetBinWidth(i) : 0.0;
+            if (w > 0.0)
+            {
+                syst /= w;
+            }
+        }
+
         const double tot = std::sqrt(stat * stat + syst * syst);
         h.SetBinError(i, tot);
     }
@@ -269,6 +286,9 @@ void StackedHist::build_histograms()
     ratio_band_.reset();
     signal_events_ = 0.0;
     signal_scale_ = 1.0;
+    chan_event_yields_.clear();
+    total_mc_events_ = 0.0;
+    density_mode_ = false;
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
     const auto &channels = Channels::mc_keys();
     const auto cfg = AdaptiveBinningService::config_from(opt_);
@@ -394,6 +414,7 @@ void StackedHist::build_histograms()
     });
 
     chan_order_.clear();
+    chan_event_yields_.clear();
     for (auto &cy : yields)
     {
         const int ch = cy.first;
@@ -410,6 +431,7 @@ void StackedHist::build_histograms()
         stack_->Add(sum.get(), "HIST");
         mc_ch_hists_.push_back(std::move(sum));
         chan_order_.push_back(ch);
+        chan_event_yields_.push_back(cy.second); // pre-density event yield
     }
 
     for (auto &uptr : mc_ch_hists_)
@@ -424,6 +446,9 @@ void StackedHist::build_histograms()
             mc_total_->Add(uptr.get());
         }
     }
+
+    // Cache the event-count total before any density scaling.
+    total_mc_events_ = mc_total_ ? mc_total_->Integral() : 0.0;
 
     if (!data_.empty())
     {
@@ -493,6 +518,30 @@ void StackedHist::build_histograms()
         sig->SetFillStyle(0);
         sig_hist_ = std::move(sig);
     }
+
+    // ---- If we used adaptive edges, the bin widths are generally not uniform.
+    // Plot densities (events / unit-x) so bar heights are comparable across bins.
+    //
+    // NOTE: This changes histogram units; any later error model must match those units.
+    const bool do_density = (cfg.enabled && adaptive_edges.size() >= 2);
+    if (do_density)
+    {
+        auto scale_width = [](TH1D &h) { h.Scale(1.0, "width"); };
+
+        for (auto &h : mc_ch_hists_)
+        {
+            if (h)
+                scale_width(*h);
+        }
+        if (mc_total_)
+            scale_width(*mc_total_);
+        if (data_hist_)
+            scale_width(*data_hist_);
+        if (sig_hist_)
+            scale_width(*sig_hist_);
+
+        density_mode_ = true;
+    }
 }
 
 void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
@@ -550,7 +599,8 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     {
         if (opt_.total_cov || !opt_.syst_bin.empty())
         {
-            apply_total_errors(*mc_total_, opt_.total_cov.get(), opt_.syst_bin.empty() ? nullptr : &opt_.syst_bin);
+            apply_total_errors(*mc_total_, opt_.total_cov.get(),
+                               opt_.syst_bin.empty() ? nullptr : &opt_.syst_bin, density_mode_);
         }
 
         max_y = maximum_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax, true);
@@ -687,7 +737,17 @@ void StackedHist::draw_legend(TPad *p)
     for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
     {
         int ch = chan_order_.at(i);
-        double sum = mc_ch_hists_[i]->Integral();
+        double sum = 0.0;
+        if (i < chan_event_yields_.size())
+        {
+            sum = chan_event_yields_[i];
+        }
+        else if (mc_ch_hists_[i])
+        {
+            // Fallback if yields were not cached for some reason.
+            // If density_mode_ is true, Integral("width") restores event counts.
+            sum = density_mode_ ? mc_ch_hists_[i]->Integral("width") : mc_ch_hists_[i]->Integral();
+        }
         std::string label = Channels::label(ch);
         if (label == "#emptyset")
         {
@@ -966,7 +1026,7 @@ void StackedHist::draw(TCanvas &canvas)
     double max_y = 1.;
     draw_stack_and_unc(p_main, max_y);
     draw_cuts(p_main, max_y);
-    draw_watermark(p_main, mc_total_ ? mc_total_->Integral() : 0.0);
+    draw_watermark(p_main, total_mc_events_);
     if (opt_.show_legend)
     {
         draw_legend(p_legend ? p_legend : p_main);

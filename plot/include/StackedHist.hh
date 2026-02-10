@@ -63,6 +63,12 @@ class StackedHist
     std::unique_ptr<TH1D> ratio_hist_;
     std::unique_ptr<TH1D> ratio_band_;
     std::vector<int> chan_order_;
+    // When we draw variable-width bins as a density (Scale("width")), TH1::Integral()
+    // no longer returns an event count. Keep the pre-density yields around for legend
+    // and watermark text.
+    std::vector<double> chan_event_yields_; // aligned with mc_ch_hists_/chan_order_
+    double total_mc_events_ = 0.0;          // event count (pre-density scaling)
+    bool density_mode_ = false;             // true if we applied Scale("width")
     double signal_events_ = 0.0;
     double signal_scale_ = 1.0;
     mutable std::vector<std::unique_ptr<TH1D>> legend_proxies_;

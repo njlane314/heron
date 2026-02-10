@@ -197,7 +197,7 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     opt.adaptive_max_relerr = 0.07;
     opt.adaptive_fold_overflow = true;
     opt.signal_channels = Channels::signal_keys();
-    opt.y_title = "Events/bin";
+    opt.y_title = "Events/cm";
     opt.run_numbers = {"1"};
     opt.image_format = "pdf";
 

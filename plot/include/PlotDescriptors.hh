@@ -79,8 +79,7 @@ struct Options
     bool adaptive_binning = false;
     double adaptive_min_sumw = 0.0;     // Wmin (<=0 disables this requirement)
     double adaptive_max_relerr = 0.0;   // relErrMax (<=0 disables this requirement)
-    bool adaptive_fold_overflow = true; // fold under/overflow into first/last in-range bins
-    bool adaptive_keep_edge_bins = false; // keep first/last fine bins when building adaptive edges
+    bool adaptive_fold_overflow = true; // fold under/overflow before edge-making + rebin
 };
 
 struct TH1DModel

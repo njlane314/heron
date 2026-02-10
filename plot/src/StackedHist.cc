@@ -28,158 +28,12 @@
 #include "TList.h"
 #include "TMatrixDSym.h"
 
+#include "AdaptiveBinningService.hh"
 #include "PlotChannels.hh"
 #include "Plotter.hh"
 
 namespace
 {
-
-constexpr double kEdgeEps = 1e-12;
-
-void fold_overflow_into_edges(TH1D &h)
-{
-    const int nb = h.GetNbinsX();
-
-    // Underflow -> first bin
-    {
-        const double c0 = h.GetBinContent(0);
-        const double e0 = h.GetBinError(0);
-        const double c1 = h.GetBinContent(1);
-        const double e1 = h.GetBinError(1);
-        h.SetBinContent(1, c1 + c0);
-        h.SetBinError(1, std::hypot(e1, e0));
-        h.SetBinContent(0, 0.0);
-        h.SetBinError(0, 0.0);
-    }
-
-    // Overflow -> last bin
-    {
-        const double co = h.GetBinContent(nb + 1);
-        const double eo = h.GetBinError(nb + 1);
-        const double cn = h.GetBinContent(nb);
-        const double en = h.GetBinError(nb);
-        h.SetBinContent(nb, cn + co);
-        h.SetBinError(nb, std::hypot(en, eo));
-        h.SetBinContent(nb + 1, 0.0);
-        h.SetBinError(nb + 1, 0.0);
-    }
-}
-
-std::vector<double> make_minstat_edges(const TH1D &h,
-                                       double wmin,
-                                       double relerrMax,
-                                       bool keep_edge_bins)
-{
-    std::vector<double> edges;
-    const int nb = h.GetNbinsX();
-    const auto *ax = h.GetXaxis();
-
-    if (nb <= 0)
-    {
-        edges.push_back(ax->GetXmin());
-        edges.push_back(ax->GetXmax());
-        return edges;
-    }
-
-    edges.reserve(nb + 1);
-    edges.push_back(ax->GetBinLowEdge(1));
-
-    int first_merge_bin = 1;
-    int last_merge_bin = nb;
-
-    if (keep_edge_bins && nb >= 3)
-    {
-        edges.push_back(ax->GetBinUpEdge(1));
-        first_merge_bin = 2;
-        last_merge_bin = nb - 1;
-    }
-
-    double sumw = 0.0;
-    double sumw2 = 0.0;
-
-    const bool use_wmin = (wmin > 0.0);
-    const bool use_relerr = (relerrMax > 0.0);
-
-    for (int i = first_merge_bin; i <= last_merge_bin; ++i)
-    {
-        const double w = h.GetBinContent(i);
-        const double e = h.GetBinError(i);
-        sumw += w;
-        sumw2 += e * e;
-
-        const double denom = std::abs(sumw);
-
-        const bool pass_w = (!use_wmin) ? true : (denom >= wmin);
-        const bool pass_re = (!use_relerr) ? true
-                                           : (denom > 0.0 && std::sqrt(sumw2) / denom <= relerrMax);
-
-        if (pass_w && pass_re)
-        {
-            const double up = ax->GetBinUpEdge(i);
-            if (edges.empty() || up > edges.back() + kEdgeEps)
-            {
-                edges.push_back(up);
-            }
-            sumw = 0.0;
-            sumw2 = 0.0;
-        }
-    }
-
-    if (keep_edge_bins && nb >= 3)
-    {
-        const double last_low = ax->GetBinLowEdge(nb);
-        if (edges.empty() || last_low > edges.back() + kEdgeEps)
-        {
-            edges.push_back(last_low);
-        }
-    }
-
-    // Ensure we end exactly at xmax
-    const double xmax = ax->GetBinUpEdge(nb);
-    if (edges.empty() || xmax > edges.back() + kEdgeEps)
-    {
-        edges.push_back(xmax);
-    }
-
-    // De-dup in case of numerical weirdness
-    edges.erase(std::unique(edges.begin(), edges.end(), [](double a, double b) { return std::abs(a - b) <= kEdgeEps; }),
-                edges.end());
-
-    if (edges.size() < 2)
-    {
-        edges.clear();
-        edges.push_back(ax->GetXmin());
-        edges.push_back(ax->GetXmax());
-    }
-
-    return edges;
-}
-
-std::unique_ptr<TH1D> rebin_to_edges(const TH1D &h, const std::vector<double> &edges, const std::string &new_name)
-{
-    // If no edges provided, just clone.
-    if (edges.size() < 2)
-    {
-        auto out = std::unique_ptr<TH1D>(static_cast<TH1D *>(h.Clone(new_name.c_str())));
-        out->SetDirectory(nullptr);
-        return out;
-    }
-
-    // Rebin is non-const, so operate on a detached clone.
-    auto tmp = std::unique_ptr<TH1D>(static_cast<TH1D *>(h.Clone((new_name + "_tmp").c_str())));
-    tmp->SetDirectory(nullptr);
-    if (tmp->GetSumw2N() == 0)
-    {
-        tmp->Sumw2(kTRUE);
-    }
-
-    const int nnew = static_cast<int>(edges.size()) - 1;
-    auto *reb = tmp->Rebin(nnew, new_name.c_str(), edges.data());
-    auto out = std::unique_ptr<TH1D>(static_cast<TH1D *>(reb));
-    out->SetDirectory(nullptr);
-    return out;
-}
-
 void log_adaptive_bin_widths(const std::string &hist_id,
                              const std::vector<double> &edges)
 {
@@ -494,38 +348,25 @@ void StackedHist::build_histograms()
 
     // ---- Adaptive min-stat-per-bin rebin (derived from TOTAL MC) ----
     std::vector<double> adaptive_edges;
-    if (opt_.adaptive_binning && !sum_by_channel.empty())
+    const auto cfg = AdaptiveBinningService::config_from(opt_);
+    if (cfg.enabled && !sum_by_channel.empty())
     {
-        std::unique_ptr<TH1D> mc_tot;
+        std::vector<const TH1D *> parts;
+        parts.reserve(sum_by_channel.size());
         for (auto &kv : sum_by_channel)
         {
-            if (!kv.second)
+            if (kv.second)
             {
-                continue;
-            }
-
-            if (!mc_tot)
-            {
-                mc_tot.reset(static_cast<TH1D *>(kv.second->Clone((spec_.id + "_mc_total_fine").c_str())));
-                mc_tot->SetDirectory(nullptr);
-            }
-            else
-            {
-                mc_tot->Add(kv.second.get());
+                parts.push_back(kv.second.get());
             }
         }
 
-        if (mc_tot)
-        {
-            if (opt_.adaptive_fold_overflow)
-            {
-                fold_overflow_into_edges(*mc_tot);
-            }
+        auto mc_tot_fine = AdaptiveBinningService::instance().sum_hists(
+            parts, spec_.id + "_mc_total_fine_for_binning", cfg.fold_overflow);
 
-            adaptive_edges = make_minstat_edges(*mc_tot,
-                                                opt_.adaptive_min_sumw,
-                                                opt_.adaptive_max_relerr,
-                                                opt_.adaptive_keep_edge_bins);
+        if (mc_tot_fine)
+        {
+            adaptive_edges = AdaptiveBinningService::instance().edges_min_stat(*mc_tot_fine, cfg);
 
             log_adaptive_bin_widths(spec_.id, adaptive_edges);
 
@@ -538,14 +379,11 @@ void StackedHist::build_histograms()
                         continue;
                     }
 
-                    if (opt_.adaptive_fold_overflow)
-                    {
-                        fold_overflow_into_edges(*kv.second);
-                    }
-
-                    kv.second = rebin_to_edges(*kv.second,
-                                               adaptive_edges,
-                                               spec_.id + "_mc_sum_ch" + std::to_string(kv.first) + "_rebin");
+                    kv.second = AdaptiveBinningService::instance().rebin_to_edges(
+                        *kv.second,
+                        adaptive_edges,
+                        spec_.id + "_mc_sum_ch" + std::to_string(kv.first) + "_rebin",
+                        cfg.fold_overflow);
                 }
             }
         }
@@ -633,12 +471,9 @@ void StackedHist::build_histograms()
         }
         if (data_hist_ && !adaptive_edges.empty())
         {
-            if (opt_.adaptive_fold_overflow)
-            {
-                fold_overflow_into_edges(*data_hist_);
-            }
-
-            data_hist_ = rebin_to_edges(*data_hist_, adaptive_edges, (spec_.id + "_data_rebin"));
+            const auto cfg2 = AdaptiveBinningService::config_from(opt_);
+            data_hist_ = AdaptiveBinningService::instance().rebin_to_edges(
+                *data_hist_, adaptive_edges, spec_.id + "_data_rebin", cfg2.fold_overflow);
         }
         if (data_hist_)
         {

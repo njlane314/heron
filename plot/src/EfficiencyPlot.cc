@@ -339,7 +339,7 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     {
         p_plot.SetLogy(true);
     }
-    p_plot.SetGrid(0, 1);
+    p_plot.SetGrid(0, 0);
 
     std::unique_ptr<TH1D> h_tot_draw(static_cast<TH1D *>(h_total_->Clone("h_tot_draw")));
     std::unique_ptr<TH1D> h_pas_draw(h_passed_ ? static_cast<TH1D *>(h_passed_->Clone("h_pas_draw")) : nullptr);

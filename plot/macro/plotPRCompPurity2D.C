@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -40,8 +41,8 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH2D.h>
-#include <TLatex.h>
 #include <TLine.h>
+#include <TPaveText.h>
 #include <TPad.h>
 #include <TROOT.h>
 #include <TStyle.h>
@@ -117,6 +118,13 @@ struct PlotCfg
 
     // Require values to be in [0,1]? (filters out sentinel values like -999)
     bool filter_unit_interval = true;
+
+    // Make low-occupancy structure visible.
+    bool logz = true;
+    double logz_min = 0.5; // must be > 0 for log scale
+
+    // Compact on-plot summary (not at top)
+    bool show_stats_box = true;
 };
 
 std::string finite_pair_sel(const std::string &x, const std::string &y)
@@ -139,14 +147,21 @@ void draw_comp_pur_hist(TH2D &h,
                         const std::string &label,
                         const PlotCfg &cfg)
 {
-    // Ensure consistent labeling
-    h.SetTitle((";" + std::string("Completeness") + ";" + std::string("Purity")).c_str());
+    // Axis labels only (no title text block)
+    h.SetTitle(";Completeness;Purity");
     h.GetXaxis()->SetRangeUser(cfg.xmin, cfg.xmax);
     h.GetYaxis()->SetRangeUser(cfg.ymin, cfg.ymax);
+    h.GetZaxis()->SetTitle("Events");
 
     // Make the color bar fit
     if (gPad)
+    {
         gPad->SetRightMargin(0.14);
+        gPad->SetLogz(cfg.logz ? 1 : 0);
+    }
+
+    if (cfg.logz)
+        h.SetMinimum(cfg.logz_min);
 
     h.Draw("COLZ");
 
@@ -163,21 +178,59 @@ void draw_comp_pur_hist(TH2D &h,
         ly->Draw("same");
     }
 
-    // Annotations
-    TLatex lat;
-    lat.SetNDC(true);
+    // Compact stats box (bottom-left; no top text)
+    if (cfg.show_stats_box)
+    {
+        const int nx = h.GetNbinsX();
+        const int ny = h.GetNbinsY();
 
-    lat.SetTextSize(0.045);
-    lat.DrawLatex(0.14, 0.93, (label + " completeness vs purity").c_str());
+        // Strictly ">" cut handling even when cut is exactly on a bin edge.
+        const int bx = h.GetXaxis()->FindBin(std::nextafter(cfg.cut_comp, cfg.xmax));
+        const int by = h.GetYaxis()->FindBin(std::nextafter(cfg.cut_pur, cfg.ymax));
 
-    lat.SetTextSize(0.035);
-    std::ostringstream os1;
-    os1 << "Entries: " << static_cast<long long>(h.GetEntries());
-    lat.DrawLatex(0.14, 0.88, os1.str().c_str());
+        const double n_tot = h.Integral(1, nx, 1, ny);
+        const double n_comp = h.Integral(bx, nx, 1, ny);   // comp > cut
+        const double n_pur = h.Integral(1, nx, by, ny);    // pur > cut
+        const double n_both = h.Integral(bx, nx, by, ny);  // both
 
-    std::ostringstream os2;
-    os2 << "Guides: comp > " << cfg.cut_comp << ", pur > " << cfg.cut_pur;
-    lat.DrawLatex(0.14, 0.84, os2.str().c_str());
+        auto pct = [](double num, double den) -> double {
+            return (den > 0.0) ? (100.0 * num / den) : 0.0;
+        };
+
+        TPaveText *pt = new TPaveText(0.16, 0.16, 0.52, 0.33, "NDC");
+        pt->SetFillStyle(0);
+        pt->SetBorderSize(0);
+        pt->SetTextAlign(12); // left, vertical centre
+        pt->SetTextSize(0.034);
+
+        pt->AddText(label.c_str());
+
+        {
+            std::ostringstream os;
+            os << "N = " << static_cast<long long>(h.GetEntries());
+            pt->AddText(os.str().c_str());
+        }
+        {
+            std::ostringstream os;
+            os << std::fixed << std::setprecision(1)
+               << "comp > " << cfg.cut_comp << ": " << pct(n_comp, n_tot) << "%";
+            pt->AddText(os.str().c_str());
+        }
+        {
+            std::ostringstream os;
+            os << std::fixed << std::setprecision(1)
+               << "pur > " << cfg.cut_pur << ": " << pct(n_pur, n_tot) << "%";
+            pt->AddText(os.str().c_str());
+        }
+        {
+            std::ostringstream os;
+            os << std::fixed << std::setprecision(1)
+               << "both: " << pct(n_both, n_tot) << "%";
+            pt->AddText(os.str().c_str());
+        }
+
+        pt->Draw("same");
+    }
 }
 
 } // namespace
@@ -194,7 +247,9 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
                        int nbins = 60,
                        double cut_comp = 0.1,
                        double cut_pur = 0.5,
-                       bool filter_unit_interval = true)
+                       bool filter_unit_interval = true,
+                       bool logz = true,
+                       bool show_stats_box = true)
 {
     ROOT::EnableImplicitMT();
 
@@ -257,6 +312,8 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
     cfg.cut_comp = cut_comp;
     cfg.cut_pur = cut_pur;
     cfg.filter_unit_interval = filter_unit_interval;
+    cfg.logz = logz;
+    cfg.show_stats_box = show_stats_box;
 
     const std::vector<PartSpec> parts = {
         {"mu", "Muon",   "pr_mu_completeness", "pr_mu_purity"},

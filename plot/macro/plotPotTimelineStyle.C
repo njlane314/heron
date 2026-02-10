@@ -640,20 +640,6 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
     const Int_t col_fhc   = TColor::GetColor("#ffb300"); // amber
     const Int_t col_rhc   = TColor::GetColor("#d81b60"); // magenta-ish
 
-    auto style_line = [](TGraph &g, Int_t col, Int_t lstyle, Int_t lwidth)
-    {
-        g.SetLineColor(col);
-        g.SetLineStyle(lstyle);
-        g.SetLineWidth(lwidth);
-    };
-    auto style_points = [](TGraph &g, Int_t col, Int_t mstyle, double msize)
-    {
-        g.SetLineColor(col);
-        g.SetMarkerColor(col);
-        g.SetMarkerStyle(mstyle);
-        g.SetMarkerSize(msize);
-    };
-
     // Distinct line styles (and matching outlines) so beam modes remain readable
     // with the black underlay.
     const Int_t ls_total = 1; // solid
@@ -673,15 +659,31 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
     TGraph g_fhc_outline(d.x_step.size(), d.x_step.data(), d.y_fhc.data());
     TGraph g_rhc_outline(d.x_step.size(), d.x_step.data(), d.y_rhc.data());
 
-    style_line(g_total_outline, kBlack, ls_total, 3);
-    style_line(g_bnb_outline,   kBlack, ls_bnb,   3);
-    style_line(g_fhc_outline,   kBlack, ls_fhc,   3);
-    style_line(g_rhc_outline,   kBlack, ls_rhc,   3);
+    g_total_outline.SetLineColor(kBlack);
+    g_total_outline.SetLineStyle(ls_total);
+    g_total_outline.SetLineWidth(3);
+    g_bnb_outline.SetLineColor(kBlack);
+    g_bnb_outline.SetLineStyle(ls_bnb);
+    g_bnb_outline.SetLineWidth(3);
+    g_fhc_outline.SetLineColor(kBlack);
+    g_fhc_outline.SetLineStyle(ls_fhc);
+    g_fhc_outline.SetLineWidth(3);
+    g_rhc_outline.SetLineColor(kBlack);
+    g_rhc_outline.SetLineStyle(ls_rhc);
+    g_rhc_outline.SetLineWidth(3);
 
-    style_line(g_total, col_total, ls_total, 2);
-    style_line(g_bnb,   col_bnb,   ls_bnb,   2);
-    style_line(g_fhc,   col_fhc,   ls_fhc,   2);
-    style_line(g_rhc,   col_rhc,   ls_rhc,   2);
+    g_total.SetLineColor(col_total);
+    g_total.SetLineStyle(ls_total);
+    g_total.SetLineWidth(2);
+    g_bnb.SetLineColor(col_bnb);
+    g_bnb.SetLineStyle(ls_bnb);
+    g_bnb.SetLineWidth(2);
+    g_fhc.SetLineColor(col_fhc);
+    g_fhc.SetLineStyle(ls_fhc);
+    g_fhc.SetLineWidth(2);
+    g_rhc.SetLineColor(col_rhc);
+    g_rhc.SetLineStyle(ls_rhc);
+    g_rhc.SetLineWidth(2);
 
     g_total_outline.Draw("L SAME");
     g_bnb_outline.Draw("L SAME");
@@ -698,9 +700,18 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
     TGraph gp_fhc(d.x_pow_fhc.size(), d.x_pow_fhc.data(), d.y_pow_fhc_scaled.data());
     TGraph gp_rhc(d.x_pow_rhc.size(), d.x_pow_rhc.data(), d.y_pow_rhc_scaled.data());
 
-    style_points(gp_bnb, col_bnb, 24, 0.65); // open markers read better over run bands
-    style_points(gp_fhc, col_fhc, 25, 0.65);
-    style_points(gp_rhc, col_rhc, 26, 0.65);
+    gp_bnb.SetLineColor(col_bnb);
+    gp_bnb.SetMarkerColor(col_bnb);
+    gp_bnb.SetMarkerStyle(24); // open markers read better over run bands
+    gp_bnb.SetMarkerSize(0.65);
+    gp_fhc.SetLineColor(col_fhc);
+    gp_fhc.SetMarkerColor(col_fhc);
+    gp_fhc.SetMarkerStyle(25);
+    gp_fhc.SetMarkerSize(0.65);
+    gp_rhc.SetLineColor(col_rhc);
+    gp_rhc.SetMarkerColor(col_rhc);
+    gp_rhc.SetMarkerStyle(26);
+    gp_rhc.SetMarkerSize(0.65);
 
     gp_bnb.Draw("P SAME");
     gp_fhc.Draw("P SAME");

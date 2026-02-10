@@ -38,6 +38,7 @@
 #include <TSystem.h>
 
 #include "EventListIO.hh"
+#include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 
 using namespace nu;
@@ -241,7 +242,7 @@ int plotPREffVsNeutrinoKinematics(const std::string &samples_tsv = "",
     auto mask_ext = el.mask_for_ext();
     auto mask_mc = el.mask_for_mc_like();
 
-    auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
+    auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) -> ROOT::RDF::RNode {
         if (!mask)
             return n;
         return n.Filter(

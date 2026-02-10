@@ -408,8 +408,12 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
 
     if (cfg_.draw_distributions)
     {
-        const double left_min = p_plot.GetUymin();
-        const double left_max = p_plot.GetUymax();
+        // Anchor the right-hand axis to the histogram axis limits rather than pad
+        // user coordinates so the red axis always spans the full frame height.
+        // (Using GetUymin/GetUymax can yield a shorter axis after ROOT applies
+        // internal padding/scaling.)
+        const double left_min = hs.GetMinimum("nostack");
+        const double left_max = hs.GetMaximum("nostack");
 
         double eff_min = cfg_.eff_ymin;
         double eff_max = cfg_.eff_ymax;

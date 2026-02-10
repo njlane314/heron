@@ -290,9 +290,9 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     };
 
     const int nbins = 50;
-    draw_one("nu_vtx_z", nbins, -50.0, 1100.0, "True neutrino vertex z [cm]");
+    draw_one("nu_vtx_z", nbins, -50.0, 1100.0, "True neutrino vertex z [cm]", true);
     draw_one("nu_vtx_x", nbins, -50.0, 300.0, "True neutrino vertex x [cm]", true);
-    draw_one("nu_vtx_y", nbins, -180.0, 180.0, "True neutrino vertex y [cm]");
+    draw_one("nu_vtx_y", nbins, -180.0, 180.0, "True neutrino vertex y [cm]", true);
 
     debug_log("completed all draw calls");
     return 0;

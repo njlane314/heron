@@ -339,6 +339,12 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
     {
         p_plot.SetLogy(true);
     }
+
+    // Keep left-axis exponent text clear of the legend pad boundary.
+    // ROOT draws exponents near the frame corner by default, which can make
+    // "#times10^{n}" appear clipped when the top plot margin is tight.
+    TGaxis::SetExponentOffset(-0.055, 0.02, "y");
+
     // Disable mirrored right-hand ticks from the primary (black) y-axis.
     // The dedicated red efficiency axis is drawn explicitly on the right.
     p_plot.SetTicky(0);

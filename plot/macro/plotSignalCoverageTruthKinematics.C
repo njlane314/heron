@@ -130,6 +130,13 @@ struct Var2D
     std::string y_title;
 };
 
+struct DynamicAxis
+{
+    int nbins = 30;
+    double xmin = 0.0;
+    double xmax = 1.0;
+};
+
 void draw_truth_2d(ROOT::RDF::RNode node,
                    const Var2D &v,
                    const std::string &weight,
@@ -274,7 +281,7 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
     opt.overlay_signal = true;
     opt.show_ratio = false;
     opt.show_ratio_band = false;
-    opt.adaptive_binning = false;          // fixed binning (paper wants common binning)
+    opt.adaptive_binning = true;
     opt.adaptive_fold_overflow = true;
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events/bin";
@@ -296,12 +303,50 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
         {"truth_W",    "kin_W",  30, 0.0, 5.0,  "True W [GeV]"},
     };
 
+    const auto build_dynamic_axis = [&](const std::string &expr,
+                                        int fallback_nbins,
+                                        double fallback_xmin,
+                                        double fallback_xmax) {
+        DynamicAxis out;
+        out.nbins = fallback_nbins;
+        out.xmin = fallback_xmin;
+        out.xmax = fallback_xmax;
+
+        const auto n_evt = e_mc.selection.nominal.node.Count().GetValue();
+        if (n_evt == 0)
+        {
+            return out;
+        }
+
+        const double global_min = static_cast<double>(e_mc.selection.nominal.node.Min(expr).GetValue());
+        const double global_max = static_cast<double>(e_mc.selection.nominal.node.Max(expr).GetValue());
+        if (!std::isfinite(global_min) || !std::isfinite(global_max) || global_max <= global_min)
+        {
+            return out;
+        }
+
+        const double fallback_span = std::max(1.0, fallback_xmax - fallback_xmin);
+        const double nominal_fine_width = fallback_span / static_cast<double>(fallback_nbins);
+        const double span = std::max(nominal_fine_width, global_max - global_min);
+
+        int dynamic_nbins = static_cast<int>(std::ceil(span / nominal_fine_width)) + 2;
+        dynamic_nbins = std::max(12, dynamic_nbins);
+        out.nbins = dynamic_nbins;
+
+        const double padded_width = span / static_cast<double>(std::max(1, dynamic_nbins - 2));
+        out.xmin = global_min - padded_width;
+        out.xmax = global_max + padded_width;
+
+        return out;
+    };
+
     for (const auto &v : vars_1d)
     {
+        const DynamicAxis axis = build_dynamic_axis(v.expr, v.nbins, v.xmin, v.xmax);
         opt.x_title = v.x_title.empty() ? v.expr : v.x_title;
 
         // `make_spec(name, ...)` controls plot/hist naming; `spec.expr` controls what is drawn.
-        TH1DModel spec = make_spec(v.name, v.nbins, v.xmin, v.xmax, weight);
+        TH1DModel spec = make_spec(v.name, axis.nbins, axis.xmin, axis.xmax, weight);
         spec.expr = v.expr;
         spec.sel = Preset::Empty;
 

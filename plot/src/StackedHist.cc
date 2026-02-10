@@ -168,7 +168,10 @@ std::unique_ptr<TH1D> rebin_to_edges(const TH1D &h, const std::vector<double> &e
     // Rebin is non-const, so operate on a detached clone.
     auto tmp = std::unique_ptr<TH1D>(static_cast<TH1D *>(h.Clone((new_name + "_tmp").c_str())));
     tmp->SetDirectory(nullptr);
-    tmp->Sumw2(kTRUE);
+    if (tmp->GetSumw2N() == 0)
+    {
+        tmp->Sumw2(kTRUE);
+    }
 
     const int nnew = static_cast<int>(edges.size()) - 1;
     auto *reb = tmp->Rebin(nnew, new_name.c_str(), edges.data());

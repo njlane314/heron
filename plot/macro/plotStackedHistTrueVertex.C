@@ -176,8 +176,8 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     opt.overlay_signal = true;
     opt.show_ratio_band = include_data;
     opt.adaptive_binning = true;
-    opt.adaptive_min_sumw = 25.0;
-    opt.adaptive_max_relerr = 0.30;
+    opt.adaptive_min_sumw = 150.0;
+    opt.adaptive_max_relerr = 0.20;
     opt.adaptive_fold_overflow = true;
     opt.adaptive_keep_edge_bins = true;
     opt.signal_channels = Channels::signal_keys();

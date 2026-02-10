@@ -361,7 +361,7 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     {
         frame->GetXaxis()->SetNdivisions(510);
         frame->GetXaxis()->SetTickLength(0.02);
-        frame->GetXaxis()->CenterTitle(true);
+        frame->GetXaxis()->CenterTitle(false);
         if (!opt_.x_title.empty())
         {
             frame->GetXaxis()->SetTitle(opt_.x_title.c_str());
@@ -396,6 +396,19 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         h->SetLineWidth(1);
         h->Draw("E2 SAME");
     }
+
+    // THStack can refresh its internal frame after range/max updates.
+    // Apply axis titles and alignment after those updates so labels persist.
+    if (!opt_.x_title.empty() && stack_->GetXaxis())
+    {
+        stack_->GetXaxis()->SetTitle(opt_.x_title.c_str());
+        stack_->GetXaxis()->CenterTitle(false);
+    }
+    if (!opt_.y_title.empty() && stack_->GetYaxis())
+    {
+        stack_->GetYaxis()->SetTitle(opt_.y_title.c_str());
+    }
+
     if (sig_hist_)
     {
         sig_hist_->Draw("HIST SAME");
@@ -427,7 +440,7 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     ratio->GetYaxis()->SetTitleSize(0.10);
     ratio->GetYaxis()->SetTitleOffset(0.4);
     ratio->GetYaxis()->SetTitle("Data / MC");
-    ratio->GetXaxis()->CenterTitle(true);
+    ratio->GetXaxis()->CenterTitle(false);
     ratio->GetXaxis()->SetTitle(opt_.x_title.empty() ? data_hist_->GetXaxis()->GetTitle() : opt_.x_title.c_str());
 
     ratio->Draw("E1");

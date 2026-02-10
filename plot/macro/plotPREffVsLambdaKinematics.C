@@ -26,6 +26,7 @@
 //     $NUXSEC_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -72,6 +73,35 @@ struct VarSpec
     std::string x_title;
 };
 
+bool env_truthy(const char *v)
+{
+    if (v == nullptr)
+        return false;
+    const std::string s(v);
+    return s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON";
+}
+
+int require_columns(const std::unordered_set<std::string> &columns,
+                    const std::vector<std::string> &required,
+                    const std::string &label)
+{
+    std::vector<std::string> missing;
+    missing.reserve(required.size());
+    for (const auto &name : required)
+    {
+        if (columns.find(name) == columns.end())
+            missing.push_back(name);
+    }
+
+    if (missing.empty())
+        return 0;
+
+    std::cerr << "[plotPREffVsLambdaKinematics] missing required columns for " << label << ":\n";
+    for (const auto &name : missing)
+        std::cerr << "  - " << name << "\n";
+    return 1;
+}
+
 } // namespace
 
 int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
@@ -88,7 +118,17 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
                                     " && (p_p>0.0)"
                                     " && (pi_p>0.0)")
 {
-    ROOT::EnableImplicitMT();
+    const bool use_imt = env_truthy(std::getenv("NUXSEC_ENABLE_IMT"));
+    if (use_imt)
+    {
+        ROOT::EnableImplicitMT();
+        std::cout << "[plotPREffVsLambdaKinematics] implicit MT enabled via NUXSEC_ENABLE_IMT\n";
+    }
+    else
+    {
+        ROOT::DisableImplicitMT();
+        std::cout << "[plotPREffVsLambdaKinematics] implicit MT disabled (set NUXSEC_ENABLE_IMT=1 to enable)\n";
+    }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotPREffVsLambdaKinematics] input=" << list_path << "\n";
@@ -99,11 +139,18 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
         return 1;
     }
 
+    std::cout << "[plotPREffVsLambdaKinematics] opening event list\n";
     EventListIO el(list_path);
+    std::cout << "[plotPREffVsLambdaKinematics] building RDF from tree='" << el.event_tree() << "'\n";
     ROOT::RDataFrame rdf = el.rdf();
+    std::cout << "[plotPREffVsLambdaKinematics] loaded sample refs: " << el.sample_refs().size() << "\n";
 
     auto mask_ext = el.mask_for_ext();
     auto mask_mc = el.mask_for_mc_like();
+    if (mask_mc)
+        std::cout << "[plotPREffVsLambdaKinematics] MC-like mask size=" << mask_mc->size() << "\n";
+    if (mask_ext)
+        std::cout << "[plotPREffVsLambdaKinematics] EXT mask size=" << mask_ext->size() << "\n";
 
     auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) -> ROOT::RDF::RNode {
         if (!mask)
@@ -131,6 +178,30 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
 
     const auto col_names = node_mc.GetColumnNames();
     const std::unordered_set<std::string> columns(col_names.begin(), col_names.end());
+    std::cout << "[plotPREffVsLambdaKinematics] available columns=" << columns.size() << "\n";
+
+    const std::vector<std::string> required_for_mask = {
+        "sample_id"
+    };
+    if (require_columns(columns, required_for_mask, "sample filtering") != 0)
+        return 1;
+
+    const std::vector<std::string> required_for_denom_and_pass = {
+        "is_nu_mu_cc",
+        "nu_vtx_in_fv",
+        "lam_pdg",
+        "p_p",
+        "pi_p",
+        "pr_valid_assignment",
+        "pr_mu_completeness",
+        "pr_mu_purity",
+        "pr_p_completeness",
+        "pr_p_purity",
+        "pr_pi_completeness",
+        "pr_pi_purity"
+    };
+    if (require_columns(columns, required_for_denom_and_pass, "denominator/pass selections") != 0)
+        return 1;
 
     const std::vector<VarSpec> vars = {
         {"lam_p_mag",          30, 0.0, 3.0,  "#Lambda |p| [GeV/c]"},
@@ -148,6 +219,7 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
     int plotted = 0;
     for (const auto &v : vars)
     {
+        std::cout << "[plotPREffVsLambdaKinematics] processing variable='" << v.expr << "'\n";
         if (columns.find(v.expr) == columns.end())
         {
             std::cerr << "[plotPREffVsLambdaKinematics] skipping variable '" << v.expr
@@ -175,11 +247,18 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
         opt.image_format.clear();
 
         EfficiencyPlot eff(spec, opt, cfg);
+        std::cout << "[plotPREffVsLambdaKinematics] computing efficiency for '" << v.expr << "'\n";
         const int one = eff.compute(node_mc, denom_sel, pass_sel, extra_sel);
+        std::cout << "[plotPREffVsLambdaKinematics] compute rc=" << one
+                  << " denom=" << eff.denom_entries()
+                  << " pass=" << eff.pass_entries() << "\n";
         if (one == 0)
         {
             const std::string tag = Plotter::sanitise(v.expr);
-            rc = std::max(rc, eff.draw_and_save("pr_eff_vs_" + tag));
+            const int drc = eff.draw_and_save("pr_eff_vs_" + tag);
+            std::cout << "[plotPREffVsLambdaKinematics] draw rc=" << drc
+                      << " variable='" << v.expr << "'\n";
+            rc = std::max(rc, drc);
             ++plotted;
         }
         else

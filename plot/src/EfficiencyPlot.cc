@@ -168,6 +168,8 @@ int EfficiencyPlot::compute(ROOT::RDF::RNode denom_node, ROOT::RDF::RNode pass_n
     n_pass_ = 0;
 
     const std::string nan_guard = spec_.expr + " == " + spec_.expr;
+    std::cout << "[EfficiencyPlot] compute expr='" << spec_.expr
+              << "' weight='" << spec_.weight << "'\n";
     ROOT::RDF::RNode denom_finite = denom_node.Filter(nan_guard);
     ROOT::RDF::RNode pass_finite = pass_node.Filter(nan_guard);
 
@@ -221,8 +223,22 @@ int EfficiencyPlot::compute(ROOT::RDF::RNode denom_node, ROOT::RDF::RNode pass_n
                                      spec_.expr);
     }
 
-    h_total_.reset(static_cast<TH1D *>(htot_r->Clone((htot_name + "_clone").c_str())));
-    h_passed_.reset(static_cast<TH1D *>(hpas_r->Clone((hpas_name + "_clone").c_str())));
+    TH1D *htot = htot_r.GetPtr();
+    TH1D *hpas = hpas_r.GetPtr();
+    if (htot == nullptr || hpas == nullptr)
+    {
+        std::cerr << "[EfficiencyPlot] null histogram pointer for " << spec_.expr
+                  << " (htot=" << htot << ", hpas=" << hpas << ")\n";
+        return 1;
+    }
+
+    h_total_.reset(static_cast<TH1D *>(htot->Clone((htot_name + "_clone").c_str())));
+    h_passed_.reset(static_cast<TH1D *>(hpas->Clone((hpas_name + "_clone").c_str())));
+    if (!h_total_ || !h_passed_)
+    {
+        std::cerr << "[EfficiencyPlot] failed to clone histograms for " << spec_.expr << "\n";
+        return 1;
+    }
     h_total_->SetDirectory(nullptr);
     h_passed_->SetDirectory(nullptr);
 

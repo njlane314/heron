@@ -39,6 +39,7 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -319,7 +320,7 @@ struct plot_data
     std::vector<double> y_fhc;
     std::vector<double> y_rhc;
 
-    // Beam power points (scaled onto left axis coordinates)
+    // Beam power points (mapped onto left-axis coordinates; right axis is logarithmic)
     std::vector<double> x_pow_bnb;
     std::vector<double> y_pow_bnb_scaled;
     std::vector<double> x_pow_fhc;
@@ -329,7 +330,8 @@ struct plot_data
 
     // Axis maxima
     double y_pot_max = 1.0;     // left axis (x 1e20)
-    double pow_axis_max = 1.0;  // right axis (kW)
+    double pow_axis_min = 1.0;  // right axis (kW) - log scale (must be > 0)
+    double pow_axis_max = 1.0;  // right axis (kW) - log scale
 
     // Totals (POT)
     double pot_total = 0;
@@ -342,6 +344,54 @@ double nice_up(double x, double step)
 {
     if (x <= 0) return step;
     return std::ceil(x / step) * step;
+}
+
+// "Nice" log-scale bounds using 1/2/5 decades.
+// These are chosen to bracket the data with a bit of padding.
+double nice_log_down(double x)
+{
+    if (x <= 0.0) return 0.1;
+    const double e = std::floor(std::log10(x));
+    const double base = std::pow(10.0, e);
+    const double m = x / base; // in [1,10)
+
+    double nice_m = 1.0;
+    if (m >= 5.0) nice_m = 5.0;
+    else if (m >= 2.0) nice_m = 2.0;
+    else nice_m = 1.0;
+
+    return nice_m * base;
+}
+
+double nice_log_up(double x)
+{
+    if (x <= 0.0) return 1.0;
+    const double e = std::floor(std::log10(x));
+    const double base = std::pow(10.0, e);
+    const double m = x / base; // in [1,10)
+
+    double nice_m = 1.0;
+    if (m <= 1.0) nice_m = 1.0;
+    else if (m <= 2.0) nice_m = 2.0;
+    else if (m <= 5.0) nice_m = 5.0;
+    else nice_m = 10.0;
+
+    return nice_m * base;
+}
+
+// Map a positive power value (kW) onto left-axis coordinates [0, y_pot_max]
+// using a log10 scale defined by [pmin, pmax].
+double power_kw_to_left_axis_log(double pkw, double pmin, double pmax, double y_pot_max)
+{
+    if (!(pmin > 0.0) || !(pmax > pmin) || !(y_pot_max > 0.0)) return 0.0;
+    if (pkw <= pmin) return 0.0;
+    if (pkw >= pmax) return y_pot_max;
+
+    const double lmin = std::log10(pmin);
+    const double lmax = std::log10(pmax);
+    const double lval = std::log10(pkw);
+    const double frac = (lval - lmin) / (lmax - lmin);
+    return frac * y_pot_max;
 }
 
 plot_data compute_plot_data(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc)
@@ -379,6 +429,7 @@ plot_data compute_plot_data(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_
 
     double max_cum = 0;
     double max_pow = 0;
+    double min_pow = std::numeric_limits<double>::infinity();
 
     int idx = 1;
     for (int i = 1; i <= nbins; ++i)
@@ -428,9 +479,9 @@ plot_data compute_plot_data(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_
             {
                 const double pkw = (pot_bnb / binw) * (E_BNB_GeV * GeV_to_kW_s);
                 d.x_pow_bnb.push_back(x_center);
-                // scaling to left axis happens later
                 d.y_pow_bnb_scaled.push_back(pkw);
                 max_pow = std::max(max_pow, pkw);
+                min_pow = std::min(min_pow, pkw);
             }
             if (pot_fhc > 0)
             {
@@ -438,6 +489,7 @@ plot_data compute_plot_data(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_
                 d.x_pow_fhc.push_back(x_center);
                 d.y_pow_fhc_scaled.push_back(pkw);
                 max_pow = std::max(max_pow, pkw);
+                min_pow = std::min(min_pow, pkw);
             }
             if (pot_rhc > 0)
             {
@@ -445,6 +497,7 @@ plot_data compute_plot_data(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_
                 d.x_pow_rhc.push_back(x_center);
                 d.y_pow_rhc_scaled.push_back(pkw);
                 max_pow = std::max(max_pow, pkw);
+                min_pow = std::min(min_pow, pkw);
             }
         }
     }
@@ -452,16 +505,42 @@ plot_data compute_plot_data(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_
     // Nice left-axis max (like the reference: 0,5,10,...)
     d.y_pot_max = nice_up(max_cum, 5.0) * 1.05;
 
-    // Nice right-axis max (kW): round up to nearest 50 or 100 depending on scale.
-    const double step = (max_pow > 300.0) ? 100.0 : 50.0;
-    d.pow_axis_max = nice_up(max_pow, step) * 1.05;
-    if (d.pow_axis_max <= 0) d.pow_axis_max = step;
+    // Log-scale right-axis bounds (kW). Add a little padding so points do not sit on the frame.
+    if (std::isfinite(min_pow) && max_pow > 0.0)
+    {
+        const double pad_lo = min_pow / 1.25;
+        const double pad_hi = max_pow * 1.25;
+        d.pow_axis_min = nice_log_down(pad_lo);
+        d.pow_axis_max = nice_log_up(pad_hi);
+        if (!(d.pow_axis_min > 0.0)) d.pow_axis_min = nice_log_down(min_pow);
+        if (!(d.pow_axis_max > d.pow_axis_min)) d.pow_axis_max = nice_log_up(max_pow);
+        if (!(d.pow_axis_max > d.pow_axis_min))
+        {
+            // Fallback (should not happen for realistic inputs)
+            d.pow_axis_min = 1.0;
+            d.pow_axis_max = 1000.0;
+        }
+    }
+    else
+    {
+        // No power points: pick a harmless default log range.
+        d.pow_axis_min = 1.0;
+        d.pow_axis_max = 1000.0;
+    }
 
-    // Scale power arrays onto left-axis coordinates.
-    const double scale = (d.pow_axis_max > 0) ? (d.y_pot_max / d.pow_axis_max) : 1.0;
-    for (double &y : d.y_pow_bnb_scaled) y *= scale;
-    for (double &y : d.y_pow_fhc_scaled) y *= scale;
-    for (double &y : d.y_pow_rhc_scaled) y *= scale;
+    // Map power arrays onto left-axis coordinates using log10 scaling.
+    for (double &pkw : d.y_pow_bnb_scaled)
+    {
+        pkw = power_kw_to_left_axis_log(pkw, d.pow_axis_min, d.pow_axis_max, d.y_pot_max);
+    }
+    for (double &pkw : d.y_pow_fhc_scaled)
+    {
+        pkw = power_kw_to_left_axis_log(pkw, d.pow_axis_min, d.pow_axis_max, d.y_pot_max);
+    }
+    for (double &pkw : d.y_pow_rhc_scaled)
+    {
+        pkw = power_kw_to_left_axis_log(pkw, d.pow_axis_min, d.pow_axis_max, d.y_pot_max);
+    }
 
     return d;
 }
@@ -480,7 +559,7 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
 
     // Two pads: top legend strip + main plot.
     const double ml = 0.08;
-    const double mr = 0.12;
+    const double mr = 0.14; // extra room for log-scale RHS labels (e.g. 10^{3})
     const double split = 0.82;
     TPad *main_pad = new TPad("pad_main", "pad_main", 0.0, 0.0, 1.0, split);
     TPad *legend_pad = new TPad("pad_legend", "pad_legend", 0.0, split, 1.0, 1.0);
@@ -614,21 +693,25 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
     g_fhc.Draw("L SAME");
     g_rhc.Draw("L SAME");
 
-    // Beam power points (already scaled onto left axis)
+    // Beam power points (already mapped onto left axis)
     TGraph gp_bnb(d.x_pow_bnb.size(), d.x_pow_bnb.data(), d.y_pow_bnb_scaled.data());
     TGraph gp_fhc(d.x_pow_fhc.size(), d.x_pow_fhc.data(), d.y_pow_fhc_scaled.data());
     TGraph gp_rhc(d.x_pow_rhc.size(), d.x_pow_rhc.data(), d.y_pow_rhc_scaled.data());
 
-    style_points(gp_bnb, col_bnb, 20, 0.55);
-    style_points(gp_fhc, col_fhc, 21, 0.55);
-    style_points(gp_rhc, col_rhc, 22, 0.55);
+    style_points(gp_bnb, col_bnb, 24, 0.65); // open markers read better over run bands
+    style_points(gp_fhc, col_fhc, 25, 0.65);
+    style_points(gp_rhc, col_rhc, 26, 0.65);
 
     gp_bnb.Draw("P SAME");
     gp_fhc.Draw("P SAME");
     gp_rhc.Draw("P SAME");
 
-    // Right axis: beam power (kW)
-    TGaxis right_axis(xhi, 0.0, xhi, d.y_pot_max, 0.0, d.pow_axis_max, 507, "+L");
+    // Right axis: beam power (kW), logarithmic.
+    //  - "+"  : tick marks on positive side (into the right margin)
+    //  - "L"  : left-adjust labels so they extend rightwards (outside the frame)
+    //  - "G"  : loGarithmic scale
+    //  - "S"  : tick size uses fTickSize (SetTickSize)
+    TGaxis right_axis(xhi, 0.0, xhi, d.y_pot_max, d.pow_axis_min, d.pow_axis_max, 510, "+LGS");
     right_axis.SetLineColor(kRed + 1);
     right_axis.SetLabelColor(kRed + 1);
     right_axis.SetTitleColor(kRed + 1);
@@ -643,6 +726,7 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
     right_axis.Draw();
 
     // Small date range + totals, in the bottom margin (NDC in pad coordinates)
+    {
         const double total = d.pot_total;
         const double bnb   = d.pot_bnb;
         const double fhc   = d.pot_fhc;
@@ -662,7 +746,7 @@ void draw_plot(const TH1D &h_bnb, const TH1D &h_fhc, const TH1D &h_rhc,
         infoL.DrawLatex(ml + 0.01, y0 + 0.030, Form("Total POT: %.3g", total));
         if (total > 0)
         {
-            // Right-anchored so the NuMI breakdown doesn't get clipped by the pad edge.
+            // Right-anchored so the NuMI breakdown does not get clipped by the pad edge.
             TLatex infoR;
             infoR.SetNDC(true);
             infoR.SetTextFont(42);

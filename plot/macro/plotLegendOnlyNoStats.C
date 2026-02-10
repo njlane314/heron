@@ -51,21 +51,22 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.pdf")
 {
     gStyle->SetOptStat(0);
 
-    TCanvas canvas("c_legend_only", "Legend only", 1250, 130);
+    TCanvas canvas("c_legend_only", "Legend only", 1250, 105);
     canvas.SetFillColor(kWhite);
     canvas.SetFrameFillColor(kWhite);
 
-    TLegend legend(0.01, 0.05, 0.99, 0.95);
+    TLegend legend(0.005, 0.04, 0.995, 0.96);
     legend.SetBorderSize(0);
     legend.SetFillStyle(0);
     legend.SetLineColorAlpha(kWhite, 0.0);
     legend.SetLineWidth(0);
     legend.SetShadowColor(kWhite);
     legend.SetTextFont(42);
-    legend.SetTextSize(0.14);
+    legend.SetTextSize(0.125);
     legend.SetNColumns(4);
-    legend.SetEntrySeparation(0.01);
-    legend.SetColumnSeparation(0.04);
+    legend.SetMargin(0.16);
+    legend.SetEntrySeparation(0.0);
+    legend.SetColumnSeparation(0.015);
 
     const std::vector<LegendEntry> entries = default_entries();
     std::vector<TH1D *> proxies;

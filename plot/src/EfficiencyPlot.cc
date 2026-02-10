@@ -430,7 +430,12 @@ int EfficiencyPlot::draw_and_save(const std::string &file_stem,
         axis.Draw();
 
         g_scaled.Draw("P SAME");
-        leg.AddEntry(&g_scaled, cfg_.legend_eff.c_str(), "P");
+        g_eff_->SetLineColor(kRed);
+        g_eff_->SetMarkerColor(kRed);
+        g_eff_->SetMarkerStyle(5);
+        g_eff_->SetMarkerSize(1.6);
+        g_eff_->SetLineWidth(2);
+        leg.AddEntry(g_eff_.get(), cfg_.legend_eff.c_str(), "P");
     }
     else
     {

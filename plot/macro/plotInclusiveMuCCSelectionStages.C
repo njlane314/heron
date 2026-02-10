@@ -695,11 +695,11 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
     // -------------------------------------------------------------------------
     // Trigger diagnostics
     // -------------------------------------------------------------------------
-    draw_one("trigger_pre", sel_pre_trigger, "optical_filter_pe_beam", 60, -10.0, 500.0, "Beam optical PE", true, true);
-    draw_one("trigger_post", sel_post_trigger, "optical_filter_pe_beam", 60, -10.0, 500.0, "Beam optical PE", true, true);
+    draw_one("trigger_pre", sel_pre_trigger, "optical_filter_pe_beam", 50, -10.0, 500.0, "Beam optical PE", true, true);
+    draw_one("trigger_post", sel_post_trigger, "optical_filter_pe_beam", 50, -10.0, 500.0, "Beam optical PE", true, true);
 
-    draw_one("trigger_pre", sel_pre_trigger, "optical_filter_pe_veto", 60, -10.0, 200.0, "Veto optical PE", true, true);
-    draw_one("trigger_post", sel_post_trigger, "optical_filter_pe_veto", 60, -10.0, 200.0, "Veto optical PE", true, true);
+    draw_one("trigger_pre", sel_pre_trigger, "optical_filter_pe_veto", 50, -10.0, 200.0, "Veto optical PE", true, true);
+    draw_one("trigger_post", sel_post_trigger, "optical_filter_pe_veto", 50, -10.0, 200.0, "Veto optical PE", true, true);
 
     draw_one("trigger_pre", sel_pre_trigger, "software_trigger", 6, -0.5, 5.5, "Software trigger", false, false);
     draw_one("trigger_post", sel_post_trigger, "software_trigger", 6, -0.5, 5.5, "Software trigger", false, false);
@@ -710,20 +710,20 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
     draw_one("slice_pre", sel_pre_slice, "num_slices", 8, -0.5, 7.5, "Number of Pandora slices", false, false);
     draw_one("slice_post", sel_post_slice, "num_slices", 8, -0.5, 7.5, "Number of Pandora slices", false, false);
 
-    draw_one("slice_pre", sel_pre_slice, "topological_score", 60, 0.0, 0.6, "Topological score", true, true);
-    draw_one("slice_post", sel_post_slice, "topological_score", 60, 0.0, 0.6, "Topological score", true, true);
+    draw_one("slice_pre", sel_pre_slice, "topological_score", 50, 0.0, 0.6, "Topological score", true, true);
+    draw_one("slice_post", sel_post_slice, "topological_score", 50, 0.0, 0.6, "Topological score", true, true);
 
     // -------------------------------------------------------------------------
     // Fiducial diagnostics (reco SCE vertex)
     // -------------------------------------------------------------------------
-    draw_one("fv_pre", sel_pre_fv, "reco_neutrino_vertex_sce_z", 60, -50.0, 1100.0, "Reco ν vertex z [cm]", true, true, true);
-    draw_one("fv_post", sel_post_fv, "reco_neutrino_vertex_sce_z", 60, -50.0, 1100.0, "Reco ν vertex z [cm]", true, true, true);
+    draw_one("fv_pre", sel_pre_fv, "reco_neutrino_vertex_sce_z", 50, -50.0, 1100.0, "Reco ν vertex z [cm]", true, true, true);
+    draw_one("fv_post", sel_post_fv, "reco_neutrino_vertex_sce_z", 50, -50.0, 1100.0, "Reco ν vertex z [cm]", true, true, true);
 
-    draw_one("fv_pre", sel_pre_fv, "reco_neutrino_vertex_sce_x", 60, -50.0, 300.0, "Reco ν vertex x [cm]", true, true, true);
-    draw_one("fv_post", sel_post_fv, "reco_neutrino_vertex_sce_x", 60, -50.0, 300.0, "Reco ν vertex x [cm]", true, true, true);
+    draw_one("fv_pre", sel_pre_fv, "reco_neutrino_vertex_sce_x", 50, -50.0, 300.0, "Reco ν vertex x [cm]", true, true, true);
+    draw_one("fv_post", sel_post_fv, "reco_neutrino_vertex_sce_x", 50, -50.0, 300.0, "Reco ν vertex x [cm]", true, true, true);
 
-    draw_one("fv_pre", sel_pre_fv, "reco_neutrino_vertex_sce_y", 60, -180.0, 180.0, "Reco ν vertex y [cm]", true, true, true);
-    draw_one("fv_post", sel_post_fv, "reco_neutrino_vertex_sce_y", 60, -180.0, 180.0, "Reco ν vertex y [cm]", true, true, true);
+    draw_one("fv_pre", sel_pre_fv, "reco_neutrino_vertex_sce_y", 50, -180.0, 180.0, "Reco ν vertex y [cm]", true, true, true);
+    draw_one("fv_post", sel_post_fv, "reco_neutrino_vertex_sce_y", 50, -180.0, 180.0, "Reco ν vertex y [cm]", true, true, true);
 
     // -------------------------------------------------------------------------
     // Muon-candidate diagnostics
@@ -735,28 +735,28 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
     const std::string sel_post_mu_with_track = sel_post_mu + " && (mu_cand_idx >= 0)";
 
     // Track-likeness proxy (your shower-vs-track score)
-    draw_one("mu_pre", sel_pre_mu_with_track, "trk_longest_score", 60, 0.0, 1.0, "Longest-track shower→track score", true, true);
-    draw_one("mu_post", sel_post_mu_with_track, "mu_cand_score", 60, 0.0, 1.0, "Muon-candidate shower→track score", true, true);
+    draw_one("mu_pre", sel_pre_mu_with_track, "trk_longest_score", 50, 0.0, 1.0, "Longest-track shower→track score", true, true);
+    draw_one("mu_post", sel_post_mu_with_track, "mu_cand_score", 50, 0.0, 1.0, "Muon-candidate shower→track score", true, true);
 
     // Geometry/proximity
-    draw_one("mu_pre", sel_pre_mu_with_track, "trk_longest_length", 60, 0.0, 800.0, "Longest-track length [cm]", true, true);
-    draw_one("mu_post", sel_post_mu_with_track, "mu_cand_length", 60, 0.0, 800.0, "Muon-candidate length [cm]", true, true);
+    draw_one("mu_pre", sel_pre_mu_with_track, "trk_longest_length", 50, 0.0, 800.0, "Longest-track length [cm]", true, true);
+    draw_one("mu_post", sel_post_mu_with_track, "mu_cand_length", 50, 0.0, 800.0, "Muon-candidate length [cm]", true, true);
 
-    draw_one("mu_pre", sel_pre_mu_with_track, "trk_longest_distance", 60, 0.0, 50.0, "Longest-track start distance to ν vtx [cm]", true, true);
-    draw_one("mu_post", sel_post_mu_with_track, "mu_cand_distance", 60, 0.0, 50.0, "Muon-candidate start distance to ν vtx [cm]", true, true);
+    draw_one("mu_pre", sel_pre_mu_with_track, "trk_longest_distance", 50, 0.0, 50.0, "Longest-track start distance to ν vtx [cm]", true, true);
+    draw_one("mu_post", sel_post_mu_with_track, "mu_cand_distance", 50, 0.0, 50.0, "Muon-candidate start distance to ν vtx [cm]", true, true);
 
     // MIPness (Y plane and median-over-planes)
     draw_one("mu_pre", sel_pre_mu_with_track + " && (trk_longest_mipness_y == trk_longest_mipness_y)",
-             "trk_longest_mipness_y", 60, 0.0, 2.0, "Longest-track MIPness (Y plane)", true, true);
+             "trk_longest_mipness_y", 50, 0.0, 2.0, "Longest-track MIPness (Y plane)", true, true);
 
     draw_one("mu_post", sel_post_mu_with_track + " && (mu_cand_mipness_y == mu_cand_mipness_y)",
-             "mu_cand_mipness_y", 60, 0.0, 2.0, "Muon-candidate MIPness (Y plane)", true, true);
+             "mu_cand_mipness_y", 50, 0.0, 2.0, "Muon-candidate MIPness (Y plane)", true, true);
 
     draw_one("mu_pre", sel_pre_mu_with_track + " && (trk_longest_mipness_med == trk_longest_mipness_med)",
-             "trk_longest_mipness_med", 60, 0.0, 2.0, "Longest-track MIPness (median planes)", true, true);
+             "trk_longest_mipness_med", 50, 0.0, 2.0, "Longest-track MIPness (median planes)", true, true);
 
     draw_one("mu_post", sel_post_mu_with_track + " && (mu_cand_mipness_med == mu_cand_mipness_med)",
-             "mu_cand_mipness_med", 60, 0.0, 2.0, "Muon-candidate MIPness (median planes)", true, true);
+             "mu_cand_mipness_med", 50, 0.0, 2.0, "Muon-candidate MIPness (median planes)", true, true);
 
     // Optional: 2D correlations (MC only), written directly to NUXSEC_PLOT_DIR
     save_2d(node_mc,
@@ -765,8 +765,8 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
             "w_nominal",
             sel_pre_mu_with_track + " && (trk_longest_mipness_med == trk_longest_mipness_med)",
             "mipness2d_pre_longest_score_vs_mipnessmed",
-            70, 0.0, 1.0,
-            70, 0.0, 2.0);
+            50, 0.0, 1.0,
+            50, 0.0, 2.0);
 
     save_2d(node_mc,
             "mu_cand_score",
@@ -774,8 +774,8 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
             "w_nominal",
             sel_post_mu_with_track + " && (mu_cand_mipness_med == mu_cand_mipness_med)",
             "mipness2d_post_mucand_score_vs_mipnessmed",
-            70, 0.0, 1.0,
-            70, 0.0, 2.0);
+            50, 0.0, 1.0,
+            50, 0.0, 2.0);
 
     return 0;
 }

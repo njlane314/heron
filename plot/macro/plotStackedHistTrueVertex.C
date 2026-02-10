@@ -278,7 +278,8 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
                   ", xmax=" + std::to_string(axis.xmax));
 
         const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-        TH1DModel spec = make_spec(draw_expr, axis.nbins, axis.xmin, axis.xmax, weight);
+        TH1DModel spec = make_spec(expr, axis.nbins, axis.xmin, axis.xmax, weight);
+        spec.expr = draw_expr;
         spec.sel = Preset::Empty;
 
         if (include_data)

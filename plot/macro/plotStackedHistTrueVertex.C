@@ -12,6 +12,7 @@
 //   - Output dir/format follow PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
 //   - Default input uses the generated event list (event_list_<analysis>.root).
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -53,14 +54,26 @@ bool looks_like_event_list_root(const std::string &p)
 
     return has_refs && (has_events_tree || has_event_tree_key);
 }
+
+
+bool debug_enabled()
+{
+    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    return env != nullptr && std::string(env) != "0";
+}
+
+void debug_log(const std::string &msg)
+{
+    if (!debug_enabled())
+    {
+        return;
+    }
+    std::cout << "[plotStackedHistTrueVertex][debug] " << msg << "\n";
+    std::cout.flush();
+}
 } // namespace
 
-int plot_stacked_hist_impl(const std::string &expr,
-                           const std::string &samples_tsv,
-                           int nbins,
-                           double xmin,
-                           double xmax,
-                           const std::string &x_title,
+int plot_stacked_hist_impl(const std::string &samples_tsv,
                            const std::string &mc_weight,
                            const std::string &extra_sel,
                            bool use_logy,
@@ -68,6 +81,7 @@ int plot_stacked_hist_impl(const std::string &expr,
 {
     ROOT::EnableImplicitMT();
 
+    debug_log("starting plot_stacked_hist_impl");
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotStackedHistTrueVertex] input=" << list_path << "\n";
 
@@ -78,6 +92,7 @@ int plot_stacked_hist_impl(const std::string &expr,
     }
 
     std::cout << "[plotStackedHistTrueVertex] mode=event_list\n";
+    debug_log("validated input root file and entering event-list mode");
 
     EventListIO el(list_path);
     ROOT::RDataFrame rdf = el.rdf();
@@ -85,6 +100,10 @@ int plot_stacked_hist_impl(const std::string &expr,
     auto mask_ext = el.mask_for_ext();
     auto mask_mc = el.mask_for_mc_like();
     auto mask_data = el.mask_for_data();
+
+    debug_log("mask sizes: ext=" + std::to_string(mask_ext ? mask_ext->size() : 0) +
+              ", mc=" + std::to_string(mask_mc ? mask_mc->size() : 0) +
+              ", data=" + std::to_string(mask_data ? mask_data->size() : 0));
 
     auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
         return n.Filter(
@@ -139,6 +158,7 @@ int plot_stacked_hist_impl(const std::string &expr,
 
     if (!extra_sel.empty())
     {
+        debug_log("applying extra selection: " + extra_sel);
         e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(extra_sel);
         e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(extra_sel);
         if (p_data != nullptr)
@@ -153,7 +173,6 @@ int plot_stacked_hist_impl(const std::string &expr,
     opt.overlay_signal = true;
     opt.show_ratio_band = include_data;
     opt.signal_channels = Channels::signal_keys();
-    opt.x_title = x_title.empty() ? expr : x_title;
     opt.y_title = "Events/bin";
     opt.run_numbers = {"1"};
 
@@ -162,18 +181,39 @@ int plot_stacked_hist_impl(const std::string &expr,
     opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
     opt.beamline = el.beamline_label();
 
-    const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-    TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
-    spec.sel = Preset::Empty;
+    debug_log("plot options configured: include_data=" + std::string(include_data ? "true" : "false") +
+              ", use_logy=" + std::string(use_logy ? "true" : "false"));
 
-    if (include_data)
-    {
-        plotter.draw_stack(spec, mc, data);
-    }
-    else
-    {
-        plotter.draw_stack(spec, mc);
-    }
+    const auto draw_one = [&](const std::string &expr,
+                              int nbins,
+                              double xmin,
+                              double xmax,
+                              const std::string &x_title) {
+        opt.x_title = x_title.empty() ? expr : x_title;
+        debug_log("drawing start: expr=" + expr + ", x_title=" + opt.x_title);
+
+        const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
+        TH1DModel spec = make_spec(expr, nbins, xmin, xmax, weight);
+        spec.sel = Preset::Empty;
+
+        if (include_data)
+        {
+            plotter.draw_stack(spec, mc, data);
+        }
+        else
+        {
+            plotter.draw_stack(spec, mc);
+        }
+
+        debug_log("drawing done: expr=" + expr);
+    };
+
+    const int nbins = 50;
+    draw_one("nu_vtx_z", nbins, -50.0, 1100.0, "True neutrino vertex z [cm]");
+    draw_one("nu_vtx_x", nbins, -50.0, 300.0, "True neutrino vertex x [cm]");
+    draw_one("nu_vtx_y", nbins, -180.0, 180.0, "True neutrino vertex y [cm]");
+
+    debug_log("completed all draw calls");
     return 0;
 }
 
@@ -183,41 +223,9 @@ int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
                               bool use_logy = false,
                               bool include_data = false)
 {
-    const int nbins = 50;
     const std::string mc_weight = "w_nominal";
 
-    int status = plot_stacked_hist_impl("nu_vtx_z",
-                                        samples_tsv,
-                                        nbins,
-                                        -50.0,
-                                        1100.0,
-                                        "True neutrino vertex z [cm]",
-                                        mc_weight,
-                                        extra_sel,
-                                        use_logy,
-                                        include_data);
-    if (status != 0)
-        return status;
-
-    status = plot_stacked_hist_impl("nu_vtx_x",
-                                    samples_tsv,
-                                    nbins,
-                                    -50.0,
-                                    300.0,
-                                    "True neutrino vertex x [cm]",
-                                    mc_weight,
-                                    extra_sel,
-                                    use_logy,
-                                    include_data);
-    if (status != 0)
-        return status;
-
-    return plot_stacked_hist_impl("nu_vtx_y",
-                                  samples_tsv,
-                                  nbins,
-                                  -180.0,
-                                  180.0,
-                                  "True neutrino vertex y [cm]",
+    return plot_stacked_hist_impl(samples_tsv,
                                   mc_weight,
                                   extra_sel,
                                   use_logy,

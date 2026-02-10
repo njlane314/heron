@@ -38,7 +38,9 @@ std::vector<LegendEntry> default_entries()
     entries.push_back({"#nu_{#mu}CC multi-strange : 73.41", kGreen + 2, 1001});
     entries.push_back({"Cosmic : 0.00", kTeal + 2, 3345});
     entries.push_back({"#nu_{#mu}CC Other : 468.59", kCyan + 2, 1001});
-    entries.push_back({"Dirt : 1,111.52", TColor::GetColor("#f6d32d"), 1001});
+    LegendEntry dirt_entry = {"Dirt : 1,111.52", kYellow, 1001};
+    dirt_entry.colour = TColor::GetColor("#f6d32d");
+    entries.push_back(dirt_entry);
     entries.push_back({"Other : 0.00", kCyan, 1001});
     entries.push_back({"#nu_{#mu}CC single-strange : 83.05", kSpring + 5, 1001});
     return entries;

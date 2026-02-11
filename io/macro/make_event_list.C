@@ -19,13 +19,17 @@
 //   - Output file is overwritten (RECREATE).
 //   - base_sel is applied during snapshot to reduce the event list size if desired.
 //   - extra_columns_csv lets you add plot variables beyond the defaults.
+//   - Default output path is /exp/uboone/data/users/$USER/event_list_<analysis>.root.
+//   - USER must be set when out_root is not provided.
 //
 // After this, you can plot from the event list using:
 //   ROOT::RDataFrame("events", "./scratch/out/event_list_myana.root")
 //
 // Or modify stack_samples.C to detect ".root" input and use the event list directly.
 
+#include <cstdlib>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -163,7 +167,10 @@ int make_event_list(const std::string &out_root = "",
     {
         const auto &analysis = AnalysisConfigService::instance();
         std::ostringstream name;
-        name << "./scratch/out/event_list_" << analysis.name() << ".root";
+        const char *user = std::getenv("USER");
+        if (!user || !*user)
+            throw std::runtime_error("make_event_list: USER must be set when out_root is empty");
+        name << "/exp/uboone/data/users/" << user << "/event_list_" << analysis.name() << ".root";
         out_path = name.str();
     }
 

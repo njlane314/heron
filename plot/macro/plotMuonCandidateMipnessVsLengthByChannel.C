@@ -31,7 +31,6 @@
 #include <TCanvas.h>
 #include <TColor.h>
 #include <TFile.h>
-#include <TLatex.h>
 #include <TLine.h>
 #include <TROOT.h>
 #include <TStyle.h>
@@ -295,7 +294,7 @@ void save_2d(const ROOT::RDF::RNode &node,
 
     h2->SetTitle(";Muon-candidate length [cm];Minimally Ionising Calorimetry");
     h2->GetXaxis()->SetTitleOffset(1.1);
-    h2->GetYaxis()->SetTitleOffset(1.0);
+    h2->GetYaxis()->SetTitleOffset(1.3);
     h2->GetZaxis()->SetTitle("Events");
     h2->GetZaxis()->SetTitleOffset(1.1);
     h2->SetMinimum(0.5);
@@ -322,6 +321,7 @@ void save_2d(const ROOT::RDF::RNode &node,
         "; MIPness > " + format_decimal(y_threshold, 2) + ": " + format_decimal(frac_y, 1) + "%" +
         "; both: " + format_decimal(frac_xy, 1) + "%";
 
+    std::cout << "[plotMuonCandidateMipnessVsLengthByChannel] " << tag << ": " << summary << "\n";
     latex.SetTextSize(0.023);
     latex.DrawLatex(0.13, 0.965, summary.c_str());
 

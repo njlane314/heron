@@ -301,14 +301,16 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
 
     TCanvas c("c_selection_evolution", "Selection evolution", 1000, 700);
     gStyle->SetOptStat(0);
-    c.SetBottomMargin(0.30);
+    c.SetBottomMargin(0.24);
     c.SetLeftMargin(0.11);
-    c.SetRightMargin(0.11);
+    c.SetRightMargin(0.10);
+    c.SetTopMargin(0.07);
 
     haxis.SetMinimum(0.0);
     haxis.SetMaximum(1.02);
     haxis.GetXaxis()->LabelsOption("v");
-    haxis.GetXaxis()->SetLabelSize(0.030);
+    haxis.GetXaxis()->SetLabelSize(0.038);
+    haxis.GetXaxis()->SetTitleOffset(1.20);
     haxis.GetYaxis()->SetTitleOffset(1.2);
     haxis.Draw("AXIS");
 
@@ -362,6 +364,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     haxis_purity.GetXaxis()->SetLabelSize(0.0);
     haxis_purity.GetXaxis()->SetTickLength(0.0);
     haxis_purity.GetYaxis()->SetTitleOffset(1.2);
+    haxis_purity.GetYaxis()->SetLabelSize(haxis.GetYaxis()->GetLabelSize());
     haxis_purity.Draw("AXIS Y+");
 
     gpur.Draw("LP SAME");
@@ -369,8 +372,11 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
 
     c.cd();
 
-    TLegend leg(0.68, 0.69, 0.93, 0.88);
+    TLegend leg(0.16, 0.92, 0.90, 0.985);
+    leg.SetNColumns(3);
     leg.SetBorderSize(0);
+    leg.SetFillStyle(0);
+    leg.SetTextSize(0.042);
     leg.AddEntry(&geff, "efficiency", "lp");
     leg.AddEntry(&gpur, "purity", "lp");
     leg.AddEntry(&gmcp, "MC purity", "lp");

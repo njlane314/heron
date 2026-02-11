@@ -13,11 +13,11 @@
 // Run with:
 //   ./nuxsec macro plotSelectionEvolutionAndTable.C
 //   ./nuxsec macro plotSelectionEvolutionAndTable.C \
-//     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "analysis_channels==10")'
+//     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "is_signal")'
 //
 //   // Custom cut sequence (comma-separated cumulative flags and labels)
 //   ./nuxsec macro plotSelectionEvolutionAndTable.C \
-//     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "analysis_channels==10", "sel_trigger,sel_triggered_slice,sel_reco_fv,sel_triggered_muon", "trigger,slice,reco fv,muon")'
+//     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "is_signal", "sel_trigger,sel_triggered_slice,sel_reco_fv,sel_triggered_muon", "trigger,slice,reco fv,muon")'
 
 #include <algorithm>
 #include <cmath>
@@ -153,7 +153,7 @@ std::string tex_number(double x)
 } // namespace
 
 int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
-                                   const std::string &signal_sel = "analysis_channels==10",
+                                   const std::string &signal_sel = "is_signal",
                                    const std::string &cuts_csv = "sel_trigger,sel_triggered_slice,sel_reco_fv,sel_triggered_muon",
                                    const std::string &labels_csv = "trigger,slice,reco fv,muon",
                                    const std::string &mc_weight = "w_nominal",
@@ -162,6 +162,12 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     ROOT::EnableImplicitMT();
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
+
+    if (signal_sel.find("analysis_channels") != std::string::npos)
+    {
+        std::cout << "[plotSelectionEvolutionAndTable] note: signal_sel uses 'analysis_channels'. "
+                  << "For truth-level signal efficiency prefer 'is_signal' (or an explicit truth selector).\n";
+    }
 
     if (!looks_like_event_list_root(input_path))
     {

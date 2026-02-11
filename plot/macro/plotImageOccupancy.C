@@ -317,7 +317,8 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                            .Define("plot_occ_value",
                                    [](double v) { return v; },
                                    {cos_col})
-                           .Define("plot_occ_weight", [evt_weight]() { return evt_weight; });
+                           .Define("plot_occ_weight", [evt_weight]() { return evt_weight; })
+                           .Define("plot_occ_channel", []() { return 1001; });
     entries.emplace_back(make_entry(std::move(cosmic_node), rec_mc));
     std::cout << "[plotImageOccupancy][debug] built cosmic entry tag=" << tag << "\n";
     std::cout.flush();
@@ -326,7 +327,8 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                              .Define("plot_occ_value",
                                      [](double v) { return v; },
                                      {nu_col})
-                             .Define("plot_occ_weight", [evt_weight]() { return evt_weight; });
+                             .Define("plot_occ_weight", [evt_weight]() { return evt_weight; })
+                             .Define("plot_occ_channel", []() { return 1002; });
     entries.emplace_back(make_entry(std::move(neutrino_node), rec_mc));
     std::cout << "[plotImageOccupancy][debug] built neutrino entry tag=" << tag << "\n";
     std::cout.flush();
@@ -369,6 +371,14 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
     opt.show_watermark = false;
     opt.use_log_x = true;
     opt.use_log_y = false;
+    opt.channel_column = "plot_occ_channel";
+    opt.unstack_channel_keys = {1001, 1002};
+    opt.unstack_channel_labels = {
+        {1001, "Cosmic"},
+        {1002, "Neutrino"}};
+    opt.unstack_channel_colours = {
+        {1001, kTeal + 2},
+        {1002, kRed + 1}};
     std::cout << "[plotImageOccupancy][debug] set basic bool options for tag=" << tag << "\n";
     std::cout.flush();
 

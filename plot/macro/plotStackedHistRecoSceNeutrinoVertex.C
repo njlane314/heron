@@ -159,11 +159,13 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
         data.push_back(p_data);
     }
 
+    const std::string software_trigger_gate_sel = "software_trigger > 0";
     const std::string reco_neutrino_slice_sel = "sel_slice";
+    const std::string gate_sel = "(" + software_trigger_gate_sel + ") && (" + reco_neutrino_slice_sel + ")";
     const std::string combined_sel = extra_sel.empty()
-                                         ? reco_neutrino_slice_sel
-                                         : "(" + reco_neutrino_slice_sel + ") && (" + extra_sel + ")";
-    debug_log("applying selection: " + combined_sel);
+                                         ? gate_sel
+                                         : "(" + gate_sel + ") && (" + extra_sel + ")";
+    debug_log("applying selection (software trigger + neutrino slice gates): " + combined_sel);
     e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(combined_sel);
     e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(combined_sel);
     if (p_data != nullptr)
@@ -204,6 +206,15 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     };
 
     constexpr double target_bin_width_cm = 5.0;
+
+    constexpr double reco_fv_min_x = 5.0;
+    constexpr double reco_fv_max_x = 251.0;
+    constexpr double reco_fv_min_y = -110.0;
+    constexpr double reco_fv_max_y = 110.0;
+    constexpr double reco_fv_min_z = 20.0;
+    constexpr double reco_fv_max_z = 986.0;
+    constexpr double reco_gap_min_z = 675.0;
+    constexpr double reco_gap_max_z = 775.0;
 
     const auto build_dynamic_axis = [&](const std::string &expr,
                                         int fallback_nbins,
@@ -276,6 +287,31 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
         }
 
         opt.x_title = x_title.empty() ? expr : x_title;
+
+        opt.show_cuts = true;
+        if (expr == "reco_neutrino_vertex_sce_x")
+        {
+            opt.cuts = {{reco_fv_min_x, CutDir::GreaterThan},
+                        {reco_fv_max_x, CutDir::LessThan}};
+        }
+        else if (expr == "reco_neutrino_vertex_sce_y")
+        {
+            opt.cuts = {{reco_fv_min_y, CutDir::GreaterThan},
+                        {reco_fv_max_y, CutDir::LessThan}};
+        }
+        else if (expr == "reco_neutrino_vertex_sce_z")
+        {
+            opt.cuts = {{reco_fv_min_z, CutDir::GreaterThan},
+                        {reco_gap_min_z, CutDir::LessThan},
+                        {reco_gap_max_z, CutDir::GreaterThan},
+                        {reco_fv_max_z, CutDir::LessThan}};
+        }
+        else
+        {
+            opt.show_cuts = false;
+            opt.cuts.clear();
+        }
+
         debug_log("drawing start: expr=" + expr +
                   ", draw_expr=" + draw_expr +
                   ", x_title=" + opt.x_title +

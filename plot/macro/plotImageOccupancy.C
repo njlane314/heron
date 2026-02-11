@@ -370,7 +370,6 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
     opt.show_legend = true;
     opt.show_watermark = false;
     opt.use_log_x = true;
-    opt.use_log_y = false;
     opt.channel_column = "plot_occ_channel";
     opt.unstack_channel_keys = {1001, 1002};
     opt.unstack_channel_labels = {
@@ -379,6 +378,7 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
     opt.unstack_channel_colours = {
         {1001, kTeal + 2},
         {1002, kRed + 1}};
+    opt.use_log_y = true;
     std::cout << "[plotImageOccupancy][debug] set basic bool options for tag=" << tag << "\n";
     std::cout.flush();
 

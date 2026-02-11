@@ -289,6 +289,11 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
   auto draw_one = [&](const std::string &cos_col,
                       const std::string &nu_col,
                       const std::string &tag) {
+    std::cout << "[plotImageOccupancy][debug] start draw_one tag=" << tag
+              << " cosmic_col=" << cos_col
+              << " nu_col=" << nu_col << "\n";
+    std::cout.flush();
+
     ProcessorEntry rec_mc;
     rec_mc.source = Type::kMC;
 
@@ -325,6 +330,7 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
 
     Plotter plotter;
     auto &opt = plotter.options();
+    std::cout << "[plotImageOccupancy][debug] configuring unstack options for tag=" << tag << "\n";
     opt.out_dir = out_dir;
     opt.image_format = fmt;
     opt.show_ratio = false;
@@ -345,7 +351,22 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
         {98, kOrange + 1}
     };
 
+    std::cout << "[plotImageOccupancy][debug] invoking draw_unstack for tag=" << tag
+              << " channels={";
+    for (size_t i = 0; i < opt.unstack_channel_keys.size(); ++i)
+    {
+      if (i > 0)
+        std::cout << ",";
+      std::cout << opt.unstack_channel_keys[i];
+    }
+    std::cout << "} entries=" << mc.size() << " nbins=" << spec.nbins
+              << " xmin=" << spec.xmin << " xmax=" << spec.xmax << "\n";
+    std::cout.flush();
+
     plotter.draw_unstack(spec, mc);
+
+    std::cout << "[plotImageOccupancy][debug] finished draw_unstack for tag=" << tag << "\n";
+    std::cout.flush();
   };
 
   draw_one("cosmic_pct_tot", "nu_pct_tot", "img_occ_cosmic_vs_neutrino_all");

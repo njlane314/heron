@@ -217,6 +217,11 @@ void UnstackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *
 
 void UnstackedHist::build_histograms()
 {
+    unstack_debug_log("build_histograms: begin spec=" + spec_.id +
+                      " expr=" + (spec_.expr.empty() ? std::string("<id>") : spec_.expr) +
+                      " mc_entries=" + std::to_string(mc_.size()) +
+                      " data_entries=" + std::to_string(data_.size()));
+
     const auto axes = spec_.axis_title();
     overlay_ = std::make_unique<THStack>((spec_.id + "_overlay").c_str(), axes.c_str());
     if (overlay_->GetHists())
@@ -259,6 +264,7 @@ void UnstackedHist::build_histograms()
 
     for (size_t ie = 0; ie < mc_.size(); ++ie)
     {
+        unstack_debug_log("build_histograms: booking MC source index=" + std::to_string(ie));
         const Entry *e = mc_[ie];
         if (!e)
         {
@@ -277,6 +283,8 @@ void UnstackedHist::build_histograms()
             booked[ch].push_back(h);
         }
     }
+
+    unstack_debug_log("build_histograms: booked channels=" + std::to_string(booked.size()));
 
     std::map<int, std::unique_ptr<TH1D>> sum_by_channel;
 
@@ -366,6 +374,8 @@ void UnstackedHist::build_histograms()
     });
 
     // Style + add to overlay stack (nostack draw later).
+    unstack_debug_log("build_histograms: sorted channel yields count=" + std::to_string(yields.size()));
+
     for (size_t i = 0; i < yields.size(); ++i)
     {
         const int ch = yields[i].first;
@@ -421,6 +431,8 @@ void UnstackedHist::build_histograms()
     }
 
     total_mc_events_ = mc_total_ ? mc_total_->Integral() : 0.0;
+    unstack_debug_log("build_histograms: mc channels=" + std::to_string(mc_ch_hists_.size()) +
+                      " total_mc_events=" + std::to_string(total_mc_events_));
 
     // Data
     if (!data_.empty())
@@ -533,14 +545,19 @@ void UnstackedHist::draw_overlay_and_unc(TPad *p_main, double &max_y)
 {
     if (!p_main)
     {
+        unstack_debug_log("draw_overlay_and_unc: main pad is null");
         return;
     }
     p_main->cd();
 
     if (!overlay_)
     {
+        unstack_debug_log("draw_overlay_and_unc: overlay is null");
         return;
     }
+
+    unstack_debug_log("draw_overlay_and_unc: drawing overlay with " + std::to_string(mc_ch_hists_.size()) +
+                      " channel histograms");
 
     // Titles
     if (!opt_.x_title.empty() || !opt_.y_title.empty())
@@ -730,8 +747,12 @@ void UnstackedHist::draw_legend(TPad *p)
 {
     if (!p)
     {
+        unstack_debug_log("draw_legend: legend pad is null");
         return;
     }
+    unstack_debug_log("draw_legend: begin mc_ch_hists=" + std::to_string(mc_ch_hists_.size()) +
+                      " chan_order=" + std::to_string(chan_order_.size()) +
+                      " chan_yields=" + std::to_string(chan_event_yields_.size()));
     p->cd();
 
     legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
@@ -763,6 +784,19 @@ void UnstackedHist::draw_legend(TPad *p)
 
     for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
     {
+        if (i >= chan_order_.size())
+        {
+            unstack_debug_log("draw_legend: skipping histogram index " + std::to_string(i) +
+                              " because chan_order size is " + std::to_string(chan_order_.size()));
+            continue;
+        }
+
+        if (!mc_ch_hists_[i])
+        {
+            unstack_debug_log("draw_legend: skipping null histogram at index " + std::to_string(i));
+            continue;
+        }
+
         const int ch = chan_order_.at(i);
 
         double sum = 0.0;
@@ -844,6 +878,7 @@ void UnstackedHist::draw_legend(TPad *p)
         leg->AddEntry(data_hist_.get(), "Data", "lep");
     }
 
+    unstack_debug_log("draw_legend: final legend entries=" + std::to_string(leg->GetNRows()));
     leg->Draw();
 }
 
@@ -1074,6 +1109,7 @@ void UnstackedHist::draw_watermark(TPad *p, double total_mc) const
 void UnstackedHist::draw(TCanvas &canvas)
 {
     build_histograms();
+    unstack_debug_log("draw: build_histograms complete");
 
     TPad *p_main = nullptr;
     TPad *p_ratio = nullptr;
@@ -1083,6 +1119,7 @@ void UnstackedHist::draw(TCanvas &canvas)
 
     double max_y = 1.0;
     draw_overlay_and_unc(p_main, max_y);
+    unstack_debug_log("draw: draw_overlay_and_unc complete");
     draw_cuts(p_main, max_y);
     draw_watermark(p_main, total_mc_events_);
 

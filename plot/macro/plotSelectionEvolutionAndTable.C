@@ -53,7 +53,7 @@ namespace
 struct StageStats
 {
     std::string cut_name;
-    std::string flag;
+    std::string stage_flag;
     std::string expr;
     double efficiency = 0.0;
     double purity = 0.0;
@@ -76,6 +76,37 @@ bool looks_like_event_list_root(const std::string &p)
     const bool has_event_tree_key = (f->Get("event_tree") != nullptr);
 
     return has_refs && (has_events_tree || has_event_tree_key);
+}
+
+std::shared_ptr<const std::vector<char>> build_truth_mc_mask(const EventListIO &el)
+{
+    const auto &refs = el.sample_refs();
+    int max_sample_id = -1;
+    for (const auto &kv : refs)
+    {
+        if (kv.first > max_sample_id)
+            max_sample_id = kv.first;
+    }
+
+    auto mask = std::make_shared<std::vector<char>>(static_cast<size_t>(max_sample_id + 1), 0);
+
+    const int overlay = static_cast<int>(SampleIO::SampleOrigin::kOverlay);
+    const int dirt = static_cast<int>(SampleIO::SampleOrigin::kDirt);
+    const int strangeness = static_cast<int>(SampleIO::SampleOrigin::kStrangeness);
+
+    for (const auto &kv : refs)
+    {
+        const int sid = kv.first;
+        const int origin = kv.second.sample_origin;
+
+        if (sid < 0 || sid > max_sample_id)
+            continue;
+
+        (*mask)[static_cast<size_t>(sid)] =
+            (origin == overlay || origin == dirt || origin == strangeness) ? 1 : 0;
+    }
+
+    return mask;
 }
 
 std::vector<std::string> split_csv(const std::string &csv)
@@ -156,7 +187,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     EventListIO el(input_path);
     ROOT::RDataFrame rdf = el.rdf();
 
-    auto mask_mc = el.mask_for_mc_like();
+    auto mask_mc = build_truth_mc_mask(el);
     auto mask_ext = el.mask_for_ext();
 
     auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
@@ -186,7 +217,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     {
         StageStats r;
         r.cut_name = (i == 0) ? "no cuts" : cut_labels[i - 1];
-        r.flag = (i == 0) ? "true" : cut_flags[i - 1];
+        r.stage_flag = (i == 0) ? "true" : cut_flags[i - 1];
         r.expr = cumulative_expr(cut_flags, i);
 
         const std::string stage_sel = "(" + r.expr + ")";
@@ -212,12 +243,13 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
 
     // Print an easy-to-copy markdown table.
     std::cout << "\n[plotSelectionEvolutionAndTable] Selection evolution table\n";
-    std::cout << "| Cut | Flag | Efficiency | Purity | MC purity | Rel. eff. |\n";
-    std::cout << "|---|---|---:|---:|---:|---:|\n";
+    std::cout << "| Cut | Stage flag | Applied selection | Efficiency | Purity | MC purity | Rel. eff. |\n";
+    std::cout << "|---|---|---|---:|---:|---:|---:|\n";
     for (const auto &r : rows)
     {
         std::cout << "| " << r.cut_name
-                  << " | `" << r.flag
+                  << " | `" << r.stage_flag
+                  << "` | `" << r.expr
                   << "` | " << tex_number(r.efficiency)
                   << " | " << tex_number(r.purity)
                   << " | " << tex_number(r.mc_purity)

@@ -196,7 +196,7 @@ int plotPixelDensityByAnalysisChannel(const std::string &samples_tsv = "",
 
     auto add_occ = [&](ROOT::RDF::RNode n) {
         n = n.Define("n_pix_tot",
-                     [](const std::vector<float> &u, const std::vector<float> &v, const std::vector<float> &w) {
+                     [](const auto &u, const auto &v, const auto &w) {
                          return static_cast<long long>(u.size()) + static_cast<long long>(v.size()) + static_cast<long long>(w.size());
                      },
                      {"detector_image_u", "detector_image_v", "detector_image_w"});

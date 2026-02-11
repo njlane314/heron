@@ -165,8 +165,9 @@ int sum_from_or_zero(const std::vector<int> &v, int idx_from)
 }
 
 // Return {sum_all_pos, sum_cosmic, sum_neutrino}
-std::array<double, 3> sum_adc_components(const std::vector<float> &adc,
-                                        const std::vector<int32_t> &sem)
+template <typename AdcVec, typename SemVec>
+std::array<double, 3> sum_adc_components(const AdcVec &adc,
+                                        const SemVec &sem)
 {
   double sum_all = 0.0;
   double sum_cos = 0.0;
@@ -279,9 +280,9 @@ int plotPixelChargeIntensity(const std::string &samples_tsv = "",
 
   auto n = node
                // per-plane sums: {all, cosmic, neutrino}
-               .Define("sum3_u", sum_adc_components, {"detector_image_u", "semantic_image_u"})
-               .Define("sum3_v", sum_adc_components, {"detector_image_v", "semantic_image_v"})
-               .Define("sum3_w", sum_adc_components, {"detector_image_w", "semantic_image_w"})
+               .Define("sum3_u", [](const auto &adc, const auto &sem) { return sum_adc_components(adc, sem); }, {"detector_image_u", "semantic_image_u"})
+               .Define("sum3_v", [](const auto &adc, const auto &sem) { return sum_adc_components(adc, sem); }, {"detector_image_v", "semantic_image_v"})
+               .Define("sum3_w", [](const auto &adc, const auto &sem) { return sum_adc_components(adc, sem); }, {"detector_image_w", "semantic_image_w"})
 
                .Define("sum_adc_all", "sum3_u[0] + sum3_v[0] + sum3_w[0]")
                .Define("sum_adc_cosmic", "sum3_u[1] + sum3_v[1] + sum3_w[1]")

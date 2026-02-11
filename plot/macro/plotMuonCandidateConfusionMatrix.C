@@ -98,8 +98,8 @@ void draw_cell_text(const TH2D &h_count,
             const double f = h_row_frac.GetBinContent(bx, by);
 
             std::ostringstream os;
-            os << std::fixed << std::setprecision(0) << c << "\\n(";
-            os << std::setprecision(1) << (100.0 * f) << "%)";
+            os << "#splitline{" << std::fixed << std::setprecision(0) << c << "}";
+            os << "{" << std::setprecision(1) << (100.0 * f) << "%}";
             latex.DrawLatex(x, y, os.str().c_str());
         }
     }
@@ -151,15 +151,15 @@ int plotMuonCandidateConfusionMatrix(const std::string &input = "",
                     .Define("cm_pred", [](bool sel) { return sel ? 1 : 0; }, {"sel_muon"});
 
     auto h = node.Histo2D(
-        {"h_muon_candidate_confusion", ";Predicted muon-candidate label;True inclusive #nu_{#mu}CC label", 2, -0.5, 1.5, 2, -0.5, 1.5},
+        {"h_muon_candidate_confusion", ";Predicted label;True label", 2, -0.5, 1.5, 2, -0.5, 1.5},
         "cm_pred", "cm_truth", weight_expr);
 
     TH2D h_count = *h;
     h_count.SetDirectory(nullptr);
-    h_count.GetXaxis()->SetBinLabel(1, "not selected");
-    h_count.GetXaxis()->SetBinLabel(2, "selected");
-    h_count.GetYaxis()->SetBinLabel(1, "not #nu_{#mu}CC");
-    h_count.GetYaxis()->SetBinLabel(2, "#nu_{#mu}CC");
+    h_count.GetXaxis()->SetBinLabel(1, "No muon candidate");
+    h_count.GetXaxis()->SetBinLabel(2, "Muon candidate");
+    h_count.GetYaxis()->SetBinLabel(1, "True not #nu_{#mu} CC");
+    h_count.GetYaxis()->SetBinLabel(2, "True #nu_{#mu} CC");
 
     TH2D h_row_frac = h_count;
     for (int by = 1; by <= h_row_frac.GetNbinsY(); ++by)
@@ -208,7 +208,7 @@ int plotMuonCandidateConfusionMatrix(const std::string &input = "",
 
     if (row_normalise)
     {
-        h_row_frac.SetTitle("Muon-candidate confusion matrix (row-normalised)");
+        h_row_frac.SetTitle("");
         h_row_frac.GetZaxis()->SetTitle("Fraction per truth row");
         h_row_frac.SetMinimum(0.0);
         h_row_frac.SetMaximum(1.0);
@@ -217,20 +217,20 @@ int plotMuonCandidateConfusionMatrix(const std::string &input = "",
     }
     else
     {
-        h_count.SetTitle("Muon-candidate confusion matrix (weighted counts)");
+        h_count.SetTitle("");
         h_count.GetZaxis()->SetTitle("Weighted events");
         h_count.Draw("COLZ TEXT");
     }
 
     std::ostringstream ptxt;
     ptxt << std::fixed << std::setprecision(1)
-         << "Purity=" << (100.0 * purity) << "%, Eff.=" << (100.0 * efficiency) << "%";
+         << "Purity=" << (100.0 * purity) << "%, Efficiency=" << (100.0 * efficiency) << "%";
 
     TLatex latex;
     latex.SetNDC(true);
     latex.SetTextFont(42);
-    latex.SetTextSize(0.035f);
-    latex.DrawLatex(0.18f, 0.96f, ptxt.str().c_str());
+    latex.SetTextSize(0.03f);
+    latex.DrawLatex(0.18f, 0.93f, ptxt.str().c_str());
 
     const std::string out_path = out_dir + "/muon_candidate_confusion_matrix." + out_fmt;
     c.SaveAs(out_path.c_str());

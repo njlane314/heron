@@ -307,7 +307,11 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
   }
 
   // Single pass over the dataset for all label hists.
-  ROOT::RDF::RunGraphs(hists);
+  std::vector<ROOT::RDF::RResultHandle> handles;
+  handles.reserve(hists.size());
+  for (const auto &hist : hists)
+    handles.emplace_back(hist);
+  ROOT::RDF::RunGraphs(handles);
 
   gStyle->SetOptStat(0);
 

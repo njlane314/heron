@@ -252,9 +252,9 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
   const int kFirstNuIdx = 2;
 
   auto n = node
-               .Define("n_pix_u", [](const std::vector<float> &v) { return static_cast<int>(v.size()); }, {"detector_image_u"})
-               .Define("n_pix_v", [](const std::vector<float> &v) { return static_cast<int>(v.size()); }, {"detector_image_v"})
-               .Define("n_pix_w", [](const std::vector<float> &v) { return static_cast<int>(v.size()); }, {"detector_image_w"})
+               .Define("n_pix_u", "(int)detector_image_u.size()")
+               .Define("n_pix_v", "(int)detector_image_v.size()")
+               .Define("n_pix_w", "(int)detector_image_w.size()")
                .Define("n_pix_tot", "n_pix_u + n_pix_v + n_pix_w")
 
                .Define("cosmic_u", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_u"})

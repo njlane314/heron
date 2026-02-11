@@ -36,6 +36,7 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -66,20 +67,6 @@ bool looks_like_event_list_root(const std::string &p)
   const bool has_event_tree_key = (f->Get("event_tree") != nullptr);
 
   return has_refs && (has_events_tree || has_event_tree_key);
-}
-
-bool env_truthy(const char *v)
-{
-  if (v == nullptr)
-    return false;
-  const std::string s(v);
-  return s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON";
-}
-
-bool implicit_mt_enabled()
-{
-  // Match patterns used elsewhere in the repo.
-  return env_truthy(std::getenv("NUXSEC_ENABLE_IMT")) || env_truthy(std::getenv("NUXSEC_PLOT_IMT"));
 }
 
 std::string plot_out_dir()
@@ -148,7 +135,7 @@ int require_columns(const std::unordered_set<std::string> &columns,
   return 1;
 }
 
-int at_or_zero(const std::vector<int> &v, int idx)
+int at_or_zero(const ROOT::VecOps::RVec<int> &v, int idx)
 {
   if (idx < 0)
     return 0;
@@ -158,7 +145,7 @@ int at_or_zero(const std::vector<int> &v, int idx)
   return v[u];
 }
 
-int sum_from_or_zero(const std::vector<int> &v, int idx_from)
+int sum_from_or_zero(const ROOT::VecOps::RVec<int> &v, int idx_from)
 {
   if (idx_from < 0)
     idx_from = 0;
@@ -178,16 +165,8 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                        double xmax_pct = 1e1,
                        bool draw_planes = true)
 {
-  if (implicit_mt_enabled())
-  {
-    ROOT::EnableImplicitMT();
-    std::cout << "[plotImageOccupancy] implicit MT enabled\n";
-  }
-  else
-  {
-    ROOT::DisableImplicitMT();
-    std::cout << "[plotImageOccupancy] implicit MT disabled (set NUXSEC_ENABLE_IMT=1 to enable)\n";
-  }
+  ROOT::EnableImplicitMT();
+  std::cout << "[plotImageOccupancy] implicit MT enabled\n";
 
   const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
   std::cout << "[plotImageOccupancy] input=" << list_path << "\n";
@@ -257,13 +236,13 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                .Define("n_pix_w", "(int)detector_image_w.size()")
                .Define("n_pix_tot", "n_pix_u + n_pix_v + n_pix_w")
 
-               .Define("cosmic_u", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_u"})
-               .Define("cosmic_v", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_v"})
-               .Define("cosmic_w", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_w"})
+               .Define("cosmic_u", [=](const ROOT::VecOps::RVec<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_u"})
+               .Define("cosmic_v", [=](const ROOT::VecOps::RVec<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_v"})
+               .Define("cosmic_w", [=](const ROOT::VecOps::RVec<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_w"})
 
-               .Define("nu_u", [=](const std::vector<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_u"})
-               .Define("nu_v", [=](const std::vector<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_v"})
-               .Define("nu_w", [=](const std::vector<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_w"})
+               .Define("nu_u", [=](const ROOT::VecOps::RVec<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_u"})
+               .Define("nu_v", [=](const ROOT::VecOps::RVec<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_v"})
+               .Define("nu_w", [=](const ROOT::VecOps::RVec<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_w"})
 
                .Define("cosmic_tot", "cosmic_u + cosmic_v + cosmic_w")
                .Define("nu_tot", "nu_u + nu_v + nu_w")

@@ -14,9 +14,11 @@
 //     'plotMuonCandidateConfusionMatrix("./scratch/out/event_list_myana.root","true","w_nominal",true,0.5)'
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -90,6 +92,65 @@ bool passes_mipness_discriminant(const ROOT::RVec<float> &scores, float threshol
     return false;
 }
 
+bool has_column(const std::vector<std::string> &cols, const std::string &name)
+{
+    return std::find(cols.begin(), cols.end(), name) != cols.end();
+}
+
+ROOT::RVec<float> derive_track_mipness_median_plane_score(const ROOT::RVec<float> &T70u,
+                                                           const ROOT::RVec<float> &Q50u,
+                                                           const ROOT::RVec<float> &Q90u,
+                                                           const ROOT::RVec<float> &T70v,
+                                                           const ROOT::RVec<float> &Q50v,
+                                                           const ROOT::RVec<float> &Q90v,
+                                                           const ROOT::RVec<float> &T70y,
+                                                           const ROOT::RVec<float> &Q50y,
+                                                           const ROOT::RVec<float> &Q90y)
+{
+    constexpr double Mref_mev_per_cm = 1.8;
+    constexpr double tail_weight_w = 0.5;
+
+    auto D_from_stats = [](float T70, float Q50, float Q90) -> double {
+        if (!(std::isfinite(T70) && std::isfinite(Q50) && std::isfinite(Q90)))
+            return std::numeric_limits<double>::quiet_NaN();
+        if (!(T70 > 0.0f && Q50 > 0.0f && Q90 > 0.0f))
+            return std::numeric_limits<double>::quiet_NaN();
+        return std::log(static_cast<double>(T70) / Mref_mev_per_cm) +
+               tail_weight_w * std::log(static_cast<double>(Q90) / static_cast<double>(Q50));
+    };
+
+    const std::size_t n = std::min({T70u.size(), Q50u.size(), Q90u.size(),
+                                    T70v.size(), Q50v.size(), Q90v.size(),
+                                    T70y.size(), Q50y.size(), Q90y.size()});
+
+    ROOT::RVec<float> out(n, std::numeric_limits<float>::quiet_NaN());
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        std::vector<double> Ds;
+        Ds.reserve(3);
+
+        const double Du = D_from_stats(T70u[i], Q50u[i], Q90u[i]);
+        const double Dv = D_from_stats(T70v[i], Q50v[i], Q90v[i]);
+        const double Dy = D_from_stats(T70y[i], Q50y[i], Q90y[i]);
+
+        if (std::isfinite(Du))
+            Ds.push_back(Du);
+        if (std::isfinite(Dv))
+            Ds.push_back(Dv);
+        if (std::isfinite(Dy))
+            Ds.push_back(Dy);
+
+        if (Ds.empty())
+            continue;
+
+        std::sort(Ds.begin(), Ds.end());
+        const double Dmed = Ds[Ds.size() / 2];
+        out[i] = static_cast<float>(std::exp(-Dmed));
+    }
+
+    return out;
+}
+
 void draw_cell_text(const TH2D &h_count,
                     const TH2D &h_row_frac)
 {
@@ -137,6 +198,7 @@ int plotMuonCandidateConfusionMatrix(const std::string &input = "",
 
     EventListIO el(list_path);
     ROOT::RDataFrame rdf = el.rdf();
+    const std::vector<std::string> cols = rdf.GetColumnNames();
 
     auto mask_ext = el.mask_for_ext();
     auto mask_mc = el.mask_for_mc_like();
@@ -153,12 +215,38 @@ int plotMuonCandidateConfusionMatrix(const std::string &input = "",
             {"sample_id"});
     }
 
+    ROOT::RDF::RNode node_base = node_mc;
+
+    const bool has_mipness_scores = has_column(cols, "track_mipness_median_plane_score");
+    const bool has_mipness_stats =
+        has_column(cols, "track_dedx_T70_u") && has_column(cols, "track_dedx_Q50_u") && has_column(cols, "track_dedx_Q90_u") &&
+        has_column(cols, "track_dedx_T70_v") && has_column(cols, "track_dedx_Q50_v") && has_column(cols, "track_dedx_Q90_v") &&
+        has_column(cols, "track_dedx_T70_y") && has_column(cols, "track_dedx_Q50_y") && has_column(cols, "track_dedx_Q90_y");
+
+    if (!has_mipness_scores && has_mipness_stats)
+    {
+        std::cout << "[plotMuonCandidateConfusionMatrix] deriving track_mipness_median_plane_score from dE/dx quantiles\n";
+        node_base = node_base.Define(
+            "track_mipness_median_plane_score",
+            derive_track_mipness_median_plane_score,
+            {"track_dedx_T70_u", "track_dedx_Q50_u", "track_dedx_Q90_u",
+             "track_dedx_T70_v", "track_dedx_Q50_v", "track_dedx_Q90_v",
+             "track_dedx_T70_y", "track_dedx_Q50_y", "track_dedx_Q90_y"});
+    }
+    else if (!has_mipness_scores)
+    {
+        std::cerr << "[plotMuonCandidateConfusionMatrix] missing required MIPness columns. Need either '\n"
+                  << "  - track_mipness_median_plane_score\n"
+                  << "or dE/dx quantiles track_dedx_{T70,Q50,Q90}_{u,v,y}\n";
+        return 1;
+    }
+
     const std::string selection = "(" + (extra_sel.empty() ? std::string("true") : extra_sel) + ")"
                                   " && software_trigger > 0"
                                   " && sel_slice"
                                   " && in_reco_fiducial";
 
-    auto node = node_mc.Filter(selection)
+    auto node = node_base.Filter(selection)
                     .Define("cm_truth", [](bool is_numu_cc) { return is_numu_cc ? 1 : 0; }, {"is_nu_mu_cc"})
                     .Define("cm_pred", [](bool sel) { return sel ? 1 : 0; }, {"sel_muon"})
                     .Define("cm_pred_mipness", [mipness_threshold](const ROOT::RVec<float> &mipness_scores) {

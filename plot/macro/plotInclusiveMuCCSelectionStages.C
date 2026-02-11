@@ -656,9 +656,10 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
             data.push_back(&entries.back());
         }
 
-        // Per-plot adaptive control (discrete vars look better with fixed bins)
+        // Force uniform binning for all inclusive muon plots.
+        (void)allow_adaptive;
         const bool old_adaptive = opt.adaptive_binning;
-        opt.adaptive_binning = allow_adaptive;
+        opt.adaptive_binning = false;
 
         opt.x_title = x_title.empty() ? expr : x_title;
 

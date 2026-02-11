@@ -88,6 +88,14 @@ struct Options
     // binning, results will look uniform. Fill finer, then merge.
     // Filled nbins = spec.nbins * adaptive_fine_bin_factor (clamped).
     int adaptive_fine_bin_factor = 10;
+
+    // --- Particle-level plotting (vector-valued branches) ---
+    // If enabled, MC is stacked by truth-matched particle type using `particle_pdg_branch`.
+    // This expects `spec.expr` (or `spec.id` if expr is empty) to evaluate to a vector-like
+    // column (e.g. track_length, backtracked_energies, ...). Data is still drawn unstacked.
+    bool particle_level = false;
+    std::string particle_pdg_branch = "backtracked_pdg_codes";
+    bool particle_drop_nan = true;
 };
 
 struct TH1DModel

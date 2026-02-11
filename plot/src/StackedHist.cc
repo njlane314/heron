@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "ROOT/RDFHelpers.hxx"
+#include "ROOT/RVec.hxx"
 #include "TArrow.h"
 #include "TCanvas.h"
 #include "TImage.h"
@@ -31,6 +32,7 @@
 
 #include "AdaptiveBinningService.hh"
 #include "PlotChannels.hh"
+#include "ParticleChannels.hh"
 #include "Plotter.hh"
 
 namespace nu
@@ -53,6 +55,31 @@ void stack_debug_log(const std::string &msg)
     std::cout << "[StackedHist][debug] " << msg << "\n";
     std::cout.flush();
 }
+ROOT::VecOps::RVec<double> select_particle_values(const ROOT::VecOps::RVec<double> &values,
+                                                  const ROOT::VecOps::RVec<int> &pdg_codes,
+                                                  int key,
+                                                  bool drop_nan)
+{
+    ROOT::VecOps::RVec<double> out;
+    out.reserve(values.size());
+    for (std::size_t i = 0; i < values.size(); ++i)
+    {
+        const double v = values[i];
+        if (drop_nan && !std::isfinite(v))
+        {
+            continue;
+        }
+        // If the PDG vector is shorter than the value vector (possible if a producer
+        // did not push placeholders), treat missing PDGs as "unmatched" (0).
+        const int pdg = (i < pdg_codes.size()) ? pdg_codes[i] : 0;
+        if (ParticleChannels::matches(key, pdg))
+        {
+            out.push_back(v);
+        }
+    }
+    return out;
+}
+
 } // namespace
 
 void apply_total_errors(TH1D &h,
@@ -310,7 +337,11 @@ void StackedHist::build_histograms()
     total_mc_events_ = 0.0;
     density_mode_ = false;
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
-    const auto &channels = Channels::mc_keys();
+    const bool particle_level = opt_.particle_level;
+    const auto &channels = particle_level ? ParticleChannels::keys() : Channels::mc_keys();
+    const std::string pdg_branch = particle_level
+                                       ? (opt_.particle_pdg_branch.empty() ? "backtracked_pdg_codes" : opt_.particle_pdg_branch)
+                                       : std::string{};
     const auto cfg = AdaptiveBinningService::config_from(opt_);
 
     // If adaptive binning is enabled, fill a finer histogram first and then merge.
@@ -335,11 +366,39 @@ void StackedHist::build_histograms()
         auto n0 = apply(e->rnode(), spec_.sel, e->selection);
         auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
         const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
-        for (int ch : channels)
+
+        if (!particle_level)
         {
-            auto nf = n.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
-            auto h = nf.Histo1D(fill_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
-            booked[ch].push_back(h);
+            for (int ch : channels)
+            {
+                auto nf = n.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
+                auto h = nf.Histo1D(fill_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
+                booked[ch].push_back(h);
+            }
+        }
+        else
+        {
+            // Convert any vector-like numeric column to RVec<double> once, then
+            // per-category select based on the truth-matched PDG vector.
+            const std::string val_d = "_nx_val_d_";
+            const std::string val_expr = "ROOT::VecOps::RVec<double>(" + var + ".begin(), " + var + ".end())";
+            auto nvec = n.Define(val_d, val_expr);
+
+            for (int ch : channels)
+            {
+                const std::string sel = "_nx_part_sel_" + std::to_string(ch) + "_src" + std::to_string(ie);
+                auto nsel = nvec.Define(
+                    sel,
+                    [ch, drop_nan = opt_.particle_drop_nan](const ROOT::VecOps::RVec<double> &values,
+                                                            const ROOT::VecOps::RVec<int> &pdg_codes) {
+                        return select_particle_values(values, pdg_codes, ch, drop_nan);
+                    },
+                    std::vector<std::string>{val_d, pdg_branch});
+
+                auto h = nsel.Histo1D(fill_spec.model("_mc_pdg" + std::to_string(ch) + "_src" + std::to_string(ie)),
+                                      sel, spec_.weight);
+                booked[ch].push_back(h);
+            }
         }
     }
 
@@ -444,8 +503,16 @@ void StackedHist::build_histograms()
             continue;
         }
         auto &sum = it->second;
-        sum->SetFillColor(Channels::colour(ch));
-        sum->SetFillStyle(Channels::fill_style(ch));
+        if (particle_level)
+        {
+            sum->SetFillColor(ParticleChannels::colour(ch));
+            sum->SetFillStyle(ParticleChannels::fill_style(ch));
+        }
+        else
+        {
+            sum->SetFillColor(Channels::colour(ch));
+            sum->SetFillStyle(Channels::fill_style(ch));
+        }
         sum->SetLineColor(kBlack);
         sum->SetLineWidth(1);
         stack_->Add(sum.get(), "HIST");
@@ -594,7 +661,8 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     {
         const std::string default_x = !spec_.name.empty() ? spec_.name : spec_.id;
         const std::string x = opt_.x_title.empty() ? default_x : opt_.x_title;
-        const std::string y = opt_.y_title.empty() ? "Events" : opt_.y_title;
+        const std::string default_y = opt_.particle_level ? "Particles" : "Events";
+        const std::string y = opt_.y_title.empty() ? default_y : opt_.y_title;
         stack_->SetTitle((";" + x + ";" + y).c_str());
     }
 
@@ -613,6 +681,18 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         frame->GetXaxis()->SetNdivisions(510);
         frame->GetXaxis()->SetTickLength(0.02);
         frame->GetXaxis()->CenterTitle(false);
+
+        // If we didn't override titles explicitly, THStack's default comes from
+        // TH1DModel::axis_title() (which defaults to "Events"). For particle-level
+        // plots, update the default Y label to avoid misleading units.
+        if (opt_.particle_level && opt_.y_title.empty())
+        {
+            const std::string cur = frame->GetYaxis() ? frame->GetYaxis()->GetTitle() : "";
+            if (cur.empty() || cur == "Events")
+            {
+                frame->GetYaxis()->SetTitle("Particles");
+            }
+        }
         if (!opt_.x_title.empty())
         {
             frame->GetXaxis()->SetTitle(opt_.x_title.c_str());
@@ -775,7 +855,7 @@ void StackedHist::draw_legend(TPad *p)
             // If density_mode_ is true, Integral("width") restores event counts.
             sum = density_mode_ ? mc_ch_hists_[i]->Integral("width") : mc_ch_hists_[i]->Integral();
         }
-        std::string label = Channels::label(ch);
+        std::string label = opt_.particle_level ? ParticleChannels::label(ch) : Channels::label(ch);
         if (label == "#emptyset")
         {
             label = "\xE2\x88\x85";
@@ -1024,10 +1104,11 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
         region_label = SelectionService::selection_label(spec_.sel);
     }
 
+    const std::string yield_unit = opt_.particle_level ? "particles" : "events";
     const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +
                               " (" + pot_str + " POT)";
     const std::string line3 = "Analysis Region: " + region_label + " (" +
-                              Plotter::fmt_commas(total_mc, 2) + " events)";
+                              Plotter::fmt_commas(total_mc, 2) + " " + yield_unit + ")";
 
     TLatex watermark;
     watermark.SetNDC();

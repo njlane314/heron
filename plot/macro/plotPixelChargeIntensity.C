@@ -33,6 +33,7 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -165,8 +166,8 @@ int sum_from_or_zero(const std::vector<int> &v, int idx_from)
 }
 
 // Return {sum_all_pos, sum_cosmic, sum_neutrino}
-std::array<double, 3> sum_adc_components(const std::vector<float> &adc,
-                                        const std::vector<int32_t> &sem)
+std::array<double, 3> sum_adc_components(const ROOT::RVec<float> &adc,
+                                        const ROOT::RVec<int32_t> &sem)
 {
   double sum_all = 0.0;
   double sum_cos = 0.0;

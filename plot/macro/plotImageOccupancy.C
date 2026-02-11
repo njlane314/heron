@@ -36,6 +36,7 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -148,7 +149,7 @@ int require_columns(const std::unordered_set<std::string> &columns,
   return 1;
 }
 
-int at_or_zero(const std::vector<int> &v, int idx)
+int at_or_zero(const ROOT::RVec<int> &v, int idx)
 {
   if (idx < 0)
     return 0;
@@ -158,7 +159,7 @@ int at_or_zero(const std::vector<int> &v, int idx)
   return v[u];
 }
 
-int sum_from_or_zero(const std::vector<int> &v, int idx_from)
+int sum_from_or_zero(const ROOT::RVec<int> &v, int idx_from)
 {
   if (idx_from < 0)
     idx_from = 0;
@@ -257,13 +258,13 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                .Define("n_pix_w", "(int)detector_image_w.size()")
                .Define("n_pix_tot", "n_pix_u + n_pix_v + n_pix_w")
 
-               .Define("cosmic_u", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_u"})
-               .Define("cosmic_v", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_v"})
-               .Define("cosmic_w", [=](const std::vector<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_w"})
+               .Define("cosmic_u", [=](const ROOT::RVec<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_u"})
+               .Define("cosmic_v", [=](const ROOT::RVec<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_v"})
+               .Define("cosmic_w", [=](const ROOT::RVec<int> &c) { return at_or_zero(c, kCosmicIdx); }, {"slice_semantic_active_pixels_w"})
 
-               .Define("nu_u", [=](const std::vector<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_u"})
-               .Define("nu_v", [=](const std::vector<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_v"})
-               .Define("nu_w", [=](const std::vector<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_w"})
+               .Define("nu_u", [=](const ROOT::RVec<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_u"})
+               .Define("nu_v", [=](const ROOT::RVec<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_v"})
+               .Define("nu_w", [=](const ROOT::RVec<int> &c) { return sum_from_or_zero(c, kFirstNuIdx); }, {"slice_semantic_active_pixels_w"})
 
                .Define("cosmic_tot", "cosmic_u + cosmic_v + cosmic_w")
                .Define("nu_tot", "nu_u + nu_v + nu_w")

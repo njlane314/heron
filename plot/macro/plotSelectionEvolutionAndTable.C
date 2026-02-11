@@ -301,7 +301,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
 
     TCanvas c("c_selection_evolution", "Selection evolution", 1000, 700);
     gStyle->SetOptStat(0);
-    c.SetBottomMargin(0.24);
+    c.SetBottomMargin(0.18);
     c.SetLeftMargin(0.11);
     c.SetRightMargin(0.10);
     c.SetTopMargin(0.07);

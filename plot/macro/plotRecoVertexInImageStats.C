@@ -59,19 +59,6 @@ bool looks_like_event_list_root(const std::string &p)
     return has_refs && (has_events_tree || has_event_tree_key);
 }
 
-bool env_truthy(const char *v)
-{
-    if (v == nullptr)
-        return false;
-    const std::string s(v);
-    return s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON";
-}
-
-bool implicit_mt_enabled()
-{
-    return env_truthy(std::getenv("NUXSEC_ENABLE_IMT")) || env_truthy(std::getenv("NUXSEC_PLOT_IMT"));
-}
-
 std::string plot_out_dir()
 {
     const char *v = std::getenv("NUXSEC_PLOT_DIR");
@@ -160,16 +147,8 @@ int plotRecoVertexInImageStats(const std::string &samples_tsv = "",
                                const std::string &extra_sel = "true",
                                bool include_data = false)
 {
-    if (implicit_mt_enabled())
-    {
-        ROOT::EnableImplicitMT();
-        std::cout << "[plotRecoVertexInImageStats] implicit MT enabled\n";
-    }
-    else
-    {
-        ROOT::DisableImplicitMT();
-        std::cout << "[plotRecoVertexInImageStats] implicit MT disabled (set NUXSEC_ENABLE_IMT=1 to enable)\n";
-    }
+    ROOT::EnableImplicitMT();
+    std::cout << "[plotRecoVertexInImageStats] implicit MT enabled\n";
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotRecoVertexInImageStats] input=" << list_path << "\n";

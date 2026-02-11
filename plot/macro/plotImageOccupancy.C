@@ -39,13 +39,16 @@
 #include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
+#include <TColor.h>
 #include <TFile.h>
 #include <TH1D.h>
-#include <TLegend.h>
 #include <TStyle.h>
 #include <TSystem.h>
 
+#include "ColumnDerivationService.hh"
+
 #include "EventListIO.hh"
+#include "Plotter.hh"
 #include "PlottingHelper.hh"
 
 using namespace nu;
@@ -79,39 +82,6 @@ std::string plot_out_fmt()
 {
   const char *v = std::getenv("NUXSEC_PLOT_FORMAT");
   return v ? std::string(v) : std::string("pdf");
-}
-
-std::vector<double> log_edges(int nbins, double xmin, double xmax)
-{
-  std::vector<double> edges;
-  edges.reserve(static_cast<size_t>(nbins) + 1);
-
-  // Guard.
-  xmin = std::max(xmin, 1e-12);
-  xmax = std::max(xmax, xmin * 1.0001);
-
-  const double logmin = std::log10(xmin);
-  const double logmax = std::log10(xmax);
-  for (int i = 0; i <= nbins; ++i)
-  {
-    const double t = static_cast<double>(i) / static_cast<double>(nbins);
-    edges.push_back(std::pow(10.0, logmin + t * (logmax - logmin)));
-  }
-  return edges;
-}
-
-void normalise_to_percent(TH1 &h)
-{
-  const double tot = h.Integral(0, h.GetNbinsX() + 1);
-  if (tot > 0.0)
-    h.Scale(100.0 / tot);
-}
-
-void style_hist(TH1 &h, int color, double alpha)
-{
-  h.SetLineColor(color);
-  h.SetLineWidth(2);
-  h.SetFillColorAlpha(color, alpha);
 }
 
 int require_columns(const std::unordered_set<std::string> &columns,
@@ -307,75 +277,84 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                        },
                        {"nu_w", "n_pix_w"});
 
-  const auto edges = log_edges(nbins, xmin_pct, xmax_pct);
-
-  auto make_model = [&](const std::string &name) {
-    return ROOT::RDF::TH1DModel(name.c_str(),
-                               ";Percentage of pixels / event;Fraction of Dataset [%]",
-                               nbins, edges.data());
-  };
-
-  auto h_cos_all = n.Histo1D(make_model("h_cos_all"), "cosmic_pct_tot");
-  auto h_nu_all = n.Histo1D(make_model("h_nu_all"), "nu_pct_tot");
-
-  ROOT::RDF::RResultPtr<TH1D> h_cos_u, h_nu_u, h_cos_v, h_nu_v, h_cos_w, h_nu_w;
-  if (draw_planes)
-  {
-    h_cos_u = n.Histo1D(make_model("h_cos_u"), "cosmic_pct_u");
-    h_nu_u = n.Histo1D(make_model("h_nu_u"), "nu_pct_u");
-    h_cos_v = n.Histo1D(make_model("h_cos_v"), "cosmic_pct_v");
-    h_nu_v = n.Histo1D(make_model("h_nu_v"), "nu_pct_v");
-    h_cos_w = n.Histo1D(make_model("h_cos_w"), "cosmic_pct_w");
-    h_nu_w = n.Histo1D(make_model("h_nu_w"), "nu_pct_w");
-  }
-
-  if (draw_planes)
-    ROOT::RDF::RunGraphs({h_cos_all, h_nu_all, h_cos_u, h_nu_u, h_cos_v, h_nu_v, h_cos_w, h_nu_w});
-  else
-    ROOT::RDF::RunGraphs({h_cos_all, h_nu_all});
-
   gStyle->SetOptStat(0);
 
   const std::string out_dir = plot_out_dir();
   const std::string fmt = plot_out_fmt();
   gSystem->mkdir(out_dir.c_str(), true);
 
-  auto draw_one = [&](TH1D *hcos, TH1D *hnu, const std::string &tag) {
-    normalise_to_percent(*hcos);
-    normalise_to_percent(*hnu);
+  const double n_events = static_cast<double>(*n.Count());
+  const double evt_weight = (n_events > 0.0) ? (100.0 / n_events) : 0.0;
 
-    style_hist(*hcos, kAzure + 1, 0.35);
-    style_hist(*hnu, kOrange + 1, 0.35);
+  auto draw_one = [&](const std::string &cos_col,
+                      const std::string &nu_col,
+                      const std::string &tag) {
+    ProcessorEntry rec_mc;
+    rec_mc.source = Type::kMC;
 
-    const double ymax = 1.15 * std::max(hcos->GetMaximum(), hnu->GetMaximum());
-    hcos->SetMaximum(ymax);
-    hcos->SetTitle("");
+    std::vector<Entry> entries;
+    entries.reserve(2);
 
-    TCanvas c(("c_" + tag).c_str(), ("c_" + tag).c_str(), 900, 550);
-    c.SetLogx();
+    auto cosmic_node = n
+                           .Define("plot_occ_value", cos_col)
+                           .Define("plot_occ_weight", [evt_weight]() { return evt_weight; })
+                           .Define("plot_occ_channel", "97");
+    entries.emplace_back(make_entry(std::move(cosmic_node), rec_mc));
 
-    hcos->Draw("hist");
-    hnu->Draw("hist same");
+    auto neutrino_node = n
+                             .Define("plot_occ_value", nu_col)
+                             .Define("plot_occ_weight", [evt_weight]() { return evt_weight; })
+                             .Define("plot_occ_channel", "98");
+    entries.emplace_back(make_entry(std::move(neutrino_node), rec_mc));
 
-    TLegend leg(0.14, 0.84, 0.44, 0.96);
-    leg.SetBorderSize(0);
-    leg.SetFillStyle(0);
-    leg.AddEntry(hcos, "Cosmic Pixels", "f");
-    leg.AddEntry(hnu, "Neutrino Pixels", "f");
-    leg.Draw();
+    std::vector<const Entry *> mc;
+    mc.reserve(entries.size());
+    for (auto &e : entries)
+      mc.push_back(&e);
 
-    const std::string out = out_dir + "/" + tag + "." + fmt;
-    c.SaveAs(out.c_str());
-    std::cout << "[plotImageOccupancy] wrote " << out << "\n";
+    TH1DModel spec;
+    spec.id = tag;
+    spec.name = tag;
+    spec.title = ";Percentage of pixels / event;Fraction of Dataset [%]";
+    spec.expr = "plot_occ_value";
+    spec.weight = "plot_occ_weight";
+    spec.nbins = nbins;
+    spec.xmin = xmin_pct;
+    spec.xmax = xmax_pct;
+    spec.sel = Preset::Empty;
+
+    Plotter plotter;
+    auto &opt = plotter.options();
+    opt.out_dir = out_dir;
+    opt.image_format = fmt;
+    opt.show_ratio = false;
+    opt.show_ratio_band = false;
+    opt.annotate_numbers = false;
+    opt.overlay_signal = false;
+    opt.legend_on_top = false;
+    opt.show_legend = true;
+    opt.use_log_y = false;
+    opt.channel_column = "plot_occ_channel";
+    opt.unstack_channel_keys = {97, 98};
+    opt.unstack_channel_labels = {
+        {97, "Cosmic Pixels"},
+        {98, "Neutrino Pixels"}
+    };
+    opt.unstack_channel_colours = {
+        {97, kAzure + 1},
+        {98, kOrange + 1}
+    };
+
+    plotter.draw_unstack(spec, mc);
   };
 
-  draw_one(&(*h_cos_all), &(*h_nu_all), "img_occ_cosmic_vs_neutrino_all");
+  draw_one("cosmic_pct_tot", "nu_pct_tot", "img_occ_cosmic_vs_neutrino_all");
 
   if (draw_planes)
   {
-    draw_one(&(*h_cos_u), &(*h_nu_u), "img_occ_cosmic_vs_neutrino_u");
-    draw_one(&(*h_cos_v), &(*h_nu_v), "img_occ_cosmic_vs_neutrino_v");
-    draw_one(&(*h_cos_w), &(*h_nu_w), "img_occ_cosmic_vs_neutrino_w");
+    draw_one("cosmic_pct_u", "nu_pct_u", "img_occ_cosmic_vs_neutrino_u");
+    draw_one("cosmic_pct_v", "nu_pct_v", "img_occ_cosmic_vs_neutrino_v");
+    draw_one("cosmic_pct_w", "nu_pct_w", "img_occ_cosmic_vs_neutrino_w");
   }
 
   return 0;

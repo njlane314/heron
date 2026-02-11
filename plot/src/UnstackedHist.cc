@@ -242,7 +242,9 @@ void UnstackedHist::build_histograms()
     density_mode_ = false;
 
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
-    const auto &channels = Channels::mc_keys();
+    const std::vector<int> channels = opt_.unstack_channel_keys.empty()
+                                          ? Channels::mc_keys()
+                                          : opt_.unstack_channel_keys;
     const auto cfg = AdaptiveBinningService::config_from(opt_);
 
     // If adaptive binning is enabled, fill a finer histogram first and then merge.
@@ -268,7 +270,7 @@ void UnstackedHist::build_histograms()
 
         for (int ch : channels)
         {
-            auto nf = n.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
+            auto nf = n.Filter([ch](int c) { return c == ch; }, {opt_.channel_column});
             auto h = nf.Histo1D(fill_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)),
                                 var,
                                 spec_.weight);
@@ -379,7 +381,13 @@ void UnstackedHist::build_histograms()
 
         // Unstacked visual: lines only to avoid filled-overlap hiding earlier curves.
         sum->SetFillStyle(0);
-        sum->SetLineColor(Channels::colour(ch));
+        int line_colour = Channels::colour(ch);
+        auto colour_it = opt_.unstack_channel_colours.find(ch);
+        if (colour_it != opt_.unstack_channel_colours.end())
+        {
+            line_colour = colour_it->second;
+        }
+        sum->SetLineColor(line_colour);
         sum->SetLineWidth(2);
         sum->SetLineStyle(line_style_for_index(i));
 
@@ -768,6 +776,11 @@ void UnstackedHist::draw_legend(TPad *p)
         }
 
         std::string label = Channels::label(ch);
+        auto label_it = opt_.unstack_channel_labels.find(ch);
+        if (label_it != opt_.unstack_channel_labels.end())
+        {
+            label = label_it->second;
+        }
         if (label == "#emptyset")
         {
             label = "\xE2\x88\x85";

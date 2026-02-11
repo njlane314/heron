@@ -10,6 +10,7 @@
 #define NUXSEC_PLOT_DESCRIPTORS_H
 
 #include <cctype>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -96,6 +97,15 @@ struct Options
     bool particle_level = false;
     std::string particle_pdg_branch = "backtracked_pdg_codes";
     bool particle_drop_nan = true;
+
+    // Channel column used for stack/unstack grouping (default analysis channel branch).
+    std::string channel_column = "analysis_channels";
+
+    // Optional channel overrides for specialised overlays (e.g. occupancy components).
+    // If empty, built-in Channels defaults are used.
+    std::vector<int> unstack_channel_keys;
+    std::map<int, std::string> unstack_channel_labels;
+    std::map<int, int> unstack_channel_colours;
 };
 
 struct TH1DModel

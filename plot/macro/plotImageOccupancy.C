@@ -368,7 +368,7 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
     opt.show_legend = true;
     opt.show_watermark = false;
     opt.use_log_x = true;
-    opt.use_log_y = false;
+    opt.use_log_y = true;
     std::cout << "[plotImageOccupancy][debug] set basic bool options for tag=" << tag << "\n";
     std::cout.flush();
 

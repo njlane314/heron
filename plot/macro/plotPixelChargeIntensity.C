@@ -33,6 +33,7 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -130,7 +131,7 @@ int require_columns(const std::unordered_set<std::string> &columns,
   return 1;
 }
 
-int at_or_zero(const std::vector<int> &v, int idx)
+int at_or_zero(const ROOT::VecOps::RVec<int> &v, int idx)
 {
   if (idx < 0)
     return 0;
@@ -140,7 +141,7 @@ int at_or_zero(const std::vector<int> &v, int idx)
   return v[u];
 }
 
-int sum_from_or_zero(const std::vector<int> &v, int idx_from)
+int sum_from_or_zero(const ROOT::VecOps::RVec<int> &v, int idx_from)
 {
   if (idx_from < 0)
     idx_from = 0;
@@ -152,8 +153,8 @@ int sum_from_or_zero(const std::vector<int> &v, int idx_from)
 }
 
 // Return {sum_all_pos, sum_cosmic, sum_neutrino}
-std::array<double, 3> sum_adc_components(const std::vector<float> &adc,
-                                        const std::vector<int32_t> &sem)
+std::array<double, 3> sum_adc_components(const ROOT::VecOps::RVec<float> &adc,
+                                         const ROOT::VecOps::RVec<int32_t> &sem)
 {
   double sum_all = 0.0;
   double sum_cos = 0.0;
@@ -269,12 +270,16 @@ int plotPixelChargeIntensity(const std::string &samples_tsv = "",
                .Define("n_active_all", "active_pixels_u + active_pixels_v + active_pixels_w")
 
                .Define("n_cosmic",
-                       [=](const std::vector<int> &u, const std::vector<int> &v, const std::vector<int> &w) {
+                       [=](const ROOT::VecOps::RVec<int> &u,
+                           const ROOT::VecOps::RVec<int> &v,
+                           const ROOT::VecOps::RVec<int> &w) {
                          return at_or_zero(u, kCosmicIdx) + at_or_zero(v, kCosmicIdx) + at_or_zero(w, kCosmicIdx);
                        },
                        {"slice_semantic_active_pixels_u", "slice_semantic_active_pixels_v", "slice_semantic_active_pixels_w"})
                .Define("n_neutrino",
-                       [=](const std::vector<int> &u, const std::vector<int> &v, const std::vector<int> &w) {
+                       [=](const ROOT::VecOps::RVec<int> &u,
+                           const ROOT::VecOps::RVec<int> &v,
+                           const ROOT::VecOps::RVec<int> &w) {
                          return sum_from_or_zero(u, kFirstNuIdx) + sum_from_or_zero(v, kFirstNuIdx) + sum_from_or_zero(w, kFirstNuIdx);
                        },
                        {"slice_semantic_active_pixels_u", "slice_semantic_active_pixels_v", "slice_semantic_active_pixels_w"})

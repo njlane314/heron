@@ -100,11 +100,13 @@ wrapper script:
 
 - `NUXSEC_SET` selects the active workspace (default: `template`).
 - `NUXSEC_OUT_BASE` overrides the base output directory (default: `<repo>/scratch/out`).
+- Temporary snapshot staging is written to `/exp/uboone/data/users/$USER/staging`; `USER` must be set.
 - `NUXSEC_PLOT_BASE` overrides the plot base directory (default: `<repo>/scratch/plot`).
 - `NUXSEC_ART_DIR`, `NUXSEC_SAMPLE_DIR`, and `NUXSEC_EVENT_DIR` override per-stage output directories.
 - `NUXSEC_PLOT_DIR` and `NUXSEC_PLOT_FORMAT` control plot output location and file extension.
 - `NUXSEC_REPO_ROOT` can be set to override the repo discovery used by the CLI.
 - `NUXSEC_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
+- `make_event_list.C` defaults its output file to `/exp/uboone/data/users/$USER/event_list_<analysis>.root`; `USER` must be set unless `out_root` is provided.
 
 ## Input Files
 

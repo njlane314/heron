@@ -83,11 +83,11 @@ void append_tree_fast(const std::string &out_path,
 
 std::filesystem::path snapshot_scratch_dir()
 {
-    if (const char *p = std::getenv("NUXSEC_OUT_BASE"); p && *p)
-        return std::filesystem::path(p) / "staging";
-    if (const char *p = std::getenv("NUXSEC_REPO_ROOT"); p && *p)
-        return std::filesystem::path(p) / "scratch" / "out" / "staging";
-    return std::filesystem::path("scratch") / "out" / "staging";
+    const char *user = std::getenv("USER");
+    if (!user || !*user)
+        throw std::runtime_error("SnapshotService: USER must be set to resolve snapshot staging directory");
+
+    return std::filesystem::path("/exp/uboone/data/users") / user / "staging";
 }
 } // namespace
 

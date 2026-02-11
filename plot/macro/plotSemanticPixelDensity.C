@@ -26,6 +26,7 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -132,7 +133,7 @@ int require_columns(const std::unordered_set<std::string> &columns,
   return 1;
 }
 
-int at_or_zero(const std::vector<int> &v, int idx)
+int at_or_zero(const ROOT::VecOps::RVec<int> &v, int idx)
 {
   if (idx < 0)
     return 0;
@@ -232,10 +233,10 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
   // If semantic_label_names exists, prefer its first-entry contents.
   if (columns.find("semantic_label_names") != columns.end())
   {
-    auto first = node.Range(1).Take<std::vector<std::string>>("semantic_label_names").GetValue();
+    auto first = node.Range(1).Take<ROOT::VecOps::RVec<std::string>>("semantic_label_names").GetValue();
     if (!first.empty() && !first[0].empty())
     {
-      labels = first[0];
+      labels.assign(first[0].begin(), first[0].end());
       std::cout << "[plotSemanticPixelDensity] using semantic_label_names from tree (n=" << labels.size() << ")\n";
     }
   }
@@ -248,7 +249,9 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
   }
 
   auto n = node.Define("n_pix_tot",
-                       [](const std::vector<float> &u, const std::vector<float> &v, const std::vector<float> &w) {
+                       [](const ROOT::VecOps::RVec<float> &u,
+                          const ROOT::VecOps::RVec<float> &v,
+                          const ROOT::VecOps::RVec<float> &w) {
                          return static_cast<long long>(u.size()) + static_cast<long long>(v.size()) + static_cast<long long>(w.size());
                        },
                        {"detector_image_u", "detector_image_v", "detector_image_w"});
@@ -263,9 +266,9 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
     const std::string col = "sem_pct_" + std::to_string(i);
     n = n.Define(
         col,
-        [i](const std::vector<int> &cu,
-            const std::vector<int> &cv,
-            const std::vector<int> &cw,
+        [i](const ROOT::VecOps::RVec<int> &cu,
+            const ROOT::VecOps::RVec<int> &cv,
+            const ROOT::VecOps::RVec<int> &cw,
             long long n_pix_tot) {
           if (n_pix_tot <= 0)
             return 0.0;

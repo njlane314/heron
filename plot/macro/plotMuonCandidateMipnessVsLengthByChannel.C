@@ -38,6 +38,7 @@
 #include <TSystem.h>
 
 #include "EventListIO.hh"
+#include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 
 using namespace nu;
@@ -294,7 +295,7 @@ void save_2d(const ROOT::RDF::RNode &node,
     c.SetTicks(1, 1);
     c.SetLogz(true);
 
-    h2->SetTitle((";Muon-candidate length [cm];Muon-candidate MIPness (median planes)").c_str());
+    h2->SetTitle(";Muon-candidate length [cm];Muon-candidate MIPness (median planes)");
     h2->GetXaxis()->SetTitleOffset(1.1);
     h2->GetYaxis()->SetTitleOffset(1.0);
     h2->GetZaxis()->SetTitle("Events");

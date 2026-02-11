@@ -175,27 +175,14 @@ EventListIO::EventListIO(std::string path, OpenMode mode)
     double db_tortgt_pot_sum = 0.0;
     double db_tor101_pot_sum = 0.0;
 
-    auto bind_branch = [t](const char *name, void *addr, bool required) {
-        if (!t->GetBranch(name))
-        {
-            if (required)
-                throw std::runtime_error(std::string("EventListIO: missing required sample_refs branch ") + name);
-            return;
-        }
-
-        const int rc = t->SetBranchAddress(name, addr);
-        if (required && rc < 0)
-            throw std::runtime_error(std::string("EventListIO: failed to bind sample_refs branch ") + name);
-    };
-
-    bind_branch("sample_id", &sample_id, true);
-    bind_branch("sample_name", &sample_name, true);
-    bind_branch("sample_rootio_path", &sample_rootio_path, true);
-    bind_branch("sample_origin", &sample_origin, true);
-    bind_branch("beam_mode", &beam_mode, true);
-    bind_branch("subrun_pot_sum", &subrun_pot_sum, false);
-    bind_branch("db_tortgt_pot_sum", &db_tortgt_pot_sum, false);
-    bind_branch("db_tor101_pot_sum", &db_tor101_pot_sum, false);
+    t->SetBranchAddress("sample_id", &sample_id);
+    t->SetBranchAddress("sample_name", &sample_name);
+    t->SetBranchAddress("sample_rootio_path", &sample_rootio_path);
+    t->SetBranchAddress("sample_origin", &sample_origin);
+    t->SetBranchAddress("beam_mode", &beam_mode);
+    t->SetBranchAddress("subrun_pot_sum", &subrun_pot_sum);
+    t->SetBranchAddress("db_tortgt_pot_sum", &db_tortgt_pot_sum);
+    t->SetBranchAddress("db_tor101_pot_sum", &db_tor101_pot_sum);
 
     const Long64_t n = t->GetEntries();
     for (Long64_t i = 0; i < n; ++i)

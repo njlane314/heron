@@ -30,6 +30,7 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -175,7 +176,7 @@ int plotPixelDensityByAnalysisChannel(const std::string &samples_tsv = "",
 
     auto add_occ = [&](ROOT::RDF::RNode n) {
         n = n.Define("n_pix_tot",
-                     [](const std::vector<float> &u, const std::vector<float> &v, const std::vector<float> &w) {
+                     [](const ROOT::RVec<float> &u, const ROOT::RVec<float> &v, const ROOT::RVec<float> &w) {
                          return static_cast<long long>(u.size()) + static_cast<long long>(v.size()) + static_cast<long long>(w.size());
                      },
                      {"detector_image_u", "detector_image_v", "detector_image_w"});

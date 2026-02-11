@@ -45,6 +45,22 @@ void stack_debug_log(const std::string &msg)
     std::cout << "[Plotter][debug] " << msg << "\n";
     std::cout.flush();
 }
+
+bool unstack_debug_enabled()
+{
+    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_UNSTACK");
+    return env != nullptr && std::string(env) != "0";
+}
+
+void unstack_debug_log(const std::string &msg)
+{
+    if (!unstack_debug_enabled())
+    {
+        return;
+    }
+    std::cout << "[Plotter][unstack-debug] " << msg << "\n";
+    std::cout.flush();
+}
 } // namespace
 
 void apply_env_defaults(Options &opt)
@@ -126,9 +142,16 @@ void Plotter::draw_unstack(const TH1DModel &spec,
                            const std::vector<const Entry *> &mc,
                            const std::vector<const Entry *> &data) const
 {
+    unstack_debug_log("draw_unstack enter: hist='" + spec.name +
+                      "', expr='" + spec.expr +
+                      "', mc_entries=" + std::to_string(mc.size()) +
+                      ", data_entries=" + std::to_string(data.size()));
     set_global_style();
+    unstack_debug_log("global style set for hist='" + spec.name + "'");
     UnstackedHist plot(spec, opt_, mc, data);
+    unstack_debug_log("UnstackedHist constructed for hist='" + spec.name + "'");
     plot.draw_and_save(opt_.image_format);
+    unstack_debug_log("draw_unstack exit: hist='" + spec.name + "'");
 }
 
 void Plotter::draw_unstack_cov(const TH1DModel &spec,

@@ -313,21 +313,34 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
     entries.reserve(2);
 
     auto cosmic_node = n
-                           .Define("plot_occ_value", cos_col)
+                           .Define("plot_occ_value",
+                                   [](double v) { return v; },
+                                   {cos_col})
                            .Define("plot_occ_weight", [evt_weight]() { return evt_weight; })
-                           .Define("plot_occ_channel", "97");
+                           .Define("plot_occ_channel", []() { return 97; });
     entries.emplace_back(make_entry(std::move(cosmic_node), rec_mc));
+    std::cout << "[plotImageOccupancy][debug] built cosmic entry tag=" << tag
+              << " channel=97\n";
+    std::cout.flush();
 
     auto neutrino_node = n
-                             .Define("plot_occ_value", nu_col)
+                             .Define("plot_occ_value",
+                                     [](double v) { return v; },
+                                     {nu_col})
                              .Define("plot_occ_weight", [evt_weight]() { return evt_weight; })
-                             .Define("plot_occ_channel", "98");
+                             .Define("plot_occ_channel", []() { return 98; });
     entries.emplace_back(make_entry(std::move(neutrino_node), rec_mc));
+    std::cout << "[plotImageOccupancy][debug] built neutrino entry tag=" << tag
+              << " channel=98\n";
+    std::cout.flush();
 
     std::vector<const Entry *> mc;
     mc.reserve(entries.size());
     for (auto &e : entries)
       mc.push_back(&e);
+    std::cout << "[plotImageOccupancy][debug] assembled entry pointers tag=" << tag
+              << " count=" << mc.size() << "\n";
+    std::cout.flush();
 
     TH1DModel spec;
     spec.id = tag;
@@ -343,6 +356,7 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
     Plotter plotter;
     auto &opt = plotter.options();
     std::cout << "[plotImageOccupancy][debug] configuring unstack options for tag=" << tag << "\n";
+    std::cout.flush();
     opt.out_dir = out_dir;
     opt.image_format = fmt;
     opt.show_ratio = false;
@@ -362,6 +376,12 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
         {97, kAzure + 1},
         {98, kOrange + 1}
     };
+
+    std::cout << "[plotImageOccupancy][debug] configured options for tag=" << tag
+              << " out_dir=" << opt.out_dir
+              << " format=" << opt.image_format
+              << " channel_column=" << opt.channel_column << "\n";
+    std::cout.flush();
 
     std::cout << "[plotImageOccupancy][debug] invoking draw_unstack for tag=" << tag
               << " channels={";

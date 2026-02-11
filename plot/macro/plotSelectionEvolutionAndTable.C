@@ -39,6 +39,7 @@
 #include <TLegend.h>
 #include <TAxis.h>
 #include <TH1D.h>
+#include <TPad.h>
 #include <TStyle.h>
 
 #include "EventListIO.hh"
@@ -275,7 +276,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
         y_mcp[i] = rows[static_cast<std::size_t>(i)].mc_purity;
     }
 
-    TH1D haxis("haxis", ";cut stage;fraction", n, 0.5, n + 0.5);
+    TH1D haxis("haxis", ";cut stage;efficiency", n, 0.5, n + 0.5);
     for (int i = 0; i < n; ++i)
         haxis.GetXaxis()->SetBinLabel(i + 1, rows[static_cast<std::size_t>(i)].cut_name.c_str());
 
@@ -302,7 +303,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     gStyle->SetOptStat(0);
     c.SetBottomMargin(0.30);
     c.SetLeftMargin(0.11);
-    c.SetRightMargin(0.04);
+    c.SetRightMargin(0.11);
 
     haxis.SetMinimum(0.0);
     haxis.SetMaximum(1.02);
@@ -312,8 +313,61 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     haxis.Draw("AXIS");
 
     geff.Draw("LP SAME");
+
+    double purity_min = std::numeric_limits<double>::infinity();
+    double purity_max = 0.0;
+    for (int i = 0; i < n; ++i)
+    {
+        if (y_pur[static_cast<std::size_t>(i)] > 0.0)
+        {
+            purity_min = std::min(purity_min, y_pur[static_cast<std::size_t>(i)]);
+            purity_max = std::max(purity_max, y_pur[static_cast<std::size_t>(i)]);
+        }
+
+        if (y_mcp[static_cast<std::size_t>(i)] > 0.0)
+        {
+            purity_min = std::min(purity_min, y_mcp[static_cast<std::size_t>(i)]);
+            purity_max = std::max(purity_max, y_mcp[static_cast<std::size_t>(i)]);
+        }
+    }
+
+    if (!std::isfinite(purity_min) || purity_min <= 0.0 || purity_max <= 0.0)
+    {
+        purity_min = 1e-6;
+        purity_max = 1.0;
+    }
+    else
+    {
+        purity_min = std::pow(10.0, std::floor(std::log10(purity_min)));
+        purity_max = std::pow(10.0, std::ceil(std::log10(purity_max)));
+        if (!(purity_max > purity_min))
+            purity_max = 10.0 * purity_min;
+    }
+
+    TPad p_purity("p_purity", "p_purity", 0.0, 0.0, 1.0, 1.0);
+    p_purity.SetFillStyle(4000);
+    p_purity.SetFrameFillStyle(0);
+    p_purity.SetFrameLineColor(0);
+    p_purity.SetBottomMargin(c.GetBottomMargin());
+    p_purity.SetLeftMargin(c.GetLeftMargin());
+    p_purity.SetRightMargin(c.GetRightMargin());
+    p_purity.SetTopMargin(c.GetTopMargin());
+    p_purity.SetLogy();
+    p_purity.Draw();
+    p_purity.cd();
+
+    TH1D haxis_purity("haxis_purity", ";;purity", n, 0.5, n + 0.5);
+    haxis_purity.SetMinimum(purity_min);
+    haxis_purity.SetMaximum(purity_max);
+    haxis_purity.GetXaxis()->SetLabelSize(0.0);
+    haxis_purity.GetXaxis()->SetTickLength(0.0);
+    haxis_purity.GetYaxis()->SetTitleOffset(1.2);
+    haxis_purity.Draw("AXIS Y+");
+
     gpur.Draw("LP SAME");
     gmcp.Draw("LP SAME");
+
+    c.cd();
 
     TLegend leg(0.68, 0.69, 0.93, 0.88);
     leg.SetBorderSize(0);

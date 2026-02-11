@@ -182,7 +182,7 @@ int plotSoftwareTriggerGatePassFail(const std::string &input = "",
     spec.nbins = 2;
     spec.xmin = -0.5;
     spec.xmax = 1.5;
-    spec.sel = Preset::None;
+    spec.sel = Preset::Empty;
 
     std::cout << "[plotSoftwareTriggerGatePassFail] selection=" << selection
               << ", include_data=" << (include_data ? "true" : "false")

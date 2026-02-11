@@ -42,6 +42,7 @@
 #include <TStyle.h>
 
 #include "EventListIO.hh"
+#include "PlotEnv.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 

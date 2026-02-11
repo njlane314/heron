@@ -69,24 +69,12 @@ int plotTopologicalScorePreSelectionLogY(const std::string &samples_tsv = "",
     if (implicit_mt_enabled())
         ROOT::EnableImplicitMT();
 
-    EventListIO el;
-    if (!el.load(list_path))
-    {
-        std::cerr << "[plotTopologicalScorePreSelectionLogY] failed to load event list\n";
-        return 2;
-    }
+    EventListIO el(list_path);
+    ROOT::RDataFrame rdf = el.rdf();
 
-    auto rdf = ROOT::RDataFrame(el.event_tree_name(), list_path);
-
-    const auto mask_ext = el.sample_mask([](const SampleRefRow &r) {
-        return is_sample_ext(r.tag, r.source);
-    });
-    const auto mask_mc = el.sample_mask([](const SampleRefRow &r) {
-        return !(is_sample_data(r.tag, r.source) || is_sample_ext(r.tag, r.source));
-    });
-    const auto mask_data = el.sample_mask([](const SampleRefRow &r) {
-        return is_sample_data(r.tag, r.source);
-    });
+    auto mask_ext = el.mask_for_ext();
+    auto mask_mc = el.mask_for_mc_like();
+    auto mask_data = el.mask_for_data();
 
     auto filter_by_mask = [](ROOT::RDF::RNode node, std::shared_ptr<const std::vector<char>> mask) {
         return node.Filter(

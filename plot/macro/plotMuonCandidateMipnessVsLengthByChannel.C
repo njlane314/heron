@@ -254,7 +254,6 @@ void save_2d(const ROOT::RDF::RNode &node,
              const std::string &w,
              const std::string &sel,
              const std::string &tag,
-             const std::string &channel_label,
              int nbx, double xmin, double xmax,
              int nby, double ymin, double ymax,
              double x_threshold,
@@ -294,7 +293,7 @@ void save_2d(const ROOT::RDF::RNode &node,
     c.SetTicks(1, 1);
     c.SetLogz(true);
 
-    h2->SetTitle(";Muon-candidate length [cm];Muon-candidate MIPness (median planes)");
+    h2->SetTitle(";Muon-candidate length [cm];Minimally Ionising Calorimetry");
     h2->GetXaxis()->SetTitleOffset(1.1);
     h2->GetYaxis()->SetTitleOffset(1.0);
     h2->GetZaxis()->SetTitle("Events");
@@ -316,8 +315,6 @@ void save_2d(const ROOT::RDF::RNode &node,
 
     TLatex latex;
     latex.SetNDC(true);
-    latex.SetTextSize(0.028);
-    latex.DrawLatex(0.13, 0.965, channel_label.c_str());
 
     const std::string summary =
         "In-range #Sigmaw: " + format_decimal(sum_w, 1) +
@@ -326,7 +323,7 @@ void save_2d(const ROOT::RDF::RNode &node,
         "; both: " + format_decimal(frac_xy, 1) + "%";
 
     latex.SetTextSize(0.023);
-    latex.DrawLatex(0.13, 0.935, summary.c_str());
+    latex.DrawLatex(0.13, 0.965, summary.c_str());
 
     const std::string out_path = out_dir + "/" + sanitize_for_filename(tag) + "." + out_fmt;
     c.SaveAs(out_path.c_str());
@@ -431,9 +428,8 @@ int plotMuonCandidateMipnessVsLengthByChannel(const std::string &samples_tsv = "
             "w_nominal",
             sel_base + " && " + sel_ch_nc,
             "mipness2d_post_mucand_length_vs_mipnessmed_ch_nc",
-            "(a) NC: muon-candidate length-MIPness",
-            60, 0.0, 1200.0,
-            50, 0.0, 2.0,
+            56, 0.0, 700.0,
+            56, 0.0, 1.4,
             static_cast<double>(mu_len_cut_cm), mipness_threshold);
 
     save_2d(node_mc,
@@ -442,9 +438,8 @@ int plotMuonCandidateMipnessVsLengthByChannel(const std::string &samples_tsv = "
             "w_nominal",
             sel_base + " && " + sel_ch_nue_cc,
             "mipness2d_post_mucand_length_vs_mipnessmed_ch_nuecc",
-            "(b) #nu_{e}CC: muon-candidate length-MIPness",
-            60, 0.0, 1200.0,
-            50, 0.0, 2.0,
+            56, 0.0, 700.0,
+            56, 0.0, 1.4,
             static_cast<double>(mu_len_cut_cm), mipness_threshold);
 
     save_2d(node_mc,
@@ -453,9 +448,8 @@ int plotMuonCandidateMipnessVsLengthByChannel(const std::string &samples_tsv = "
             "w_nominal",
             sel_base + " && " + sel_ch_numu_cc_inclusive,
             "mipness2d_post_mucand_length_vs_mipnessmed_ch_numucc_inclusive",
-            "(c) Inclusive #nu_{#mu}CC: muon-candidate length-MIPness",
-            60, 0.0, 1200.0,
-            50, 0.0, 2.0,
+            56, 0.0, 700.0,
+            56, 0.0, 1.4,
             static_cast<double>(mu_len_cut_cm), mipness_threshold);
 
     return 0;

@@ -35,6 +35,7 @@
 #include <TSystem.h>
 
 #include "EventListIO.hh"
+#include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 
 using namespace nu;

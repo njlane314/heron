@@ -249,12 +249,7 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
   }
 
   auto n = node.Define("n_pix_tot",
-                       [](const ROOT::VecOps::RVec<float> &u,
-                          const ROOT::VecOps::RVec<float> &v,
-                          const ROOT::VecOps::RVec<float> &w) {
-                         return static_cast<long long>(u.size()) + static_cast<long long>(v.size()) + static_cast<long long>(w.size());
-                       },
-                       {"detector_image_u", "detector_image_v", "detector_image_w"});
+                       "(long long)detector_image_u.size() + (long long)detector_image_v.size() + (long long)detector_image_w.size()");
 
   // Define one percentage column per label and book all histograms.
   const auto edges = log_edges(nbins, xmin_pct, xmax_pct);

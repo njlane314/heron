@@ -76,9 +76,9 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         {"int", "evt"},
         {"bool", "is_signal"},
         {"double", "w_nominal"},
-        {"vector<float>", "detector_image_u"},
-        {"vector<float>", "detector_image_v"},
-        {"vector<float>", "detector_image_w"}
+        {"ROOT::VecOps::RVec<float>", "detector_image_u"},
+        {"ROOT::VecOps::RVec<float>", "detector_image_v"},
+        {"ROOT::VecOps::RVec<float>", "detector_image_w"}
     };
 
     const std::string provenance_tree = "nuxsec_art_provenance/run_subrun";

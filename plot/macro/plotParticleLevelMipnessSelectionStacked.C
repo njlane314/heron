@@ -61,7 +61,7 @@ int plotParticleLevelMipnessSelectionStacked(const std::string &event_list_path 
                                              bool include_data = true,
                                              const std::string &selection_upto = "sel_trigger && sel_triggered_slice && sel_reco_fv",
                                              const std::string &particle_pdg_branch = "backtracked_pdg_codes",
-                                             double squash_midpoint = 1.0,
+                                             double squash_midpoint = 0.65,
                                              double squash_softness = 0.2)
 {
     ROOT::EnableImplicitMT();

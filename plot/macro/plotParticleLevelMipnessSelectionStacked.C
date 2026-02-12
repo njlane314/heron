@@ -163,9 +163,9 @@ int plotParticleLevelMipnessSelectionStacked(const std::string &event_list_path 
         p_data->selection.nominal.node = p_data->selection.nominal.node.Filter(combined_sel);
 
     std::ostringstream squashed_expr;
-    squashed_expr << "1.0/(1.0 + exp((track_mipness_median_plane_score - "
+    squashed_expr << "1.0/(1.0 + exp(("
                   << squash_midpoint
-                  << ")/"
+                  << " - track_mipness_median_plane_score)/"
                   << squash_softness
                   << "))";
     const std::string squashed_col = "track_mipness_squashed_score";

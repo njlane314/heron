@@ -62,6 +62,7 @@ static std::vector<std::string> default_event_columns()
         "track_length",
         "track_distance_to_vertex",
         "track_mipness_median_plane_score",
+        "backtracked_pdg_codes",
         "pfp_generations",
         "track_dedx_T70_u",
         "track_dedx_T70_v",

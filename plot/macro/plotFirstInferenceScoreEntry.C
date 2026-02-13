@@ -7,7 +7,7 @@
 //   ./nuxsec macro plotFirstInferenceScoreEntry.C \
 //     'plotFirstInferenceScoreEntry("./scratch/out/event_list_myana.root")'
 //   ./nuxsec macro plotFirstInferenceScoreEntry.C \
-//     'plotFirstInferenceScoreEntry("./scratch/out/event_list_myana.root","true",false,true)'
+//     'plotFirstInferenceScoreEntry("./scratch/out/event_list_myana.root","sel_triggered_muon",false,true)'
 
 #include <cstdlib>
 #include <algorithm>
@@ -130,7 +130,7 @@ RocCurve make_roc_curve(const std::vector<float> &scores, const std::vector<int>
 }
 
 int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
-                                 const std::string &extra_sel = "true",
+                                 const std::string &extra_sel = "sel_triggered_muon",
                                  bool use_logy = true,
                                  bool include_data = false)
 {

@@ -29,7 +29,7 @@ bool file_exists(const std::string &path)
 
 std::string find_default_event_list_path()
 {
-    const auto &analysis = nuxsec::ana::AnalysisConfigService::instance();
+    const auto &analysis = AnalysisConfigService::instance();
     std::ostringstream analysis_path;
 
     const char *out_base = std::getenv("NUXSEC_OUT_BASE");

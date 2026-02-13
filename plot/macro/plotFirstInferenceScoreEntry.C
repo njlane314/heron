@@ -54,7 +54,7 @@ bool implicit_mt_enabled()
 
 int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
                                  const std::string &extra_sel = "true",
-                                 bool use_logy = false,
+                                 bool use_logy = true,
                                  bool include_data = false)
 {
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
@@ -93,8 +93,7 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
                                                return -1.0f;
                                            return scores[0];
                                        },
-                                       {"inf_scores"})
-                                .Filter("inf_score_0 >= 0.0f");
+                                       {"inf_scores"});
 
     ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext);
     ROOT::RDF::RNode node_mc = filter_by_mask(base, mask_mc)

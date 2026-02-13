@@ -149,8 +149,8 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
     opt.overlay_signal = true;
     opt.show_ratio = include_data;
     opt.show_ratio_band = include_data;
-    // Use the #Lambda signal definition for the overlay in this diagnostic.
-    opt.signal_channels = {15};
+    // Use the standard signal-channel definition (#nu_{#mu}CC single+multi-strange).
+    opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events";
     opt.run_numbers = {"1"};
     opt.image_format = "pdf";

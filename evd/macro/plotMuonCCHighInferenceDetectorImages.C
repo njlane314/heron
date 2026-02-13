@@ -5,10 +5,14 @@
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
+
+#include "AnalysisConfigService.hh"
 
 #include "../include/EventDisplay.hh"
 
@@ -25,7 +29,26 @@ bool file_exists(const std::string &path)
 
 std::string find_default_event_list_path()
 {
+    const auto &analysis = nuxsec::ana::AnalysisConfigService::instance();
+    std::ostringstream analysis_path;
+
+    const char *out_base = std::getenv("NUXSEC_OUT_BASE");
+    if (out_base && *out_base)
+    {
+        analysis_path << out_base << "/event_list_" << analysis.name() << ".root";
+    }
+    else
+    {
+        const char *user = std::getenv("USER");
+        if (user && *user)
+        {
+            analysis_path << "/exp/uboone/data/users/" << user
+                          << "/event_list_" << analysis.name() << ".root";
+        }
+    }
+
     const std::vector<std::string> candidates{
+        analysis_path.str(),
         "./scratch/out/event_list.root",
         "./scratch/out/event_list_myana.root",
         "./scratch/out/event_list_nuxsec.root"};

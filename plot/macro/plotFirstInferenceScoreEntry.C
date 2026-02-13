@@ -150,7 +150,8 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
     opt.overlay_signal = true;
     opt.show_ratio = include_data;
     opt.show_ratio_band = include_data;
-    opt.signal_channels = Channels::signal_keys();
+    // Use the #Lambda signal definition for the overlay in this diagnostic.
+    opt.signal_channels = {15};
     opt.y_title = "Events";
     opt.run_numbers = {"1"};
     opt.image_format = "pdf";
@@ -160,7 +161,7 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
     opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
     opt.beamline = el.beamline_label();
 
-    TH1DModel spec = make_spec("inf_score_0", 50, 0.0, 1.0, "w_nominal");
+    TH1DModel spec = make_spec("inf_score_0", 50, -10.0, 10.0, "w_nominal");
     spec.sel = Preset::Empty;
 
     opt.x_title = "Inference score [0]";

@@ -110,7 +110,7 @@ inline int run_guarded(const std::string &log_prefix, const std::function<int()>
 
 inline int run_guarded(const std::function<int()> &func)
 {
-    return run_guarded("nuxsec", func);
+    return run_guarded("heron", func);
 }
 
 inline std::vector<std::string> read_paths(const std::string &filelist_path)

@@ -2,7 +2,7 @@
 /**
  *  @file  apps/src/EventWorkflow.cc
  *
- *  @brief Event-level output builder (invoked by the unified nuxsec CLI).
+ *  @brief Event-level output builder (invoked by the unified heron CLI).
  */
 
 #include <chrono>

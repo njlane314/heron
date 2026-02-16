@@ -46,8 +46,8 @@ EVD_LIB_NAME = build/lib/libNuxsecEvd.so
 EVD_SRC = evd/src/EventDisplay.cc
 EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-NUXSEC_NAME = build/bin/nuxsec
-APPS_SRC = apps/src/nuxsec.cc \
+NUXSEC_NAME = build/bin/heron
+APPS_SRC = apps/src/heron.cc \
            apps/src/ArtWorkflow.cc \
            apps/src/SampleWorkflow.cc \
            apps/src/EventWorkflow.cc

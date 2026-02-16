@@ -1,4 +1,4 @@
-# nuxsec workflow commands
+# heron workflow commands
 
 
 # build filelists for each partition
@@ -6,29 +6,29 @@ USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1
 source scripts/partition-lists.sh
 
 # aggregate art output
-nuxsec art "beam_s0:scratch/out/filelists/beam_s0.list:overlay:numi"
-nuxsec art "beam_s1:scratch/out/filelists/beam_s1.list:overlay:numi"
-nuxsec art "beam_s2:scratch/out/filelists/beam_s2.list:overlay:numi"
-nuxsec art "beam_s3:scratch/out/filelists/beam_s3.list:overlay:numi"
-nuxsec art "dirt_s0:scratch/out/filelists/dirt_s0.list:dirt:numi"
-nuxsec art "dirt_s1:scratch/out/filelists/dirt_s1.list:dirt:numi"
-nuxsec art "strangeness_run1_fhc:scratch/out/filelists/strangeness_run1_fhc.list:strangeness:numi"
-nuxsec art "ext_p0:scratch/out/filelists/ext_p0.list:ext:numi"
-nuxsec art "ext_p1:scratch/out/filelists/ext_p1.list:ext:numi"
-nuxsec art "ext_p2:scratch/out/filelists/ext_p2.list:ext:numi"
+heron art "beam_s0:scratch/out/filelists/beam_s0.list:overlay:numi"
+heron art "beam_s1:scratch/out/filelists/beam_s1.list:overlay:numi"
+heron art "beam_s2:scratch/out/filelists/beam_s2.list:overlay:numi"
+heron art "beam_s3:scratch/out/filelists/beam_s3.list:overlay:numi"
+heron art "dirt_s0:scratch/out/filelists/dirt_s0.list:dirt:numi"
+heron art "dirt_s1:scratch/out/filelists/dirt_s1.list:dirt:numi"
+heron art "strangeness_run1_fhc:scratch/out/filelists/strangeness_run1_fhc.list:strangeness:numi"
+heron art "ext_p0:scratch/out/filelists/ext_p0.list:ext:numi"
+heron art "ext_p1:scratch/out/filelists/ext_p1.list:ext:numi"
+heron art "ext_p2:scratch/out/filelists/ext_p2.list:ext:numi"
 
 # group art output into logical samples
 source scripts/sample-lists.sh
-nuxsec sample "beam:scratch/out/sample-lists/numi_fhc_run1_sample_beam.list"
-nuxsec sample "strangeness:scratch/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
+heron sample "beam:scratch/out/sample-lists/numi_fhc_run1_sample_beam.list"
+heron sample "strangeness:scratch/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_inclusive_mu_cc cols/event_columns.tsv 
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_inclusive_mu_cc cols/event_columns.tsv 
 
 
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root true cols/event_columns.tsv
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_muon
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_inclusive_mu_cc
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_triggered_muon
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_triggered_slice
-nuxsec event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_reco_fv
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root true cols/event_columns.tsv
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_muon
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_inclusive_mu_cc
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_triggered_muon
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_triggered_slice
+heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_reco_fv

@@ -1,6 +1,6 @@
-# nuxsec
+# heron
 
-Documentation: [https://nuxsec.github.io/nuxsec/](https://njlane314.github.io/nuxsec/)
+Documentation: [https://heron.github.io/heron/](https://njlane314.github.io/heron/)
 
 ROOT-based utilities for a neutrino cross-section analysis pipeline. The codebase formalises the analysis
 entities (aggregation → sample → dataset/RDF → channel/category → selection → template/plot) and provides
@@ -26,12 +26,12 @@ apps/  CLI entrypoints that orchestrate the pipeline
 
 ### Runtime 
 
-- `scratch/out/<set>/art/` stores provenance ROOT outputs from `nuxsec art`.
-- `scratch/out/<set>/sample/` stores per-sample ROOT outputs and `samples.tsv` produced by `nuxsec sample`.
-- `scratch/out/<set>/event/` stores event-level ROOT outputs produced by `nuxsec event`.
-- `scratch/plot/<set>/` stores plot outputs produced by `nuxsec macro` (configurable via `NUXSEC_PLOT_DIR`).
+- `scratch/out/<set>/art/` stores provenance ROOT outputs from `heron art`.
+- `scratch/out/<set>/sample/` stores per-sample ROOT outputs and `samples.tsv` produced by `heron sample`.
+- `scratch/out/<set>/event/` stores event-level ROOT outputs produced by `heron event`.
+- `scratch/plot/<set>/` stores plot outputs produced by `heron macro` (configurable via `NUXSEC_PLOT_DIR`).
 
-The `<set>` segment defaults to `template` and is controlled by `NUXSEC_SET` or `nuxsec --set`.
+The `<set>` segment defaults to `template` and is controlled by `NUXSEC_SET` or `heron --set`.
 
 ## Requirements
 
@@ -50,20 +50,17 @@ This produces shared libraries and drivers:
 - `build/lib/libNuxsecIO.so`
 - `build/lib/libNuxsecAna.so`
 - `build/lib/libNuxsecPlot.so`
-- `build/bin/nuxsec`
-- `build/bin/nuxsecArtFileIOdriver`
-- `build/bin/nuxsecSampleIOdriver`
-- `build/bin/nuxsecEventIOdriver`
-- `./nuxsec` (wrapper script that runs `build/bin/nuxsec`)
+- `build/bin/heron`
+- `./heron` (wrapper script that runs `build/bin/heron`)
 
 ## CLI Overview
 
 ```bash
-nuxsec -h
+heron -h
 ```
 
 ```text
-Usage: nuxsec <command> [args]
+Usage: heron <command> [args]
 
 Commands:
   art         Aggregate art provenance for an input
@@ -76,7 +73,7 @@ Commands:
 Global options:
   -S, --set   Workspace selector (default: template)
 
-Run 'nuxsec <command> --help' for command-specific usage.
+Run 'heron <command> --help' for command-specific usage.
 ```
 
 ## Run Environment
@@ -93,7 +90,7 @@ If you prefer to run from the repository root without modifying your `PATH`, use
 wrapper script:
 
 ```bash
-./nuxsec <command> [args...]
+./heron <command> [args...]
 ```
 
 ### Environment Variables
@@ -123,15 +120,15 @@ LIST
 ## Minimal Workflow
 
 Assume you run from the repo root and already have per-input filelists from your partitioning step.
-Choose a workspace either by exporting `NUXSEC_SET` or using `nuxsec --set` in each command.
+Choose a workspace either by exporting `NUXSEC_SET` or using `heron --set` in each command.
 
 1) **Input → art provenance ROOT (per partition/input)**
 
 ```bash
-nuxsec --set template art "sample_a:inputs/filelists/sample_a.txt:Data:Beam"
-nuxsec --set template art "sample_b:inputs/filelists/sample_b.txt:EXT:Beam"
-nuxsec --set template art "sample_c:inputs/filelists/sample_c.txt:Overlay:Beam"
-nuxsec --set template art "sample_d:inputs/filelists/sample_d.txt:Dirt:Beam"
+heron --set template art "sample_a:inputs/filelists/sample_a.txt:Data:Beam"
+heron --set template art "sample_b:inputs/filelists/sample_b.txt:EXT:Beam"
+heron --set template art "sample_c:inputs/filelists/sample_c.txt:Overlay:Beam"
+heron --set template art "sample_d:inputs/filelists/sample_d.txt:Dirt:Beam"
 ```
 
 Outputs (by code convention):
@@ -158,10 +155,10 @@ ls scratch/out/template/art/art_prov_sample_d*.root > scratch/out/lists/sample_d
 Then aggregate each sample:
 
 ```bash
-nuxsec --set template sample "sample_a:scratch/out/lists/sample_a.txt"
-nuxsec --set template sample "sample_b:scratch/out/lists/sample_b.txt"
-nuxsec --set template sample "sample_c:scratch/out/lists/sample_c.txt"
-nuxsec --set template sample "sample_d:scratch/out/lists/sample_d.txt"
+heron --set template sample "sample_a:scratch/out/lists/sample_a.txt"
+heron --set template sample "sample_b:scratch/out/lists/sample_b.txt"
+heron --set template sample "sample_c:scratch/out/lists/sample_c.txt"
+heron --set template sample "sample_d:scratch/out/lists/sample_d.txt"
 ```
 
 Outputs:
@@ -178,14 +175,14 @@ Use the resulting `samples.tsv` downstream for event-level aggregation and plott
 Keep train/template outputs separated by selecting the workspace instead of moving files:
 
 ```bash
-nuxsec --set template sample "sample_a:scratch/out/lists/sample_a.txt"
-nuxsec --set template event scratch/out/template/event/events.root
+heron --set template sample "sample_a:scratch/out/lists/sample_a.txt"
+heron --set template event scratch/out/template/event/events.root
 
-nuxsec --set train sample "sample_a:scratch/out/lists/sample_a.txt"
-nuxsec --set train macro plotTrainingQA.C
+heron --set train sample "sample_a:scratch/out/lists/sample_a.txt"
+heron --set train macro plotTrainingQA.C
 ```
 
-Use `nuxsec paths` to print resolved locations or `eval "$(nuxsec env train)"` to switch a shell.
+Use `heron paths` to print resolved locations or `eval "$(heron env train)"` to switch a shell.
 
 3) **Samples → event-level output (compiled analysis)**
 
@@ -198,7 +195,7 @@ If you provide only the output path, the CLI uses the active workspace's
 argument to filter events before writing the output.
 
 ```bash
-nuxsec --set template event scratch/out/template/event/events.root
+heron --set template event scratch/out/template/event/events.root
 ```
 
 To override the event output schema, pass a columns TSV as the final positional
@@ -206,28 +203,28 @@ argument. The TSV expects `type` and `name` columns (see `cols/event_columns.tsv
 If you only want to provide columns, pass `true` as the selection placeholder.
 
 ```bash
-nuxsec --set template event scratch/out/template/event/events.root true cols/event_columns.tsv
+heron --set template event scratch/out/template/event/events.root true cols/event_columns.tsv
 ```
 
 Selection strings can reference selection columns derived by the SelectionService.
 Examples:
 
 ```bash
-nuxsec --set template event scratch/out/template/event/events.root sel_muon
-nuxsec --set template event scratch/out/template/event/events.root sel_inclusive_mu_cc
-nuxsec --set template event scratch/out/template/event/events.root sel_triggered_muon
-nuxsec --set template event scratch/out/template/event/events.root sel_triggered_slice
-nuxsec --set template event scratch/out/template/event/events.root sel_reco_fv
+heron --set template event scratch/out/template/event/events.root sel_muon
+heron --set template event scratch/out/template/event/events.root sel_inclusive_mu_cc
+heron --set template event scratch/out/template/event/events.root sel_triggered_muon
+heron --set template event scratch/out/template/event/events.root sel_triggered_slice
+heron --set template event scratch/out/template/event/events.root sel_reco_fv
 ```
 
 4) **Plotting via macros**
 
-Plotting is macro-driven. Use the `nuxsec macro` helper to run a plot macro
+Plotting is macro-driven. Use the `heron macro` helper to run a plot macro
 (and optionally a specific function inside it).
 
 ```bash
-nuxsec --set template macro plotPotSimple.C
+heron --set template macro plotPotSimple.C
 ```
 
-Shell completion for these commands is available in `scripts/nuxsec-completion.bash` (source it
+Shell completion for these commands is available in `scripts/heron-completion.bash` (source it
 in your shell profile or session).

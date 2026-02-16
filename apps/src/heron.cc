@@ -1,8 +1,8 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsec.cc
+ *  @file  apps/src/heron.cc
  *
- *  @brief Unified CLI for Nuxsec utilities.
+ *  @brief Unified CLI for Heron utilities.
  */
 
 #include <algorithm>
@@ -30,8 +30,8 @@
 
 
 const char *kUsageMacro =
-    "Usage: nuxsec macro MACRO.C [CALL]\n"
-    "       nuxsec macro list\n"
+    "Usage: heron macro MACRO.C [CALL]\n"
+    "       heron macro list\n"
     "\nEnvironment:\n"
     "  NUXSEC_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
     "  NUXSEC_PLOT_DIR     Output directory override (default: NUXSEC_PLOT_BASE/<set>)\n"
@@ -103,7 +103,7 @@ void print_main_help(std::ostream &out)
     out << kMainBanner << "\n"
         << "Neutrino cross-section analysis CLI for provenance, samples, events,\n"
         << "and plots.\n\n"
-        << "Usage: nuxsec <command> [args]\n\n"
+        << "Usage: heron <command> [args]\n\n"
         << "Commands:\n"
         << "  art         Aggregate art provenance for an input\n"
         << "  sample      Aggregate Sample ROOT files from art provenance\n"
@@ -114,7 +114,7 @@ void print_main_help(std::ostream &out)
         << "  env         Print environment exports for a workspace\n"
         << "\nGlobal options:\n"
         << "  -S, --set   Workspace selector (default: template)\n"
-        << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
+        << "\nRun 'heron <command> --help' for command-specific usage.\n";
 }
 
 std::filesystem::path find_repo_root()
@@ -317,7 +317,7 @@ void ensure_plot_lib_loaded(const std::filesystem::path &repo_root)
         gSystem->AddDynamicPath(lib_dir.string().c_str());
     }
 
-    // NOTE: nuxsec binary links IO + ANA, but not PLOT. Plot macros need this loaded.
+    // NOTE: heron binary links IO + ANA, but not PLOT. Plot macros need this loaded.
     const auto plot_lib = lib_dir / "libNuxsecPlot.so";
     if (std::filesystem::exists(plot_lib))
     {
@@ -353,7 +353,7 @@ int handle_paths_command(const std::vector<std::string> &args,
 {
     if (!args.empty())
     {
-        throw std::runtime_error("Usage: nuxsec paths");
+        throw std::runtime_error("Usage: heron paths");
     }
     print_paths(std::cout, repo_root);
     return 0;
@@ -364,7 +364,7 @@ int handle_env_command(const std::vector<std::string> &args,
 {
     if (args.size() > 1)
     {
-        throw std::runtime_error("Usage: nuxsec env [SET]");
+        throw std::runtime_error("Usage: heron env [SET]");
     }
 
     std::string set_value = workspace_set();
@@ -541,28 +541,28 @@ int handle_macro_command(const std::vector<std::string> &args)
 int handle_art_command(const std::vector<std::string> &args)
 {
     return run_guarded(
-        "nuxsecArtFileIOdriver",
+        "heronArtFileIOdriver",
         [&]()
         {
             const ArtArgs art_args =
                 parse_art_args(
                     args,
-                    "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-            return run(art_args, "nuxsecArtFileIOdriver");
+                    "Usage: heron art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
+            return run(art_args, "heronArtFileIOdriver");
         });
 }
 
 int handle_sample_command(const std::vector<std::string> &args)
 {
     return run_guarded(
-        "nuxsecSampleIOdriver",
+        "heronSampleIOdriver",
         [&]()
         {
             const SampleArgs sample_args =
                 parse_sample_args(
                     args,
-                    "Usage: nuxsec sample NAME:FILELIST");
-            return run(sample_args, "nuxsecSampleIOdriver");
+                    "Usage: heron sample NAME:FILELIST");
+            return run(sample_args, "heronSampleIOdriver");
         });
 }
 
@@ -570,7 +570,7 @@ int handle_event_command(const std::vector<std::string> &args,
                          const std::filesystem::path &repo_root)
 {
     return run_guarded(
-        "nuxsecEventIOdriver",
+        "heronEventIOdriver",
         [&]()
         {
             std::vector<std::string> rewritten = args;
@@ -591,8 +591,8 @@ int handle_event_command(const std::vector<std::string> &args,
             const EventArgs event_args =
                 parse_event_args(
                     rewritten,
-                    "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
-            return run(event_args, "nuxsecEventIOdriver");
+                    "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
+            return run(event_args, "heronEventIOdriver");
         });
 }
 
@@ -639,7 +639,7 @@ StatusOptions parse_status_args(const std::vector<std::string> &args)
             opts.count = 1;
             continue;
         }
-        throw std::runtime_error("Usage: nuxsec status [--interval SECONDS] [--count COUNT] [--once]");
+        throw std::runtime_error("Usage: heron status [--interval SECONDS] [--count COUNT] [--once]");
     }
     return opts;
 }
@@ -725,7 +725,7 @@ int handle_status_command(const std::vector<std::string> &args,
     {
         start_message << " count=" << opts.count;
     }
-    log_info("nuxsec", start_message.str());
+    log_info("heron", start_message.str());
 
     long long completed = 0;
     while (opts.count == 0 || completed < opts.count)
@@ -735,12 +735,12 @@ int handle_status_command(const std::vector<std::string> &args,
         summary << "action=exe_status_scan status=complete executables="
                 << format_count(
                        static_cast<long long>(executables.size()));
-        log_info("nuxsec", summary.str());
+        log_info("heron", summary.str());
 
         if (executables.empty())
         {
             log_warning(
-                "nuxsec",
+                "heron",
                 "action=exe_status status=empty message=No executables found");
         }
         else
@@ -751,7 +751,7 @@ int handle_status_command(const std::vector<std::string> &args,
                 message << "action=exe_status status=ok exe="
                         << path.filename().string()
                         << " path=" << path.string();
-                log_info("nuxsec", message.str());
+                log_info("heron", message.str());
             }
         }
 
@@ -813,7 +813,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec paths\n";
+            std::cout << "Usage: heron paths\n";
         }
     });
     table.push_back(CommandEntry{
@@ -824,7 +824,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec env [SET]\n";
+            std::cout << "Usage: heron env [SET]\n";
         }
     });
     table.push_back(CommandEntry{
@@ -835,7 +835,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec status [--interval SECONDS] [--count COUNT] [--once]\n";
+            std::cout << "Usage: heron status [--interval SECONDS] [--count COUNT] [--once]\n";
         }
     });
     table.push_back(CommandEntry{
@@ -858,7 +858,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]\n";
+            std::cout << "Usage: heron art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]\n";
         }
     });
     table.push_back(CommandEntry{
@@ -869,7 +869,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec sample NAME:FILELIST\n";
+            std::cout << "Usage: heron sample NAME:FILELIST\n";
         }
     });
     table.push_back(CommandEntry{
@@ -880,7 +880,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
+            std::cout << "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
         }
     });
     return table;
@@ -889,7 +889,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
 int main(int argc, char **argv)
 {
     return run_guarded(
-        "nuxsec",
+        "heron",
         [argc, argv]()
         {
             int i = 1;

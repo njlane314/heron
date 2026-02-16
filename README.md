@@ -104,6 +104,9 @@ wrapper script:
 - `NUXSEC_PLOT_BASE` overrides the plot base directory (default: `<repo>/scratch/plot`).
 - `NUXSEC_ART_DIR`, `NUXSEC_SAMPLE_DIR`, and `NUXSEC_EVENT_DIR` override per-stage output directories.
 - `NUXSEC_PLOT_DIR` and `NUXSEC_PLOT_FORMAT` control plot output location and file extension.
+- `NUXSEC_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macro/library`).
+- `NUXSEC_MACRO_PATH` sets additional colon-separated macro search paths (searched after `NUXSEC_MACRO_LIBRARY_DIR`).
+- `manifest.tsv` inside `NUXSEC_MACRO_LIBRARY_DIR` can register logical macro names as `name<TAB>macro[<TAB>call]`.
 - `NUXSEC_REPO_ROOT` can be set to override the repo discovery used by the CLI.
 - `NUXSEC_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
 - `make_event_list.C` defaults its output file to `/exp/uboone/data/users/$USER/event_list_<analysis>.root`; `USER` must be set unless `out_root` is provided.
@@ -228,6 +231,22 @@ Plotting is macro-driven. Use the `nuxsec macro` helper to run a plot macro
 ```bash
 nuxsec --set template macro plotPotSimple.C
 ```
+
+For an in-repo macro library, keep macros under `macro/library/` (for example,
+as a git submodule checkout), and optionally add extra search paths.
+
+```bash
+export NUXSEC_MACRO_LIBRARY_DIR=macro/library
+export NUXSEC_MACRO_PATH=macro/library/custom
+nuxsec --set template macro list
+```
+
+Optional: create `macro/library/manifest.tsv` with entries like
+`name<TAB>macro<TAB>call` so users can run logical names, for example
+`nuxsec macro pr_eff`.
+
+Macro resolution order for relative names is: `NUXSEC_MACRO_LIBRARY_DIR`, then
+`NUXSEC_MACRO_PATH` entries, then repository macro directories.
 
 Shell completion for these commands is available in `scripts/nuxsec-completion.bash` (source it
 in your shell profile or session).

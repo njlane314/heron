@@ -34,7 +34,7 @@ const char *kUsageMacro =
     "Usage: heron macro MACRO.C [CALL]\n"
     "       heron macro list\n"
     "\nEnvironment:\n"
-    "  HERON_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macro/library)\n"
+    "  HERON_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macros/macro/library)\n"
     "  HERON_MACRO_PATH         Colon-separated extra macro directories (searched after library)\n"
     "  Manifest: <macro_library>/manifest.tsv with columns: name<TAB>macro[<TAB>call]\n"
     "  HERON_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
@@ -136,7 +136,8 @@ std::filesystem::path find_repo_root()
     {
         for (int i = 0; i < 6; ++i)
         {
-            if (std::filesystem::exists(base / "plot/macro/.plot_driver.retired"))
+            if (std::filesystem::exists(base / "macros/plot/macro/.plot_driver.retired") ||
+                std::filesystem::exists(base / "plot/macro/.plot_driver.retired"))
             {
                 return base;
             }
@@ -182,6 +183,16 @@ std::filesystem::path plot_base_dir(const std::filesystem::path &repo_root)
 {
     return path_from_env_or_default("HERON_PLOT_BASE",
                                     repo_root / "scratch" / "plot");
+}
+
+std::filesystem::path macro_repo_dir(const std::filesystem::path &repo_root)
+{
+    const auto macro_submodule = repo_root / "macros";
+    if (std::filesystem::exists(macro_submodule))
+    {
+        return macro_submodule;
+    }
+    return repo_root;
 }
 
 std::filesystem::path stage_dir(const std::filesystem::path &repo_root,
@@ -277,7 +288,7 @@ std::vector<std::string> split_path_list(const std::string &raw)
 
 std::filesystem::path macro_library_dir(const std::filesystem::path &repo_root)
 {
-    const std::filesystem::path fallback = repo_root / "macro" / "library";
+    const std::filesystem::path fallback = macro_repo_dir(repo_root) / "macro" / "library";
     return path_from_env_or_default("HERON_MACRO_LIBRARY_DIR", fallback);
 }
 
@@ -419,22 +430,23 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
             }
         }
 
-        const auto standalone_candidate = repo_root / "standalone" / "macro" / candidate;
+        const auto macro_root = macro_repo_dir(repo_root);
+        const auto standalone_candidate = macro_root / "standalone" / "macro" / candidate;
         if (std::filesystem::exists(standalone_candidate))
         {
             return standalone_candidate;
         }
-        const auto macro_candidate = repo_root / "plot" / "macro" / candidate;
+        const auto macro_candidate = macro_root / "plot" / "macro" / candidate;
         if (std::filesystem::exists(macro_candidate))
         {
             return macro_candidate;
         }
-        const auto evd_candidate = repo_root / "evd" / "macro" / candidate;
+        const auto evd_candidate = macro_root / "evd" / "macro" / candidate;
         if (std::filesystem::exists(evd_candidate))
         {
             return evd_candidate;
         }
-        const auto io_candidate = repo_root / "io" / "macro" / candidate;
+        const auto io_candidate = macro_root / "io" / "macro" / candidate;
         if (std::filesystem::exists(io_candidate))
         {
             return io_candidate;
@@ -643,10 +655,11 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
         list_macros(dir, "External macros in", "");
     }
 
-    list_macros(repo_root / "plot" / "macro", "Plot macros in", "");
-    list_macros(repo_root / "standalone" / "macro", "Standalone macros in", "");
-    list_macros(repo_root / "evd" / "macro", "Event-display macros in", "");
-    list_macros(repo_root / "io" / "macro", "I/O macros in", "");
+    const auto macro_root = macro_repo_dir(repo_root);
+    list_macros(macro_root / "plot" / "macro", "Plot macros in", "");
+    list_macros(macro_root / "standalone" / "macro", "Standalone macros in", "");
+    list_macros(macro_root / "evd" / "macro", "Event-display macros in", "");
+    list_macros(macro_root / "io" / "macro", "I/O macros in", "");
 }
 
 int handle_macro_command(const std::vector<std::string> &args)

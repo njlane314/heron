@@ -17,12 +17,12 @@ _heron()
     local exe
     local exe_dir
 
-    if [[ -n "${HERON_REPO_ROOT:-}" && ( -d "${HERON_REPO_ROOT}/plot/macro" || -d "${HERON_REPO_ROOT}/evd/macro" || -d "${HERON_REPO_ROOT}/standalone/macro" || -d "${HERON_REPO_ROOT}/io/macro" ) ]]; then
+    if [[ -n "${HERON_REPO_ROOT:-}" && ( -d "${HERON_REPO_ROOT}/macros/plot/macro" || -d "${HERON_REPO_ROOT}/macros/evd/macro" || -d "${HERON_REPO_ROOT}/macros/standalone/macro" || -d "${HERON_REPO_ROOT}/macros/io/macro" ) ]]; then
       printf "%s" "${HERON_REPO_ROOT}"
       return 0
     fi
 
-    if [[ -n "${HERON_ROOT:-}" && ( -d "${HERON_ROOT}/plot/macro" || -d "${HERON_ROOT}/evd/macro" || -d "${HERON_ROOT}/standalone/macro" || -d "${HERON_ROOT}/io/macro" ) ]]; then
+    if [[ -n "${HERON_ROOT:-}" && ( -d "${HERON_ROOT}/macros/plot/macro" || -d "${HERON_ROOT}/macros/evd/macro" || -d "${HERON_ROOT}/macros/standalone/macro" || -d "${HERON_ROOT}/macros/io/macro" ) ]]; then
       printf "%s" "${HERON_ROOT}"
       return 0
     fi
@@ -32,7 +32,7 @@ _heron()
       exe_dir="$(dirname "$(readlink -f "${exe}" 2>/dev/null || printf "%s" "${exe}")")"
       dir="${exe_dir}"
       while [[ -n "${dir}" && "${dir}" != "/" ]]; do
-        if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" || -d "${dir}/standalone/macro" || -d "${dir}/io/macro" ]]; then
+        if [[ -d "${dir}/macros/plot/macro" || -d "${dir}/macros/evd/macro" || -d "${dir}/macros/standalone/macro" || -d "${dir}/macros/io/macro" ]]; then
           printf "%s" "${dir}"
           return 0
         fi
@@ -42,34 +42,11 @@ _heron()
 
     dir="${PWD}"
     while [[ "${dir}" != "/" ]]; do
-      if [[ -d "${dir}/plot/macro" || -d "${dir}/evd/macro" || -d "${dir}/standalone/macro" || -d "${dir}/io/macro" ]]; then
+      if [[ -d "${dir}/macros/plot/macro" || -d "${dir}/macros/evd/macro" || -d "${dir}/macros/standalone/macro" || -d "${dir}/macros/io/macro" ]]; then
         printf "%s" "${dir}"
         return 0
       fi
       base="$(basename "${dir}")"
-      if [[ "${base}" == "plot" && -d "${dir}/macro" ]]; then
-        printf "%s" "$(dirname "${dir}")"
-        return 0
-      fi
-      if [[ "${base}" == "evd" && -d "${dir}/macro" ]]; then
-        printf "%s" "$(dirname "${dir}")"
-        return 0
-      fi
-      if [[ "${base}" == "io" && -d "${dir}/macro" ]]; then
-        printf "%s" "$(dirname "${dir}")"
-        return 0
-      fi
-      if [[ "${base}" == "macro" ]]; then
-        parent="$(dirname "${dir}")"
-        if [[ "$(basename "${parent}")" == "plot" || "$(basename "${parent}")" == "evd" || "$(basename "${parent}")" == "io" ]]; then
-          printf "%s" "$(dirname "${parent}")"
-          return 0
-        fi
-        if [[ "$(basename "${parent}")" == "standalone" ]]; then
-          printf "%s" "$(dirname "${parent}")"
-          return 0
-        fi
-      fi
       dir="$(dirname "${dir}")"
     done
     return 1
@@ -84,7 +61,7 @@ _heron()
 
     repo_root="$(_heron_find_root 2>/dev/null || true)"
     if [[ -n "${repo_root}" ]]; then
-      macro_dir="${repo_root}/plot/macro"
+      macro_dir="${repo_root}/macros/plot/macro"
       if [[ -d "${macro_dir}" ]]; then
         for macro in "${macro_dir}"/*.C; do
           if [[ -f "${macro}" ]]; then
@@ -92,7 +69,7 @@ _heron()
           fi
         done
       fi
-      macro_dir="${repo_root}/standalone/macro"
+      macro_dir="${repo_root}/macros/standalone/macro"
       if [[ -d "${macro_dir}" ]]; then
         for macro in "${macro_dir}"/*.C; do
           if [[ -f "${macro}" ]]; then
@@ -100,7 +77,7 @@ _heron()
           fi
         done
       fi
-      evd_dir="${repo_root}/evd/macro"
+      evd_dir="${repo_root}/macros/evd/macro"
       if [[ -d "${evd_dir}" ]]; then
         for macro in "${evd_dir}"/*.C; do
           if [[ -f "${macro}" ]]; then
@@ -108,7 +85,7 @@ _heron()
           fi
         done
       fi
-      macro_dir="${repo_root}/io/macro"
+      macro_dir="${repo_root}/macros/io/macro"
       if [[ -d "${macro_dir}" ]]; then
         for macro in "${macro_dir}"/*.C; do
           if [[ -f "${macro}" ]]; then

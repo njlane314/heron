@@ -104,7 +104,7 @@ wrapper script:
 - `HERON_PLOT_BASE` overrides the plot base directory (default: `<repo>/scratch/plot`).
 - `HERON_ART_DIR`, `HERON_SAMPLE_DIR`, and `HERON_EVENT_DIR` override per-stage output directories.
 - `HERON_PLOT_DIR` and `HERON_PLOT_FORMAT` control plot output location and file extension.
-- `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macro/library`).
+- `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macros/macro/library`).
 - `HERON_MACRO_PATH` sets additional colon-separated macro search paths (searched after `HERON_MACRO_LIBRARY_DIR`).
 - `manifest.tsv` inside `HERON_MACRO_LIBRARY_DIR` can register logical macro names as `name<TAB>macro[<TAB>call]`.
 - `HERON_REPO_ROOT` can be set to override the repo discovery used by the CLI.
@@ -232,16 +232,16 @@ Plotting is macro-driven. Use the `heron macro` helper to run a plot macro
 heron --set template macro plotPotSimple.C
 ```
 
-For an in-repo macro library, keep macros under `macro/library/` (for example,
+For an in-repo macro library, keep macros under `macros/macro/library/` (for example,
 as a git submodule checkout), and optionally add extra search paths.
 
 ```bash
-export HERON_MACRO_LIBRARY_DIR=macro/library
-export HERON_MACRO_PATH=macro/library/custom
+export HERON_MACRO_LIBRARY_DIR=macros/macro/library
+export HERON_MACRO_PATH=macros/macro/library/custom
 heron --set template macro list
 ```
 
-Optional: create `macro/library/manifest.tsv` with entries like
+Optional: create `macros/macro/library/manifest.tsv` with entries like
 `name<TAB>macro<TAB>call` so users can run logical names, for example
 `heron macro pr_eff`.
 

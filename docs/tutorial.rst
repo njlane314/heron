@@ -39,7 +39,7 @@ ready for selections and plotting.
 Step 4: run a plotting macro
 ----------------------------
 
-Plotting macros live under ``plot/macro`` and can be run directly:
+Plotting macros live under ``macros/plot/macro`` and can be run directly:
 
 .. code-block:: console
 
@@ -50,7 +50,7 @@ configuration to be present. Adjust ``HERON_PLOT_DIR`` or ``HERON_PLOT_BASE``
 if you want to separate outputs per production set.
 
 Standalone ROOT macros that do not depend on the heron plotting, analysis, or
-input/output libraries live under ``standalone/macro`` and can be run the same
+input/output libraries live under ``macros/standalone/macro`` and can be run the same
 way:
 
 .. code-block:: console

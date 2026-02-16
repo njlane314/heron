@@ -42,7 +42,7 @@ Each module typically contains:
 
 * ``include/`` for public headers (``.hh``).
 * ``src/`` for implementations (``.cpp``).
-* ``macro/`` for ROOT-style macros and scripts.
+* ``macros/`` git submodule for ROOT-style macros and scripts.
 
 Supporting folders include:
 

@@ -41,16 +41,16 @@ Quick start commands
    # 4) Build the event-level output from the default samples list.
    heron event scratch/out/template/event/event_output.root
 
-   # 5) Run a plotting macro from plot/macro.
+   # 5) Run a plotting macro from macros/plot/macro.
    heron macro plotFluxMinimal.C
 
-   # 6) Run a standalone ROOT macro from standalone/macro.
+   # 6) Run a standalone ROOT macro from macros/standalone/macro.
    heron macro plotOscPars.C
 
 After step (4) you will have an event tree with analysis columns in the
 specified output ROOT file. After step (5) plots are written under the plot
 output directory (``scratch/plot/<set>`` by default). Step (6) shows a
-standalone ROOT macro from ``standalone/macro`` that does not require the
+standalone ROOT macro from ``macros/standalone/macro`` that does not require the
 heron plotting libraries.
 
 Workspace tips

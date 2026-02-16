@@ -16,10 +16,10 @@ void ArtFileProvenanceIO::write(const Provenance &r, const std::string &out_file
         throw std::runtime_error("Failed to open merged output file for UPDATE: " + out_file);
     }
 
-    TDirectory *d = f->GetDirectory("nuxsec_art_provenance");
+    TDirectory *d = f->GetDirectory("heron_art_provenance");
     if (!d)
     {
-        d = f->mkdir("nuxsec_art_provenance");
+        d = f->mkdir("heron_art_provenance");
     }
     d->cd();
 
@@ -70,10 +70,10 @@ Provenance ArtFileProvenanceIO::read(const std::string &in_file)
         throw std::runtime_error("Failed to open merged output file for READ: " + in_file);
     }
 
-    TDirectory *d = f->GetDirectory("nuxsec_art_provenance");
+    TDirectory *d = f->GetDirectory("heron_art_provenance");
     if (!d)
     {
-        throw std::runtime_error("Missing nuxsec_art_provenance directory in file: " + in_file);
+        throw std::runtime_error("Missing heron_art_provenance directory in file: " + in_file);
     }
     d->cd();
 
@@ -93,10 +93,10 @@ Provenance ArtFileProvenanceIO::read(const std::string &in_file,
         throw std::runtime_error("Failed to open merged output file for READ: " + in_file);
     }
 
-    TDirectory *d = f->GetDirectory("nuxsec_art_provenance");
+    TDirectory *d = f->GetDirectory("heron_art_provenance");
     if (!d)
     {
-        throw std::runtime_error("Missing nuxsec_art_provenance directory in file: " + in_file);
+        throw std::runtime_error("Missing heron_art_provenance directory in file: " + in_file);
     }
     d->cd();
 

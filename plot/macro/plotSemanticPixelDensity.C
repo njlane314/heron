@@ -9,11 +9,11 @@
 // per-pixel semantic_image arrays.
 //
 // Run with:
-//   ./nuxsec macro plotSemanticPixelDensity.C
-//   ./nuxsec macro plotSemanticPixelDensity.C 'plotSemanticPixelDensity("/path/to/event_list.root","true")'
+//   ./heron macro plotSemanticPixelDensity.C
+//   ./heron macro plotSemanticPixelDensity.C 'plotSemanticPixelDensity("/path/to/event_list.root","true")'
 //
 // Output:
-//   One plot per label, saved to $NUXSEC_PLOT_DIR in $NUXSEC_PLOT_FORMAT.
+//   One plot per label, saved to $HERON_PLOT_DIR in $HERON_PLOT_FORMAT.
 
 #include <algorithm>
 #include <cmath>
@@ -61,13 +61,13 @@ bool looks_like_event_list_root(const std::string &p)
 
 std::string plot_out_dir()
 {
-  const char *v = std::getenv("NUXSEC_PLOT_DIR");
+  const char *v = std::getenv("HERON_PLOT_DIR");
   return v ? std::string(v) : std::string("./scratch/plots");
 }
 
 std::string plot_out_fmt()
 {
-  const char *v = std::getenv("NUXSEC_PLOT_FORMAT");
+  const char *v = std::getenv("HERON_PLOT_FORMAT");
   return v ? std::string(v) : std::string("pdf");
 }
 

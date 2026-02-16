@@ -93,9 +93,9 @@ void EventListIO::init(const std::string &out_path,
     TObjString(header.provenance_tree.c_str()).Write("provenance_tree");
     TObjString(header.event_tree.c_str()).Write("event_tree");
     TObjString(header.sample_list_source.c_str()).Write("sample_list_source");
-    if (!header.nuxsec_set.empty())
+    if (!header.heron_set.empty())
     {
-        TObjString(header.nuxsec_set.c_str()).Write("nuxsec_set");
+        TObjString(header.heron_set.c_str()).Write("heron_set");
     }
     if (!header.event_output_dir.empty())
     {
@@ -159,7 +159,7 @@ EventListIO::EventListIO(std::string path, OpenMode mode)
     m_header.provenance_tree = read_objstring_optional(*fin, "provenance_tree");
     m_header.event_tree = read_objstring_optional(*fin, "event_tree");
     m_header.sample_list_source = read_objstring_optional(*fin, "sample_list_source");
-    m_header.nuxsec_set = read_objstring_optional(*fin, "nuxsec_set");
+    m_header.heron_set = read_objstring_optional(*fin, "heron_set");
     m_header.event_output_dir = read_objstring_optional(*fin, "event_output_dir");
 
     auto *t = dynamic_cast<TTree *>(fin->Get("sample_refs"));
@@ -388,7 +388,7 @@ int EventListIO::build_event_list(const std::string &out_root,
     header.sample_list_source = list_path;
 
     std::ostringstream schema;
-    schema << "# nuxsec event list columns (macro make_event_list.C)\n";
+    schema << "# heron event list columns (macro make_event_list.C)\n";
     for (const auto &c : columns)
         schema << c << "\n";
 

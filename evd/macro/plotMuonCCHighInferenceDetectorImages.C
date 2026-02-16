@@ -16,7 +16,7 @@
 
 #include "../include/EventDisplay.hh"
 
-using namespace nuxsec::evd;
+using namespace heron::evd;
 
 namespace
 {
@@ -32,7 +32,7 @@ std::string find_default_event_list_path()
     const auto &analysis = AnalysisConfigService::instance();
     std::ostringstream analysis_path;
 
-    const char *out_base = std::getenv("NUXSEC_OUT_BASE");
+    const char *out_base = std::getenv("HERON_OUT_BASE");
     if (out_base && *out_base)
     {
         analysis_path << out_base << "/event_list_" << analysis.name() << ".root";
@@ -51,7 +51,7 @@ std::string find_default_event_list_path()
         analysis_path.str(),
         "./scratch/out/event_list.root",
         "./scratch/out/event_list_myana.root",
-        "./scratch/out/event_list_nuxsec.root"};
+        "./scratch/out/event_list_heron.root"};
 
     for (const auto &path : candidates)
     {

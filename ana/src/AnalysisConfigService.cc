@@ -21,7 +21,7 @@ const AnalysisConfigService &AnalysisConfigService::instance()
 
 AnalysisConfigService::AnalysisConfigService()
 {
-    m_name = "nuxsec_default";
+    m_name = "heron_default";
     m_tree_name = "nuselection/EventSelectionFilter";
 }
 

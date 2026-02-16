@@ -1,5 +1,5 @@
 # Scope
-This file captures the coding conventions and structural patterns used in the Nuxsec C++ codebase.
+This file captures the coding conventions and structural patterns used in the heron C++ codebase.
 
 ## Directory layout
 - Modules live in top-level folders (io/, sample/, pot/, rdf/, sel/, ana/, syst/, stat/) with include/, src/,
@@ -9,14 +9,14 @@ This file captures the coding conventions and structural patterns used in the Nu
 
 ## File layout & naming
 - Use .hh for headers and .cc for implementation files.
-- Use the nuxsec namespace for library code.
+- Use the heron namespace for library code.
 - Class and type names use descriptive PascalCase that keeps entities explicit
   (e.g., ProvenanceInput, LogicalSample, Dataset, ChannelDef, Selection, HistDef).
 - Global/static variables and macros are defined in implementation files when appropriate.
 
 ## Header conventions
 - Start headers with /* -- C++ -- */.
-- Use concise include guards in the form #ifndef NUXSEC_<MODULE>_<NAME>_H / #define NUXSEC_<MODULE>_<NAME>_H.
+- Use concise include guards in the form #ifndef heron_<MODULE>_<NAME>_H / #define heron_<MODULE>_<NAME>_H.
 - Forward declare classes when possible, include system/ROOT headers after that.
 - using namespace std; appears in headers and is acceptable in this codebase.
 - Group and order includes with blank lines between groups:

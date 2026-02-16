@@ -6,8 +6,8 @@
  *         plots for analysis reporting.
  */
 
-#ifndef NUXSEC_PLOT_PLOTTER_H
-#define NUXSEC_PLOT_PLOTTER_H
+#ifndef HERON_PLOT_PLOTTER_H
+#define HERON_PLOT_PLOTTER_H
 
 #include <string>
 #include <vector>
@@ -60,4 +60,4 @@ class Plotter
 } // namespace nu
 
 
-#endif // NUXSEC_PLOT_PLOTTER_H
+#endif // HERON_PLOT_PLOTTER_H

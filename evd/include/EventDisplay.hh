@@ -5,8 +5,8 @@
  *  @brief Rendering helpers for detector and semantic event display images.
  */
 
-#ifndef NUXSEC_EVD_EVENTDISPLAY_H
-#define NUXSEC_EVD_EVENTDISPLAY_H
+#ifndef HERON_EVD_EVENTDISPLAY_H
+#define HERON_EVD_EVENTDISPLAY_H
 
 #include <array>
 #include <cstddef>
@@ -23,7 +23,7 @@ class TH1F;
 class TH2F;
 class TLegend;
 
-namespace nuxsec {
+namespace heron {
 namespace evd {
 
 /**
@@ -141,6 +141,6 @@ class EventDisplay
 };
 
 } // namespace evd
-} // namespace nuxsec
+} // namespace heron
 
-#endif // NUXSEC_EVD_EVENTDISPLAY_H
+#endif // HERON_EVD_EVENTDISPLAY_H

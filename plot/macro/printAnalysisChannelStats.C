@@ -1,9 +1,9 @@
 // plot/macro/printAnalysisChannelStats.C
 //
 // Run with:
-//   ./nuxsec macro printAnalysisChannelStats.C
-//   ./nuxsec macro printAnalysisChannelStats.C 'printAnalysisChannelStats("/path/to/event_list.root","true","w_nominal",false)'
-//   ./nuxsec macro printAnalysisChannelStats.C 'printAnalysisChannelStats("/path/to/event_list.root","your_selection_here","w_nominal",true)'
+//   ./heron macro printAnalysisChannelStats.C
+//   ./heron macro printAnalysisChannelStats.C 'printAnalysisChannelStats("/path/to/event_list.root","true","w_nominal",false)'
+//   ./heron macro printAnalysisChannelStats.C 'printAnalysisChannelStats("/path/to/event_list.root","your_selection_here","w_nominal",true)'
 //
 // Notes:
 //   - Input is an event_list_<analysis>.root (same event-list mode as plotStackedHistTrueVertex.C).

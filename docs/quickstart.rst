@@ -3,19 +3,19 @@ Quick start
 
 This quick start shows how to go from FermiGrid production outputs to
 analysis-ready event trees and plots. It assumes you have art ROOT files from
-production, a working Nuxsec build, and a configured workspace.
+production, a working heron build, and a configured workspace.
 
 Prerequisites
 -------------
 
-* A local build of Nuxsec (see ``README.md`` for build steps).
+* A local build of heron (see ``README.md`` for build steps).
 * ROOT available in your environment.
 * A file list of FermiGrid-produced art ROOT files for a sample.
 
 Workflow overview
 -----------------
 
-Nuxsec uses a three-stage I/O pipeline for production outputs:
+heron uses a three-stage I/O pipeline for production outputs:
 
 1. **Art provenance scan**: read the art ROOT files and capture run/subrun
    metadata for later POT normalisation.
@@ -30,33 +30,33 @@ Quick start commands
 .. code-block:: console
 
    # 1) Register a production input with art provenance.
-   nuxsec art my_sample:data/filelist.txt
+   heron art my_sample:data/filelist.txt
 
    # 2) Build a list of art provenance outputs from step (1).
    ls scratch/out/template/art/art_prov_my_sample*.root > scratch/out/template/lists/my_sample.txt
 
    # 3) Build a SampleIO output ROOT file and update samples.tsv.
-   nuxsec sample my_sample:scratch/out/template/lists/my_sample.txt
+   heron sample my_sample:scratch/out/template/lists/my_sample.txt
 
    # 4) Build the event-level output from the default samples list.
-   nuxsec event scratch/out/template/event/event_output.root
+   heron event scratch/out/template/event/event_output.root
 
    # 5) Run a plotting macro from plot/macro.
-   nuxsec macro plotFluxMinimal.C
+   heron macro plotFluxMinimal.C
 
    # 6) Run a standalone ROOT macro from standalone/macro.
-   nuxsec macro plotOscPars.C
+   heron macro plotOscPars.C
 
 After step (4) you will have an event tree with analysis columns in the
 specified output ROOT file. After step (5) plots are written under the plot
 output directory (``scratch/plot/<set>`` by default). Step (6) shows a
 standalone ROOT macro from ``standalone/macro`` that does not require the
-Nuxsec plotting libraries.
+heron plotting libraries.
 
 Workspace tips
 --------------
 
-Use ``--set`` or ``NUXSEC_SET`` to switch workspace configurations. Plot outputs
-are controlled by ``NUXSEC_PLOT_BASE``, ``NUXSEC_PLOT_DIR``, and
-``NUXSEC_PLOT_FORMAT``. Adjust these when comparing multiple productions or
+Use ``--set`` or ``HERON_SET`` to switch workspace configurations. Plot outputs
+are controlled by ``HERON_PLOT_BASE``, ``HERON_PLOT_DIR``, and
+``HERON_PLOT_FORMAT``. Adjust these when comparing multiple productions or
 analysis variants.

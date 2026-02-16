@@ -2,7 +2,7 @@
 set -euo pipefail
 
 OUTPUT_DIR="scratch/out/sample-lists"
-ART_DIR="scratch/out/${NUXSEC_SET:-template}/art"
+ART_DIR="scratch/out/${HERON_SET:-template}/art"
 
 mkdir -p "${OUTPUT_DIR}"
 shopt -s nullglob

@@ -1,7 +1,7 @@
 API highlights
 ==============
 
-This section lists the main libraries and classes that make up the Nuxsec API.
+This section lists the main libraries and classes that make up the heron API.
 It is not exhaustive; instead it points to the primary entry points that are
 commonly used by the applications and analysis workflows.
 

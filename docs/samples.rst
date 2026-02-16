@@ -1,27 +1,27 @@
 Samples and provenance
 ======================
 
-Nuxsec models production inputs as samples built from art ROOT files. Each
+heron models production inputs as samples built from art ROOT files. Each
 sample tracks provenance, POT totals, and a normalisation factor to ensure
 consistent scaling across analyses.
 
 From FermiGrid production to SampleIO
 -------------------------------------
 
-FermiGrid production delivers art ROOT files. Nuxsec first scans them to record
+FermiGrid production delivers art ROOT files. heron first scans them to record
 run/subrun metadata, then aggregates the resulting provenance outputs into a
 SampleIO file.
 
 .. code-block:: console
 
    # Register art provenance for a production file list.
-   nuxsec art nue_run1:data/run1_nue.list
+   heron art nue_run1:data/run1_nue.list
 
    # Build a list of art provenance outputs from the previous step.
    ls scratch/out/template/art/art_prov_nue_run1*.root > scratch/out/template/lists/nue_run1.txt
 
    # Build the SampleIO file and update samples.tsv.
-   nuxsec sample nue_run1:scratch/out/template/lists/nue_run1.txt
+   heron sample nue_run1:scratch/out/template/lists/nue_run1.txt
 
 The sample step reads the beam database, sums POT, and writes a SampleIO ROOT
 file that is referenced by ``samples.tsv``.
@@ -39,7 +39,7 @@ are TSV files with a header row and per-sample lines such as:
 
 Applications that build event outputs read this list to locate each sample
 ROOT file and its metadata. The ``<set>`` segment defaults to ``template`` and
-is controlled by ``NUXSEC_SET`` or ``nuxsec --set``.
+is controlled by ``HERON_SET`` or ``heron --set``.
 
 Normalisation inputs
 --------------------

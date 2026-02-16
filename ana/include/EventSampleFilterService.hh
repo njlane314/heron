@@ -5,8 +5,8 @@
  *  @brief Sample-origin filters for event-level RDataFrame processing.
  */
 
-#ifndef NUXSEC_ANA_EVENT_SAMPLE_FILTER_SERVICE_H
-#define NUXSEC_ANA_EVENT_SAMPLE_FILTER_SERVICE_H
+#ifndef HERON_ANA_EVENT_SAMPLE_FILTER_SERVICE_H
+#define HERON_ANA_EVENT_SAMPLE_FILTER_SERVICE_H
 
 #include <ROOT/RDataFrame.hxx>
 
@@ -22,4 +22,4 @@ class EventSampleFilterService
 };
 
 
-#endif // NUXSEC_ANA_EVENT_SAMPLE_FILTER_SERVICE_H
+#endif // HERON_ANA_EVENT_SAMPLE_FILTER_SERVICE_H

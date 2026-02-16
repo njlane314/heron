@@ -3,10 +3,10 @@
 // Stacked distribution of the first entry in the inf_scores vector.
 //
 // Run with:
-//   ./nuxsec macro plotFirstInferenceScoreEntry.C
-//   ./nuxsec macro plotFirstInferenceScoreEntry.C \
+//   ./heron macro plotFirstInferenceScoreEntry.C
+//   ./heron macro plotFirstInferenceScoreEntry.C \
 //     'plotFirstInferenceScoreEntry("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotFirstInferenceScoreEntry.C \
+//   ./heron macro plotFirstInferenceScoreEntry.C \
 //     'plotFirstInferenceScoreEntry("./scratch/out/event_list_myana.root","sel_triggered_muon",false,true)'
 
 #include <cstdlib>
@@ -57,7 +57,7 @@ bool looks_like_event_list_root(const std::string &path)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 
@@ -316,8 +316,8 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
         leg.AddEntry(&g_sigmoid, label_sigmoid, "l");
         leg.Draw();
 
-        const std::string out_dir = env_or("NUXSEC_PLOT_OUT_DIR", "./scratch/out");
-        const std::string out_fmt = env_or("NUXSEC_PLOT_OUT_FMT", "pdf");
+        const std::string out_dir = env_or("HERON_PLOT_OUT_DIR", "./scratch/out");
+        const std::string out_fmt = env_or("HERON_PLOT_OUT_FMT", "pdf");
         gSystem->mkdir(out_dir.c_str(), true);
         const std::string out_path = out_dir + "/first_inference_score_roc_auc." + out_fmt;
         c.SaveAs(out_path.c_str());

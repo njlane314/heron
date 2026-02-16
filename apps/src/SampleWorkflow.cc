@@ -2,7 +2,7 @@
 /**
  *  @file  apps/src/SampleWorkflow.cc
  *
- *  @brief Sample aggregation workflow (invoked by the unified nuxsec CLI).
+ *  @brief Sample aggregation workflow (invoked by the unified heron CLI).
  */
 
 #include <chrono>

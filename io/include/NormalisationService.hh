@@ -6,8 +6,8 @@
  *         adjustments for consistent analysis bookkeeping.
  */
 
-#ifndef NUXSEC_IO_NORMALISATION_SERVICE_H
-#define NUXSEC_IO_NORMALISATION_SERVICE_H
+#ifndef HERON_IO_NORMALISATION_SERVICE_H
+#define HERON_IO_NORMALISATION_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ class NormalisationService
 };
 
 
-#endif // NUXSEC_IO_NORMALISATION_SERVICE_H
+#endif // HERON_IO_NORMALISATION_SERVICE_H

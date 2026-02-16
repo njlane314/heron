@@ -4,10 +4,10 @@
 // selection up to (and including) the reco-fiducial stage by default.
 //
 // Run with:
-//   ./nuxsec macro plotParticleLevelMipnessSelectionStacked.C
-//   ./nuxsec macro plotParticleLevelMipnessSelectionStacked.C \
+//   ./heron macro plotParticleLevelMipnessSelectionStacked.C
+//   ./heron macro plotParticleLevelMipnessSelectionStacked.C \
 //     'plotParticleLevelMipnessSelectionStacked("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotParticleLevelMipnessSelectionStacked.C \
+//   ./heron macro plotParticleLevelMipnessSelectionStacked.C \
 //     'plotParticleLevelMipnessSelectionStacked("", "w_nominal", "", false, true, "sel_trigger && sel_triggered_slice && sel_reco_fv && sel_triggered_muon")'
 
 #include <algorithm>

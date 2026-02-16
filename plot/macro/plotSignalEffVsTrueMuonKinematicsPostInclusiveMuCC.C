@@ -16,16 +16,16 @@
 //       * event satisfies the truth-level signal definition (is_signal)
 //
 // Run with:
-//   ./nuxsec macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C
-//   ./nuxsec macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon && sel_reco_fv")'
-//   ./nuxsec macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon","is_signal")'
+//   ./heron macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C
+//   ./heron macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root")'
+//   ./heron macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon && sel_reco_fv")'
+//   ./heron macro plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon","is_signal")'
 //
 // Output:
 //   Saves one plot per x-variable to:
-//     $NUXSEC_PLOT_DIR (default: ./scratch/plots)
+//     $HERON_PLOT_DIR (default: ./scratch/plots)
 //   with format:
-//     $NUXSEC_PLOT_FORMAT (default: pdf)
+//     $HERON_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
 #include <cstdlib>
@@ -116,16 +116,16 @@ int plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC(const std::string &sample
                                                        " && (p_p>0.0)"
                                                        " && (pi_p>0.0)")
 {
-    const bool use_imt = env_truthy(std::getenv("NUXSEC_ENABLE_IMT"));
+    const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
     if (use_imt)
     {
         ROOT::EnableImplicitMT();
-        std::cout << "[plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT enabled via NUXSEC_ENABLE_IMT\n";
+        std::cout << "[plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT enabled via HERON_ENABLE_IMT\n";
     }
     else
     {
         ROOT::DisableImplicitMT();
-        std::cout << "[plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT disabled (set NUXSEC_ENABLE_IMT=1 to enable)\n";
+        std::cout << "[plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT disabled (set HERON_ENABLE_IMT=1 to enable)\n";
     }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

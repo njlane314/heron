@@ -13,12 +13,12 @@
 //   - Histograms are normalised to "Fraction of Dataset [%]" like the example.
 //
 // Run with:
-//   ./nuxsec macro plotPixelChargeIntensity.C
-//   ./nuxsec macro plotPixelChargeIntensity.C 'plotPixelChargeIntensity("/path/to/event_list.root","true")'
+//   ./heron macro plotPixelChargeIntensity.C
+//   ./heron macro plotPixelChargeIntensity.C 'plotPixelChargeIntensity("/path/to/event_list.root","true")'
 //
 // Output:
-//   $NUXSEC_PLOT_DIR (default: ./scratch/plots)
-//   $NUXSEC_PLOT_FORMAT (default: pdf)
+//   $HERON_PLOT_DIR (default: ./scratch/plots)
+//   $HERON_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
 #include <array>
@@ -68,13 +68,13 @@ bool looks_like_event_list_root(const std::string &p)
 
 std::string plot_out_dir()
 {
-  const char *v = std::getenv("NUXSEC_PLOT_DIR");
+  const char *v = std::getenv("HERON_PLOT_DIR");
   return v ? std::string(v) : std::string("./scratch/plots");
 }
 
 std::string plot_out_fmt()
 {
-  const char *v = std::getenv("NUXSEC_PLOT_FORMAT");
+  const char *v = std::getenv("HERON_PLOT_FORMAT");
   return v ? std::string(v) : std::string("pdf");
 }
 

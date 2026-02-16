@@ -1,6 +1,6 @@
 /* -- C++ -- */
-#ifndef NUXSEC_APPS_STATUS_MONITOR_H
-#define NUXSEC_APPS_STATUS_MONITOR_H
+#ifndef HERON_APPS_STATUS_MONITOR_H
+#define HERON_APPS_STATUS_MONITOR_H
 
 #include <chrono>
 #include <condition_variable>
@@ -98,4 +98,4 @@ private:
 
 
 
-#endif // NUXSEC_APPS_STATUS_MONITOR_H
+#endif // HERON_APPS_STATUS_MONITOR_H

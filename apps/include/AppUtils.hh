@@ -6,8 +6,8 @@
  *         including shared parsing, formatting, and I/O conveniences used by
  *         multiple app entry points.
  */
-#ifndef NUXSEC_APPS_APP_UTILS_H
-#define NUXSEC_APPS_APP_UTILS_H
+#ifndef HERON_APPS_APP_UTILS_H
+#define HERON_APPS_APP_UTILS_H
 
 #include <algorithm>
 #include <cctype>
@@ -61,7 +61,7 @@ inline const char *getenv_cstr(const char *name)
 
 inline std::filesystem::path repo_root_dir()
 {
-    if (const char *value = getenv_cstr("NUXSEC_REPO_ROOT"))
+    if (const char *value = getenv_cstr("HERON_REPO_ROOT"))
     {
         return std::filesystem::path(value);
     }
@@ -70,7 +70,7 @@ inline std::filesystem::path repo_root_dir()
 
 inline std::filesystem::path out_base_dir()
 {
-    if (const char *value = getenv_cstr("NUXSEC_OUT_BASE"))
+    if (const char *value = getenv_cstr("HERON_OUT_BASE"))
     {
         return std::filesystem::path(value);
     }
@@ -79,7 +79,7 @@ inline std::filesystem::path out_base_dir()
 
 inline std::string workspace_set()
 {
-    if (const char *value = getenv_cstr("NUXSEC_SET"))
+    if (const char *value = getenv_cstr("HERON_SET"))
     {
         return std::string(value);
     }
@@ -110,7 +110,7 @@ inline int run_guarded(const std::string &log_prefix, const std::function<int()>
 
 inline int run_guarded(const std::function<int()> &func)
 {
-    return run_guarded("nuxsec", func);
+    return run_guarded("heron", func);
 }
 
 inline std::vector<std::string> read_paths(const std::string &filelist_path)

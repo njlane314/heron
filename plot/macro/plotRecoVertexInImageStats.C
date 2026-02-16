@@ -7,8 +7,8 @@
 // Produces a fraction-per-plane plot (with binomial error bars).
 //
 // Run with:
-//   ./nuxsec macro plotRecoVertexInImageStats.C
-//   ./nuxsec macro plotRecoVertexInImageStats.C 'plotRecoVertexInImageStats("/path/to/event_list.root","true",true)'
+//   ./heron macro plotRecoVertexInImageStats.C
+//   ./heron macro plotRecoVertexInImageStats.C 'plotRecoVertexInImageStats("/path/to/event_list.root","true",true)'
 //
 // Args:
 //   samples_tsv   : event_list root file (default: default_event_list_root())
@@ -61,13 +61,13 @@ bool looks_like_event_list_root(const std::string &p)
 
 std::string plot_out_dir()
 {
-    const char *v = std::getenv("NUXSEC_PLOT_DIR");
+    const char *v = std::getenv("HERON_PLOT_DIR");
     return v ? std::string(v) : std::string("./scratch/plots");
 }
 
 std::string plot_out_fmt()
 {
-    const char *v = std::getenv("NUXSEC_PLOT_FORMAT");
+    const char *v = std::getenv("HERON_PLOT_FORMAT");
     return v ? std::string(v) : std::string("pdf");
 }
 

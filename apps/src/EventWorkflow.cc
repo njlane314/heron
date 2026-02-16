@@ -2,7 +2,7 @@
 /**
  *  @file  apps/src/EventWorkflow.cc
  *
- *  @brief Event-level output builder (invoked by the unified nuxsec CLI).
+ *  @brief Event-level output builder (invoked by the unified heron CLI).
  */
 
 #include <chrono>
@@ -81,7 +81,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         {"ROOT::VecOps::RVec<float>", "detector_image_w"}
     };
 
-    const std::string provenance_tree = "nuxsec_art_provenance/run_subrun";
+    const std::string provenance_tree = "heron_art_provenance/run_subrun";
     const std::string event_tree = analysis.tree_name();
 
     nu::EventListHeader header;
@@ -89,7 +89,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     header.provenance_tree = provenance_tree;
     header.event_tree = event_tree;
     header.sample_list_source = event_args.list_path;
-    header.nuxsec_set = workspace_set();
+    header.heron_set = workspace_set();
 
     const std::filesystem::path output_path(event_args.output_root);
     if (!output_path.parent_path().empty())

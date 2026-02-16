@@ -7,10 +7,10 @@
 //   muon_candidate_pass = (sel_muon ? 1 : 0)
 //
 // Run with:
-//   ./nuxsec macro plotMuonCandidateAfterFiducialPassFail.C
-//   ./nuxsec macro plotMuonCandidateAfterFiducialPassFail.C \
+//   ./heron macro plotMuonCandidateAfterFiducialPassFail.C
+//   ./heron macro plotMuonCandidateAfterFiducialPassFail.C \
 //     'plotMuonCandidateAfterFiducialPassFail("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotMuonCandidateAfterFiducialPassFail.C \
+//   ./heron macro plotMuonCandidateAfterFiducialPassFail.C \
 //     'plotMuonCandidateAfterFiducialPassFail("./scratch/out/event_list_myana.root","abs(reco_neutrino_vertex_sce_x) < 250",true,true)'
 
 #include <cstdlib>
@@ -166,7 +166,7 @@ int plotMuonCandidateAfterFiducialPassFail(const std::string &input = "",
     opt.x_title = "Muon Candidate Selected";
     opt.y_title = "Events";
     opt.analysis_region_label = "Software Trigger + Slice + Fiducial";
-    opt.image_format = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    opt.image_format = getenv_or("HERON_PLOT_FORMAT", "pdf");
 
     const double pot_data = el.total_pot_data();
     const double pot_mc = el.total_pot_mc();

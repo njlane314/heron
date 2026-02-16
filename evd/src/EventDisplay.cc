@@ -32,7 +32,7 @@
 
 #include "Plotter.hh"
 
-namespace nuxsec {
+namespace heron {
 namespace evd {
 
 //____________________________________________________________________________
@@ -690,4 +690,4 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
 }
 
 } // namespace evd
-} // namespace nuxsec
+} // namespace heron

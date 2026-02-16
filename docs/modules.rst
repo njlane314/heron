@@ -4,7 +4,7 @@ Module Technical Notes
 This page expands on the responsibilities of each module with technical
 examples, equations, and snippets that reflect how analyses are typically
 assembled. The intent is to give readers a compact, engineering-focused view of
-how data, selections, and plots interact in the Nuxsec workflow.
+how data, selections, and plots interact in the heron workflow.
 
 io/ -- data access and provenance
 ---------------------------------
@@ -54,7 +54,7 @@ apps/ -- command-line drivers
 -----------------------------
 
 ``apps/`` contains the executable entry points that orchestrate the analysis
-pipeline. The unified ``nuxsec`` CLI lives here and dispatches to the art,
+pipeline. The unified ``heron`` CLI lives here and dispatches to the art,
 sample, event, and macro drivers. Helper utilities such as logging and status
 monitoring also live in this layer.
 

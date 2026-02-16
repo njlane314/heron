@@ -909,7 +909,7 @@ void plotPotTimelineStyleInternal(const char *out = nullptr)
 }
 
 
-int nuxsec_plot(const char *out = nullptr)
+int heron_plot(const char *out = nullptr)
 {
     plotPotTimelineStyleInternal(out);
     return 0;

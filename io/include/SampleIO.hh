@@ -6,8 +6,8 @@
  *         metadata, and serialisation conventions.
  */
 
-#ifndef NUXSEC_IO_SAMPLE_IO_H
-#define NUXSEC_IO_SAMPLE_IO_H
+#ifndef HERON_IO_SAMPLE_IO_H
+#define HERON_IO_SAMPLE_IO_H
 
 #include <string>
 #include <vector>
@@ -78,4 +78,4 @@ class SampleIO
 
 
 
-#endif // NUXSEC_IO_SAMPLE_IO_H
+#endif // HERON_IO_SAMPLE_IO_H

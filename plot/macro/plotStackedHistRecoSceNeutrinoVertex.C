@@ -1,15 +1,15 @@
 // plot/macro/plotStackedHistRecoSceNeutrinoVertex.C
 //
 // Run with:
-//   ./nuxsec macro plotStackedHistRecoSceNeutrinoVertex.C
-//   ./nuxsec macro plotStackedHistRecoSceNeutrinoVertex.C 'plotStackedHistRecoSceNeutrinoVertex("/path/to/samples.tsv","true",false)'
+//   ./heron macro plotStackedHistRecoSceNeutrinoVertex.C
+//   ./heron macro plotStackedHistRecoSceNeutrinoVertex.C 'plotStackedHistRecoSceNeutrinoVertex("/path/to/samples.tsv","true",false)'
 //
 // Notes:
 //   - This macro loads aggregated samples (samples.tsv -> SampleIO -> original analysis tree)
 //   - It runs your analysis column derivations so that "analysis_channels" exists for stacking.
 //   - The stack is grouped by "analysis_channels"; expr controls the x-axis variable only.
 //   - MC yields are scaled by w_nominal unless an alternative weight is provided.
-//   - Output dir/format follow PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
+//   - Output dir/format follow PlotEnv defaults (HERON_PLOT_DIR / HERON_PLOT_FORMAT).
 //   - Default input uses the generated event list (event_list_<analysis>.root).
 
 #include <algorithm>
@@ -61,7 +61,7 @@ bool looks_like_event_list_root(const std::string &p)
 
 bool debug_enabled()
 {
-    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    const char *env = std::getenv("HERON_DEBUG_PLOT_STACK");
     return env != nullptr && std::string(env) != "0";
 }
 

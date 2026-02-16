@@ -10,10 +10,10 @@
 // plotStackedHistTrueVertex.C), with signal overlay enabled.
 //
 // Run with:
-//   ./nuxsec macro plotSignalCoverageTruthKinematics.C
-//   ./nuxsec macro plotSignalCoverageTruthKinematics.C \
+//   ./heron macro plotSignalCoverageTruthKinematics.C
+//   ./heron macro plotSignalCoverageTruthKinematics.C \
 //        'plotSignalCoverageTruthKinematics("./scratch/out/event_list_myana.root","sel_cc0pi")'
-//   ./nuxsec macro plotSignalCoverageTruthKinematics.C \
+//   ./heron macro plotSignalCoverageTruthKinematics.C \
 //        'plotSignalCoverageTruthKinematics("./scratch/out/event_list_myana.root",
 //                                          "sel_cc0pi",
 //                                          true,  /*make_2d*/
@@ -25,8 +25,8 @@
 //   - Binning is fixed ("common binning") via the VarSpec tables below.
 //
 // Output:
-//   - 1D stacked plots follow Plotter/PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
-//   - 2D plots are written explicitly to $NUXSEC_PLOT_DIR (default: ./scratch/plots).
+//   - 1D stacked plots follow Plotter/PlotEnv defaults (HERON_PLOT_DIR / HERON_PLOT_FORMAT).
+//   - 2D plots are written explicitly to $HERON_PLOT_DIR (default: ./scratch/plots).
 //
 // You may pass an explicit selection expression via `extra_sel`.
 
@@ -104,7 +104,7 @@ std::string sanitize_for_filename(const std::string &s)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 
@@ -305,7 +305,7 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
     if (implicit_mt_enabled())
     {
         ROOT::EnableImplicitMT();
-        std::cout << "[plotSignalCoverageTruthKinematics] ROOT implicit MT enabled (NUXSEC_PLOT_IMT != 0)\n";
+        std::cout << "[plotSignalCoverageTruthKinematics] ROOT implicit MT enabled (HERON_PLOT_IMT != 0)\n";
     }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
@@ -385,7 +385,7 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events / bin";
     opt.run_numbers = {"1"};
-    opt.image_format = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    opt.image_format = getenv_or("HERON_PLOT_FORMAT", "pdf");
 
     const double pot_data = el.total_pot_data();
     const double pot_mc = el.total_pot_mc();
@@ -499,8 +499,8 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
             std::cout << "[plotSignalCoverageTruthKinematics] 2D: plotting all selected events (no truth-signal filter)\n";
         }
 
-        const std::string out_dir = getenv_or("NUXSEC_PLOT_DIR", "./scratch/plots");
-        const std::string out_fmt = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+        const std::string out_dir = getenv_or("HERON_PLOT_DIR", "./scratch/plots");
+        const std::string out_fmt = getenv_or("HERON_PLOT_FORMAT", "pdf");
 
         const std::vector<Var2D> vars_2d = {
             {"truth2d_W_vs_nu_E",     "nu_E",      "kin_W",

@@ -6,8 +6,8 @@
  *         provenance-driven workflows, coordinating input discovery and
  *         reporting.
  */
-#ifndef NUXSEC_APPS_ARTCLI_H
-#define NUXSEC_APPS_ARTCLI_H
+#ifndef HERON_APPS_ARTCLI_H
+#define HERON_APPS_ARTCLI_H
 
 #include <chrono>
 #include <filesystem>
@@ -107,7 +107,7 @@ inline ArtArgs parse_art_input(const std::string &input)
     }
 
     const std::filesystem::path art_dir =
-        stage_output_dir("NUXSEC_ART_DIR", "art");
+        stage_output_dir("HERON_ART_DIR", "art");
     out.art_path = (art_dir / ("art_prov_" + out.input.input_name + ".root")).string();
 
     return out;

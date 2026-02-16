@@ -125,7 +125,7 @@ ULong64_t SnapshotService::snapshot_event_list_merged(ROOT::RDF::RNode node,
     }
 
     const std::string scratch_file =
-        (scratch_dir / ("nuxsec_snapshot_" + tree_name + "_" + sanitise_root_key(sample_name) + "_"
+        (scratch_dir / ("heron_snapshot_" + tree_name + "_" + sanitise_root_key(sample_name) + "_"
                         + std::to_string(::getpid()) + ".root"))
             .string();
 
@@ -225,7 +225,7 @@ ULong64_t SnapshotService::snapshot_event_list(ROOT::RDF::RNode node,
     }
 
     const std::string scratch_file =
-        (scratch_dir / ("nuxsec_snapshot_" + tree_name + "_" + std::to_string(::getpid()) + ".root")).string();
+        (scratch_dir / ("heron_snapshot_" + tree_name + "_" + std::to_string(::getpid()) + ".root")).string();
 
     ROOT::RDF::RSnapshotOptions options;
     options.fMode = "RECREATE";

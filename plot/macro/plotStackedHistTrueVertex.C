@@ -1,15 +1,15 @@
 // plot/macro/plotStackedHistTrueVertex.C
 //
 // Run with:
-//   ./nuxsec macro plotStackedHistTrueVertex.C
-//   ./nuxsec macro plotStackedHistTrueVertex.C 'plotStackedHistTrueVertex("/path/to/samples.tsv","true",false)'
+//   ./heron macro plotStackedHistTrueVertex.C
+//   ./heron macro plotStackedHistTrueVertex.C 'plotStackedHistTrueVertex("/path/to/samples.tsv","true",false)'
 //
 // Notes:
 //   - This macro loads aggregated samples (samples.tsv -> SampleIO -> original analysis tree)
 //   - It runs your analysis column derivations so that "analysis_channels" exists for stacking.
 //   - The stack is grouped by "analysis_channels"; expr controls the x-axis variable only.
 //   - MC yields are scaled by w_nominal unless an alternative weight is provided.
-//   - Output dir/format follow PlotEnv defaults (NUXSEC_PLOT_DIR / NUXSEC_PLOT_FORMAT).
+//   - Output dir/format follow PlotEnv defaults (HERON_PLOT_DIR / HERON_PLOT_FORMAT).
 //   - Default input uses the generated event list (event_list_<analysis>.root).
 
 #include <algorithm>
@@ -61,7 +61,7 @@ bool looks_like_event_list_root(const std::string &p)
 
 bool debug_enabled()
 {
-    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    const char *env = std::getenv("HERON_DEBUG_PLOT_STACK");
     return env != nullptr && std::string(env) != "0";
 }
 
@@ -77,7 +77,7 @@ void debug_log(const std::string &msg)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 } // namespace
@@ -91,11 +91,11 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     if (implicit_mt_enabled())
     {
         ROOT::EnableImplicitMT();
-        debug_log("ROOT implicit MT enabled (NUXSEC_PLOT_IMT != 0)");
+        debug_log("ROOT implicit MT enabled (HERON_PLOT_IMT != 0)");
     }
     else
     {
-        debug_log("ROOT implicit MT disabled (set NUXSEC_PLOT_IMT=1 to enable)");
+        debug_log("ROOT implicit MT disabled (set HERON_PLOT_IMT=1 to enable)");
     }
 
     debug_log("starting plot_stacked_hist_impl");

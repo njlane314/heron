@@ -8,16 +8,16 @@ setup nlohmann_json v3_11_2
 setup libtorch v1_13_1b -q e20:prof
 setup eigen v3_4_0
 
-NUXSEC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export NUXSEC_ROOT
+HERON_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export HERON_ROOT
 
-source "${NUXSEC_ROOT}/scripts/nuxsec-completion.bash"
+source "${HERON_ROOT}/scripts/heron-completion.bash"
 
-export PATH="${NUXSEC_ROOT}/build/bin:${PATH}"
-export LD_LIBRARY_PATH="${NUXSEC_ROOT}/build/lib:${NUXSEC_ROOT}/build/framework:${LD_LIBRARY_PATH}"
-export ROOT_INCLUDE_PATH="${NUXSEC_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"
+export PATH="${HERON_ROOT}/build/bin:${PATH}"
+export LD_LIBRARY_PATH="${HERON_ROOT}/build/lib:${HERON_ROOT}/build/framework:${LD_LIBRARY_PATH}"
+export ROOT_INCLUDE_PATH="${HERON_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"
 
 if [ -d "/exp/uboone/data/users/${USER}/cache" ]; then
-  export NUXSEC_TMPDIR="/exp/uboone/data/users/${USER}/cache/nuxsec_tmp"
-  mkdir -p "${NUXSEC_TMPDIR}"
+  export HERON_TMPDIR="/exp/uboone/data/users/${USER}/cache/heron_tmp"
+  mkdir -p "${HERON_TMPDIR}"
 fi

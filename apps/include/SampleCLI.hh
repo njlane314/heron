@@ -5,8 +5,8 @@
  *  @brief CLI helpers that manage sample-level workflows, from input handling
  *         through reporting and normalisation for data preparation tasks.
  */
-#ifndef NUXSEC_APPS_SAMPLECLI_H
-#define NUXSEC_APPS_SAMPLECLI_H
+#ifndef HERON_APPS_SAMPLECLI_H
+#define HERON_APPS_SAMPLECLI_H
 
 #include <algorithm>
 #include <cerrno>
@@ -180,7 +180,7 @@ inline SampleArgs parse_sample_input(const std::string &input)
     }
 
     const std::filesystem::path sample_dir =
-        stage_output_dir("NUXSEC_SAMPLE_DIR", "sample");
+        stage_output_dir("HERON_SAMPLE_DIR", "sample");
     out.output_path = (sample_dir / ("sample_root_" + out.sample_name + ".root")).string();
     out.sample_list_path = (sample_dir / "samples.tsv").string();
 

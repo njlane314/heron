@@ -3,11 +3,11 @@
 // Create a compact event-list ROOT file (merged) for fast plotting.
 //
 // Usage examples:
-//   ./nuxsec macro make_event_list.C
-//   ./nuxsec macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root","/path/to/samples.tsv")'
-//   ./nuxsec macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root","/path/to/samples.tsv","true","reco_neutrino_vertex_sce_z,reco_neutrino_vertex_sce_x,reco_neutrino_vertex_sce_y")'
-//   ./nuxsec macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root","/path/to/samples.tsv","sel_muon","reco_neutrino_vertex_sce_z")'
+//   ./heron macro make_event_list.C
+//   ./heron macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root")'
+//   ./heron macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root","/path/to/samples.tsv")'
+//   ./heron macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root","/path/to/samples.tsv","true","reco_neutrino_vertex_sce_z,reco_neutrino_vertex_sce_x,reco_neutrino_vertex_sce_y")'
+//   ./heron macro make_event_list.C 'make_event_list("./scratch/out/event_list_myana.root","/path/to/samples.tsv","sel_muon","reco_neutrino_vertex_sce_z")'
 //
 // What it writes:
 //   - TObjString keys: analysis_name, provenance_tree, event_tree, sample_list_source

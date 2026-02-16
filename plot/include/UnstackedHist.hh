@@ -5,8 +5,8 @@
  *  @brief Unstacked (overlay) histogram plotting helper.
  */
 
-#ifndef NUXSEC_PLOT_UNSTACKED_H
-#define NUXSEC_PLOT_UNSTACKED_H
+#ifndef HERON_PLOT_UNSTACKED_H
+#define HERON_PLOT_UNSTACKED_H
 
 #include <memory>
 #include <string>
@@ -81,4 +81,4 @@ class UnstackedHist
 
 } // namespace nu
 
-#endif // NUXSEC_PLOT_UNSTACKED_H
+#endif // HERON_PLOT_UNSTACKED_H

@@ -6,8 +6,8 @@
  *         covering input configuration and dataframe initialisation.
  */
 
-#ifndef NUXSEC_ANA_RDATA_FRAME_SERVICE_H
-#define NUXSEC_ANA_RDATA_FRAME_SERVICE_H
+#ifndef HERON_ANA_RDATA_FRAME_SERVICE_H
+#define HERON_ANA_RDATA_FRAME_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -35,4 +35,4 @@ class RDataFrameService
 };
 
 
-#endif // NUXSEC_ANA_RDATA_FRAME_SERVICE_H
+#endif // HERON_ANA_RDATA_FRAME_SERVICE_H

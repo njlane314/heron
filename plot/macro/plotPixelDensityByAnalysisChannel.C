@@ -9,9 +9,9 @@
 //   - By default it overlays MC and EXT (if present) and optionally Data.
 //
 // Run with:
-//   ./nuxsec macro plotPixelDensityByAnalysisChannel.C
-//   ./nuxsec macro plotPixelDensityByAnalysisChannel.C 'plotPixelDensityByAnalysisChannel("/path/to/event_list.root","true","",false)'
-//   ./nuxsec macro plotPixelDensityByAnalysisChannel.C 'plotPixelDensityByAnalysisChannel("/path/to/event_list.root","sel","w_nominal",true)'
+//   ./heron macro plotPixelDensityByAnalysisChannel.C
+//   ./heron macro plotPixelDensityByAnalysisChannel.C 'plotPixelDensityByAnalysisChannel("/path/to/event_list.root","true","",false)'
+//   ./heron macro plotPixelDensityByAnalysisChannel.C 'plotPixelDensityByAnalysisChannel("/path/to/event_list.root","sel","w_nominal",true)'
 //
 // Args:
 //   samples_tsv  : event_list root file path (default: default_event_list_root())
@@ -65,13 +65,13 @@ bool looks_like_event_list_root(const std::string &p)
 
 std::string plot_out_dir()
 {
-    const char *v = std::getenv("NUXSEC_PLOT_DIR");
+    const char *v = std::getenv("HERON_PLOT_DIR");
     return v ? std::string(v) : std::string("./scratch/plots");
 }
 
 std::string plot_out_fmt()
 {
-    const char *v = std::getenv("NUXSEC_PLOT_FORMAT");
+    const char *v = std::getenv("HERON_PLOT_FORMAT");
     return v ? std::string(v) : std::string("pdf");
 }
 

@@ -10,14 +10,14 @@
 //       completeness>0.1 AND purity>0.5
 //
 // Run with:
-//   ./nuxsec macro plotPREffVsNeutrinoKinematics.C
-//   ./nuxsec macro plotPREffVsNeutrinoKinematics.C 'plotPREffVsNeutrinoKinematics("./scratch/out/event_list_myana.root","sel_triggered_slice")'
+//   ./heron macro plotPREffVsNeutrinoKinematics.C
+//   ./heron macro plotPREffVsNeutrinoKinematics.C 'plotPREffVsNeutrinoKinematics("./scratch/out/event_list_myana.root","sel_triggered_slice")'
 //
 // Output:
 //   Saves one plot per x-variable to:
-//     $NUXSEC_PLOT_DIR (default: ./scratch/plots)
+//     $HERON_PLOT_DIR (default: ./scratch/plots)
 //   with format:
-//     $NUXSEC_PLOT_FORMAT (default: pdf)
+//     $HERON_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
 #include <iostream>

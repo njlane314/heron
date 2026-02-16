@@ -6,8 +6,8 @@
  *         derived columns and related transformation helpers.
  */
 
-#ifndef NUXSEC_ANA_COLUMN_DERIVATION_SERVICE_H
-#define NUXSEC_ANA_COLUMN_DERIVATION_SERVICE_H
+#ifndef HERON_ANA_COLUMN_DERIVATION_SERVICE_H
+#define HERON_ANA_COLUMN_DERIVATION_SERVICE_H
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
@@ -60,4 +60,4 @@ class ColumnDerivationService
 };
 
 
-#endif // NUXSEC_ANA_COLUMN_DERIVATION_SERVICE_H
+#endif // HERON_ANA_COLUMN_DERIVATION_SERVICE_H

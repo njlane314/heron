@@ -6,8 +6,8 @@
  *         counts, and metadata summaries.
  */
 
-#ifndef NUXSEC_IO_SUBRUN_INVENTORY_SERVICE_H
-#define NUXSEC_IO_SUBRUN_INVENTORY_SERVICE_H
+#ifndef HERON_IO_SUBRUN_INVENTORY_SERVICE_H
+#define HERON_IO_SUBRUN_INVENTORY_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -21,4 +21,4 @@ class SubRunInventoryService
     static Summary scan_subruns(const std::vector<std::string> &files);
 };
 
-#endif // NUXSEC_IO_SUBRUN_INVENTORY_SERVICE_H
+#endif // HERON_IO_SUBRUN_INVENTORY_SERVICE_H

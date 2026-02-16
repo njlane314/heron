@@ -6,8 +6,8 @@
  *         lightweight access to bookkeeping metadata.
  */
 
-#ifndef NUXSEC_IO_RUNDATABASE_SERVICE_H
-#define NUXSEC_IO_RUNDATABASE_SERVICE_H
+#ifndef HERON_IO_RUNDATABASE_SERVICE_H
+#define HERON_IO_RUNDATABASE_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -53,4 +53,4 @@ class RunDatabaseService
 };
 
 
-#endif // NUXSEC_IO_RUNDATABASE_SERVICE_H
+#endif // HERON_IO_RUNDATABASE_SERVICE_H

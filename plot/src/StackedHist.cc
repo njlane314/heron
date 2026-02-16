@@ -42,7 +42,7 @@ namespace
 {
 bool stack_debug_enabled()
 {
-    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    const char *env = std::getenv("HERON_DEBUG_PLOT_STACK");
     return env != nullptr && std::string(env) != "0";
 }
 

@@ -6,8 +6,8 @@
  *         labels, and ordering for stacked outputs.
  */
 
-#ifndef NUXSEC_PLOT_CHANNELS_H
-#define NUXSEC_PLOT_CHANNELS_H
+#ifndef HERON_PLOT_CHANNELS_H
+#define HERON_PLOT_CHANNELS_H
 
 #include <map>
 #include <string>
@@ -84,4 +84,4 @@ class Channels
 } // namespace nu
 
 
-#endif // NUXSEC_PLOT_CHANNELS_H
+#endif // HERON_PLOT_CHANNELS_H

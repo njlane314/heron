@@ -6,8 +6,8 @@
  *         stacked histograms. Categories are based on truth-matched PDG codes.
  */
 
-#ifndef NUXSEC_PLOT_PARTICLE_CHANNELS_H
-#define NUXSEC_PLOT_PARTICLE_CHANNELS_H
+#ifndef HERON_PLOT_PARTICLE_CHANNELS_H
+#define HERON_PLOT_PARTICLE_CHANNELS_H
 
 #include <map>
 #include <string>
@@ -105,4 +105,4 @@ class ParticleChannels
 
 } // namespace nu
 
-#endif // NUXSEC_PLOT_PARTICLE_CHANNELS_H
+#endif // HERON_PLOT_PARTICLE_CHANNELS_H

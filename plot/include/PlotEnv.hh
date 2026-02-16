@@ -6,19 +6,19 @@
  *         repository-relative paths and default plotting conventions.
  *
  *  Conventions:
- *    - All *relative* plot outputs are rooted under NUXSEC_PLOT_DIR.
+ *    - All *relative* plot outputs are rooted under HERON_PLOT_DIR.
  *    - Defaults:
- *        NUXSEC_PLOT_DIR    = <repo>/scratch/plot
- *        NUXSEC_PLOT_FORMAT = pdf
+ *        HERON_PLOT_DIR    = <repo>/scratch/plot
+ *        HERON_PLOT_FORMAT = pdf
  *
- *  The CLI sets NUXSEC_REPO_ROOT and (if unset) NUXSEC_PLOT_DIR so plots land
+ *  The CLI sets HERON_REPO_ROOT and (if unset) HERON_PLOT_DIR so plots land
  *  consistently regardless of where the binary is invoked from. When using
- *  workspace switching, the CLI derives NUXSEC_PLOT_DIR from NUXSEC_PLOT_BASE
- *  and NUXSEC_SET.
+ *  workspace switching, the CLI derives HERON_PLOT_DIR from HERON_PLOT_BASE
+ *  and HERON_SET.
  */
 
-#ifndef NUXSEC_PLOT_PLOT_ENV_H
-#define NUXSEC_PLOT_PLOT_ENV_H
+#ifndef HERON_PLOT_PLOT_ENV_H
+#define HERON_PLOT_PLOT_ENV_H
 
 #include <cstdlib>
 #include <filesystem>
@@ -40,7 +40,7 @@ inline const char *getenv_cstr(const char *name) noexcept
 
 inline std::filesystem::path repo_root_dir()
 {
-    if (const char *e = getenv_cstr("NUXSEC_REPO_ROOT"))
+    if (const char *e = getenv_cstr("HERON_REPO_ROOT"))
     {
         return std::filesystem::path(e);
     }
@@ -49,7 +49,7 @@ inline std::filesystem::path repo_root_dir()
 
 inline std::filesystem::path plot_output_dir_path()
 {
-    if (const char *e = getenv_cstr("NUXSEC_PLOT_DIR"))
+    if (const char *e = getenv_cstr("HERON_PLOT_DIR"))
     {
         return std::filesystem::path(e);
     }
@@ -63,7 +63,7 @@ inline std::string plot_output_dir()
 
 inline std::string plot_image_format()
 {
-    if (const char *e = getenv_cstr("NUXSEC_PLOT_FORMAT"))
+    if (const char *e = getenv_cstr("HERON_PLOT_FORMAT"))
     {
         return std::string(e);
     }
@@ -72,7 +72,7 @@ inline std::string plot_image_format()
 
 inline std::filesystem::path release_dir_path()
 {
-    if (const char *e = getenv_cstr("NUXSEC_RELEASE_DIR"))
+    if (const char *e = getenv_cstr("HERON_RELEASE_DIR"))
     {
         return std::filesystem::path(e);
     }

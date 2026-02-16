@@ -5,8 +5,8 @@
  *  @brief CLI helpers that drive event-level workflows, including configuration,
  *         input selection, and summary output for analysis-ready datasets.
  */
-#ifndef NUXSEC_APPS_EVENTCLI_H
-#define NUXSEC_APPS_EVENTCLI_H
+#ifndef HERON_APPS_EVENTCLI_H
+#define HERON_APPS_EVENTCLI_H
 
 #include <algorithm>
 #include <chrono>
@@ -131,7 +131,7 @@ inline EventArgs parse_event_args(const std::vector<std::string> &args, const st
     if (output_root.is_relative() && output_root.parent_path().empty())
     {
         const std::filesystem::path event_dir =
-            stage_output_dir("NUXSEC_EVENT_DIR", "event");
+            stage_output_dir("HERON_EVENT_DIR", "event");
         out.output_root = (event_dir / output_root).string();
     }
 
@@ -143,4 +143,4 @@ int run(const EventArgs &event_args, const std::string &log_prefix);
 
 
 
-#endif // NUXSEC_APPS_EVENTCLI_H
+#endif // HERON_APPS_EVENTCLI_H

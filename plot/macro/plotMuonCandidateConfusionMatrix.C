@@ -7,10 +7,10 @@
 // Default phase-space is after software trigger, neutrino-slice, and reco-fiducial cuts.
 //
 // Run with:
-//   ./nuxsec macro plotMuonCandidateConfusionMatrix.C
-//   ./nuxsec macro plotMuonCandidateConfusionMatrix.C \
+//   ./heron macro plotMuonCandidateConfusionMatrix.C
+//   ./heron macro plotMuonCandidateConfusionMatrix.C \
 //     'plotMuonCandidateConfusionMatrix("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotMuonCandidateConfusionMatrix.C \
+//   ./heron macro plotMuonCandidateConfusionMatrix.C \
 //     'plotMuonCandidateConfusionMatrix("./scratch/out/event_list_myana.root","true","w_nominal",true,0.5)'
 
 #include <algorithm>
@@ -303,8 +303,8 @@ int plotMuonCandidateConfusionMatrix(const std::string &input = "",
     gStyle->SetOptStat(0);
     gStyle->SetPaintTextFormat(".1f");
 
-    const std::string out_dir = getenv_or("NUXSEC_PLOT_DIR", "./scratch/plots");
-    const std::string out_fmt = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    const std::string out_dir = getenv_or("HERON_PLOT_DIR", "./scratch/plots");
+    const std::string out_fmt = getenv_or("HERON_PLOT_FORMAT", "pdf");
     gSystem->mkdir(out_dir.c_str(), true);
 
     TCanvas c("c_muon_candidate_confusion", "Muon candidate confusion matrix", 900, 760);

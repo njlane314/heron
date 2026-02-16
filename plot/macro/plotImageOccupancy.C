@@ -15,15 +15,15 @@
 //   - Uses event_list_<analysis>.root format (EventListIO).
 //
 // Run with:
-//   ./nuxsec macro plotImageOccupancy.C
-//   ./nuxsec macro plotImageOccupancy.C 'plotImageOccupancy("/path/to/event_list.root","true")'
-//   ./nuxsec macro plotImageOccupancy.C 'plotImageOccupancy("/path/to/event_list.root","sel_triggered_slice")'
+//   ./heron macro plotImageOccupancy.C
+//   ./heron macro plotImageOccupancy.C 'plotImageOccupancy("/path/to/event_list.root","true")'
+//   ./heron macro plotImageOccupancy.C 'plotImageOccupancy("/path/to/event_list.root","sel_triggered_slice")'
 //
 // Output:
 //   Saves plots to:
-//     $NUXSEC_PLOT_DIR (default: ./scratch/plots)
+//     $HERON_PLOT_DIR (default: ./scratch/plots)
 //   with format:
-//     $NUXSEC_PLOT_FORMAT (default: pdf)
+//     $HERON_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
 #include <cmath>
@@ -74,13 +74,13 @@ bool looks_like_event_list_root(const std::string &p)
 
 std::string plot_out_dir()
 {
-  const char *v = std::getenv("NUXSEC_PLOT_DIR");
+  const char *v = std::getenv("HERON_PLOT_DIR");
   return v ? std::string(v) : std::string("./scratch/plots");
 }
 
 std::string plot_out_fmt()
 {
-  const char *v = std::getenv("NUXSEC_PLOT_FORMAT");
+  const char *v = std::getenv("HERON_PLOT_FORMAT");
   return v ? std::string(v) : std::string("pdf");
 }
 
@@ -288,8 +288,8 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
   std::cout << "[plotImageOccupancy] selected events=" << n_events
             << " evt_weight=" << evt_weight << "\n";
 
-  std::cout << "[plotImageOccupancy] unstack debug env NUXSEC_DEBUG_PLOT_UNSTACK="
-            << (std::getenv("NUXSEC_DEBUG_PLOT_UNSTACK") ? std::getenv("NUXSEC_DEBUG_PLOT_UNSTACK") : "<unset>")
+  std::cout << "[plotImageOccupancy] unstack debug env HERON_DEBUG_PLOT_UNSTACK="
+            << (std::getenv("HERON_DEBUG_PLOT_UNSTACK") ? std::getenv("HERON_DEBUG_PLOT_UNSTACK") : "<unset>")
             << "\n";
 
   auto draw_one = [&](const std::string &cos_col,

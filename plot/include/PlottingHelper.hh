@@ -6,8 +6,8 @@
  *         reusable routines for assembling stacked histograms.
  */
 
-#ifndef NUXSEC_PLOT_PLOTTING_HELPER_H
-#define NUXSEC_PLOT_PLOTTING_HELPER_H
+#ifndef HERON_PLOT_PLOTTING_HELPER_H
+#define HERON_PLOT_PLOTTING_HELPER_H
 
 #include <string>
 
@@ -39,4 +39,4 @@ TH1DModel make_spec(const std::string &expr,
 } // namespace nu
 
 
-#endif // NUXSEC_PLOT_PLOTTING_HELPER_H
+#endif // HERON_PLOT_PLOTTING_HELPER_H

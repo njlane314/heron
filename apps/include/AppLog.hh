@@ -6,8 +6,8 @@
  *         application command-line workflows, covering informational, warning,
  *         and error reporting paths.
  */
-#ifndef NUXSEC_APPS_APPLOG_H
-#define NUXSEC_APPS_APPLOG_H
+#ifndef HERON_APPS_APPLOG_H
+#define HERON_APPS_APPLOG_H
 
 #include <iomanip>
 #include <iostream>
@@ -109,4 +109,4 @@ inline void log_stage(const std::string &log_prefix,
 
 
 
-#endif // NUXSEC_APPS_APPLOG_H
+#endif // HERON_APPS_APPLOG_H

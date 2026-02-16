@@ -5,8 +5,8 @@
  *  @brief Service for deriving adaptive min-stat bin edges and rebinning histograms.
  */
 
-#ifndef NUXSEC_PLOT_ADAPTIVE_BINNING_SERVICE_H
-#define NUXSEC_PLOT_ADAPTIVE_BINNING_SERVICE_H
+#ifndef HERON_PLOT_ADAPTIVE_BINNING_SERVICE_H
+#define HERON_PLOT_ADAPTIVE_BINNING_SERVICE_H
 
 #include <cstddef>
 #include <memory>
@@ -79,4 +79,4 @@ class AdaptiveBinningService
 
 } // namespace nu
 
-#endif // NUXSEC_PLOT_ADAPTIVE_BINNING_SERVICE_H
+#endif // HERON_PLOT_ADAPTIVE_BINNING_SERVICE_H

@@ -17,16 +17,16 @@
 //       * for each (mu, p, pi): completeness > 0.1 and purity > 0.5
 //
 // Run with:
-//   ./nuxsec macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C
-//   ./nuxsec macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotPREffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotPREffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon && sel_reco_fv")'
-//   ./nuxsec macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotPREffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon","pr_valid_assignment && pr_mu_completeness>0.2 && pr_mu_purity>0.7 && pr_p_completeness>0.2 && pr_p_purity>0.7 && pr_pi_completeness>0.2 && pr_pi_purity>0.7")'
+//   ./heron macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C
+//   ./heron macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotPREffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root")'
+//   ./heron macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotPREffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon && sel_reco_fv")'
+//   ./heron macro plotPREffVsTrueMuonKinematicsPostInclusiveMuCC.C 'plotPREffVsTrueMuonKinematicsPostInclusiveMuCC("./scratch/out/event_list_myana.root","sel_triggered_muon","pr_valid_assignment && pr_mu_completeness>0.2 && pr_mu_purity>0.7 && pr_p_completeness>0.2 && pr_p_purity>0.7 && pr_pi_completeness>0.2 && pr_pi_purity>0.7")'
 //
 // Output:
 //   Saves one plot per x-variable to:
-//     $NUXSEC_PLOT_DIR (default: ./scratch/plots)
+//     $HERON_PLOT_DIR (default: ./scratch/plots)
 //   with format:
-//     $NUXSEC_PLOT_FORMAT (default: pdf)
+//     $HERON_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
 #include <cstdlib>
@@ -121,16 +121,16 @@ int plotPREffVsTrueMuonKinematicsPostInclusiveMuCC(const std::string &samples_ts
                                                        " && (p_p>0.0)"
                                                        " && (pi_p>0.0)")
 {
-    const bool use_imt = env_truthy(std::getenv("NUXSEC_ENABLE_IMT"));
+    const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
     if (use_imt)
     {
         ROOT::EnableImplicitMT();
-        std::cout << "[plotPREffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT enabled via NUXSEC_ENABLE_IMT\n";
+        std::cout << "[plotPREffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT enabled via HERON_ENABLE_IMT\n";
     }
     else
     {
         ROOT::DisableImplicitMT();
-        std::cout << "[plotPREffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT disabled (set NUXSEC_ENABLE_IMT=1 to enable)\n";
+        std::cout << "[plotPREffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT disabled (set HERON_ENABLE_IMT=1 to enable)\n";
     }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

@@ -6,8 +6,8 @@
  *         selection names, cuts, and bookkeeping outputs.
  */
 
-#ifndef NUXSEC_ANA_SELECTION_SERVICE_H
-#define NUXSEC_ANA_SELECTION_SERVICE_H
+#ifndef HERON_ANA_SELECTION_SERVICE_H
+#define HERON_ANA_SELECTION_SERVICE_H
 
 #include <cstddef>
 #include <string>
@@ -71,4 +71,4 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const SelectionEn
 
 
 
-#endif // NUXSEC_ANA_SELECTION_SERVICE_H
+#endif // HERON_ANA_SELECTION_SERVICE_H

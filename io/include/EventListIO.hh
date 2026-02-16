@@ -6,8 +6,8 @@
  *         capturing per-event metadata and processing summaries.
  */
 
-#ifndef NUXSEC_IO_EVENT_LIST_IO_H
-#define NUXSEC_IO_EVENT_LIST_IO_H
+#ifndef HERON_IO_EVENT_LIST_IO_H
+#define HERON_IO_EVENT_LIST_IO_H
 
 #include <cstdint>
 #include <memory>
@@ -27,7 +27,7 @@ struct EventListHeader
     std::string provenance_tree;
     std::string event_tree;
     std::string sample_list_source;
-    std::string nuxsec_set;
+    std::string heron_set;
     std::string event_output_dir;
 };
 

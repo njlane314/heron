@@ -1,7 +1,7 @@
 Definitions and conventions
 ===========================
 
-This page defines the core analysis terms used throughout Nuxsec. These
+This page defines the core analysis terms used throughout heron. These
 definitions align with the production workflow that starts from FermiGrid art
 outputs and ends in analysis-ready ROOT files.
 

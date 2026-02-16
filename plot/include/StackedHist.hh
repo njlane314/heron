@@ -6,8 +6,8 @@
  *         styling, and render orchestration.
  */
 
-#ifndef NUXSEC_PLOT_STACKED_HIST_H
-#define NUXSEC_PLOT_STACKED_HIST_H
+#ifndef HERON_PLOT_STACKED_HIST_H
+#define HERON_PLOT_STACKED_HIST_H
 
 #include <memory>
 #include <string>
@@ -78,4 +78,4 @@ class StackedHist
 } // namespace nu
 
 
-#endif // NUXSEC_PLOT_STACKED_HIST_H
+#endif // HERON_PLOT_STACKED_HIST_H

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-_nuxsec()
+_heron()
 {
   local cur prev
   COMPREPLY=()
@@ -9,7 +9,7 @@ _nuxsec()
 
   local commands="art sample event macro paths env help -h --help"
 
-  _nuxsec_find_root()
+  _heron_find_root()
   {
     local dir
     local base
@@ -17,17 +17,17 @@ _nuxsec()
     local exe
     local exe_dir
 
-    if [[ -n "${NUXSEC_REPO_ROOT:-}" && ( -d "${NUXSEC_REPO_ROOT}/plot/macro" || -d "${NUXSEC_REPO_ROOT}/evd/macro" || -d "${NUXSEC_REPO_ROOT}/standalone/macro" || -d "${NUXSEC_REPO_ROOT}/io/macro" ) ]]; then
-      printf "%s" "${NUXSEC_REPO_ROOT}"
+    if [[ -n "${HERON_REPO_ROOT:-}" && ( -d "${HERON_REPO_ROOT}/plot/macro" || -d "${HERON_REPO_ROOT}/evd/macro" || -d "${HERON_REPO_ROOT}/standalone/macro" || -d "${HERON_REPO_ROOT}/io/macro" ) ]]; then
+      printf "%s" "${HERON_REPO_ROOT}"
       return 0
     fi
 
-    if [[ -n "${NUXSEC_ROOT:-}" && ( -d "${NUXSEC_ROOT}/plot/macro" || -d "${NUXSEC_ROOT}/evd/macro" || -d "${NUXSEC_ROOT}/standalone/macro" || -d "${NUXSEC_ROOT}/io/macro" ) ]]; then
-      printf "%s" "${NUXSEC_ROOT}"
+    if [[ -n "${HERON_ROOT:-}" && ( -d "${HERON_ROOT}/plot/macro" || -d "${HERON_ROOT}/evd/macro" || -d "${HERON_ROOT}/standalone/macro" || -d "${HERON_ROOT}/io/macro" ) ]]; then
+      printf "%s" "${HERON_ROOT}"
       return 0
     fi
 
-    exe="$(command -v nuxsec 2>/dev/null || true)"
+    exe="$(command -v heron 2>/dev/null || true)"
     if [[ -n "${exe}" ]]; then
       exe_dir="$(dirname "$(readlink -f "${exe}" 2>/dev/null || printf "%s" "${exe}")")"
       dir="${exe_dir}"
@@ -75,14 +75,14 @@ _nuxsec()
     return 1
   }
 
-  _nuxsec_list_macros()
+  _heron_list_macros()
   {
     local repo_root
     local macro_dir
     local macro
     local evd_dir
 
-    repo_root="$(_nuxsec_find_root 2>/dev/null || true)"
+    repo_root="$(_heron_find_root 2>/dev/null || true)"
     if [[ -n "${repo_root}" ]]; then
       macro_dir="${repo_root}/plot/macro"
       if [[ -d "${macro_dir}" ]]; then
@@ -119,7 +119,7 @@ _nuxsec()
       return 0
     fi
 
-    nuxsec macro list 2>/dev/null | awk '/\.C$/ {print $1}'
+    heron macro list 2>/dev/null | awk '/\.C$/ {print $1}'
   }
 
   if [[ ${COMP_CWORD} -le 1 ]]; then
@@ -134,7 +134,7 @@ _nuxsec()
 
   if [[ "${COMP_WORDS[1]}" == "macro" ]]; then
     local macros
-    macros="$(_nuxsec_list_macros)"
+    macros="$(_heron_list_macros)"
     if [[ ${COMP_CWORD} -eq 2 ]]; then
       COMPREPLY=( $(compgen -W "${macros}" -- "${cur}") )
       return 0
@@ -145,4 +145,4 @@ _nuxsec()
   return 0
 }
 
-complete -F _nuxsec nuxsec
+complete -F _heron heron

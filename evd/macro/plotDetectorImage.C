@@ -13,7 +13,7 @@
 
 #include "../include/EventDisplay.hh"
 
-using namespace nuxsec::evd;
+using namespace heron::evd;
 
 namespace
 {
@@ -29,7 +29,7 @@ std::string find_default_event_list_path()
     const std::vector<std::string> candidates{
         "./scratch/out/event_list.root",
         "./scratch/out/event_list_myana.root",
-        "./scratch/out/event_list_nuxsec.root"};
+        "./scratch/out/event_list_heron.root"};
 
     for (const auto &path : candidates)
     {
@@ -122,7 +122,7 @@ void plot_random_detector_image(const std::string &input_file,
 /// \brief ROOT entry-point matching this macro's CamelCase filename.
 ///
 /// Call this overload explicitly for default behaviour:
-///   nuxsec macro plotDetectorImage.C \
+///   heron macro plotDetectorImage.C \
 ///     'plotDetectorImage("/path/to/event_list.root", 1, 1, 1)'
 void plotDetectorImage()
 {

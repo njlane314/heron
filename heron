@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+HERON_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HERON_BIN="${HERON_ROOT}/build/bin/heron"
+
+if [ ! -x "${HERON_BIN}" ]; then
+  echo "heron executable not found at ${HERON_BIN}. Run 'make' first." >&2
+  exit 1
+fi
+
+exec "${HERON_BIN}" "$@"

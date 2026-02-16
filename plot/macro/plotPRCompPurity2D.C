@@ -12,19 +12,19 @@
 //       pr_valid_assignment
 //
 // Run with:
-//   ./nuxsec macro plotPRCompPurity2D.C
-//   ./nuxsec macro plotPRCompPurity2D.C 'plotPRCompPurity2D("./scratch/out/event_list_myana.root","sel_triggered_slice")'
-//   ./nuxsec macro plotPRCompPurity2D.C 'plotPRCompPurity2D("./scratch/out/event_list_myana.root","sel_triggered_slice","pr_valid_assignment")'
-//   ./nuxsec macro plotPRCompPurity2D.C 'plotPRCompPurity2D("./scratch/out/event_list_myana.root","sel_triggered_slice","true")'  // include even unassigned (still filters finite)
+//   ./heron macro plotPRCompPurity2D.C
+//   ./heron macro plotPRCompPurity2D.C 'plotPRCompPurity2D("./scratch/out/event_list_myana.root","sel_triggered_slice")'
+//   ./heron macro plotPRCompPurity2D.C 'plotPRCompPurity2D("./scratch/out/event_list_myana.root","sel_triggered_slice","pr_valid_assignment")'
+//   ./heron macro plotPRCompPurity2D.C 'plotPRCompPurity2D("./scratch/out/event_list_myana.root","sel_triggered_slice","true")'  // include even unassigned (still filters finite)
 //
 // Output:
 //   Saves:
 //     - one combined 1x3 canvas:  pr_comp_pur_2d_all.<fmt>
 //     - and one per particle:     pr_comp_pur_2d_{mu,p,pi}.<fmt>
 //   to:
-//     $NUXSEC_PLOT_DIR (default: ./scratch/plots)
+//     $HERON_PLOT_DIR (default: ./scratch/plots)
 //   with format:
-//     $NUXSEC_PLOT_FORMAT (default: pdf)
+//     $HERON_PLOT_FORMAT (default: pdf)
 
 #include <algorithm>
 #include <cmath>
@@ -276,8 +276,8 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
     if (!assignment_sel.empty())
         base = base.Filter(assignment_sel);
 
-    const std::string out_dir = getenv_or("NUXSEC_PLOT_DIR", "./scratch/plots");
-    const std::string out_fmt = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    const std::string out_dir = getenv_or("HERON_PLOT_DIR", "./scratch/plots");
+    const std::string out_fmt = getenv_or("HERON_PLOT_FORMAT", "pdf");
     gSystem->mkdir(out_dir.c_str(), /*recursive=*/true);
 
     // Configure plot appearance

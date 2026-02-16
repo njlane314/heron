@@ -1,8 +1,8 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/nuxsec.cc
+ *  @file  apps/src/heron.cc
  *
- *  @brief Unified CLI for Nuxsec utilities.
+ *  @brief Unified CLI for HERON utilities.
  */
 
 #include <algorithm>
@@ -31,16 +31,16 @@
 
 
 const char *kUsageMacro =
-    "Usage: nuxsec macro MACRO.C [CALL]\n"
-    "       nuxsec macro list\n"
+    "Usage: heron macro MACRO.C [CALL]\n"
+    "       heron macro list\n"
     "\nEnvironment:\n"
-    "  NUXSEC_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macro/library)\n"
-    "  NUXSEC_MACRO_PATH         Colon-separated extra macro directories (searched after library)\n"
+    "  HERON_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macro/library)\n"
+    "  HERON_MACRO_PATH         Colon-separated extra macro directories (searched after library)\n"
     "  Manifest: <macro_library>/manifest.tsv with columns: name<TAB>macro[<TAB>call]\n"
-    "  NUXSEC_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
-    "  NUXSEC_PLOT_DIR     Output directory override (default: NUXSEC_PLOT_BASE/<set>)\n"
-    "  NUXSEC_PLOT_FORMAT  Output extension (default: pdf)\n"
-    "  NUXSEC_SET          Workspace selector (default: template)\n";
+    "  HERON_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
+    "  HERON_PLOT_DIR     Output directory override (default: HERON_PLOT_BASE/<set>)\n"
+    "  HERON_PLOT_FORMAT  Output extension (default: pdf)\n"
+    "  HERON_SET          Workspace selector (default: template)\n";
 
 const char *kMainBanner =
     "███╗   ██╗██╗   ██╗██╗  ██╗███████╗███████╗ ██████╗\n"
@@ -105,9 +105,8 @@ GlobalOptions parse_global(int &i, int argc, char **argv)
 void print_main_help(std::ostream &out)
 {
     out << kMainBanner << "\n"
-        << "Neutrino cross-section analysis CLI for provenance, samples, events,\n"
-        << "and plots.\n\n"
-        << "Usage: nuxsec <command> [args]\n\n"
+        << "HERON — Histogram and Event Relay for Orchestrated Normalisation.\n\n"
+        << "Usage: heron <command> [args]\n\n"
         << "Commands:\n"
         << "  art         Aggregate art provenance for an input\n"
         << "  sample      Aggregate Sample ROOT files from art provenance\n"
@@ -118,7 +117,7 @@ void print_main_help(std::ostream &out)
         << "  env         Print environment exports for a workspace\n"
         << "\nGlobal options:\n"
         << "  -S, --set   Workspace selector (default: template)\n"
-        << "\nRun 'nuxsec <command> --help' for command-specific usage.\n";
+        << "\nRun 'heron <command> --help' for command-specific usage.\n";
 }
 
 std::filesystem::path find_repo_root()
@@ -175,13 +174,13 @@ std::filesystem::path path_from_env_or_default(
 
 std::filesystem::path out_base_dir(const std::filesystem::path &repo_root)
 {
-    return path_from_env_or_default("NUXSEC_OUT_BASE",
+    return path_from_env_or_default("HERON_OUT_BASE",
                                     repo_root / "scratch" / "out");
 }
 
 std::filesystem::path plot_base_dir(const std::filesystem::path &repo_root)
 {
-    return path_from_env_or_default("NUXSEC_PLOT_BASE",
+    return path_from_env_or_default("HERON_PLOT_BASE",
                                     repo_root / "scratch" / "plot");
 }
 
@@ -201,7 +200,7 @@ std::filesystem::path plot_dir(const std::filesystem::path &repo_root)
     {
         out /= set;
     }
-    return path_from_env_or_default("NUXSEC_PLOT_DIR", out);
+    return path_from_env_or_default("HERON_PLOT_DIR", out);
 }
 
 std::filesystem::path default_samples_tsv(const std::filesystem::path &repo_root)
@@ -249,14 +248,14 @@ bool is_executable(const std::filesystem::path &path)
 
 void ensure_plot_env(const std::filesystem::path &repo_root)
 {
-    if (!gSystem->Getenv("NUXSEC_REPO_ROOT"))
+    if (!gSystem->Getenv("HERON_REPO_ROOT"))
     {
-        gSystem->Setenv("NUXSEC_REPO_ROOT", repo_root.string().c_str());
+        gSystem->Setenv("HERON_REPO_ROOT", repo_root.string().c_str());
     }
-    if (!gSystem->Getenv("NUXSEC_PLOT_DIR"))
+    if (!gSystem->Getenv("HERON_PLOT_DIR"))
     {
         const auto out = plot_dir(repo_root).string();
-        gSystem->Setenv("NUXSEC_PLOT_DIR", out.c_str());
+        gSystem->Setenv("HERON_PLOT_DIR", out.c_str());
     }
 }
 
@@ -279,7 +278,7 @@ std::vector<std::string> split_path_list(const std::string &raw)
 std::filesystem::path macro_library_dir(const std::filesystem::path &repo_root)
 {
     const std::filesystem::path fallback = repo_root / "macro" / "library";
-    return path_from_env_or_default("NUXSEC_MACRO_LIBRARY_DIR", fallback);
+    return path_from_env_or_default("HERON_MACRO_LIBRARY_DIR", fallback);
 }
 
 struct MacroManifestEntry
@@ -383,7 +382,7 @@ std::vector<std::filesystem::path> macro_search_dirs(const std::filesystem::path
 
     append_if_exists(dirs, macro_library_dir(repo_root));
 
-    const std::string raw_dirs = string_from_env_or_default("NUXSEC_MACRO_PATH", "");
+    const std::string raw_dirs = string_from_env_or_default("HERON_MACRO_PATH", "");
     const auto dir_entries = split_path_list(raw_dirs);
     for (const auto &entry : dir_entries)
     {
@@ -470,8 +469,8 @@ void ensure_plot_lib_loaded(const std::filesystem::path &repo_root)
         gSystem->AddDynamicPath(lib_dir.string().c_str());
     }
 
-    // NOTE: nuxsec binary links IO + ANA, but not PLOT. Plot macros need this loaded.
-    const auto plot_lib = lib_dir / "libNuxsecPlot.so";
+    // NOTE: heron binary links IO + ANA, but not PLOT. Plot macros need this loaded.
+    const auto plot_lib = lib_dir / "libheronPlot.so";
     if (std::filesystem::exists(plot_lib))
     {
         const int rc = gSystem->Load(plot_lib.string().c_str());
@@ -482,22 +481,22 @@ void ensure_plot_lib_loaded(const std::filesystem::path &repo_root)
         return;
     }
 
-    const int rc = gSystem->Load("libNuxsecPlot.so");
+    const int rc = gSystem->Load("libheronPlot.so");
     if (rc < 0)
     {
-        throw std::runtime_error("Failed to load plot library: libNuxsecPlot.so");
+        throw std::runtime_error("Failed to load plot library: libheronPlot.so");
     }
 }
 
 void print_paths(std::ostream &out, const std::filesystem::path &repo_root)
 {
-    out << "NUXSEC_REPO_ROOT=" << repo_root.string() << "\n";
-    out << "NUXSEC_SET=" << workspace_set() << "\n";
-    out << "NUXSEC_OUT_BASE=" << out_base_dir(repo_root).string() << "\n";
-    out << "NUXSEC_PLOT_BASE=" << plot_base_dir(repo_root).string() << "\n";
-    out << "ART_DIR=" << stage_dir(repo_root, "NUXSEC_ART_DIR", "art").string() << "\n";
-    out << "SAMPLE_DIR=" << stage_dir(repo_root, "NUXSEC_SAMPLE_DIR", "sample").string() << "\n";
-    out << "EVENT_DIR=" << stage_dir(repo_root, "NUXSEC_EVENT_DIR", "event").string() << "\n";
+    out << "HERON_REPO_ROOT=" << repo_root.string() << "\n";
+    out << "HERON_SET=" << workspace_set() << "\n";
+    out << "HERON_OUT_BASE=" << out_base_dir(repo_root).string() << "\n";
+    out << "HERON_PLOT_BASE=" << plot_base_dir(repo_root).string() << "\n";
+    out << "ART_DIR=" << stage_dir(repo_root, "HERON_ART_DIR", "art").string() << "\n";
+    out << "SAMPLE_DIR=" << stage_dir(repo_root, "HERON_SAMPLE_DIR", "sample").string() << "\n";
+    out << "EVENT_DIR=" << stage_dir(repo_root, "HERON_EVENT_DIR", "event").string() << "\n";
     out << "PLOT_DIR=" << plot_dir(repo_root).string() << "\n";
 }
 
@@ -506,7 +505,7 @@ int handle_paths_command(const std::vector<std::string> &args,
 {
     if (!args.empty())
     {
-        throw std::runtime_error("Usage: nuxsec paths");
+        throw std::runtime_error("Usage: heron paths");
     }
     print_paths(std::cout, repo_root);
     return 0;
@@ -517,7 +516,7 @@ int handle_env_command(const std::vector<std::string> &args,
 {
     if (args.size() > 1)
     {
-        throw std::runtime_error("Usage: nuxsec env [SET]");
+        throw std::runtime_error("Usage: heron env [SET]");
     }
 
     std::string set_value = workspace_set();
@@ -531,9 +530,9 @@ int handle_env_command(const std::vector<std::string> &args,
         throw std::runtime_error("Missing workspace set value");
     }
 
-    std::cout << "export NUXSEC_SET=" << shell_quote(set_value) << "\n";
-    std::cout << "export NUXSEC_OUT_BASE=" << shell_quote(out_base_dir(repo_root).string()) << "\n";
-    std::cout << "export NUXSEC_PLOT_BASE=" << shell_quote(plot_base_dir(repo_root).string()) << "\n";
+    std::cout << "export HERON_SET=" << shell_quote(set_value) << "\n";
+    std::cout << "export HERON_OUT_BASE=" << shell_quote(out_base_dir(repo_root).string()) << "\n";
+    std::cout << "export HERON_PLOT_BASE=" << shell_quote(plot_base_dir(repo_root).string()) << "\n";
     return 0;
 }
 
@@ -718,28 +717,28 @@ int handle_macro_command(const std::vector<std::string> &args)
 int handle_art_command(const std::vector<std::string> &args)
 {
     return run_guarded(
-        "nuxsecArtFileIOdriver",
+        "heronArtFileIOdriver",
         [&]()
         {
             const ArtArgs art_args =
                 parse_art_args(
                     args,
-                    "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
-            return run(art_args, "nuxsecArtFileIOdriver");
+                    "Usage: heron art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]");
+            return run(art_args, "heronArtFileIOdriver");
         });
 }
 
 int handle_sample_command(const std::vector<std::string> &args)
 {
     return run_guarded(
-        "nuxsecSampleIOdriver",
+        "heronSampleIOdriver",
         [&]()
         {
             const SampleArgs sample_args =
                 parse_sample_args(
                     args,
-                    "Usage: nuxsec sample NAME:FILELIST");
-            return run(sample_args, "nuxsecSampleIOdriver");
+                    "Usage: heron sample NAME:FILELIST");
+            return run(sample_args, "heronSampleIOdriver");
         });
 }
 
@@ -747,7 +746,7 @@ int handle_event_command(const std::vector<std::string> &args,
                          const std::filesystem::path &repo_root)
 {
     return run_guarded(
-        "nuxsecEventIOdriver",
+        "heronEventIOdriver",
         [&]()
         {
             std::vector<std::string> rewritten = args;
@@ -768,8 +767,8 @@ int handle_event_command(const std::vector<std::string> &args,
             const EventArgs event_args =
                 parse_event_args(
                     rewritten,
-                    "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
-            return run(event_args, "nuxsecEventIOdriver");
+                    "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
+            return run(event_args, "heronEventIOdriver");
         });
 }
 
@@ -816,7 +815,7 @@ StatusOptions parse_status_args(const std::vector<std::string> &args)
             opts.count = 1;
             continue;
         }
-        throw std::runtime_error("Usage: nuxsec status [--interval SECONDS] [--count COUNT] [--once]");
+        throw std::runtime_error("Usage: heron status [--interval SECONDS] [--count COUNT] [--once]");
     }
     return opts;
 }
@@ -824,7 +823,7 @@ StatusOptions parse_status_args(const std::vector<std::string> &args)
 std::vector<std::filesystem::path> status_dirs(const std::filesystem::path &repo_root)
 {
     std::vector<std::filesystem::path> dirs;
-    if (const char *driver_dir = std::getenv("NUXSEC_DRIVER_DIR"))
+    if (const char *driver_dir = std::getenv("HERON_DRIVER_DIR"))
     {
         dirs.emplace_back(driver_dir);
     }
@@ -902,7 +901,7 @@ int handle_status_command(const std::vector<std::string> &args,
     {
         start_message << " count=" << opts.count;
     }
-    log_info("nuxsec", start_message.str());
+    log_info("heron", start_message.str());
 
     long long completed = 0;
     while (opts.count == 0 || completed < opts.count)
@@ -912,12 +911,12 @@ int handle_status_command(const std::vector<std::string> &args,
         summary << "action=exe_status_scan status=complete executables="
                 << format_count(
                        static_cast<long long>(executables.size()));
-        log_info("nuxsec", summary.str());
+        log_info("heron", summary.str());
 
         if (executables.empty())
         {
             log_warning(
-                "nuxsec",
+                "heron",
                 "action=exe_status status=empty message=No executables found");
         }
         else
@@ -928,7 +927,7 @@ int handle_status_command(const std::vector<std::string> &args,
                 message << "action=exe_status status=ok exe="
                         << path.filename().string()
                         << " path=" << path.string();
-                log_info("nuxsec", message.str());
+                log_info("heron", message.str());
             }
         }
 
@@ -990,7 +989,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec paths\n";
+            std::cout << "Usage: heron paths\n";
         }
     });
     table.push_back(CommandEntry{
@@ -1001,7 +1000,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec env [SET]\n";
+            std::cout << "Usage: heron env [SET]\n";
         }
     });
     table.push_back(CommandEntry{
@@ -1012,7 +1011,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec status [--interval SECONDS] [--count COUNT] [--once]\n";
+            std::cout << "Usage: heron status [--interval SECONDS] [--count COUNT] [--once]\n";
         }
     });
     table.push_back(CommandEntry{
@@ -1035,7 +1034,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]\n";
+            std::cout << "Usage: heron art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]\n";
         }
     });
     table.push_back(CommandEntry{
@@ -1046,7 +1045,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec sample NAME:FILELIST\n";
+            std::cout << "Usage: heron sample NAME:FILELIST\n";
         }
     });
     table.push_back(CommandEntry{
@@ -1057,7 +1056,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: nuxsec event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
+            std::cout << "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
         }
     });
     return table;
@@ -1066,14 +1065,14 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
 int main(int argc, char **argv)
 {
     return run_guarded(
-        "nuxsec",
+        "heron",
         [argc, argv]()
         {
             int i = 1;
             const GlobalOptions global_opts = parse_global(i, argc, argv);
             if (!global_opts.set.empty())
             {
-                ::setenv("NUXSEC_SET", global_opts.set.c_str(), 1);
+                ::setenv("HERON_SET", global_opts.set.c_str(), 1);
             }
 
             if (i >= argc)
@@ -1083,9 +1082,9 @@ int main(int argc, char **argv)
             }
 
             const auto repo_root = find_repo_root();
-            if (!getenv_cstr("NUXSEC_REPO_ROOT"))
+            if (!getenv_cstr("HERON_REPO_ROOT"))
             {
-                ::setenv("NUXSEC_REPO_ROOT", repo_root.string().c_str(), 1);
+                ::setenv("HERON_REPO_ROOT", repo_root.string().c_str(), 1);
             }
 
             const std::string command = argv[i++];

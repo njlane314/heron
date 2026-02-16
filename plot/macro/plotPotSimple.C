@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /// \file plot/macro/plotPotSimple.C
-/// \brief POT timeline plotting macro for Nuxsec.
+/// \brief POT timeline plotting macro for heron.
 
 #include "RVersion.h"
 #include "TCanvas.h"
@@ -523,7 +523,7 @@ void plotPotSimpleInternal(const char *out = nullptr)
 }
 
 
-int nuxsec_plot(const char *out = nullptr)
+int heron_plot(const char *out = nullptr)
 {
     plotPotSimpleInternal(out);
     return 0;

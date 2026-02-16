@@ -2,7 +2,7 @@
 /**
  *  @file  apps/src/ArtWorkflow.cc
  *
- *  @brief Provenance generation workflow (invoked by the unified nuxsec CLI).
+ *  @brief Provenance generation workflow (invoked by the unified heron CLI).
  */
 
 #include <chrono>

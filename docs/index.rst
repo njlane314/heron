@@ -1,4 +1,4 @@
-Nuxsec Documentation
+heron Documentation
 ====================
 
 .. toctree::
@@ -18,7 +18,7 @@ Nuxsec Documentation
 Overview
 --------
 
-Nuxsec is a C++ analysis toolkit organised into top-level modules that each
+heron is a C++ analysis toolkit organised into top-level modules that each
 provide a focused slice of functionality. Source code is split into ``include/``
 headers and ``src/`` implementations, with executables living in ``apps/``.
 Documentation is built with Sphinx, and this index provides a map of the
@@ -55,7 +55,7 @@ Supporting folders include:
 Architecture at a glance
 ------------------------
 
-Nuxsec takes a layered approach to analysis development:
+heron takes a layered approach to analysis development:
 
 * **Data access and provenance** live in ``io/`` to provide a consistent
   interface to ROOT trees, SampleIO metadata, and run database lookups.

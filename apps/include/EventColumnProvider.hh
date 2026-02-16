@@ -6,8 +6,8 @@
  *         names, metadata, and formatting for downstream CLI reporting.
  */
 
-#ifndef NUXSEC_APPS_EVENT_COLUMN_PROVIDER_H
-#define NUXSEC_APPS_EVENT_COLUMN_PROVIDER_H
+#ifndef HERON_APPS_EVENT_COLUMN_PROVIDER_H
+#define HERON_APPS_EVENT_COLUMN_PROVIDER_H
 
 #include <algorithm>
 #include <cctype>
@@ -153,4 +153,4 @@ class EventColumnProvider
 
 
 
-#endif // NUXSEC_APPS_EVENT_COLUMN_PROVIDER_H
+#endif // HERON_APPS_EVENT_COLUMN_PROVIDER_H

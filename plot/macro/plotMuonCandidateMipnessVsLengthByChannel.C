@@ -10,8 +10,8 @@
 //   - inclusive numu CC (analysis_channels in {10,11,12,13,15,16,18})
 //
 // Run with:
-//   ./nuxsec macro plotMuonCandidateMipnessVsLengthByChannel.C
-//   ./nuxsec macro plotMuonCandidateMipnessVsLengthByChannel.C \
+//   ./heron macro plotMuonCandidateMipnessVsLengthByChannel.C
+//   ./heron macro plotMuonCandidateMipnessVsLengthByChannel.C \
 //       'plotMuonCandidateMipnessVsLengthByChannel("./scratch/out/event_list_myana.root")'
 
 #include <algorithm>
@@ -63,7 +63,7 @@ bool looks_like_event_list_root(const std::string &p)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 
@@ -262,8 +262,8 @@ void save_2d(const ROOT::RDF::RNode &node,
     gStyle->SetOptStat(0);
     gStyle->SetNumberContours(255);
 
-    const std::string out_dir = getenv_or("NUXSEC_PLOT_DIR", "./scratch/plots");
-    const std::string out_fmt = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    const std::string out_dir = getenv_or("HERON_PLOT_DIR", "./scratch/plots");
+    const std::string out_fmt = getenv_or("HERON_PLOT_FORMAT", "pdf");
     gSystem->mkdir(out_dir.c_str(), /*recursive=*/true);
 
     ROOT::RDF::RNode n = node;

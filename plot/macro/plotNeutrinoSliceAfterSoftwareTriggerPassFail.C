@@ -6,10 +6,10 @@
 //   neutrino_slice_pass = (sel_slice ? 1 : 0)
 //
 // Run with:
-//   ./nuxsec macro plotNeutrinoSliceAfterSoftwareTriggerPassFail.C
-//   ./nuxsec macro plotNeutrinoSliceAfterSoftwareTriggerPassFail.C \
+//   ./heron macro plotNeutrinoSliceAfterSoftwareTriggerPassFail.C
+//   ./heron macro plotNeutrinoSliceAfterSoftwareTriggerPassFail.C \
 //     'plotNeutrinoSliceAfterSoftwareTriggerPassFail("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotNeutrinoSliceAfterSoftwareTriggerPassFail.C \
+//   ./heron macro plotNeutrinoSliceAfterSoftwareTriggerPassFail.C \
 //     'plotNeutrinoSliceAfterSoftwareTriggerPassFail("./scratch/out/event_list_myana.root","abs(reco_nu_vtx_x) < 250",true,true)'
 
 #include <cstdlib>
@@ -165,7 +165,7 @@ int plotNeutrinoSliceAfterSoftwareTriggerPassFail(const std::string &input = "",
     opt.x_title = "Neutrino Slice Selected";
     opt.y_title = "Events";
     opt.analysis_region_label = "Software Trigger + Neutrino Slice";
-    opt.image_format = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    opt.image_format = getenv_or("HERON_PLOT_FORMAT", "pdf");
 
     const double pot_data = el.total_pot_data();
     const double pot_mc = el.total_pot_mc();

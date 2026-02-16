@@ -6,8 +6,8 @@
  *         including provenance records, mapping, and persistence support.
  */
 
-#ifndef NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
-#define NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
+#ifndef HERON_IO_ART_FILE_PROVENANCE_IO_H
+#define HERON_IO_ART_FILE_PROVENANCE_IO_H
 
 #include <memory>
 #include <stdexcept>
@@ -93,4 +93,4 @@ class ArtFileProvenanceIO
 };
 
 
-#endif // NUXSEC_IO_ART_FILE_PROVENANCE_IO_H
+#endif // HERON_IO_ART_FILE_PROVENANCE_IO_H

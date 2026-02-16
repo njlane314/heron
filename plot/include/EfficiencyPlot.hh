@@ -6,8 +6,8 @@
  *         distributions and overlays right-axis efficiency.
  */
 
-#ifndef NUXSEC_PLOT_EFFICIENCY_PLOT_H
-#define NUXSEC_PLOT_EFFICIENCY_PLOT_H
+#ifndef HERON_PLOT_EFFICIENCY_PLOT_H
+#define HERON_PLOT_EFFICIENCY_PLOT_H
 
 #include <cstdint>
 #include <memory>
@@ -116,4 +116,4 @@ class EfficiencyPlot
 } // namespace nu
 
 
-#endif // NUXSEC_PLOT_EFFICIENCY_PLOT_H
+#endif // HERON_PLOT_EFFICIENCY_PLOT_H

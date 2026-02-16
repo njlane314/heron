@@ -3,10 +3,10 @@
 // Stacked topological-score distribution before any selection (log-y by default).
 //
 // Run with:
-//   ./nuxsec macro plotTopologicalScorePreSelectionLogY.C
-//   ./nuxsec macro plotTopologicalScorePreSelectionLogY.C \
+//   ./heron macro plotTopologicalScorePreSelectionLogY.C
+//   ./heron macro plotTopologicalScorePreSelectionLogY.C \
 //     'plotTopologicalScorePreSelectionLogY("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotTopologicalScorePreSelectionLogY.C \
+//   ./heron macro plotTopologicalScorePreSelectionLogY.C \
 //     'plotTopologicalScorePreSelectionLogY("./scratch/out/event_list_myana.root","true",true,true)'
 
 #include <cstdlib>
@@ -46,7 +46,7 @@ bool looks_like_event_list_root(const std::string &path)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 }

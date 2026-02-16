@@ -21,12 +21,12 @@
 //   - “muon-candidate track” (mu_cand_*) using the same thresholds as SelectionService
 //
 // Run with:
-//   ./nuxsec macro plotInclusiveMuCCSelectionStages.C
-//   ./nuxsec macro plotInclusiveMuCCSelectionStages.C \
+//   ./heron macro plotInclusiveMuCCSelectionStages.C
+//   ./heron macro plotInclusiveMuCCSelectionStages.C \
 //       'plotInclusiveMuCCSelectionStages("./scratch/out/event_list_myana.root")'
 //
 //   // With data overlay + log-y
-//   ./nuxsec macro plotInclusiveMuCCSelectionStages.C \
+//   ./heron macro plotInclusiveMuCCSelectionStages.C \
 //       'plotInclusiveMuCCSelectionStages("./scratch/out/event_list_myana.root","true",true,true)'
 //
 // Notes / requirements:
@@ -84,7 +84,7 @@ bool looks_like_event_list_root(const std::string &p)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 
@@ -379,8 +379,8 @@ void save_2d(const ROOT::RDF::RNode &node,
     gROOT->SetBatch(true);
     gStyle->SetOptStat(0);
 
-    const std::string out_dir = getenv_or("NUXSEC_PLOT_DIR", "./scratch/plots");
-    const std::string out_fmt = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    const std::string out_dir = getenv_or("HERON_PLOT_DIR", "./scratch/plots");
+    const std::string out_fmt = getenv_or("HERON_PLOT_FORMAT", "pdf");
     gSystem->mkdir(out_dir.c_str(), /*recursive=*/true);
 
     ROOT::RDF::RNode n = node;
@@ -543,7 +543,7 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
     opt.show_ratio_band = include_data;
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events";
-    opt.image_format = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    opt.image_format = getenv_or("HERON_PLOT_FORMAT", "pdf");
 
     const double pot_data = el.total_pot_data();
     const double pot_mc = el.total_pot_mc();
@@ -707,7 +707,7 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
     draw_one("mu_post", sel_post_mu_with_track + " && (mu_cand_mipness_med == mu_cand_mipness_med)",
              "mu_cand_mipness_med", 50, 0.0, 2.0, "Muon-candidate MIPness (median planes)");
 
-    // Optional: 2D correlations (MC only), written directly to NUXSEC_PLOT_DIR
+    // Optional: 2D correlations (MC only), written directly to HERON_PLOT_DIR
     save_2d(node_mc,
             "trk_longest_score",
             "trk_longest_mipness_med",

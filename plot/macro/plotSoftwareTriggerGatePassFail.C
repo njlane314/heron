@@ -6,10 +6,10 @@
 //   software_trigger_gate_pass = (software_trigger > 0 ? 1 : 0)
 //
 // Run with:
-//   ./nuxsec macro plotSoftwareTriggerGatePassFail.C
-//   ./nuxsec macro plotSoftwareTriggerGatePassFail.C \
+//   ./heron macro plotSoftwareTriggerGatePassFail.C
+//   ./heron macro plotSoftwareTriggerGatePassFail.C \
 //     'plotSoftwareTriggerGatePassFail("./scratch/out/event_list_myana.root")'
-//   ./nuxsec macro plotSoftwareTriggerGatePassFail.C \
+//   ./heron macro plotSoftwareTriggerGatePassFail.C \
 //     'plotSoftwareTriggerGatePassFail("./scratch/out/event_list_myana.root","sel_slice",true,true)'
 
 #include <cstdlib>
@@ -165,7 +165,7 @@ int plotSoftwareTriggerGatePassFail(const std::string &input = "",
     opt.x_title = "Slice Selected";
     opt.y_title = "Events";
     opt.analysis_region_label = "Software Trigger Gate";
-    opt.image_format = getenv_or("NUXSEC_PLOT_FORMAT", "pdf");
+    opt.image_format = getenv_or("HERON_PLOT_FORMAT", "pdf");
 
     const double pot_data = el.total_pot_data();
     const double pot_mc = el.total_pot_mc();

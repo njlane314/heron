@@ -6,8 +6,8 @@
  *         and binning settings for output visualisations.
  */
 
-#ifndef NUXSEC_PLOT_DESCRIPTORS_H
-#define NUXSEC_PLOT_DESCRIPTORS_H
+#ifndef HERON_PLOT_DESCRIPTORS_H
+#define HERON_PLOT_DESCRIPTORS_H
 
 #include <cctype>
 #include <map>
@@ -175,4 +175,4 @@ struct TH1DModel
 } // namespace nu
 
 
-#endif // NUXSEC_PLOT_DESCRIPTORS_H
+#endif // HERON_PLOT_DESCRIPTORS_H

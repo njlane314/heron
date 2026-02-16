@@ -11,12 +11,12 @@
 //   Stage 4: ... && sel_triggered_muon
 //
 // Run with:
-//   ./nuxsec macro plotSelectionEvolutionAndTable.C
-//   ./nuxsec macro plotSelectionEvolutionAndTable.C \
+//   ./heron macro plotSelectionEvolutionAndTable.C
+//   ./heron macro plotSelectionEvolutionAndTable.C \
 //     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "is_signal")'
 //
 //   // Custom cut sequence (comma-separated cumulative flags and labels)
-//   ./nuxsec macro plotSelectionEvolutionAndTable.C \
+//   ./heron macro plotSelectionEvolutionAndTable.C \
 //     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "is_signal", "sel_trigger,sel_triggered_slice,sel_reco_fv,sel_triggered_muon", "trigger,slice,reco fv,muon")'
 
 #include <algorithm>

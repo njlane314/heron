@@ -1,10 +1,10 @@
-Nuxsec Usage Guide
+heron Usage Guide
 =================
 
 Getting started
 ---------------
 
-Nuxsec is organised as a set of C++ modules with headers in ``include/`` and
+heron is organised as a set of C++ modules with headers in ``include/`` and
 implementation files in ``src/``. The repository also ships small executables
 in ``apps/`` and helper scripts in ``scripts/``. When exploring the codebase,
 start by identifying the module that matches your task (for example
@@ -19,7 +19,7 @@ outputs are composed.
 Prerequisites
 -------------
 
-Before extending Nuxsec, ensure you have:
+Before extending heron, ensure you have:
 
 * A working C++ toolchain that matches the project's build setup.
 * ROOT installed and available in your environment.
@@ -33,7 +33,7 @@ are clear.
 Typical workflow
 ----------------
 
-The common workflow when extending Nuxsec is:
+The common workflow when extending heron is:
 
 1. Add or update headers in the module ``include/`` folder.
 2. Implement the corresponding source code in ``src/``.
@@ -93,7 +93,7 @@ columns.
 Contributing notes
 ------------------
 
-Nuxsec uses British-English spelling in code and documentation, and applies
+heron uses British-English spelling in code and documentation, and applies
 consistent naming for classes and functions. When adding new types, prefer
 explicit PascalCase names (``Dataset``, ``Selection``, ``HistDef``), and use
 ``lowercase_with_underscores`` for methods.

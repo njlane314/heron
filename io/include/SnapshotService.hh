@@ -5,8 +5,8 @@
  *  @brief Snapshot helpers for event-level ROOT output.
  */
 
-#ifndef NUXSEC_IO_SNAPSHOT_SERVICE_H
-#define NUXSEC_IO_SNAPSHOT_SERVICE_H
+#ifndef HERON_IO_SNAPSHOT_SERVICE_H
+#define HERON_IO_SNAPSHOT_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -37,4 +37,4 @@ class SnapshotService final
 };
 
 
-#endif // NUXSEC_IO_SNAPSHOT_SERVICE_H
+#endif // HERON_IO_SNAPSHOT_SERVICE_H

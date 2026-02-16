@@ -1,4 +1,4 @@
-project = "Nuxsec"
+project = "heron"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",

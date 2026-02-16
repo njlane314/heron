@@ -11,7 +11,7 @@
 
 #include "../include/EventDisplay.hh"
 
-using namespace nuxsec::evd;
+using namespace heron::evd;
 
 void plot_semantic_image(const std::string &input_file,
                          int run,

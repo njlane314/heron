@@ -6,8 +6,8 @@
  *         columns, and configuration metadata for processing.
  */
 
-#ifndef NUXSEC_ANA_ANALYSIS_CONFIG_SERVICE_H
-#define NUXSEC_ANA_ANALYSIS_CONFIG_SERVICE_H
+#ifndef HERON_ANA_ANALYSIS_CONFIG_SERVICE_H
+#define HERON_ANA_ANALYSIS_CONFIG_SERVICE_H
 
 #include <string>
 #include <vector>
@@ -33,4 +33,4 @@ class AnalysisConfigService final
 };
 
 
-#endif // NUXSEC_ANA_ANALYSIS_CONFIG_SERVICE_H
+#endif // HERON_ANA_ANALYSIS_CONFIG_SERVICE_H

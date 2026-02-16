@@ -1,8 +1,8 @@
 // plot/macro/plotStackedHistRecoSceNeutrinoVertexEmptySelection.C
 //
 // Run with:
-//   ./nuxsec macro plotStackedHistRecoSceNeutrinoVertexEmptySelection.C
-//   ./nuxsec macro plotStackedHistRecoSceNeutrinoVertexEmptySelection.C 'plotStackedHistRecoSceNeutrinoVertexEmptySelection("/path/to/event_list.root",false,false)'
+//   ./heron macro plotStackedHistRecoSceNeutrinoVertexEmptySelection.C
+//   ./heron macro plotStackedHistRecoSceNeutrinoVertexEmptySelection.C 'plotStackedHistRecoSceNeutrinoVertexEmptySelection("/path/to/event_list.root",false,false)'
 //
 // Notes:
 //   - This macro loads the event list ROOT file and stacks channels using analysis_channels.
@@ -53,7 +53,7 @@ bool looks_like_event_list_root(const std::string &path)
 
 bool debug_enabled()
 {
-    const char *env = std::getenv("NUXSEC_DEBUG_PLOT_STACK");
+    const char *env = std::getenv("HERON_DEBUG_PLOT_STACK");
     return env != nullptr && std::string(env) != "0";
 }
 
@@ -70,7 +70,7 @@ void debug_log(const std::string &msg)
 
 bool implicit_mt_enabled()
 {
-    const char *env = std::getenv("NUXSEC_PLOT_IMT");
+    const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";
 }
 } // namespace
@@ -82,11 +82,11 @@ int plotStackedHistRecoSceNeutrinoVertexEmptySelection(const std::string &event_
     if (implicit_mt_enabled())
     {
         ROOT::EnableImplicitMT();
-        debug_log("ROOT implicit MT enabled (NUXSEC_PLOT_IMT != 0)");
+        debug_log("ROOT implicit MT enabled (HERON_PLOT_IMT != 0)");
     }
     else
     {
-        debug_log("ROOT implicit MT disabled (set NUXSEC_PLOT_IMT=1 to enable)");
+        debug_log("ROOT implicit MT disabled (set HERON_PLOT_IMT=1 to enable)");
     }
 
     const std::string list_path = event_list_root.empty() ? default_event_list_root() : event_list_root;

@@ -7,8 +7,8 @@
 //
 // Run (ROOT):
 //   root -l -b -q 'makeNuMIFluxPlots.C()'
-// or (nuxsec wrapper, like you used before):
-//   nuxsec macro makeNuMIFluxPlots.C
+// or (heron wrapper, like you used before):
+//   heron macro makeNuMIFluxPlots.C
 //
 // Optional:
 //   root -l -b -q 'makeNuMIFluxPlots.C("FHC.root","RHC.root","myplots.pdf")'

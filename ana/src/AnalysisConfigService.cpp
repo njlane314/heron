@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/AnalysisConfigService.cc
+ *  @file  ana/src/AnalysisConfigService.cpp
  *
  *  @brief Compiled analysis configuration service.
  */

@@ -41,7 +41,7 @@ Modules live at the repository root and follow a consistent layout:
 Each module typically contains:
 
 * ``include/`` for public headers (``.hh``).
-* ``src/`` for implementations (``.cc``).
+* ``src/`` for implementations (``.cpp``).
 * ``macro/`` for ROOT-style macros and scripts.
 
 Supporting folders include:

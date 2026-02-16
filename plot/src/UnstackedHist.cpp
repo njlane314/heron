@@ -1,16 +1,16 @@
 /* -- C++ -- */
 /**
- *  @file  plot/src/StackedHist.cc
+ *  @file  plot/src/UnstackedHist.cpp
  *
- *  @brief Stacked histogram plotting helper.
+ *  @brief Unstacked (overlay) histogram plotting helper.
  */
 
-#include "StackedHist.hh"
+#include "UnstackedHist.hh"
 
 #include <algorithm>
-#include <cstdlib>
 #include <cctype>
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "ROOT/RDFHelpers.hxx"
-#include "ROOT/RVec.hxx"
 #include "TArrow.h"
 #include "TCanvas.h"
 #include "TImage.h"
@@ -29,159 +28,58 @@
 #include "TLine.h"
 #include "TList.h"
 #include "TMatrixDSym.h"
+#include "TPad.h"
 
 #include "AdaptiveBinningService.hh"
 #include "PlotChannels.hh"
-#include "ParticleChannels.hh"
 #include "Plotter.hh"
 
 namespace nu
 {
 
-namespace
-{
-bool stack_debug_enabled()
-{
-    const char *env = std::getenv("HERON_DEBUG_PLOT_STACK");
-    return env != nullptr && std::string(env) != "0";
-}
-
-void stack_debug_log(const std::string &msg)
-{
-    if (!stack_debug_enabled())
-    {
-        return;
-    }
-    std::cout << "[StackedHist][debug] " << msg << "\n";
-    std::cout.flush();
-}
-ROOT::VecOps::RVec<double> select_particle_values(const ROOT::VecOps::RVec<double> &values,
-                                                  const ROOT::VecOps::RVec<int> &pdg_codes,
-                                                  int key,
-                                                  bool drop_nan)
-{
-    ROOT::VecOps::RVec<double> out;
-    out.reserve(values.size());
-    for (std::size_t i = 0; i < values.size(); ++i)
-    {
-        const double v = values[i];
-        if (drop_nan && !std::isfinite(v))
-        {
-            continue;
-        }
-        // If the PDG vector is shorter than the value vector (possible if a producer
-        // did not push placeholders), treat missing PDGs as "unmatched" (0).
-        const int pdg = (i < pdg_codes.size()) ? pdg_codes[i] : 0;
-        if (ParticleChannels::matches(key, pdg))
-        {
-            out.push_back(v);
-        }
-    }
-    return out;
-}
-
-} // namespace
-
+// NOTE:
+// These utilities are already defined in plot/src/StackedHist.cpp in namespace nu.
+// We forward-declare them here to reuse the same implementation and avoid duplicate
+// symbol definitions.
 void apply_total_errors(TH1D &h,
                         const TMatrixDSym *cov,
                         const std::vector<double> *syst_bin,
-                        bool density_mode)
+                        bool density_mode);
+
+double integral_in_visible_range(const TH1D &h, double xmin, double xmax);
+
+double maximum_in_visible_range(const TH1D &h, double xmin, double xmax, bool include_error);
+
+namespace
 {
-    const int nb = h.GetNbinsX();
-    for (int i = 1; i <= nb; ++i)
-    {
-        const double stat = h.GetBinError(i);
-        double syst = 0.0;
-        if (cov && i - 1 < cov->GetNrows())
-        {
-            syst = std::sqrt((*cov)(i - 1, i - 1));
-        }
-        else if (syst_bin && i - 1 < static_cast<int>(syst_bin->size()))
-        {
-            syst = std::max(0.0, (*syst_bin)[i - 1]);
-        }
-
-        // If the histogram content has been scaled to a density (events / unit-x)
-        // via h.Scale(1, "width"), then the systematic uncertainties must be put
-        // in the same units. For diagonal-only usage, that is a 1/width factor.
-        // (Full covariance needs V'_{ij} = V_{ij} / (w_i w_j).)
-        if (density_mode)
-        {
-            const double w = h.GetXaxis() ? h.GetXaxis()->GetBinWidth(i) : 0.0;
-            if (w > 0.0)
-            {
-                syst /= w;
-            }
-        }
-
-        const double tot = std::sqrt(stat * stat + syst * syst);
-        h.SetBinError(i, tot);
-    }
+bool unstack_debug_enabled()
+{
+    const char *env = std::getenv("HERON_DEBUG_PLOT_UNSTACK");
+    return env != nullptr && std::string(env) != "0";
 }
 
-double integral_in_visible_range(const TH1D &h, double xmin, double xmax)
+void unstack_debug_log(const std::string &msg)
 {
-    const TAxis *axis = h.GetXaxis();
-    if (!axis)
+    if (!unstack_debug_enabled())
     {
-        return h.Integral();
+        return;
     }
-
-    int first_bin = 1;
-    int last_bin = h.GetNbinsX();
-    if (xmin < xmax)
-    {
-        first_bin = std::max(1, axis->FindFixBin(xmin));
-        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
-        if (xmax <= axis->GetBinLowEdge(last_bin))
-        {
-            last_bin = std::max(first_bin, last_bin - 1);
-        }
-    }
-
-    if (first_bin > last_bin)
-    {
-        return 0.0;
-    }
-    return h.Integral(first_bin, last_bin);
+    std::cout << "[UnstackedHist][debug] " << msg << "\n";
+    std::cout.flush();
 }
 
-double maximum_in_visible_range(const TH1D &h, double xmin, double xmax, bool include_error)
+int line_style_for_index(std::size_t i)
 {
-    const TAxis *axis = h.GetXaxis();
-    if (!axis)
-    {
-        return include_error ? h.GetMaximum() + h.GetBinError(h.GetMaximumBin()) : h.GetMaximum();
-    }
-
-    int first_bin = 1;
-    int last_bin = h.GetNbinsX();
-    if (xmin < xmax)
-    {
-        first_bin = std::max(1, axis->FindFixBin(xmin));
-        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
-        if (xmax <= axis->GetBinLowEdge(last_bin))
-        {
-            last_bin = std::max(first_bin, last_bin - 1);
-        }
-    }
-
-    if (first_bin > last_bin)
-    {
-        return 0.0;
-    }
-
-    double max_y = 0.0;
-    for (int i = first_bin; i <= last_bin; ++i)
-    {
-        const double y = h.GetBinContent(i) + (include_error ? h.GetBinError(i) : 0.0);
-        max_y = std::max(max_y, y);
-    }
-    return max_y;
+    // ROOT common line styles: 1=solid, 2=dashed, 3=dotted, 4=dash-dot, ...
+    static const int styles[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    return styles[i % (sizeof(styles) / sizeof(styles[0]))];
 }
+} // namespace
 
-
-StackedHist::StackedHist(TH1DModel spec, Options opt, std::vector<const Entry *> mc, std::vector<const Entry *> data)
+UnstackedHist::UnstackedHist(TH1DModel spec,
+                             Options opt,
+                             std::vector<const Entry *> mc,
+                             std::vector<const Entry *> data)
     : spec_(std::move(spec)),
       opt_(std::move(opt)),
       mc_(std::move(mc)),
@@ -191,7 +89,7 @@ StackedHist::StackedHist(TH1DModel spec, Options opt, std::vector<const Entry *>
 {
 }
 
-void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p_legend) const
+void UnstackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p_legend) const
 {
     auto disable_primitive_ownership = [](TPad *pad) {
         if (!pad)
@@ -257,6 +155,10 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         {
             p_main->SetLogy();
         }
+        if (opt_.use_log_x && p_main)
+        {
+            p_main->SetLogx();
+        }
         if (p_ratio)
         {
             p_ratio->Draw();
@@ -294,6 +196,10 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             {
                 p_main->SetLogy();
             }
+            if (opt_.use_log_x)
+            {
+                p_main->SetLogx();
+            }
             p_ratio->Draw();
             p_main->Draw();
             disable_primitive_ownership(p_ratio);
@@ -311,53 +217,66 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             {
                 p_main->SetLogy();
             }
+            if (opt_.use_log_x)
+            {
+                p_main->SetLogx();
+            }
             p_main->Draw();
             disable_primitive_ownership(p_main);
         }
     }
 }
 
-void StackedHist::build_histograms()
+void UnstackedHist::build_histograms()
 {
+    unstack_debug_log("build_histograms: begin spec=" + spec_.id +
+                      " expr=" + (spec_.expr.empty() ? std::string("<id>") : spec_.expr) +
+                      " mc_entries=" + std::to_string(mc_.size()) +
+                      " data_entries=" + std::to_string(data_.size()));
+
     const auto axes = spec_.axis_title();
-    stack_ = std::make_unique<THStack>((spec_.id + "_stack").c_str(), axes.c_str());
-    if (stack_->GetHists())
+    overlay_ = std::make_unique<THStack>((spec_.id + "_overlay").c_str(), axes.c_str());
+    if (overlay_->GetHists())
     {
-        stack_->GetHists()->SetOwner(kFALSE);
+        overlay_->GetHists()->SetOwner(kFALSE);
     }
+
     mc_ch_hists_.clear();
+    chan_order_.clear();
+    chan_event_yields_.clear();
     mc_total_.reset();
+    mc_unc_band_.reset();
     data_hist_.reset();
     sig_hist_.reset();
     ratio_hist_.reset();
     ratio_band_.reset();
+    legend_.reset();
+    legend_proxies_.clear();
+
     signal_events_ = 0.0;
     signal_scale_ = 1.0;
-    chan_event_yields_.clear();
     total_mc_events_ = 0.0;
     density_mode_ = false;
+
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
-    const bool particle_level = opt_.particle_level;
-    const auto &channels = particle_level ? ParticleChannels::keys() : Channels::mc_keys();
-    const std::string pdg_branch = particle_level
-                                       ? (opt_.particle_pdg_branch.empty() ? "backtracked_pdg_codes" : opt_.particle_pdg_branch)
-                                       : std::string{};
+    const std::vector<int> channels = opt_.unstack_channel_keys.empty()
+                                          ? Channels::mc_keys()
+                                          : opt_.unstack_channel_keys;
     const auto cfg = AdaptiveBinningService::config_from(opt_);
 
     // If adaptive binning is enabled, fill a finer histogram first and then merge.
-    // Otherwise the merge algorithm has nothing to do and bins will look uniform.
     TH1DModel fill_spec = spec_;
     if (cfg.enabled)
     {
         const int factor = std::max(1, opt_.adaptive_fine_bin_factor);
         long long nb = 1LL * fill_spec.nbins * factor;
-        // Clamp to something sane.
         nb = std::max<long long>(1, std::min<long long>(nb, 5000));
         fill_spec.nbins = static_cast<int>(nb);
     }
 
     for (size_t ie = 0; ie < mc_.size(); ++ie)
     {
+        unstack_debug_log("build_histograms: booking MC source index=" + std::to_string(ie));
         const Entry *e = mc_[ie];
         if (!e)
         {
@@ -367,40 +286,17 @@ void StackedHist::build_histograms()
         auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
         const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
 
-        if (!particle_level)
+        for (int ch : channels)
         {
-            for (int ch : channels)
-            {
-                auto nf = n.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
-                auto h = nf.Histo1D(fill_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
-                booked[ch].push_back(h);
-            }
-        }
-        else
-        {
-            // Convert any vector-like numeric column to RVec<double> once, then
-            // per-category select based on the truth-matched PDG vector.
-            const std::string val_d = "_nx_val_d_";
-            const std::string val_expr = "ROOT::VecOps::RVec<double>(" + var + ".begin(), " + var + ".end())";
-            auto nvec = n.Define(val_d, val_expr);
-
-            for (int ch : channels)
-            {
-                const std::string sel = "_nx_part_sel_" + std::to_string(ch) + "_src" + std::to_string(ie);
-                auto nsel = nvec.Define(
-                    sel,
-                    [ch, drop_nan = opt_.particle_drop_nan](const ROOT::VecOps::RVec<double> &values,
-                                                            const ROOT::VecOps::RVec<int> &pdg_codes) {
-                        return select_particle_values(values, pdg_codes, ch, drop_nan);
-                    },
-                    std::vector<std::string>{val_d, pdg_branch});
-
-                auto h = nsel.Histo1D(fill_spec.model("_mc_pdg" + std::to_string(ch) + "_src" + std::to_string(ie)),
-                                      sel, spec_.weight);
-                booked[ch].push_back(h);
-            }
+            auto nf = n.Filter([ch](int c) { return c == ch; }, {opt_.channel_column});
+            auto h = nf.Histo1D(fill_spec.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)),
+                                var,
+                                spec_.weight);
+            booked[ch].push_back(h);
         }
     }
+
+    unstack_debug_log("build_histograms: booked channels=" + std::to_string(booked.size()));
 
     std::map<int, std::unique_ptr<TH1D>> sum_by_channel;
 
@@ -451,8 +347,6 @@ void StackedHist::build_histograms()
         if (mc_tot_fine)
         {
             adaptive_edges = AdaptiveBinningService::instance().edges_min_stat(*mc_tot_fine, cfg);
-
-
             if (adaptive_edges.size() >= 2)
             {
                 for (auto &kv : sum_by_channel)
@@ -461,7 +355,6 @@ void StackedHist::build_histograms()
                     {
                         continue;
                     }
-
                     kv.second = AdaptiveBinningService::instance().rebin_to_edges(
                         *kv.second,
                         adaptive_edges,
@@ -472,7 +365,7 @@ void StackedHist::build_histograms()
         }
     }
 
-    // ---- Compute yields AFTER rebin so ordering matches what you plot ----
+    // ---- Compute yields AFTER rebin so legend ordering matches what you plot ----
     std::vector<std::pair<int, double>> yields;
     yields.reserve(sum_by_channel.size());
     for (auto &kv : sum_by_channel)
@@ -492,44 +385,52 @@ void StackedHist::build_histograms()
         return a.second > b.second;
     });
 
-    chan_order_.clear();
-    chan_event_yields_.clear();
-    for (auto &cy : yields)
+    // Style + add to overlay stack (nostack draw later).
+    unstack_debug_log("build_histograms: sorted channel yields count=" + std::to_string(yields.size()));
+
+    for (size_t i = 0; i < yields.size(); ++i)
     {
-        const int ch = cy.first;
+        const int ch = yields[i].first;
+        const double yld = yields[i].second;
+
         auto it = sum_by_channel.find(ch);
         if (it == sum_by_channel.end() || !it->second)
         {
             continue;
         }
+
         auto &sum = it->second;
-        if (particle_level)
+
+        // Unstacked visual: lines only to avoid filled-overlap hiding earlier curves.
+        sum->SetFillStyle(0);
+        int line_colour = Channels::colour(ch);
+        auto colour_it = opt_.unstack_channel_colours.find(ch);
+        if (colour_it != opt_.unstack_channel_colours.end())
         {
-            sum->SetFillColor(ParticleChannels::colour(ch));
-            sum->SetFillStyle(ParticleChannels::fill_style(ch));
+            line_colour = colour_it->second;
         }
-        else
+        sum->SetLineColor(line_colour);
+        sum->SetLineWidth(2);
+        sum->SetLineStyle(line_style_for_index(i));
+
+        overlay_->Add(sum.get(), "HIST");
+        if (auto *hists = overlay_->GetHists())
         {
-            sum->SetFillColor(Channels::colour(ch));
-            sum->SetFillStyle(Channels::fill_style(ch));
-        }
-        sum->SetLineColor(kBlack);
-        sum->SetLineWidth(1);
-        stack_->Add(sum.get(), "HIST");
-        if (auto *hists = stack_->GetHists())
-        {
-            // THStack owns its histogram list by default. We also own these
-            // histograms via std::unique_ptr in mc_ch_hists_, so disable list
-            // ownership to avoid double-deletes when StackedHist tears down.
             hists->SetOwner(kFALSE);
         }
+
         mc_ch_hists_.push_back(std::move(sum));
         chan_order_.push_back(ch);
-        chan_event_yields_.push_back(cy.second); // pre-density event yield
+        chan_event_yields_.push_back(yld); // pre-density event yield
     }
 
+    // Total MC
     for (auto &uptr : mc_ch_hists_)
     {
+        if (!uptr)
+        {
+            continue;
+        }
         if (!mc_total_)
         {
             mc_total_.reset(static_cast<TH1D *>(uptr->Clone((spec_.id + "_mc_total").c_str())));
@@ -541,9 +442,11 @@ void StackedHist::build_histograms()
         }
     }
 
-    // Cache the event-count total before any density scaling.
     total_mc_events_ = mc_total_ ? mc_total_->Integral() : 0.0;
+    unstack_debug_log("build_histograms: mc channels=" + std::to_string(mc_ch_hists_.size()) +
+                      " total_mc_events=" + std::to_string(total_mc_events_));
 
+    // Data
     if (!data_.empty())
     {
         std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
@@ -586,37 +489,41 @@ void StackedHist::build_histograms()
         }
     }
 
-    if (opt_.overlay_signal && !opt_.signal_channels.empty() && !mc_ch_hists_.empty())
+    // Signal overlay (scaled to total in visible range), same logic as StackedHist.
+    if (opt_.overlay_signal && !opt_.signal_channels.empty() && !mc_ch_hists_.empty() && mc_total_)
     {
-        double tot_sum = mc_total_ ? integral_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax) : 0.0;
+        const double tot_sum = integral_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax);
+
         auto sig = std::make_unique<TH1D>(*mc_ch_hists_.front());
         sig->Reset();
+
         for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
         {
-            int ch = chan_order_.at(i);
+            const int ch = chan_order_.at(i);
             if (std::find(opt_.signal_channels.begin(), opt_.signal_channels.end(), ch) != opt_.signal_channels.end())
             {
                 sig->Add(mc_ch_hists_[i].get());
             }
         }
+
         signal_events_ = integral_in_visible_range(*sig, spec_.xmin, spec_.xmax);
-        double sig_sum = signal_events_;
+        const double sig_sum = signal_events_;
+
         if (sig_sum > 0.0 && tot_sum > 0.0)
         {
             signal_scale_ = tot_sum / sig_sum;
             sig->Scale(signal_scale_);
         }
+
         sig->SetLineColor(kGreen + 2);
         sig->SetLineStyle(kDashed);
-        sig->SetLineWidth(2);
+        sig->SetLineWidth(3);
         sig->SetFillStyle(0);
+
         sig_hist_ = std::move(sig);
     }
 
-    // ---- If we used adaptive edges, the bin widths are generally not uniform.
-    // Plot densities (events / unit-x) so bar heights are comparable across bins.
-    //
-    // NOTE: This changes histogram units; any later error model must match those units.
+    // If we used adaptive edges, bins are generally not uniform: draw densities.
     const bool do_density = (cfg.enabled && adaptive_edges.size() >= 2);
     if (do_density)
     {
@@ -625,74 +532,111 @@ void StackedHist::build_histograms()
         for (auto &h : mc_ch_hists_)
         {
             if (h)
+            {
                 scale_width(*h);
+            }
         }
         if (mc_total_)
+        {
             scale_width(*mc_total_);
+        }
         if (data_hist_)
+        {
             scale_width(*data_hist_);
+        }
         if (sig_hist_)
+        {
             scale_width(*sig_hist_);
+        }
 
         density_mode_ = true;
     }
 }
 
-void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
+void UnstackedHist::draw_overlay_and_unc(TPad *p_main, double &max_y)
 {
     if (!p_main)
     {
+        unstack_debug_log("draw_overlay_and_unc: main pad is null");
         return;
     }
     p_main->cd();
 
-    if (auto *hists = stack_->GetHists())
+    if (!overlay_)
     {
-        for (TObject *obj = hists->First(); obj != nullptr; obj = hists->After(obj))
-        {
-            if (auto *hist = dynamic_cast<TH1 *>(obj))
-            {
-                hist->SetLineColor(kBlack);
-            }
-        }
+        unstack_debug_log("draw_overlay_and_unc: overlay is null");
+        return;
     }
 
+    unstack_debug_log("draw_overlay_and_unc: drawing overlay with " + std::to_string(mc_ch_hists_.size()) +
+                      " channel histograms");
+
+    // Titles
     if (!opt_.x_title.empty() || !opt_.y_title.empty())
     {
         const std::string default_x = !spec_.name.empty() ? spec_.name : spec_.id;
         const std::string x = opt_.x_title.empty() ? default_x : opt_.x_title;
-        const std::string default_y = opt_.particle_level ? "Particles" : "Events";
-        const std::string y = opt_.y_title.empty() ? default_y : opt_.y_title;
-        stack_->SetTitle((";" + x + ";" + y).c_str());
+        const std::string y = opt_.y_title.empty() ? "Events" : opt_.y_title;
+        overlay_->SetTitle((";" + x + ";" + y).c_str());
     }
 
-    stack_->Draw("HIST");
-    TH1 *frame = stack_->GetHistogram();
+    // Apply total errors if requested (needed for band + ratio band).
+    if (mc_total_ && (opt_.total_cov || !opt_.syst_bin.empty()))
+    {
+        apply_total_errors(*mc_total_, opt_.total_cov.get(),
+                           opt_.syst_bin.empty() ? nullptr : &opt_.syst_bin,
+                           density_mode_);
+    }
+
+    // Determine y-max in visible range.
+    max_y = 0.0;
+    for (const auto &h : mc_ch_hists_)
+    {
+        if (!h)
+        {
+            continue;
+        }
+        max_y = std::max(max_y, maximum_in_visible_range(*h, spec_.xmin, spec_.xmax, false));
+    }
+    if (mc_total_)
+    {
+        max_y = std::max(max_y, maximum_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax, true));
+    }
+    if (sig_hist_)
+    {
+        max_y = std::max(max_y, maximum_in_visible_range(*sig_hist_, spec_.xmin, spec_.xmax, false));
+    }
+    if (has_data())
+    {
+        max_y = std::max(max_y, maximum_in_visible_range(*data_hist_, spec_.xmin, spec_.xmax, true));
+    }
+    if (opt_.y_max > 0.0)
+    {
+        max_y = opt_.y_max;
+    }
+    if (max_y <= 0.0)
+    {
+        max_y = 1.0;
+    }
+
+    overlay_->SetMaximum(max_y * (opt_.use_log_y ? 10. : 1.3));
+    overlay_->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
+
+    // Draw the overlay (THStack in "nostack" mode).
+    overlay_->Draw("NOSTACK HIST");
+
+    TH1 *frame = overlay_->GetHistogram();
     if (frame)
     {
         frame->SetLineWidth(2);
-    }
-    if (frame && spec_.xmin < spec_.xmax)
-    {
-        frame->GetXaxis()->SetRangeUser(spec_.xmin, spec_.xmax);
-    }
-    if (frame)
-    {
+        if (spec_.xmin < spec_.xmax)
+        {
+            frame->GetXaxis()->SetRangeUser(spec_.xmin, spec_.xmax);
+        }
         frame->GetXaxis()->SetNdivisions(510);
         frame->GetXaxis()->SetTickLength(0.02);
         frame->GetXaxis()->CenterTitle(false);
 
-        // If we didn't override titles explicitly, THStack's default comes from
-        // TH1DModel::axis_title() (which defaults to "Events"). For particle-level
-        // plots, update the default Y label to avoid misleading units.
-        if (opt_.particle_level && opt_.y_title.empty())
-        {
-            const std::string cur = frame->GetYaxis() ? frame->GetYaxis()->GetTitle() : "";
-            if (cur.empty() || cur == "Events")
-            {
-                frame->GetYaxis()->SetTitle("Particles");
-            }
-        }
         if (!opt_.x_title.empty())
         {
             frame->GetXaxis()->SetTitle(opt_.x_title.c_str());
@@ -702,60 +646,65 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
             frame->GetYaxis()->SetTitle(opt_.y_title.c_str());
         }
     }
+
+    // Uncertainty band for total MC (draw first, then redraw lines on top).
+    mc_unc_band_.reset();
     if (mc_total_)
     {
-        if (opt_.total_cov || !opt_.syst_bin.empty())
-        {
-            apply_total_errors(*mc_total_, opt_.total_cov.get(),
-                               opt_.syst_bin.empty() ? nullptr : &opt_.syst_bin, density_mode_);
-        }
-
-        max_y = maximum_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax, true);
-        if (sig_hist_)
-        {
-            max_y = std::max(max_y, maximum_in_visible_range(*sig_hist_, spec_.xmin, spec_.xmax, false));
-        }
-        if (opt_.y_max > 0)
-        {
-            max_y = opt_.y_max;
-        }
-
-        stack_->SetMaximum(max_y * (opt_.use_log_y ? 10. : 1.3));
-        stack_->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
-
-        auto *h = static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_totband").c_str()));
-        h->SetDirectory(nullptr);
-        h->SetFillColor(kBlack);
-        h->SetFillStyle(3004);
-        h->SetMarkerSize(0);
-        h->SetLineColor(kBlack);
-        h->SetLineWidth(1);
-        h->Draw("E2 SAME");
+        mc_unc_band_.reset(static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_totband").c_str())));
+        mc_unc_band_->SetDirectory(nullptr);
+        mc_unc_band_->SetFillColor(kBlack);
+        mc_unc_band_->SetFillStyle(3004);
+        mc_unc_band_->SetMarkerSize(0);
+        mc_unc_band_->SetLineColor(kBlack);
+        mc_unc_band_->SetLineWidth(1);
+        mc_unc_band_->Draw("E2 SAME");
     }
 
-    // THStack can refresh its internal frame after range/max updates.
-    // Apply axis titles and alignment after those updates so labels persist.
-    if (!opt_.x_title.empty() && stack_->GetXaxis())
+    // Redraw channel curves so they stay on top of the band.
+    for (auto &h : mc_ch_hists_)
     {
-        stack_->GetXaxis()->SetTitle(opt_.x_title.c_str());
-        stack_->GetXaxis()->CenterTitle(false);
-    }
-    if (!opt_.y_title.empty() && stack_->GetYaxis())
-    {
-        stack_->GetYaxis()->SetTitle(opt_.y_title.c_str());
+        if (h)
+        {
+            h->Draw("HIST SAME");
+        }
     }
 
+    // Total MC central value (black line)
+    if (mc_total_)
+    {
+        mc_total_->SetFillStyle(0);
+        mc_total_->SetLineColor(kBlack);
+        mc_total_->SetLineWidth(2);
+        mc_total_->SetLineStyle(1);
+        mc_total_->Draw("HIST SAME");
+    }
+
+    // Signal overlay
     if (sig_hist_)
     {
         sig_hist_->Draw("HIST SAME");
     }
+
+    // Data
     if (has_data())
     {
         data_hist_->Draw("E1 SAME");
     }
+
+    // THStack can refresh internal axis state; re-apply explicit axis titles if set.
+    if (!opt_.x_title.empty() && overlay_->GetXaxis())
+    {
+        overlay_->GetXaxis()->SetTitle(opt_.x_title.c_str());
+        overlay_->GetXaxis()->CenterTitle(false);
+    }
+    if (!opt_.y_title.empty() && overlay_->GetYaxis())
+    {
+        overlay_->GetYaxis()->SetTitle(opt_.y_title.c_str());
+    }
 }
 
-void StackedHist::draw_ratio(TPad *p_ratio)
+void UnstackedHist::draw_ratio(TPad *p_ratio)
 {
     if (!p_ratio || !has_data() || !mc_total_)
     {
@@ -763,8 +712,7 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     }
     p_ratio->cd();
 
-    ratio_hist_.reset(static_cast<TH1D *>(
-        data_hist_->Clone((spec_.id + "_ratio").c_str())));
+    ratio_hist_.reset(static_cast<TH1D *>(data_hist_->Clone((spec_.id + "_ratio").c_str())));
     ratio_hist_->SetDirectory(nullptr);
     ratio_hist_->Divide(mc_total_.get());
     ratio_hist_->SetTitle("; ;Data / MC");
@@ -807,13 +755,18 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     ratio_hist_->Draw("E1 SAME");
 }
 
-void StackedHist::draw_legend(TPad *p)
+void UnstackedHist::draw_legend(TPad *p)
 {
     if (!p)
     {
+        unstack_debug_log("draw_legend: legend pad is null");
         return;
     }
+    unstack_debug_log("draw_legend: begin mc_ch_hists=" + std::to_string(mc_ch_hists_.size()) +
+                      " chan_order=" + std::to_string(chan_order_.size()) +
+                      " chan_yields=" + std::to_string(chan_event_yields_.size()));
     p->cd();
+
     legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
     auto *leg = legend_.get();
     leg->SetBorderSize(0);
@@ -823,7 +776,7 @@ void StackedHist::draw_legend(TPad *p)
     int n_entries = static_cast<int>(mc_ch_hists_.size());
     if (mc_total_)
     {
-        ++n_entries;
+        n_entries += 2; // total line + unc band
     }
     if (sig_hist_)
     {
@@ -843,7 +796,21 @@ void StackedHist::draw_legend(TPad *p)
 
     for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
     {
-        int ch = chan_order_.at(i);
+        if (i >= chan_order_.size())
+        {
+            unstack_debug_log("draw_legend: skipping histogram index " + std::to_string(i) +
+                              " because chan_order size is " + std::to_string(chan_order_.size()));
+            continue;
+        }
+
+        if (!mc_ch_hists_[i])
+        {
+            unstack_debug_log("draw_legend: skipping null histogram at index " + std::to_string(i));
+            continue;
+        }
+
+        const int ch = chan_order_.at(i);
+
         double sum = 0.0;
         if (i < chan_event_yields_.size())
         {
@@ -851,11 +818,15 @@ void StackedHist::draw_legend(TPad *p)
         }
         else if (mc_ch_hists_[i])
         {
-            // Fallback if yields were not cached for some reason.
-            // If density_mode_ is true, Integral("width") restores event counts.
             sum = density_mode_ ? mc_ch_hists_[i]->Integral("width") : mc_ch_hists_[i]->Integral();
         }
-        std::string label = opt_.particle_level ? ParticleChannels::label(ch) : Channels::label(ch);
+
+        std::string label = Channels::label(ch);
+        auto label_it = opt_.unstack_channel_labels.find(ch);
+        if (label_it != opt_.unstack_channel_labels.end())
+        {
+            label = label_it->second;
+        }
         if (label == "#emptyset")
         {
             label = "\xE2\x88\x85";
@@ -864,37 +835,52 @@ void StackedHist::draw_legend(TPad *p)
         {
             label += " : " + Plotter::fmt_commas(sum, 2);
         }
-        auto proxy = std::unique_ptr<TH1D>(static_cast<TH1D *>(
-            mc_ch_hists_[i]->Clone((spec_.id + "_leg_ch" + std::to_string(ch)).c_str())));
+
+        auto proxy = std::unique_ptr<TH1D>(
+            static_cast<TH1D *>(mc_ch_hists_[i]->Clone((spec_.id + "_leg_ch" + std::to_string(ch)).c_str())));
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
+        proxy->SetFillStyle(0);
+        proxy->SetLineColor(mc_ch_hists_[i]->GetLineColor());
+        proxy->SetLineWidth(mc_ch_hists_[i]->GetLineWidth());
+        proxy->SetLineStyle(mc_ch_hists_[i]->GetLineStyle());
 
-        auto *entry = leg->AddEntry(proxy.get(), label.c_str(), "f");
+        leg->AddEntry(proxy.get(), label.c_str(), "l");
         leg->SetEntrySeparation(0.01);
         legend_proxies_.push_back(std::move(proxy));
-        (void)entry;
     }
 
+    // Total MC line + unc band
     if (mc_total_)
     {
-        auto proxy = std::unique_ptr<TH1D>(static_cast<TH1D *>(
-            mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
-        proxy->SetDirectory(nullptr);
-        proxy->Reset("ICES");
-        proxy->SetFillColor(kBlack);
-        proxy->SetFillStyle(3004);
-        proxy->SetLineColor(kBlack);
-        proxy->SetLineWidth(1);
-        leg->AddEntry(proxy.get(), "Stat. #oplus Syst. Unc.", "f");
-        legend_proxies_.push_back(std::move(proxy));
+        auto proxy_line = std::unique_ptr<TH1D>(
+            static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_leg_total").c_str())));
+        proxy_line->SetDirectory(nullptr);
+        proxy_line->Reset("ICES");
+        proxy_line->SetFillStyle(0);
+        proxy_line->SetLineColor(kBlack);
+        proxy_line->SetLineWidth(2);
+        proxy_line->SetLineStyle(1);
+        leg->AddEntry(proxy_line.get(), "Total MC", "l");
+        legend_proxies_.push_back(std::move(proxy_line));
+
+        auto proxy_band = std::unique_ptr<TH1D>(
+            static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
+        proxy_band->SetDirectory(nullptr);
+        proxy_band->Reset("ICES");
+        proxy_band->SetFillColor(kBlack);
+        proxy_band->SetFillStyle(3004);
+        proxy_band->SetLineColor(kBlack);
+        proxy_band->SetLineWidth(1);
+        leg->AddEntry(proxy_band.get(), "Stat. #oplus Syst. Unc.", "f");
+        legend_proxies_.push_back(std::move(proxy_band));
     }
 
     if (sig_hist_)
     {
         std::ostringstream signal_label;
-        signal_label << "Signal";
-        signal_label << " : "
-                     << Plotter::fmt_commas(signal_events_, 2)
+        signal_label << "Signal"
+                     << " : " << Plotter::fmt_commas(signal_events_, 2)
                      << " (x" << std::fixed << std::setprecision(2) << signal_scale_ << ")";
         leg->AddEntry(sig_hist_.get(), signal_label.str().c_str(), "l");
     }
@@ -904,26 +890,34 @@ void StackedHist::draw_legend(TPad *p)
         leg->AddEntry(data_hist_.get(), "Data", "lep");
     }
 
+    unstack_debug_log("draw_legend: final legend entries=" + std::to_string(leg->GetNRows()));
     leg->Draw();
 }
 
-void StackedHist::draw_cuts(TPad *p, double max_y)
+void UnstackedHist::draw_cuts(TPad *p, double max_y)
 {
     if (!opt_.show_cuts || opt_.cuts.empty())
     {
         return;
     }
+    if (!p)
+    {
+        return;
+    }
     p->cd();
-    TH1 *frame = stack_->GetHistogram();
+
+    TH1 *frame = overlay_ ? overlay_->GetHistogram() : nullptr;
     if (!frame)
     {
         return;
     }
+
     const double y = max_y * 0.80;
     const double xmin = frame->GetXaxis()->GetXmin();
     const double xmax = frame->GetXaxis()->GetXmax();
     const double xr = xmax - xmin;
     const double alen = xr * 0.04;
+
     for (const auto &c : opt_.cuts)
     {
         auto *line = new TLine(c.x, 0., c.x, max_y * 1.3);
@@ -931,6 +925,7 @@ void StackedHist::draw_cuts(TPad *p, double max_y)
         line->SetLineWidth(2);
         line->SetLineStyle(kDashed);
         line->Draw("same");
+
         const double x1 = c.x;
         const double x2 = (c.dir == CutDir::GreaterThan) ? c.x + alen : c.x - alen;
         auto *arr = new TArrow(x1, y, x2, y, 0.025, ">");
@@ -941,7 +936,7 @@ void StackedHist::draw_cuts(TPad *p, double max_y)
     }
 }
 
-void StackedHist::draw_watermark(TPad *p, double total_mc) const
+void UnstackedHist::draw_watermark(TPad *p, double total_mc) const
 {
     if (!p)
     {
@@ -1029,9 +1024,7 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
     }
     std::string beam_key = beam_name;
     std::transform(beam_key.begin(), beam_key.end(), beam_key.begin(),
-                   [](unsigned char c) {
-                       return static_cast<char>(std::tolower(c));
-                   });
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     if (beam_key == "numi")
     {
@@ -1104,11 +1097,10 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
         region_label = SelectionService::selection_label(spec_.sel);
     }
 
-    const std::string yield_unit = opt_.particle_level ? "particles" : "events";
     const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +
                               " (" + pot_str + " POT)";
     const std::string line3 = "Analysis Region: " + region_label + " (" +
-                              Plotter::fmt_commas(total_mc, 2) + " " + yield_unit + ")";
+                              Plotter::fmt_commas(total_mc, 2) + " events)";
 
     TLatex watermark;
     watermark.SetNDC();
@@ -1126,15 +1118,26 @@ void StackedHist::draw_watermark(TPad *p, double total_mc) const
     watermark.DrawLatex(x, y - 0.06, line3.c_str());
 }
 
-void StackedHist::draw(TCanvas &canvas)
+void UnstackedHist::draw(TCanvas &canvas)
 {
     build_histograms();
-    TPad *p_main = nullptr, *p_ratio = nullptr, *p_legend = nullptr;
+    unstack_debug_log("draw: build_histograms complete");
+
+    TPad *p_main = nullptr;
+    TPad *p_ratio = nullptr;
+    TPad *p_legend = nullptr;
+
     setup_pads(canvas, p_main, p_ratio, p_legend);
-    double max_y = 1.;
-    draw_stack_and_unc(p_main, max_y);
+
+    double max_y = 1.0;
+    draw_overlay_and_unc(p_main, max_y);
+    unstack_debug_log("draw: draw_overlay_and_unc complete");
     draw_cuts(p_main, max_y);
-    draw_watermark(p_main, total_mc_events_);
+    if (opt_.show_watermark)
+    {
+        draw_watermark(p_main, total_mc_events_);
+    }
+
     if (opt_.show_legend)
     {
         draw_legend(p_legend ? p_legend : p_main);
@@ -1143,6 +1146,7 @@ void StackedHist::draw(TCanvas &canvas)
     {
         draw_ratio(p_ratio);
     }
+
     if (p_main)
     {
         p_main->RedrawAxis();
@@ -1150,21 +1154,24 @@ void StackedHist::draw(TCanvas &canvas)
     canvas.Update();
 }
 
-void StackedHist::draw_and_save(const std::string &image_format)
+void UnstackedHist::draw_and_save(const std::string &image_format)
 {
     std::filesystem::create_directories(output_directory_);
-    stack_debug_log("draw_and_save enter: plot='" + plot_name_ +
-                    "', out_dir='" + output_directory_ + "'");
+    unstack_debug_log("draw_and_save enter: plot='" + plot_name_ +
+                      "', out_dir='" + output_directory_ + "'");
+
     TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
-    stack_debug_log("canvas constructed: plot='" + plot_name_ + "'");
+    unstack_debug_log("canvas constructed: plot='" + plot_name_ + "'");
+
     draw(canvas);
-    stack_debug_log("draw finished: plot='" + plot_name_ + "'");
+    unstack_debug_log("draw finished: plot='" + plot_name_ + "'");
+
     const std::string fmt = image_format.empty() ? "png" : image_format;
     const std::string out = output_directory_ + "/" + plot_name_ + "." + fmt;
 
-    stack_debug_log("SaveAs start: plot='" + plot_name_ + "', file='" + out + "'");
+    unstack_debug_log("SaveAs start: plot='" + plot_name_ + "', file='" + out + "'");
     canvas.SaveAs(out.c_str());
-    stack_debug_log("SaveAs done: plot='" + plot_name_ + "'");
+    unstack_debug_log("SaveAs done: plot='" + plot_name_ + "'");
 }
 
 } // namespace nu

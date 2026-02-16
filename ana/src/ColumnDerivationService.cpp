@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/ColumnDerivationService.cc
+ *  @file  ana/src/ColumnDerivationService.cpp
  *
  *  @brief Variable definitions for analysis RDataFrame processing.
  */

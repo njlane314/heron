@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  apps/src/EventWorkflow.cc
+ *  @file  apps/src/EventWorkflow.cpp
  *
  *  @brief Event-level output builder (invoked by the unified heron CLI).
  */

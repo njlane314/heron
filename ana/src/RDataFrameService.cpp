@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/RDataFrameService.cc
+ *  @file  ana/src/RDataFrameService.cpp
  *
  *  @brief Sample loading and variable definitions for ROOT RDataFrame.
  */

@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  plot/src/AdaptiveBinningService.cc
+ *  @file  plot/src/AdaptiveBinningService.cpp
  *
  *  @brief Adaptive binning service implementation.
  */

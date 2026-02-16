@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  plot/src/EfficiencyPlot.cc
+ *  @file  plot/src/EfficiencyPlot.cpp
  *
  *  @brief Efficiency plotting helper implementation.
  */

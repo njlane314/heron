@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <set>
@@ -33,6 +34,9 @@ const char *kUsageMacro =
     "Usage: nuxsec macro MACRO.C [CALL]\n"
     "       nuxsec macro list\n"
     "\nEnvironment:\n"
+    "  NUXSEC_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macro/library)\n"
+    "  NUXSEC_MACRO_PATH         Colon-separated extra macro directories (searched after library)\n"
+    "  Manifest: <macro_library>/manifest.tsv with columns: name<TAB>macro[<TAB>call]\n"
     "  NUXSEC_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
     "  NUXSEC_PLOT_DIR     Output directory override (default: NUXSEC_PLOT_BASE/<set>)\n"
     "  NUXSEC_PLOT_FORMAT  Output extension (default: pdf)\n"
@@ -256,6 +260,144 @@ void ensure_plot_env(const std::filesystem::path &repo_root)
     }
 }
 
+std::vector<std::string> split_path_list(const std::string &raw)
+{
+    std::vector<std::string> entries;
+    std::stringstream ss(raw);
+    std::string item;
+    while (std::getline(ss, item, ':'))
+    {
+        const std::string value = trim(item);
+        if (!value.empty())
+        {
+            entries.push_back(value);
+        }
+    }
+    return entries;
+}
+
+std::filesystem::path macro_library_dir(const std::filesystem::path &repo_root)
+{
+    const std::filesystem::path fallback = repo_root / "macro" / "library";
+    return path_from_env_or_default("NUXSEC_MACRO_LIBRARY_DIR", fallback);
+}
+
+struct MacroManifestEntry
+{
+    std::string name;
+    std::filesystem::path macro_path;
+    std::string call;
+};
+
+std::vector<MacroManifestEntry> read_macro_manifest(const std::filesystem::path &repo_root)
+{
+    std::vector<MacroManifestEntry> entries;
+
+    const auto library_dir = macro_library_dir(repo_root);
+    const auto manifest_path = library_dir / "manifest.tsv";
+    if (!std::filesystem::exists(manifest_path))
+    {
+        return entries;
+    }
+
+    std::ifstream in(manifest_path);
+    std::string line;
+    while (std::getline(in, line))
+    {
+        const std::string raw = trim(line);
+        if (raw.empty() || raw[0] == '#')
+        {
+            continue;
+        }
+
+        std::stringstream row(raw);
+        std::string name;
+        std::string macro;
+        std::string call;
+        std::getline(row, name, '	');
+        std::getline(row, macro, '	');
+        std::getline(row, call, '	');
+
+        MacroManifestEntry entry;
+        entry.name = trim(name);
+        entry.macro_path = std::filesystem::path(trim(macro));
+        entry.call = trim(call);
+
+        if (entry.name.empty() || entry.macro_path.empty())
+        {
+            continue;
+        }
+
+        if (entry.macro_path.is_relative())
+        {
+            entry.macro_path = library_dir / entry.macro_path;
+        }
+
+        entries.push_back(entry);
+    }
+
+    return entries;
+}
+
+bool resolve_manifest_macro(const std::filesystem::path &repo_root,
+                           const std::string &name,
+                           std::filesystem::path &macro_path,
+                           std::string &call)
+{
+    const auto entries = read_macro_manifest(repo_root);
+    for (const auto &entry : entries)
+    {
+        if (entry.name != name)
+        {
+            continue;
+        }
+
+        if (!std::filesystem::exists(entry.macro_path))
+        {
+            continue;
+        }
+
+        macro_path = entry.macro_path;
+        if (call.empty())
+        {
+            call = entry.call;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+std::vector<std::filesystem::path> macro_search_dirs(const std::filesystem::path &repo_root)
+{
+    auto append_if_exists = [](std::vector<std::filesystem::path> &dirs,
+                               const std::filesystem::path &path)
+    {
+        if (!path.empty() && std::filesystem::exists(path))
+        {
+            dirs.push_back(path);
+        }
+    };
+
+    std::vector<std::filesystem::path> dirs;
+
+    append_if_exists(dirs, macro_library_dir(repo_root));
+
+    const std::string raw_dirs = string_from_env_or_default("NUXSEC_MACRO_PATH", "");
+    const auto dir_entries = split_path_list(raw_dirs);
+    for (const auto &entry : dir_entries)
+    {
+        std::filesystem::path p(entry);
+        if (p.is_relative())
+        {
+            p = repo_root / p;
+        }
+        append_if_exists(dirs, p);
+    }
+
+    return dirs;
+}
+
 std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
                                          const std::string &macro_path)
 {
@@ -267,6 +409,17 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
         {
             return repo_candidate;
         }
+
+        const auto external_macro_dirs = macro_search_dirs(repo_root);
+        for (const auto &macro_dir : external_macro_dirs)
+        {
+            const auto custom_candidate = macro_dir / candidate;
+            if (std::filesystem::exists(custom_candidate))
+            {
+                return custom_candidate;
+            }
+        }
+
         const auto standalone_candidate = repo_root / "standalone" / "macro" / candidate;
         if (std::filesystem::exists(standalone_candidate))
         {
@@ -469,6 +622,28 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
         }
     };
 
+    const auto manifest_entries = read_macro_manifest(repo_root);
+    out << "Manifest macros:\n";
+    if (manifest_entries.empty())
+    {
+        out << "  (none)\n";
+    }
+    for (const auto &entry : manifest_entries)
+    {
+        out << "  " << entry.name << " -> " << entry.macro_path.string();
+        if (!entry.call.empty())
+        {
+            out << " [call: " << entry.call << "]";
+        }
+        out << "\n";
+    }
+
+    const auto external_dirs = macro_search_dirs(repo_root);
+    for (const auto &dir : external_dirs)
+    {
+        list_macros(dir, "External macros in", "");
+    }
+
     list_macros(repo_root / "plot" / "macro", "Plot macros in", "");
     list_macros(repo_root / "standalone" / "macro", "Standalone macros in", "");
     list_macros(repo_root / "evd" / "macro", "Event-display macros in", "");
@@ -514,13 +689,15 @@ int handle_macro_command(const std::vector<std::string> &args)
         const std::string macro_name = trim(rest[0]);
         const std::string call = (rest.size() == 2) ? trim(rest[1]) : "";
 
-        const auto macro_path = resolve_macro_path(repo_root, macro_name);
-        if (call.empty())
+        std::filesystem::path macro_path;
+        std::string resolved_call = call;
+        if (!resolve_manifest_macro(repo_root, macro_name, macro_path, resolved_call))
         {
-            return exec_root_macro(repo_root, macro_path, "");
+            macro_path = resolve_macro_path(repo_root, macro_name);
         }
-        return exec_root_macro(repo_root, macro_path, call);
+        return exec_root_macro(repo_root, macro_path, resolved_call);
     }
+
 
     if (rest.size() > 1)
     {
@@ -528,11 +705,11 @@ int handle_macro_command(const std::vector<std::string> &args)
     }
 
     const std::string macro_name = verb;
-    const std::string call = rest.empty() ? "" : trim(rest[0]);
-    const auto macro_path = resolve_macro_path(repo_root, macro_name);
-    if (call.empty())
+    std::string call = rest.empty() ? "" : trim(rest[0]);
+    std::filesystem::path macro_path;
+    if (!resolve_manifest_macro(repo_root, macro_name, macro_path, call))
     {
-        return exec_root_macro(repo_root, macro_path, "");
+        macro_path = resolve_macro_path(repo_root, macro_name);
     }
     return exec_root_macro(repo_root, macro_path, call);
 }

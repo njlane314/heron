@@ -2,3 +2,4 @@
 # columns: name<TAB>macro<TAB>call
 # example:
 # pr_eff	plotPREffVsNeutrinoKinematics.C	plotPREffVsNeutrinoKinematics()
+pr_eff_lambda_decay_distance	plotPREffLambdaSignalVsDecayDistance.C	plotPREffLambdaSignalVsDecayDistance()

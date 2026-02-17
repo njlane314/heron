@@ -22,6 +22,7 @@
 #include <utility>
 
 #include <ROOT/RConfig.h>
+#include <ROOT/RVec.hxx>
 #include <TCanvas.h>
 #include <TColor.h>
 #include <TH1F.h>
@@ -492,9 +493,9 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
             [&](int run,
                 int sub,
                 int evt,
-                const std::vector<float> &det_u,
-                const std::vector<float> &det_v,
-                const std::vector<float> &det_w)
+                const ROOT::VecOps::RVec<float> &det_u,
+                const ROOT::VecOps::RVec<float> &det_v,
+                const ROOT::VecOps::RVec<float> &det_w)
             {
                 std::clog << "[EventDisplay] Rendering detector images for "
                           << "run=" << run
@@ -502,7 +503,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
                           << " evt=" << evt
                           << '\n';
 
-                auto pick = [&](const std::string &plane) -> const std::vector<float> &
+                auto pick = [&](const std::string &plane) -> const ROOT::VecOps::RVec<float> &
                 {
                     if (plane == "U")
                         return det_u;
@@ -550,7 +551,8 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
                         ", Event " + std::to_string(evt);
 
                     EventDisplay::Spec spec{tag, title, Mode::Detector};
-                    EventDisplay ed(spec, plane_opts, img);
+                    EventDisplay::DetectorData det_data(img.begin(), img.end());
+                    EventDisplay ed(spec, plane_opts, std::move(det_data));
 
                     if (use_combined_pdf)
                     {
@@ -607,9 +609,9 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
             [&](int run,
                 int sub,
                 int evt,
-                const std::vector<int> &sem_u,
-                const std::vector<int> &sem_v,
-                const std::vector<int> &sem_w)
+                const ROOT::VecOps::RVec<int> &sem_u,
+                const ROOT::VecOps::RVec<int> &sem_v,
+                const ROOT::VecOps::RVec<int> &sem_w)
             {
                 std::clog << "[EventDisplay] Rendering semantic images for "
                           << "run=" << run
@@ -617,7 +619,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
                           << " evt=" << evt
                           << '\n';
 
-                auto pick = [&](const std::string &plane) -> const std::vector<int> &
+                auto pick = [&](const std::string &plane) -> const ROOT::VecOps::RVec<int> &
                 {
                     if (plane == "U")
                         return sem_u;
@@ -638,7 +640,8 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
                         ", Event " + std::to_string(evt);
 
                     EventDisplay::Spec spec{tag, title, Mode::Semantic};
-                    EventDisplay ed(spec, display_opts, img);
+                    EventDisplay::SemanticData sem_data(img.begin(), img.end());
+                    EventDisplay ed(spec, display_opts, std::move(sem_data));
 
                     if (use_combined_pdf)
                     {

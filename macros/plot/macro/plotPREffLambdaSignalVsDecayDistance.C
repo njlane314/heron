@@ -1,11 +1,10 @@
 // plot/macro/plotPREffLambdaSignalVsDecayDistance.C
 //
 // Plot pattern-recognition assignment efficiency for true #Lambda signal
-// versus true decay distance from the neutrino vertex, after trigger and
-// neutrino-slice selection.
+// versus true decay distance from the neutrino vertex, after neutrino-slice selection.
 //
 // Default event-level preselection:
-//   sel_triggered_slice
+//   sel_slice
 //
 // Pattern-recognition efficiency definition (default):
 //   - Denominator (eligible truth events):
@@ -86,7 +85,7 @@ int require_columns(const std::unordered_set<std::string> &columns,
 
 int plotPREffLambdaSignalVsDecayDistance(
     const std::string &samples_tsv = "",
-    const std::string &extra_sel = "sel_triggered_slice",
+    const std::string &extra_sel = "sel_slice",
     const std::string &pass_sel =
         "pr_valid_assignment"
         " && pr_mu_completeness>0.1 && pr_mu_purity>0.5"
@@ -145,7 +144,7 @@ int plotPREffLambdaSignalVsDecayDistance(
 
     const std::vector<std::string> required_cols = {
         "sample_id",
-        "sel_triggered_slice",
+        "sel_slice",
         "is_nu_mu_cc",
         "nu_vtx_in_fv",
         "lam_pdg",
@@ -185,5 +184,5 @@ int plotPREffLambdaSignalVsDecayDistance(
     if (rc != 0)
         return rc;
 
-    return eff.draw_and_save("pr_eff_lambda_signal_vs_decay_distance_post_triggered_slice");
+    return eff.draw_and_save("pr_eff_lambda_signal_vs_decay_distance_post_neutrino_slice");
 }

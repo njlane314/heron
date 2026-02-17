@@ -162,7 +162,7 @@ int plotPREffLambdaSignalVsDecayDistance(
     if (require_columns(columns, required_cols, "selections and plotting") != 0)
         return 1;
 
-    TH1DModel spec = make_spec("lam_decay_sep", 30, 0.0, 200.0, "");
+    TH1DModel spec = make_spec("lam_decay_sep", 30, 0.0, 20.0, "");
 
     EfficiencyPlot::Config cfg;
     cfg.x_title = "#Lambda decay sep. to #nu vtx [cm]";

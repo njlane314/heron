@@ -517,14 +517,24 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
                     const auto &img = pick(plane);
 
                     auto plane_opts = display_opts;
+                    float raw_min = 0.0f;
+                    float raw_max = 0.0f;
+                    float q02 = 0.0f;
+                    float q999 = 0.0f;
+                    std::size_t positive_pixels = 0;
                     if (!img.empty())
                     {
+                        const auto raw_mm = std::minmax_element(img.begin(), img.end());
+                        raw_min = *raw_mm.first;
+                        raw_max = *raw_mm.second;
+
                         std::vector<float> vals;
                         vals.reserve(img.size());
                         for (float v : img)
                             if (v > 0.0f)
                                 vals.push_back(v);
 
+                        positive_pixels = vals.size();
                         if (!vals.empty())
                         {
                             std::sort(vals.begin(), vals.end());
@@ -535,15 +545,30 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
                                 return vals[idx];
                             };
 
-                            const float min_pos = q(0.02);
+                            q02 = q(0.02);
                             // Keep a robust upper bound while reducing colour saturation
                             // on bright detector features.
-                            const float max_val = q(0.999);
+                            q999 = q(0.999);
 
-                            plane_opts.det_min = std::max(min_pos, 1e-4f);
-                            plane_opts.det_max = max_val;
+                            plane_opts.det_min = std::max(q02, 1e-4f);
+                            plane_opts.det_max = q999;
                         }
                     }
+
+                    std::clog << "[EventDisplay] Plane range summary "
+                              << "run=" << run
+                              << " sub=" << sub
+                              << " evt=" << evt
+                              << " plane=" << plane
+                              << " raw_min=" << raw_min
+                              << " raw_max=" << raw_max
+                              << " positive_pixels=" << positive_pixels
+                              << " q02=" << q02
+                              << " q999=" << q999
+                              << " display_min=" << plane_opts.det_min
+                              << " display_max=" << plane_opts.det_max
+                              << '\n';
+
                     const std::string tag = format_tag(opt.file_pattern, plane, run, sub, evt);
                     const std::string title =
                         "Detector Image, Plane " + plane +

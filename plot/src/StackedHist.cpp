@@ -510,6 +510,272 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
     disable_primitive_ownership(p_legend);
 }
 
+void StackedHist::build_histograms()
+{
+    const auto axes = spec_.axis_title();
+    stack_ = std::make_unique<THStack>((spec_.id + "_stack").c_str(), axes.c_str());
+    if (stack_->GetHists())
+    {
+        stack_->GetHists()->SetOwner(kFALSE);
+    }
+
+    mc_ch_hists_.clear();
+    mc_total_.reset();
+    mc_total_stat_.reset();
+    data_hist_.reset();
+    mc_unc_hist_.reset();
+    sig_hist_.reset();
+    ratio_hist_.reset();
+    ratio_band_.reset();
+    signal_events_ = 0.0;
+    signal_scale_ = 1.0;
+    chan_event_yields_.clear();
+    total_mc_events_ = 0.0;
+    density_mode_ = false;
+
+    std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
+    const bool particle_level = opt_.particle_level;
+    const auto &channels = particle_level ? ParticleChannels::keys() : Channels::mc_keys();
+    const std::string pdg_branch = particle_level
+                                       ? (opt_.particle_pdg_branch.empty() ? "backtracked_pdg_codes" : opt_.particle_pdg_branch)
+                                       : std::string{};
+    const std::string channel_column = opt_.channel_column.empty() ? "analysis_channels" : opt_.channel_column;
+
+    for (size_t ie = 0; ie < mc_.size(); ++ie)
+    {
+        const Entry *e = mc_[ie];
+        if (!e)
+        {
+            continue;
+        }
+
+        auto n0 = apply(e->rnode(), spec_.sel);
+        auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
+        const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
+
+        if (!particle_level)
+        {
+            for (int ch : channels)
+            {
+                auto nf = n.Filter([ch](int c) { return c == ch; }, {channel_column});
+                auto h = nf.Histo1D(spec_.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
+                booked[ch].push_back(h);
+            }
+            continue;
+        }
+
+        const std::string val_d = "_nx_val_d_";
+        const std::string val_expr = "ROOT::VecOps::RVec<double>(" + var + ".begin(), " + var + ".end())";
+        auto nvec = n.Define(val_d, val_expr);
+
+        for (int ch : channels)
+        {
+            const std::string sel = "_nx_part_sel_" + std::to_string(ch) + "_src" + std::to_string(ie);
+            auto nsel = nvec.Define(
+                sel,
+                [ch, drop_nan = opt_.particle_drop_nan](const ROOT::VecOps::RVec<double> &values,
+                                                        const ROOT::VecOps::RVec<int> &pdg_codes) {
+                    return select_particle_values(values, pdg_codes, ch, drop_nan);
+                },
+                std::vector<std::string>{val_d, pdg_branch});
+
+            auto h = nsel.Histo1D(spec_.model("_mc_pdg" + std::to_string(ch) + "_src" + std::to_string(ie)),
+                                  sel, spec_.weight);
+            booked[ch].push_back(h);
+        }
+    }
+
+    std::map<int, std::unique_ptr<TH1D>> sum_by_channel;
+    for (int ch : channels)
+    {
+        auto it = booked.find(ch);
+        if (it == booked.end() || it->second.empty())
+        {
+            continue;
+        }
+
+        std::unique_ptr<TH1D> sum;
+        for (auto &rr : it->second)
+        {
+            const TH1D &h = rr.GetValue();
+            if (!sum)
+            {
+                sum.reset(static_cast<TH1D *>(h.Clone((spec_.id + "_mc_sum_ch" + std::to_string(ch)).c_str())));
+                sum->SetDirectory(nullptr);
+            }
+            else
+            {
+                sum->Add(&h);
+            }
+        }
+
+        if (sum)
+        {
+            sum_by_channel.emplace(ch, std::move(sum));
+        }
+    }
+
+    std::vector<std::pair<int, double>> yields;
+    yields.reserve(sum_by_channel.size());
+    for (auto &kv : sum_by_channel)
+    {
+        if (!kv.second)
+        {
+            continue;
+        }
+        yields.emplace_back(kv.first, kv.second->Integral());
+    }
+
+    std::stable_sort(yields.begin(), yields.end(), [](const auto &a, const auto &b) {
+        if (a.second == b.second)
+        {
+            return a.first < b.first;
+        }
+        return a.second > b.second;
+    });
+
+    chan_order_.clear();
+    chan_event_yields_.clear();
+    for (auto &cy : yields)
+    {
+        const int ch = cy.first;
+        auto it = sum_by_channel.find(ch);
+        if (it == sum_by_channel.end() || !it->second)
+        {
+            continue;
+        }
+
+        auto &sum = it->second;
+        if (particle_level)
+        {
+            sum->SetFillColor(ParticleChannels::colour(ch));
+            sum->SetFillStyle(ParticleChannels::fill_style(ch));
+        }
+        else
+        {
+            sum->SetFillColor(Channels::colour(ch));
+            sum->SetFillStyle(Channels::fill_style(ch));
+        }
+        sum->SetLineColor(kBlack);
+        sum->SetLineWidth(1);
+        stack_->Add(sum.get(), "HIST");
+        if (auto *hists = stack_->GetHists())
+        {
+            hists->SetOwner(kFALSE);
+        }
+        mc_ch_hists_.push_back(std::move(sum));
+        chan_order_.push_back(ch);
+        chan_event_yields_.push_back(cy.second);
+    }
+
+    for (auto &uptr : mc_ch_hists_)
+    {
+        if (!mc_total_)
+        {
+            mc_total_.reset(static_cast<TH1D *>(uptr->Clone((spec_.id + "_mc_total").c_str())));
+            mc_total_->SetDirectory(nullptr);
+        }
+        else
+        {
+            mc_total_->Add(uptr.get());
+        }
+    }
+
+    total_mc_events_ = mc_total_ ? mc_total_->Integral() : 0.0;
+
+    if (!data_.empty())
+    {
+        std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
+        for (size_t ie = 0; ie < data_.size(); ++ie)
+        {
+            const Entry *e = data_[ie];
+            if (!e)
+            {
+                continue;
+            }
+            auto n0 = apply(e->rnode(), spec_.sel);
+            auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
+            const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
+            parts.push_back(n.Histo1D(spec_.model("_data_src" + std::to_string(ie)), var));
+        }
+
+        for (auto &rr : parts)
+        {
+            const TH1D &h = rr.GetValue();
+            if (!data_hist_)
+            {
+                data_hist_.reset(static_cast<TH1D *>(h.Clone((spec_.id + "_data").c_str())));
+                data_hist_->SetDirectory(nullptr);
+            }
+            else
+            {
+                data_hist_->Add(&h);
+            }
+        }
+
+        if (data_hist_)
+        {
+            data_hist_->SetMarkerStyle(kFullCircle);
+            data_hist_->SetMarkerSize(0.9);
+            data_hist_->SetLineColor(kBlack);
+            data_hist_->SetFillStyle(0);
+        }
+    }
+
+    if (opt_.overlay_signal && !opt_.signal_channels.empty() && !mc_ch_hists_.empty())
+    {
+        const double total_sum = mc_total_ ? integral_in_visible_range(*mc_total_, spec_.xmin, spec_.xmax) : 0.0;
+        auto sig = std::make_unique<TH1D>(*mc_ch_hists_.front());
+        sig->Reset();
+        for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
+        {
+            const int ch = chan_order_.at(i);
+            if (std::find(opt_.signal_channels.begin(), opt_.signal_channels.end(), ch) != opt_.signal_channels.end())
+            {
+                sig->Add(mc_ch_hists_[i].get());
+            }
+        }
+
+        signal_events_ = integral_in_visible_range(*sig, spec_.xmin, spec_.xmax);
+        if (signal_events_ > 0.0 && total_sum > 0.0)
+        {
+            signal_scale_ = total_sum / signal_events_;
+            sig->Scale(signal_scale_);
+        }
+        sig->SetLineColor(kGreen + 2);
+        sig->SetLineStyle(kDashed);
+        sig->SetLineWidth(2);
+        sig->SetFillStyle(0);
+        sig_hist_ = std::move(sig);
+    }
+
+    if (opt_.normalise_by_bin_width)
+    {
+        auto scale_width = [](TH1D &h) { h.Scale(1.0, "width"); };
+
+        for (auto &h : mc_ch_hists_)
+        {
+            if (h)
+            {
+                scale_width(*h);
+            }
+        }
+        if (mc_total_)
+        {
+            scale_width(*mc_total_);
+        }
+        if (data_hist_)
+        {
+            scale_width(*data_hist_);
+        }
+        if (sig_hist_)
+        {
+            scale_width(*sig_hist_);
+        }
+        density_mode_ = true;
+    }
+}
+
 void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
 {
     if (!p_main)

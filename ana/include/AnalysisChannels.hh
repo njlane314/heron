@@ -8,6 +8,7 @@
 #ifndef HERON_ANA_ANALYSIS_CHANNELS_H
 #define HERON_ANA_ANALYSIS_CHANNELS_H
 
+#include <cmath>
 #include <cstdlib>
 
 /** \brief Channel definitions for reconstruction-level analysis categorisation. */
@@ -83,6 +84,34 @@ class AnalysisChannels
     static int to_int(AnalysisChannel channel)
     {
         return static_cast<int>(channel);
+    }
+
+    static bool is_signal(
+        bool is_nu_mu_cc,
+        int ccnc,
+        bool in_fiducial,
+        float mu_p,
+        float p_p,
+        float pi_p,
+        float lam_decay_sep)
+    {
+        const float min_mu_p = 0.10f;
+        const float min_p_p = 0.30f;
+        const float min_pi_p = 0.10f;
+        const float min_lam_decay_sep = 0.50f;
+
+        if (!is_nu_mu_cc)
+            return false;
+        if (ccnc != 0)
+            return false;
+        if (!in_fiducial)
+            return false;
+        if (!std::isfinite(mu_p) || !std::isfinite(p_p) || !std::isfinite(pi_p) ||
+            !std::isfinite(lam_decay_sep))
+            return false;
+        if (mu_p < min_mu_p || p_p < min_p_p || pi_p < min_pi_p)
+            return false;
+        return lam_decay_sep >= min_lam_decay_sep;
     }
 };
 

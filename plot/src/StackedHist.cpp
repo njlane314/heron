@@ -1139,6 +1139,15 @@ void StackedHist::draw_and_save(const std::string &image_format)
     stack_debug_log("SaveAs start: plot='" + plot_name_ + "', file='" + out + "'");
     canvas.SaveAs(out.c_str());
     stack_debug_log("SaveAs done: plot='" + plot_name_ + "'");
+
+    // The stacked histograms are owned by this StackedHist instance (unique_ptr).
+    // Prevent TCanvas from attempting to delete drawn pad primitives during
+    // teardown, which can otherwise double-delete histogram objects after SaveAs.
+    auto *canvas_primitives = canvas.GetListOfPrimitives();
+    if (canvas_primitives)
+    {
+        canvas_primitives->SetOwner(kFALSE);
+    }
 }
 
 } // namespace nu

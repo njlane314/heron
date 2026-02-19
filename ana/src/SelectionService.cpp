@@ -84,7 +84,7 @@ inline ROOT::RDF::RNode filter_on(ROOT::RDF::RNode node, const char *col)
 
 ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec)
 {
-    node = decorate(node, p, rec);
+    node = decorate(node);
     switch (p)
     {
     case Preset::Empty:
@@ -102,7 +102,7 @@ ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, const 
     }
 }
 
-ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec)
+ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node)
 {
     std::vector<std::string> names = node.GetColumnNames();
     auto has = [&](const std::string &name) {
@@ -116,73 +116,58 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
         names.emplace_back(name);
     };
 
-    if (p == Preset::Empty)
-        return node;
-
-    if (p == Preset::Trigger || p == Preset::Slice || p == Preset::Fiducial || p == Preset::Muon)
-    {
-        if (has("beam_mode") && has("run") && has("software_trigger") && has("software_trigger_pre") && has("software_trigger_post"))
-        {
-            define_if_missing(
-                "sel_trigger",
-                [](int beam_mode, int run, int sw, int sw_pre, int sw_post) {
-                    const int numi_beam_mode = static_cast<int>(nu::SampleIO::BeamMode::kNuMI);
-                    if (beam_mode == numi_beam_mode)
-                    {
-                        constexpr int numi_run_boundary = 16880;
-                        if (run < numi_run_boundary)
-                            return sw_pre > 0;
-                        return sw_post > 0;
-                    }
-                    return sw > 0;
-                },
-                {"beam_mode", "run", "software_trigger", "software_trigger_pre", "software_trigger_post"});
-        }
-        else
-        {
-            define_if_missing("sel_trigger", [](int sw) { return sw > 0; }, {"software_trigger"});
-        }
-    }
-
-    if (p == Preset::Slice || p == Preset::Fiducial || p == Preset::Muon)
+    if (has("beam_mode") && has("run") && has("software_trigger") && has("software_trigger_pre") && has("software_trigger_post"))
     {
         define_if_missing(
-            "sel_slice",
-            [](int ns, float topo) { return passes_slice(ns, topo); },
-            {"num_slices", "topological_score"});
-    }
-
-    if (p == Preset::Fiducial || p == Preset::Muon)
-    {
-        define_if_missing(
-            "sel_fiducial",
-            [](bool slice, bool fv) { return slice && fv; },
-            {"sel_slice", "in_reco_fiducial"});
-        define_if_missing(
-            "sel_topology",
-            [](bool fid) { return fid; },
-            {"sel_fiducial"});
-    }
-
-    if (p == Preset::Muon)
-    {
-        define_if_missing(
-            "sel_muon",
-            [](bool topo,
-               const ROOT::RVec<float> &scores,
-               const ROOT::RVec<float> &lengths,
-               const ROOT::RVec<float> &distances,
-               const ROOT::RVec<unsigned> &generations) {
-                if (!topo)
-                    return false;
-                return passes_muon(scores, lengths, distances, generations);
+            "sel_trigger",
+            [](int beam_mode, int run, int sw, int sw_pre, int sw_post) {
+                const int numi_beam_mode = static_cast<int>(nu::SampleIO::BeamMode::kNuMI);
+                if (beam_mode == numi_beam_mode)
+                {
+                    constexpr int numi_run_boundary = 16880;
+                    if (run < numi_run_boundary)
+                        return sw_pre > 0;
+                    return sw_post > 0;
+                }
+                return sw > 0;
             },
-            {"sel_topology",
-             "track_shower_scores",
-             "track_length",
-             "track_distance_to_vertex",
-             "pfp_generations"});
+            {"beam_mode", "run", "software_trigger", "software_trigger_pre", "software_trigger_post"});
     }
+    else
+    {
+        define_if_missing("sel_trigger", [](int sw) { return sw > 0; }, {"software_trigger"});
+    }
+
+    define_if_missing(
+        "sel_slice",
+        [](int ns, float topo) { return passes_slice(ns, topo); },
+        {"num_slices", "topological_score"});
+
+    define_if_missing(
+        "sel_fiducial",
+        [](bool slice, bool fv) { return slice && fv; },
+        {"sel_slice", "in_reco_fiducial"});
+    define_if_missing(
+        "sel_topology",
+        [](bool fid) { return fid; },
+        {"sel_fiducial"});
+
+    define_if_missing(
+        "sel_muon",
+        [](bool topo,
+           const ROOT::RVec<float> &scores,
+           const ROOT::RVec<float> &lengths,
+           const ROOT::RVec<float> &distances,
+           const ROOT::RVec<unsigned> &generations) {
+            if (!topo)
+                return false;
+            return passes_muon(scores, lengths, distances, generations);
+        },
+        {"sel_topology",
+         "track_shower_scores",
+         "track_length",
+         "track_distance_to_vertex",
+         "pfp_generations"});
 
     return node;
 }

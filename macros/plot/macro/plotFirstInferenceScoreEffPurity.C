@@ -28,6 +28,7 @@
 
 #include "EventListIO.hh"
 #include "PlotEnv.hh"
+#include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 
 using namespace nu;

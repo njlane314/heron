@@ -9,10 +9,6 @@ auto	sel_slice
 auto	sel_fiducial
 auto	sel_topology
 auto	sel_muon
-auto	sel_inclusive_mu_cc
-auto	sel_reco_fv
-auto	sel_triggered_slice
-auto	sel_triggered_muon
 auto	optical_filter_pe_beam
 auto	optical_filter_pe_veto
 auto	software_trigger

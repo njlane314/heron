@@ -58,12 +58,13 @@ pipeline. The unified ``heron`` CLI lives here and dispatches to the art,
 sample, event, and macro drivers. Helper utilities such as logging and status
 monitoring also live in this layer.
 
-cols/ -- column schema references
----------------------------------
+apps/config/ -- event column schema references
+----------------------------------------
 
-``cols/`` contains TSV references used by the event builder to define output
-schemas. The ``cols/event_columns.tsv`` file enumerates event-level columns and
-is consumed by the CLI when you override the compiled column list.
+``apps/config/`` stores the default event column TSV consumed by the event
+builder. The ``apps/config/event_columns.tsv`` file enumerates event-level
+columns and is used automatically unless you pass a custom TSV path to the
+CLI.
 
 Putting it together
 -------------------

@@ -109,7 +109,6 @@ wrapper script:
 - `manifest.tsv` inside `HERON_MACRO_LIBRARY_DIR` can register logical macro names as `name<TAB>macro[<TAB>call]`.
 - `HERON_REPO_ROOT` can be set to override the repo discovery used by the CLI.
 - `HERON_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
-- `make_event_list.C` defaults its output file to `/exp/uboone/data/users/$USER/event_list_<analysis>.root`; `USER` must be set unless `out_root` is provided.
 
 ## Input Files
 
@@ -205,11 +204,11 @@ heron --set template event scratch/out/template/event/events.root
 ```
 
 To override the event output schema, pass a columns TSV as the final positional
-argument. The TSV expects `type` and `name` columns (see `cols/event_columns.tsv`).
+argument. The TSV expects `type` and `name` columns (see `apps/config/event_columns.tsv`).
 If you only want to provide columns, pass `true` as the selection placeholder.
 
 ```bash
-heron --set template event scratch/out/template/event/events.root true cols/event_columns.tsv
+heron --set template event scratch/out/template/event/events.root true apps/config/event_columns.tsv
 ```
 
 Selection strings can reference selection columns derived by the SelectionService.

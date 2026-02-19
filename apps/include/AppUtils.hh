@@ -87,7 +87,7 @@ inline std::string workspace_set()
     {
         return std::string(value);
     }
-    return "template";
+    return "out";
 }
 
 inline std::filesystem::path stage_output_dir(const char *override_env, const std::string &stage)

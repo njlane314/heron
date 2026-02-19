@@ -31,7 +31,7 @@ std::string env_or(const char *key, const std::string &fallback)
 std::string default_samples_tsv()
 {
     const std::string repo_root = env_or("HERON_REPO_ROOT", ".");
-    const std::string set_name = env_or("HERON_SET", "template");
+    const std::string set_name = env_or("HERON_SET", "out");
     const std::string out_base = env_or("HERON_OUT_BASE", repo_root + "/scratch/out");
     return out_base + "/" + set_name + "/sample/samples.tsv";
 }

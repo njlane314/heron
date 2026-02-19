@@ -31,7 +31,7 @@ apps/  CLI entrypoints that orchestrate the pipeline
 - `scratch/out/<set>/event/` stores event-level ROOT outputs produced by `heron event`.
 - `scratch/plot/<set>/` stores plot outputs produced by `heron macro` (configurable via `HERON_PLOT_DIR`).
 
-The `<set>` segment defaults to `template` and is controlled by `HERON_SET` or `heron --set`.
+The `<set>` segment defaults to `out` and is controlled by `HERON_SET` or `heron --set`.
 
 ## Requirements
 
@@ -74,7 +74,7 @@ Commands:
   env         Print environment exports for a workspace
 
 Global options:
-  -S, --set   Workspace selector (default: template)
+  -S, --set   Workspace selector (default: out)
 
 Run 'heron <command> --help' for command-specific usage.
 ```
@@ -98,7 +98,7 @@ wrapper script:
 
 ### Environment Variables
 
-- `HERON_SET` selects the active workspace (default: `template`).
+- `HERON_SET` selects the active workspace (default: `out`).
 - `HERON_OUT_BASE` overrides the base output directory; if unset, `HERON_OUTPUT_DIR` is used before falling back to `<repo>/scratch/out`.
 - Temporary snapshot staging is written to `/exp/uboone/data/users/$USER/staging`; `USER` must be set.
 - `HERON_PLOT_BASE` overrides the plot base directory (default: `<repo>/scratch/plot`).

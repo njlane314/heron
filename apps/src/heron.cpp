@@ -40,7 +40,7 @@ const char *kUsageMacro =
     "  HERON_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
     "  HERON_PLOT_DIR     Output directory override (default: HERON_PLOT_BASE/<set>)\n"
     "  HERON_PLOT_FORMAT  Output extension (default: pdf)\n"
-    "  HERON_SET          Workspace selector (default: template)\n";
+    "  HERON_SET          Workspace selector (default: out)\n";
 
 const char *kMainBanner =
     "███╗   ██╗██╗   ██╗██╗  ██╗███████╗███████╗ ██████╗\n"
@@ -116,7 +116,7 @@ void print_main_help(std::ostream &out)
         << "  paths       Print resolved workspace paths\n"
         << "  env         Print environment exports for a workspace\n"
         << "\nGlobal options:\n"
-        << "  -S, --set   Workspace selector (default: template)\n"
+        << "  -S, --set   Workspace selector (default: out)\n"
         << "\nRun 'heron <command> --help' for command-specific usage.\n";
 }
 

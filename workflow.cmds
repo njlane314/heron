@@ -23,12 +23,12 @@ heron sample "beam:${HERON_OUTPUT_DIR}/sample-lists/numi_fhc_run1_sample_beam.li
 heron sample "strangeness:${HERON_OUTPUT_DIR}/sample-lists/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_inclusive_mu_cc apps/config/event_columns.tsv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_inclusive_mu_cc apps/config/event_columns.tsv
 
 
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root true apps/config/event_columns.tsv
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_muon
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_inclusive_mu_cc
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_triggered_muon
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_triggered_slice
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_reco_fv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root true apps/config/event_columns.tsv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_muon
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_inclusive_mu_cc
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_triggered_muon
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_triggered_slice
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_reco_fv

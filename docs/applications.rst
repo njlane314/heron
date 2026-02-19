@@ -41,5 +41,5 @@ A typical workflow is:
 
 Each application writes its outputs under ``scratch/out/<set>`` by default, and
 plotting artefacts are written under ``scratch/plot/<set>`` unless overridden by
-environment variables. The ``<set>`` segment defaults to ``template`` and is
+environment variables. The ``<set>`` segment defaults to ``out`` and is
 controlled by ``HERON_SET`` or ``heron --set``.

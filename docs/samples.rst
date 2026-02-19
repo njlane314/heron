@@ -38,7 +38,7 @@ are TSV files with a header row and per-sample lines such as:
    nue_run1\tdata\tbeam\tscratch/out/template/sample/sample_root_nue_run1.root
 
 Applications that build event outputs read this list to locate each sample
-ROOT file and its metadata. The ``<set>`` segment defaults to ``template`` and
+ROOT file and its metadata. The ``<set>`` segment defaults to ``out`` and
 is controlled by ``HERON_SET`` or ``heron --set``.
 
 Normalisation inputs

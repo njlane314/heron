@@ -25,23 +25,35 @@ class AnalysisChannels
         MuCCPi0OrGamma = 12, ///< Muon-neutrino charged-current with π0 or photon activity.
         MuCCNpi = 13,        ///< Muon-neutrino charged-current with more than one pion.
         NC = 14,             ///< Neutral-current interaction in fiducial volume.
-        CCS1 = 15,           ///< Charged-current interaction with exactly one strange hadron.
-        CCSgt1 = 16,         ///< Charged-current interaction with multiple strange hadrons.
+        SignalLambdaQE = 15,   ///< Signal interaction in Lambda quasi-elastic mode.
+        SignalLambdaAssociated = 16, ///< Signal interaction in associated Lambda production mode.
         ECCC = 17,           ///< Electron-neutrino charged-current interaction.
         MuCCOther = 18,      ///< Other muon-neutrino charged-current topologies.
         DataInclusive = 99   ///< Inclusive data channel (non-MC).
     };
 
+    static bool is_lambda_associated_mode(int interaction_mode)
+    {
+        // Based on simb::int_type_ / Nuance-offset values carried in MCNeutrino::Mode().
+        return interaction_mode == 1073 || // kResCCNuKaonPlusLambda0
+               interaction_mode == 1076;   // kResCCNuBarKaon0Lambda0
+    }
+
     static AnalysisChannel classify_analysis_channel(
         bool in_fiducial,
         int nu_pdg,
         int ccnc,
-        int count_strange,
+        int interaction_mode,
         int n_p,
         int n_pi_minus,
         int n_pi_plus,
         int n_pi0,
-        int n_gamma)
+        int n_gamma,
+        bool is_nu_mu_cc,
+        float mu_p,
+        float p_p,
+        float pi_p,
+        float lam_decay_sep)
     {
         const int npi = n_pi_minus + n_pi_plus;
 
@@ -55,11 +67,11 @@ class AnalysisChannels
         if (ccnc == 1)
             return AnalysisChannel::NC;
 
-        if (ccnc == 0 && count_strange > 0)
+        if (is_signal(is_nu_mu_cc, ccnc, in_fiducial, mu_p, p_p, pi_p, lam_decay_sep))
         {
-            if (count_strange == 1)
-                return AnalysisChannel::CCS1;
-            return AnalysisChannel::CCSgt1;
+            if (is_lambda_associated_mode(interaction_mode))
+                return AnalysisChannel::SignalLambdaAssociated;
+            return AnalysisChannel::SignalLambdaQE;
         }
 
         if (std::abs(nu_pdg) == 12 && ccnc == 0)

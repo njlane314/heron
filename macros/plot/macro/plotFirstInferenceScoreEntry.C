@@ -177,15 +177,15 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
                                        },
                                        {"inf_score_0"});
 
-    if (rdf.HasColumn("is_signal"))
+    if (rdf.HasColumn("analysis_channels"))
     {
-        base = base.Define("is_signal_label", [](bool is_signal) { return is_signal ? 1 : 0; }, {"is_signal"});
+        base = base.Define("is_signal_label",
+                           [](int analysis_channel) { return (analysis_channel == 15 || analysis_channel == 16) ? 1 : 0; },
+                           {"analysis_channels"});
     }
     else
     {
-        base = base.Define("is_signal_label",
-                           [](int analysis_channel) { return analysis_channel == 15 ? 1 : 0; },
-                           {"analysis_channels"});
+        base = base.Define("is_signal_label", [](bool is_signal) { return is_signal ? 1 : 0; }, {"is_signal"});
     }
 
     ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext);
@@ -242,7 +242,7 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
     opt.overlay_signal = true;
     opt.show_ratio = include_data;
     opt.show_ratio_band = include_data;
-    // Use the standard signal-channel definition (#nu_{#mu}CC single+multi-strange).
+    // Use the standard signal-channel definition.
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events";
     opt.run_numbers = {"1"};

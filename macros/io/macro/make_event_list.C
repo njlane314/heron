@@ -111,6 +111,7 @@ static std::vector<std::string> default_event_columns()
         "nu_pdg",
         "int_ccnc",
         "int_mode",
+        "interaction_mode",
         "int_type",
         "is_nu_mu_cc",
         "nu_vtx_in_fv",

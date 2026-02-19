@@ -106,22 +106,71 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
             [](int strange) { return strange > 0; },
             {"count_strange"});
 
+        {
+            const auto mc_cnames = node.GetColumnNames();
+            auto has_mc = [&](const std::string &name) {
+                return std::find(mc_cnames.begin(), mc_cnames.end(), name) != mc_cnames.end();
+            };
+            if (!has_mc("interaction_mode"))
+            {
+                if (has_mc("int_mode"))
+                {
+                    node = node.Define("interaction_mode", [](int m) { return m; }, {"int_mode"});
+                }
+                else
+                {
+                    node = node.Define("interaction_mode", [] { return -1; });
+                }
+            }
+        }
+
         node = node.Define(
             "analysis_channels",
-            [](bool in_fiducial, int nu_pdg, int ccnc, int count_strange, int n_p, int n_pi_minus, int n_pi_plus, int n_pi0, int n_gamma) {
+            [](bool in_fiducial,
+               int nu_pdg,
+               int ccnc,
+               int interaction_mode,
+               int n_p,
+               int n_pi_minus,
+               int n_pi_plus,
+               int n_pi0,
+               int n_gamma,
+               bool is_nu_mu_cc,
+               float mu_p,
+               float p_p,
+               float pi_p,
+               float lam_decay_sep) {
                 return AnalysisChannels::to_int(
                     AnalysisChannels::classify_analysis_channel(
                         in_fiducial,
                         nu_pdg,
                         ccnc,
-                        count_strange,
+                        interaction_mode,
                         n_p,
                         n_pi_minus,
                         n_pi_plus,
                         n_pi0,
-                        n_gamma));
+                        n_gamma,
+                        is_nu_mu_cc,
+                        mu_p,
+                        p_p,
+                        pi_p,
+                        lam_decay_sep));
             },
-            {"in_fiducial", "nu_pdg", "int_ccnc", "count_strange", "n_p", "n_pi_minus", "n_pi_plus", "n_pi0", "n_gamma"});
+            {"in_fiducial",
+             "nu_pdg",
+             "int_ccnc",
+             "interaction_mode",
+             "n_p",
+             "n_pi_minus",
+             "n_pi_plus",
+             "n_pi0",
+             "n_gamma",
+             "is_nu_mu_cc",
+             "mu_p",
+             "p_p",
+             "pi_p",
+             "lam_decay_sep"});
 
 
         node = node.Define(
@@ -151,6 +200,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         node = node.Define("in_fiducial", [] { return false; });
         node = node.Define("is_strange", [] { return false; });
         node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
+        node = node.Define("interaction_mode", [] { return -1; });
         node = node.Define("is_signal", [] { return false; });
         node = node.Define("recognised_signal", [] { return false; });
     }

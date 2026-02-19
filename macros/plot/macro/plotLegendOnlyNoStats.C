@@ -29,20 +29,20 @@ struct LegendEntry
 std::vector<LegendEntry> default_entries()
 {
     std::vector<LegendEntry> entries;
-    entries.push_back({"Out FV", kYellow - 7, 1001});
-    entries.push_back({"#nu_{#mu}CC #pi^{0}/#gamma#gamma", kOrange, 1001});
-    entries.push_back({"#nu_{#mu}CC 0p1#pi^{#pm}", kRed - 7, 1001});
-    entries.push_back({"#nu_{#mu}CC Np0#pi", kRed, 1001});
-    entries.push_back({"#nu_{#mu}CC multi-#pi^{#pm}", kViolet, 1001});
-    entries.push_back({"#nu_{x}NC", kBlue, 1001});
-    entries.push_back({"#nu_{#mu}CC multi-strange", kGreen + 2, 1001});
-    entries.push_back({"Cosmic", kTeal + 2, 3345});
-    entries.push_back({"#nu_{#mu}CC Other", kCyan + 2, 1001});
+    entries.push_back({"Out FV", TColor::GetColor("#ff9f1c"), 1001});
+    entries.push_back({"#nu_{#mu}CC #pi^{0}/#gamma#gamma", TColor::GetColor("#ff006e"), 1001});
+    entries.push_back({"#nu_{#mu}CC 0p1#pi^{#pm}", TColor::GetColor("#8338ec"), 1001});
+    entries.push_back({"#nu_{#mu}CC Np0#pi", TColor::GetColor("#3a86ff"), 1001});
+    entries.push_back({"#nu_{#mu}CC multi-#pi^{#pm}", TColor::GetColor("#5e60ce"), 1001});
+    entries.push_back({"#nu_{x}NC", TColor::GetColor("#4361ee"), 1001});
+    entries.push_back({"Cosmic", TColor::GetColor("#1f2a44"), 3345});
+    entries.push_back({"#nu_{#mu}CC Other", TColor::GetColor("#118ab2"), 1001});
     LegendEntry dirt_entry = {"Dirt", kYellow, 1001};
-    dirt_entry.colour = TColor::GetColor("#f6d32d");
+    dirt_entry.colour = TColor::GetColor("#ffb703");
     entries.push_back(dirt_entry);
-    entries.push_back({"Other", kCyan, 1001});
-    entries.push_back({"#nu_{#mu}CC single-strange", kSpring + 5, 1001});
+    entries.push_back({"Other", TColor::GetColor("#ff3d00"), 1001});
+    entries.push_back({"Signal #Lambda (QE-like)", TColor::GetColor("#39ff14"), 1001});
+    entries.push_back({"Signal #Lambda + K assoc.", TColor::GetColor("#00e676"), 1001});
     return entries;
 }
 } // namespace

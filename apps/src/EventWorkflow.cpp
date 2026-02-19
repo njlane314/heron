@@ -19,6 +19,34 @@
 #include "RDataFrameService.hh"
 #include "StatusMonitor.hh"
 
+namespace
+{
+std::string resolve_sample_output_path(const std::string &configured_output_path,
+                                       const std::string &log_prefix)
+{
+    const std::filesystem::path configured_path(configured_output_path);
+    if (std::filesystem::exists(configured_path))
+    {
+        return configured_output_path;
+    }
+
+    const std::filesystem::path fallback_path =
+        stage_output_dir("HERON_SAMPLE_DIR", "sample") / configured_path.filename();
+    if (std::filesystem::exists(fallback_path))
+    {
+        log_warning(
+            log_prefix,
+            "action=sample_resolve status=fallback configured=" + configured_output_path +
+                " resolved=" + fallback_path.string());
+        return fallback_path.string();
+    }
+
+    throw std::runtime_error(
+        "Sample output file not found: " + configured_output_path +
+        ". Checked configured path and fallback path: " + fallback_path.string());
+}
+} // namespace
+
 int run(const EventArgs &event_args, const std::string &log_prefix)
 {
     ROOT::EnableImplicitMT();
@@ -41,11 +69,13 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
 
     for (const auto &entry : entries)
     {
-        SampleIO::Sample sample = SampleIO::read(entry.output_path);
+        const std::string sample_output_path =
+            resolve_sample_output_path(entry.output_path, log_prefix);
+        SampleIO::Sample sample = SampleIO::read(sample_output_path);
 
         nu::SampleInfo info;
         info.sample_name = sample.sample_name;
-        info.sample_rootio_path = entry.output_path;
+        info.sample_rootio_path = sample_output_path;
         info.sample_origin = static_cast<int>(sample.origin);
         info.beam_mode = static_cast<int>(sample.beam);
         info.subrun_pot_sum = sample.subrun_pot_sum;

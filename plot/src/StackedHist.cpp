@@ -1155,7 +1155,7 @@ void StackedHist::draw_legend(TPad *p)
     }
     if (n_entries > 0)
     {
-        int n_cols = (n_entries > 4) ? 3 : 2;
+        int n_cols = 2;
         if (compact_legend)
         {
             n_cols = 1;

@@ -53,8 +53,13 @@ struct Options
 {
     std::string out_dir = ".";
     std::string image_format = "png";
-    bool show_ratio = false;
-    bool show_ratio_band = false;
+    // MicroBooNE-like defaults: ratio panel + uncertainty band in ratio.
+    bool show_ratio = true;
+    bool show_ratio_band = true;
+    // Draw counts as a density (events / bin width), matching common publication style.
+    bool normalise_by_bin_width = true;
+    // Draw a small χ² box on the main pad (χ² / Nbins in visible range).
+    bool show_chi2 = true;
     bool use_log_x = false;
     bool use_log_y = false;
     bool annotate_numbers = false;

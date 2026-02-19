@@ -854,12 +854,12 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         }
         else
         {
-            frame->GetXaxis()->SetLabelSize(opt_.stv_style ? 0.05 : 0.04);
-            frame->GetXaxis()->SetTitleSize(opt_.stv_style ? 0.06 : 0.05);
+            frame->GetXaxis()->SetLabelSize(opt_.stv_style ? 0.04 : 0.04);
+            frame->GetXaxis()->SetTitleSize(opt_.stv_style ? 0.05 : 0.05);
         }
         frame->GetXaxis()->CenterTitle(opt_.stv_style);
-        frame->GetYaxis()->SetLabelSize(opt_.stv_style ? 0.05 : 0.04);
-        frame->GetYaxis()->SetTitleSize(opt_.stv_style ? 0.06 : 0.05);
+        frame->GetYaxis()->SetLabelSize(opt_.stv_style ? 0.04 : 0.04);
+        frame->GetYaxis()->SetTitleSize(opt_.stv_style ? 0.05 : 0.05);
         frame->GetYaxis()->SetTitleOffset(opt_.stv_style ? 0.95 : 1.2);
         frame->GetYaxis()->CenterTitle(opt_.stv_style);
 
@@ -1271,7 +1271,7 @@ void StackedHist::draw_legend(TPad *p)
         leg->SetLineColor(kBlack);
         leg->SetFillColor(kWhite);
         leg->SetFillStyle(1001);
-        leg->SetTextSize(0.028);
+        leg->SetTextSize(0.03);
         leg->SetMargin(0.18);
     }
     else
@@ -1501,6 +1501,7 @@ void StackedHist::draw_and_save(const std::string &image_format)
     std::filesystem::create_directories(output_directory_);
     stack_debug_log("draw_and_save enter: plot='" + plot_name_ +
                     "', out_dir='" + output_directory_ + "'");
+    // Match the reference stacked-plot canvas shape (ROOT default canvas size).
     const int cw = opt_.stv_style ? 700 : 800;
     const int ch = opt_.stv_style ? 500 : 600;
     TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), cw, ch);

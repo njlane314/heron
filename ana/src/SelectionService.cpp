@@ -21,7 +21,6 @@ const float SelectionService::slice_min_topology_score = 0.06f;
 const float SelectionService::muon_min_track_score = 0.5f;
 const float SelectionService::muon_min_track_length = 10.0f;
 const float SelectionService::muon_max_track_distance = 4.0f;
-const float SelectionService::muon_min_mipness_median_plane_score = 0.5f;
 const unsigned SelectionService::muon_required_generation = 2u;
 
 namespace
@@ -68,18 +67,16 @@ inline bool passes_slice(int ns, float topo)
 inline bool passes_muon(const ROOT::RVec<float> &scores,
                         const ROOT::RVec<float> &lengths,
                         const ROOT::RVec<float> &distances,
-                        const ROOT::RVec<float> &mipness_median_plane_scores,
                         const ROOT::RVec<unsigned> &generations)
 {
     const auto n = scores.size();
     for (std::size_t i = 0; i < n; ++i)
     {
-        if (i >= lengths.size() || i >= distances.size() || i >= mipness_median_plane_scores.size() || i >= generations.size())
+        if (i >= lengths.size() || i >= distances.size() || i >= generations.size())
             return false;
         const bool ok = scores[i] > SelectionService::muon_min_track_score &&
                         lengths[i] > SelectionService::muon_min_track_length &&
                         distances[i] < SelectionService::muon_max_track_distance &&
-                        mipness_median_plane_scores[i] > SelectionService::muon_min_mipness_median_plane_score &&
                         generations[i] == SelectionService::muon_required_generation;
         if (ok)
             return true;
@@ -171,17 +168,15 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
                    const ROOT::RVec<float> &scores,
                    const ROOT::RVec<float> &lengths,
                    const ROOT::RVec<float> &distances,
-                   const ROOT::RVec<float> &mipness_median_plane_scores,
                    const ROOT::RVec<unsigned> &generations) {
                     if (!topo)
                         return false;
-                    return passes_muon(scores, lengths, distances, mipness_median_plane_scores, generations);
+                    return passes_muon(scores, lengths, distances, generations);
                 },
                 {"sel_topology",
                  "track_shower_scores",
                  "track_length",
                  "track_distance_to_vertex",
-                 "track_mipness_median_plane_score",
                  "pfp_generations"});
         }
         return node;

@@ -53,7 +53,6 @@ class SelectionService
     static const float muon_min_track_score;
     static const float muon_min_track_length;
     static const float muon_max_track_distance;
-    static const float muon_min_mipness_median_plane_score;
     static const unsigned muon_required_generation;
 
     static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const SelectionEntry &rec);

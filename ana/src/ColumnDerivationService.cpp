@@ -9,93 +9,11 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <string>
-#include <vector>
 
 #include <ROOT/RVec.hxx>
 
 #include "SelectionService.hh"
-
-namespace
-{
-
-ROOT::RVec<float> derive_track_mipness_median_plane_score(
-    const ROOT::RVec<float> &t70_u,
-    const ROOT::RVec<float> &q50_u,
-    const ROOT::RVec<float> &q90_u,
-    const ROOT::RVec<float> &t70_v,
-    const ROOT::RVec<float> &q50_v,
-    const ROOT::RVec<float> &q90_v,
-    const ROOT::RVec<float> &t70_y,
-    const ROOT::RVec<float> &q50_y,
-    const ROOT::RVec<float> &q90_y)
-{
-    const double mref_mev_per_cm = 2.10;
-    const double tail_weight_w = 1.0;
-
-    const auto n = t70_u.size();
-    ROOT::RVec<float> out(n, std::numeric_limits<float>::quiet_NaN());
-
-    auto at = [](const ROOT::RVec<float> &v, std::size_t i) {
-        return (i < v.size()) ? v[i] : std::numeric_limits<float>::quiet_NaN();
-    };
-
-    auto discriminant = [mref_mev_per_cm, tail_weight_w](float t70, float q50, float q90) {
-        if (!(std::isfinite(t70) && std::isfinite(q50) && std::isfinite(q90)))
-            return std::numeric_limits<double>::quiet_NaN();
-        if (!(t70 > 0.0f && q50 > 0.0f && q90 > 0.0f))
-            return std::numeric_limits<double>::quiet_NaN();
-        return std::log(static_cast<double>(t70) / mref_mev_per_cm) +
-               tail_weight_w * std::log(static_cast<double>(q90) / static_cast<double>(q50));
-    };
-
-    for (std::size_t i = 0; i < n; ++i)
-    {
-        std::vector<double> d_values;
-        d_values.reserve(3);
-
-        const double d_u = discriminant(at(t70_u, i), at(q50_u, i), at(q90_u, i));
-        const double d_v = discriminant(at(t70_v, i), at(q50_v, i), at(q90_v, i));
-        const double d_y = discriminant(at(t70_y, i), at(q50_y, i), at(q90_y, i));
-
-        if (std::isfinite(d_u))
-            d_values.push_back(d_u);
-        if (std::isfinite(d_v))
-            d_values.push_back(d_v);
-        if (std::isfinite(d_y))
-            d_values.push_back(d_y);
-
-        if (d_values.empty())
-            continue;
-
-        std::sort(d_values.begin(), d_values.end());
-        out[i] = static_cast<float>(std::exp(-d_values[d_values.size() / 2]));
-    }
-
-    return out;
-}
-
-ROOT::RVec<float> derive_track_mipness_logistic_median_plane_score(const ROOT::RVec<float> &mipness)
-{
-    const double d0 = 3.0;
-    const double softness = 1.0;
-
-    ROOT::RVec<float> out(mipness.size(), std::numeric_limits<float>::quiet_NaN());
-    for (std::size_t i = 0; i < mipness.size(); ++i)
-    {
-        const double m = static_cast<double>(mipness[i]);
-        if (!(std::isfinite(m) && m > 0.0))
-            continue;
-        const double d = -std::log(m);
-        const double z = std::clamp((d - d0) / softness, -60.0, 60.0);
-        out[i] = static_cast<float>(1.0 / (1.0 + std::exp(z)));
-    }
-    return out;
-}
-
-} // namespace
-
 
 //____________________________________________________________________________
 ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
@@ -135,38 +53,6 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         if (!has("RootinoFix"))
         {
             node = node.Define("RootinoFix", [] { return 1.0; });
-        }
-    }
-
-    {
-        const auto cnames = node.GetColumnNames();
-        auto has = [&](const std::string &name) {
-            return std::find(cnames.begin(), cnames.end(), name) != cnames.end();
-        };
-
-        const bool has_mipness_median = has("track_mipness_median_plane_score");
-        const bool has_mipness_inputs =
-            has("track_dedx_T70_u") && has("track_dedx_Q50_u") && has("track_dedx_Q90_u") &&
-            has("track_dedx_T70_v") && has("track_dedx_Q50_v") && has("track_dedx_Q90_v") &&
-            has("track_dedx_T70_y") && has("track_dedx_Q50_y") && has("track_dedx_Q90_y");
-
-        if (!has_mipness_median && has_mipness_inputs)
-        {
-            node = node.Define(
-                "track_mipness_median_plane_score",
-                derive_track_mipness_median_plane_score,
-                {"track_dedx_T70_u", "track_dedx_Q50_u", "track_dedx_Q90_u",
-                 "track_dedx_T70_v", "track_dedx_Q50_v", "track_dedx_Q90_v",
-                 "track_dedx_T70_y", "track_dedx_Q50_y", "track_dedx_Q90_y"});
-        }
-
-        if (!has("track_mipness_logistic_median_plane_score") &&
-            (has_mipness_median || has_mipness_inputs))
-        {
-            node = node.Define(
-                "track_mipness_logistic_median_plane_score",
-                derive_track_mipness_logistic_median_plane_score,
-                {"track_mipness_median_plane_score"});
         }
     }
 

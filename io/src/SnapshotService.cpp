@@ -85,9 +85,9 @@ std::filesystem::path snapshot_scratch_dir()
 {
     const char *user = std::getenv("USER");
     if (!user || !*user)
-        throw std::runtime_error("SnapshotService: USER must be set to resolve snapshot staging directory");
+        throw std::runtime_error("SnapshotService: USER must be set to resolve snapshot scratch directory");
 
-    return std::filesystem::path("/exp/uboone/data/users") / user / "staging";
+    return std::filesystem::path("/exp/uboone/data/users") / user / "heron" / "scratch";
 }
 } // namespace
 

@@ -19,8 +19,8 @@ heron art "ext_p2:${HERON_OUTPUT_DIR}/inputs/ext_p2.list:ext:numi"
 
 # group art output into logical samples
 source scripts/sample-lists.sh
-heron sample "beam:${HERON_OUTPUT_DIR}/sample-lists/numi_fhc_run1_sample_beam.list"
-heron sample "strangeness:${HERON_OUTPUT_DIR}/sample-lists/numi_fhc_run1_sample_strangeness.list"
+heron sample "beam:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_beam.list"
+heron sample "strangeness:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples
 heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_inclusive_mu_cc apps/config/event_columns.tsv

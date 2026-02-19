@@ -38,8 +38,9 @@ namespace nu
 
 namespace
 {
-constexpr int k_panel_fill_colour = 17;
-constexpr int k_uncertainty_fill_style = 3002;
+constexpr int k_panel_fill_colour = kWhite;
+constexpr int k_uncertainty_fill_colour = kGray + 2;
+constexpr int k_uncertainty_fill_style = 3345;
 
 bool stack_debug_enabled()
 {
@@ -520,7 +521,7 @@ void StackedHist::build_histograms()
             sum->SetFillColor(Channels::colour(ch));
             sum->SetFillStyle(Channels::fill_style(ch));
         }
-        sum->SetLineColor(kBlack);
+        sum->SetLineColor(sum->GetFillColor());
         sum->SetLineWidth(1);
         stack_->Add(sum.get(), "HIST");
         if (auto *hists = stack_->GetHists())
@@ -582,7 +583,7 @@ void StackedHist::build_histograms()
         if (data_hist_)
         {
             data_hist_->SetMarkerStyle(kFullCircle);
-            data_hist_->SetMarkerSize(0.9);
+            data_hist_->SetMarkerSize(0.8);
             data_hist_->SetLineColor(kBlack);
             data_hist_->SetFillStyle(0);
         }
@@ -631,7 +632,8 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         {
             if (auto *hist = dynamic_cast<TH1 *>(obj))
             {
-                hist->SetLineColor(kBlack);
+                hist->SetLineColor(hist->GetFillColor());
+                hist->SetLineWidth(1);
             }
         }
     }
@@ -711,12 +713,12 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
 
         auto *h = static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_totband").c_str()));
         h->SetDirectory(nullptr);
-        h->SetFillColor(kBlack);
+        h->SetFillColor(k_uncertainty_fill_colour);
         h->SetFillStyle(k_uncertainty_fill_style);
         h->SetMarkerSize(0);
-        h->SetLineColor(kBlack);
-        h->SetLineStyle(kDashed);
-        h->SetLineWidth(2);
+        h->SetLineColor(k_uncertainty_fill_colour);
+        h->SetLineStyle(kSolid);
+        h->SetLineWidth(1);
         h->Draw("E2 SAME");
     }
 
@@ -782,11 +784,11 @@ void StackedHist::draw_ratio(TPad *p_ratio)
             ratio_band_->SetBinContent(i, 1.0);
             ratio_band_->SetBinError(i, (m > 0 ? em / m : 0.0));
         }
-        ratio_band_->SetFillColor(kBlack);
+        ratio_band_->SetFillColor(k_uncertainty_fill_colour);
         ratio_band_->SetFillStyle(k_uncertainty_fill_style);
-        ratio_band_->SetLineColor(kBlack);
-        ratio_band_->SetLineStyle(kDashed);
-        ratio_band_->SetLineWidth(2);
+        ratio_band_->SetLineColor(k_uncertainty_fill_colour);
+        ratio_band_->SetLineStyle(kSolid);
+        ratio_band_->SetLineWidth(1);
         ratio_band_->SetMarkerSize(0);
         ratio_band_->Draw("E2 SAME");
     }
@@ -820,8 +822,8 @@ void StackedHist::draw_legend(TPad *p)
     legend_ = std::make_unique<TLegend>(x1, y1, x2, y2);
     auto *leg = legend_.get();
     leg->SetBorderSize(0);
-    leg->SetFillColor(kWhite);
-    leg->SetFillStyle(1001);
+    leg->SetFillColor(k_panel_fill_colour);
+    leg->SetFillStyle(0);
     leg->SetTextFont(42);
     leg->SetMargin(0.25);
 
@@ -890,11 +892,11 @@ void StackedHist::draw_legend(TPad *p)
             mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
-        proxy->SetFillColor(kBlack);
+        proxy->SetFillColor(k_uncertainty_fill_colour);
         proxy->SetFillStyle(k_uncertainty_fill_style);
-        proxy->SetLineColor(kBlack);
-        proxy->SetLineStyle(kDashed);
-        proxy->SetLineWidth(2);
+        proxy->SetLineColor(k_uncertainty_fill_colour);
+        proxy->SetLineStyle(kSolid);
+        proxy->SetLineWidth(1);
         leg->AddEntry(proxy.get(), "Stat. #oplus Syst. Unc.", "f");
         legend_proxies_.push_back(std::move(proxy));
     }

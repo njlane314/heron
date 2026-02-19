@@ -53,7 +53,7 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.pdf")
 {
     gStyle->SetOptStat(0);
 
-    TCanvas canvas("c_legend_only", "Legend only", 600, 120);
+    TCanvas canvas("c_legend_only", "Legend only", 700, 360);
     canvas.SetFillColor(kWhite);
     canvas.SetFrameFillColor(kWhite);
 
@@ -64,8 +64,8 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.pdf")
     legend.SetLineWidth(0);
     legend.SetShadowColor(kWhite);
     legend.SetTextFont(42);
-    legend.SetTextSize(0.14);
-    legend.SetNColumns(4);
+    legend.SetTextSize(0.08);
+    legend.SetNColumns(2);
     legend.SetEntrySeparation(0.01);
     legend.SetColumnSeparation(0.04);
 

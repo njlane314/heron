@@ -675,7 +675,7 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     TH1 *frame = stack_->GetHistogram();
     if (frame)
     {
-        frame->SetLineWidth(2);
+        frame->SetLineWidth(1);
         frame->SetFillColor(k_panel_fill_colour);
         frame->SetMarkerSize(0.0);
     }
@@ -695,12 +695,12 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         }
         else
         {
-            frame->GetXaxis()->SetLabelSize(opt_.stv_style ? 0.04 : 0.04);
-            frame->GetXaxis()->SetTitleSize(opt_.stv_style ? 0.05 : 0.05);
+            frame->GetXaxis()->SetLabelSize(opt_.stv_style ? 0.035 : 0.035);
+            frame->GetXaxis()->SetTitleSize(opt_.stv_style ? 0.045 : 0.045);
         }
         frame->GetXaxis()->CenterTitle(opt_.stv_style);
-        frame->GetYaxis()->SetLabelSize(opt_.stv_style ? 0.04 : 0.04);
-        frame->GetYaxis()->SetTitleSize(opt_.stv_style ? 0.05 : 0.05);
+        frame->GetYaxis()->SetLabelSize(opt_.stv_style ? 0.035 : 0.035);
+        frame->GetYaxis()->SetTitleSize(opt_.stv_style ? 0.045 : 0.045);
         frame->GetYaxis()->SetTitleOffset(opt_.stv_style ? 0.95 : 1.2);
         frame->GetYaxis()->CenterTitle(opt_.stv_style);
 

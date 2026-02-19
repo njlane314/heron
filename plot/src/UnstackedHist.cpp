@@ -546,7 +546,7 @@ void UnstackedHist::draw_overlay_and_unc(TPad *p_main, double &max_y)
     TH1 *frame = overlay_->GetHistogram();
     if (frame)
     {
-        frame->SetLineWidth(2);
+        frame->SetLineWidth(1);
         if (spec_.xmin < spec_.xmax)
         {
             frame->GetXaxis()->SetRangeUser(spec_.xmin, spec_.xmax);

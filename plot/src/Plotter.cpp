@@ -237,15 +237,15 @@ void Plotter::set_global_style() const
     style->SetTitleFont(font_style, "X");
     style->SetTitleFont(font_style, "Y");
     style->SetTitleFont(font_style, "Z");
-    // Slightly larger defaults; ratio pad overrides these explicitly.
-    style->SetTitleSize(0.06, "X");
-    style->SetTitleSize(0.06, "Y");
+    // Slightly lighter defaults; ratio pad overrides these explicitly.
+    style->SetTitleSize(0.055, "X");
+    style->SetTitleSize(0.055, "Y");
     style->SetTitleSize(0.05, "Z");
     style->SetLabelFont(font_style, "X");
     style->SetLabelFont(font_style, "Y");
     style->SetLabelFont(font_style, "Z");
-    style->SetLabelSize(0.05, "X");
-    style->SetLabelSize(0.05, "Y");
+    style->SetLabelSize(0.045, "X");
+    style->SetLabelSize(0.045, "Y");
     style->SetLabelSize(0.045, "Z");
     style->SetLabelOffset(0.005, "X");
     style->SetLabelOffset(0.005, "Y");
@@ -258,9 +258,9 @@ void Plotter::set_global_style() const
     style->SetPadTickY(1);
     // No horizontal x-error bars on binned points (matches reference).
     style->SetErrorX(0.0);
-    // Thicker axes/frames (matches reference).
-    style->SetLineWidth(2);
-    style->SetFrameLineWidth(2);
+    // Use lighter axis and frame outlines.
+    style->SetLineWidth(1);
+    style->SetFrameLineWidth(1);
     style->SetHistLineWidth(2);
     // Grid appearance used by the reference code.
     style->SetGridColor(17);

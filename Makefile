@@ -38,7 +38,6 @@ PLOT_SRC = plot/src/Plotter.cpp \
            plot/src/StackedHist.cpp \
            plot/src/UnstackedHist.cpp \
            plot/src/PlottingHelper.cpp \
-           plot/src/AdaptiveBinningService.cpp \
            plot/src/EfficiencyPlot.cpp
 PLOT_OBJ = $(PLOT_SRC:%.cpp=$(OBJ_DIR)/%.o)
 

@@ -29,7 +29,6 @@
 #include "TList.h"
 #include "TMatrixDSym.h"
 
-#include "AdaptiveBinningService.hh"
 #include "PlotChannels.hh"
 #include "ParticleChannels.hh"
 #include "Plotter.hh"
@@ -403,19 +402,7 @@ void StackedHist::build_histograms()
     const std::string pdg_branch = particle_level
                                        ? (opt_.particle_pdg_branch.empty() ? "backtracked_pdg_codes" : opt_.particle_pdg_branch)
                                        : std::string{};
-    const auto cfg = AdaptiveBinningService::config_from(opt_);
-
-    // If adaptive binning is enabled, fill a finer histogram first and then merge.
-    // Otherwise the merge algorithm has nothing to do and bins will look uniform.
-    TH1DModel fill_spec = spec_;
-    if (cfg.enabled)
-    {
-        const int factor = std::max(1, opt_.adaptive_fine_bin_factor);
-        long long nb = 1LL * fill_spec.nbins * factor;
-        // Clamp to something sane.
-        nb = std::max<long long>(1, std::min<long long>(nb, 5000));
-        fill_spec.nbins = static_cast<int>(nb);
-    }
+    const TH1DModel &fill_spec = spec_;
 
     for (size_t ie = 0; ie < mc_.size(); ++ie)
     {
@@ -492,48 +479,7 @@ void StackedHist::build_histograms()
         }
     }
 
-    // ---- Adaptive min-stat-per-bin rebin (derived from TOTAL MC) ----
-    std::vector<double> adaptive_edges;
-    if (cfg.enabled && !sum_by_channel.empty())
-    {
-        std::vector<const TH1D *> parts;
-        parts.reserve(sum_by_channel.size());
-        for (auto &kv : sum_by_channel)
-        {
-            if (kv.second)
-            {
-                parts.push_back(kv.second.get());
-            }
-        }
-
-        auto mc_tot_fine = AdaptiveBinningService::instance().sum_hists(
-            parts, spec_.id + "_mc_total_fine_for_binning", cfg);
-
-        if (mc_tot_fine)
-        {
-            adaptive_edges = AdaptiveBinningService::instance().edges_min_stat(*mc_tot_fine, cfg);
-
-
-            if (adaptive_edges.size() >= 2)
-            {
-                for (auto &kv : sum_by_channel)
-                {
-                    if (!kv.second)
-                    {
-                        continue;
-                    }
-
-                    kv.second = AdaptiveBinningService::instance().rebin_to_edges(
-                        *kv.second,
-                        adaptive_edges,
-                        spec_.id + "_mc_sum_ch" + std::to_string(kv.first) + "_rebin",
-                        cfg);
-                }
-            }
-        }
-    }
-
-    // ---- Compute yields AFTER rebin so ordering matches what you plot ----
+    // ---- Compute yields so ordering matches what you plot ----
     std::vector<std::pair<int, double>> yields;
     yields.reserve(sum_by_channel.size());
     for (auto &kv : sum_by_channel)
@@ -633,11 +579,6 @@ void StackedHist::build_histograms()
                 data_hist_->Add(&h);
             }
         }
-        if (data_hist_ && !adaptive_edges.empty())
-        {
-            data_hist_ = AdaptiveBinningService::instance().rebin_to_edges(
-                *data_hist_, adaptive_edges, spec_.id + "_data_rebin", cfg);
-        }
         if (data_hist_)
         {
             data_hist_->SetMarkerStyle(kFullCircle);
@@ -674,29 +615,6 @@ void StackedHist::build_histograms()
         sig_hist_ = std::move(sig);
     }
 
-    // ---- If we used adaptive edges, the bin widths are generally not uniform.
-    // Plot densities (events / unit-x) so bar heights are comparable across bins.
-    //
-    // NOTE: This changes histogram units; any later error model must match those units.
-    const bool do_density = (cfg.enabled && adaptive_edges.size() >= 2);
-    if (do_density)
-    {
-        auto scale_width = [](TH1D &h) { h.Scale(1.0, "width"); };
-
-        for (auto &h : mc_ch_hists_)
-        {
-            if (h)
-                scale_width(*h);
-        }
-        if (mc_total_)
-            scale_width(*mc_total_);
-        if (data_hist_)
-            scale_width(*data_hist_);
-        if (sig_hist_)
-            scale_width(*sig_hist_);
-
-        density_mode_ = true;
-    }
 }
 
 void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)

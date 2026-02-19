@@ -48,6 +48,9 @@ constexpr int k_uncertainty_fill_colour = kGray + 2;
 constexpr int k_uncertainty_fill_style = 3345;
 // STV-style uncertainty outline (matches the reference plots: dotted line, no fill).
 constexpr int k_uncertainty_outline_style = kDotted;
+constexpr int k_uncertainty_line_colour = kGray + 2;
+constexpr int k_uncertainty_line_style = k_uncertainty_outline_style;
+constexpr int k_uncertainty_line_width = 2;
 
 bool stack_debug_enabled()
 {

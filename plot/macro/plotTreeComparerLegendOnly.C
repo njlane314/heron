@@ -29,11 +29,12 @@ void plotTreeComparerLegendOnly(const char *output_name = "analysis_channel_lege
     canvas.SetFrameFillColor(kWhite);
 
     TLegend legend(0.01, 0.05, 0.99, 0.95);
-    legend.SetBorderSize(0);
+    legend.SetBorderSize(1);
+    legend.SetLineColor(kBlack);
     legend.SetFillStyle(0);
     legend.SetTextFont(42);
     legend.SetTextSize(0.14);
-    legend.SetNColumns(4);
+    legend.SetNColumns(2);
     legend.SetEntrySeparation(0.01);
     legend.SetColumnSeparation(0.04);
 

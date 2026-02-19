@@ -21,8 +21,8 @@ const AnalysisConfigService &AnalysisConfigService::instance()
 
 AnalysisConfigService::AnalysisConfigService()
 {
-    m_name = "heron_default";
-    m_tree_name = "nuselection/EventSelectionFilter";
+    m_name = "heron_event_default";
+    m_tree_name = "Events";
 }
 
 ProcessorEntry AnalysisConfigService::make_processor(const SampleIO::Sample &sample) const noexcept
@@ -53,4 +53,3 @@ ProcessorEntry AnalysisConfigService::make_processor(const SampleIO::Sample &sam
 
     return proc_entry;
 }
-

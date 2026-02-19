@@ -424,7 +424,7 @@ void StackedHist::build_histograms()
         {
             continue;
         }
-        auto n0 = apply(e->rnode(), spec_.sel, &e->selection);
+        auto n0 = apply(e->rnode(), spec_.sel);
         auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
         const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
 
@@ -615,7 +615,7 @@ void StackedHist::build_histograms()
             {
                 continue;
             }
-            auto n0 = apply(e->rnode(), spec_.sel, &e->selection);
+            auto n0 = apply(e->rnode(), spec_.sel);
             auto n = (spec_.expr.empty() ? n0 : n0.Define("_nx_expr_", spec_.expr));
             const std::string var = spec_.expr.empty() ? spec_.id : "_nx_expr_";
             parts.push_back(n.Histo1D(fill_spec.model("_data_src" + std::to_string(ie)), var));

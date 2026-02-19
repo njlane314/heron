@@ -82,24 +82,35 @@ inline ROOT::RDF::RNode filter_on(ROOT::RDF::RNode node, const char *col)
 
 } // namespace
 
-ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p)
+ROOT::RDF::RNode SelectionService::apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection)
 {
     node = decorate(node);
+    ROOT::RDF::RNode filtered = node;
     switch (p)
     {
     case Preset::Empty:
-        return node;
+        break;
     case Preset::Trigger:
-        return filter_on(node, "sel_trigger");
+        filtered = filter_on(node, "sel_trigger");
+        break;
     case Preset::Slice:
-        return filter_on(node, "sel_slice");
+        filtered = filter_on(node, "sel_slice");
+        break;
     case Preset::Fiducial:
-        return filter_on(node, "sel_fiducial");
+        filtered = filter_on(node, "sel_fiducial");
+        break;
     case Preset::Muon:
-        return filter_on(node, "sel_muon");
+        filtered = filter_on(node, "sel_muon");
+        break;
     default:
-        return node;
+        break;
     }
+
+    if (selection != NULL)
+    {
+        selection->nominal.node = filtered;
+    }
+    return filtered;
 }
 
 ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node)

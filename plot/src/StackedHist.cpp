@@ -255,9 +255,21 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         }
     };
 
+    auto use_single_sided_ticks = [](TPad *pad) {
+        if (!pad)
+        {
+            return;
+        }
+        // Keep stacked plots visually light: ticks only on the left/bottom axes.
+        pad->SetTickx(0);
+        pad->SetTicky(0);
+    };
+
     c.cd();
     c.SetFillColor(k_panel_fill_colour);
     c.SetFrameFillColor(k_panel_fill_colour);
+    c.SetTickx(0);
+    c.SetTicky(0);
     p_main = nullptr;
     p_ratio = nullptr;
     p_legend = nullptr;
@@ -288,6 +300,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_main->SetFillColor(k_panel_fill_colour);
             p_main->SetFrameFillColor(k_panel_fill_colour);
             p_main->SetGridx();
+            use_single_sided_ticks(p_main);
             if (opt_.use_log_y)
             {
                 p_main->SetLogy();
@@ -301,6 +314,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_ratio->SetFrameFillColor(k_panel_fill_colour);
             p_ratio->SetFrameFillStyle(4000);
             p_ratio->SetGridx();
+            use_single_sided_ticks(p_ratio);
 
             if (p_legend)
             {
@@ -341,6 +355,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         p_main->SetFillColor(k_panel_fill_colour);
         p_main->SetFrameFillColor(k_panel_fill_colour);
         p_main->SetGridx();
+        use_single_sided_ticks(p_main);
         if (opt_.use_log_y)
         {
             p_main->SetLogy();
@@ -386,6 +401,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_main->SetRightMargin(0.05);
             p_main->SetFillColor(k_panel_fill_colour);
             p_main->SetFrameFillColor(k_panel_fill_colour);
+            use_single_sided_ticks(p_main);
 
             p_ratio->SetTopMargin(0.05);
             p_ratio->SetBottomMargin(0.35);
@@ -393,6 +409,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_ratio->SetRightMargin(0.05);
             p_ratio->SetFillColor(k_panel_fill_colour);
             p_ratio->SetFrameFillColor(k_panel_fill_colour);
+            use_single_sided_ticks(p_ratio);
 
             p_legend->SetTopMargin(0.05);
             p_legend->SetBottomMargin(0.01);
@@ -414,6 +431,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_main->SetRightMargin(0.05);
             p_main->SetFillColor(k_panel_fill_colour);
             p_main->SetFrameFillColor(k_panel_fill_colour);
+            use_single_sided_ticks(p_main);
 
             p_legend->SetTopMargin(0.05);
             p_legend->SetBottomMargin(0.01);
@@ -455,6 +473,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         p_main->SetRightMargin(0.05);
         p_main->SetFillColor(k_panel_fill_colour);
         p_main->SetFrameFillColor(k_panel_fill_colour);
+        use_single_sided_ticks(p_main);
 
         p_ratio->SetTopMargin(0.04);
         p_ratio->SetBottomMargin(0.35);
@@ -462,6 +481,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         p_ratio->SetRightMargin(0.05);
         p_ratio->SetFillColor(k_panel_fill_colour);
         p_ratio->SetFrameFillColor(k_panel_fill_colour);
+        use_single_sided_ticks(p_ratio);
     }
     else
     {
@@ -473,6 +493,7 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         p_main->SetRightMargin(0.05);
         p_main->SetFillColor(k_panel_fill_colour);
         p_main->SetFrameFillColor(k_panel_fill_colour);
+        use_single_sided_ticks(p_main);
     }
 
     if (separate_legend && p_main)
@@ -783,6 +804,8 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         return;
     }
     p_main->cd();
+    p_main->SetTickx(0);
+    p_main->SetTicky(0);
 
     if (auto *hists = stack_->GetHists())
     {
@@ -922,6 +945,8 @@ void StackedHist::draw_ratio(TPad *p_ratio)
         return;
     }
     p_ratio->cd();
+    p_ratio->SetTickx(0);
+    p_ratio->SetTicky(0);
 
     ratio_hist_.reset(static_cast<TH1D *>(
         data_hist_->Clone((spec_.id + "_ratio").c_str())));

@@ -537,7 +537,6 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
     opt.use_log_y = use_logy;
     opt.legend_on_top = true;
     opt.annotate_numbers = true;
-    opt.adaptive_binning = false; // force uniform binning everywhere in this macro
     opt.overlay_signal = true;
     opt.show_ratio = include_data;
     opt.show_ratio_band = include_data;

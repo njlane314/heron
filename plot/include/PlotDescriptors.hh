@@ -77,21 +77,6 @@ struct Options
     std::vector<std::string> run_numbers;
     std::vector<std::string> periods;
     std::string analysis_region_label;
-    // --- Adaptive ("minimum-stat-per-bin") binning ---
-    bool adaptive_binning = false;
-    double adaptive_min_sumw = 0.0;       // Wmin (sum of weights; <=0 disables)
-    double adaptive_max_relerr = 0.0;     // relErrMax (sqrt(sumw2)/|sumw|; <=0 disables)
-    bool adaptive_fold_overflow = true;   // fold under/overflow before edge-making + rebin
-
-    // Keep this many *fine* bins fixed (unmerged) at each edge of the plot.
-    // This gives you constant-width leading/trailing bins (often intentionally empty padding).
-    int adaptive_edge_bins = 0;
-
-    // IMPORTANT: the min-stat algorithm only MERGES bins. If you fill with your final coarse
-    // binning, results will look uniform. Fill finer, then merge.
-    // Filled nbins = spec.nbins * adaptive_fine_bin_factor (clamped).
-    int adaptive_fine_bin_factor = 10;
-
     // --- Particle-level plotting (vector-valued branches) ---
     // If enabled, MC is stacked by truth-matched particle type using `particle_pdg_branch`.
     // This expects `spec.expr` (or `spec.id` if expr is empty) to evaluate to a vector-like

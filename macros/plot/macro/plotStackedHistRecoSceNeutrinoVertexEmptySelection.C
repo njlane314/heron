@@ -175,7 +175,6 @@ int plotStackedHistRecoSceNeutrinoVertexEmptySelection(const std::string &event_
     opt.overlay_signal = true;
     opt.show_ratio = include_data;
     opt.show_ratio_band = include_data;
-    opt.adaptive_binning = false;
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events/bin";
     opt.run_numbers = {"1"};

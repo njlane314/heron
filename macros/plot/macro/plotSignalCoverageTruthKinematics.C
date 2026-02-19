@@ -376,12 +376,6 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
     opt.overlay_signal = true;
     opt.show_ratio = false;
     opt.show_ratio_band = false;
-    opt.adaptive_binning = true;
-    // Target ~7% relative statistical uncertainty per adaptive bin:
-    // N_eff ≈ 1/(0.07^2) ≈ 204, so enforce a matching sumw floor.
-    opt.adaptive_min_sumw = 200.0;
-    opt.adaptive_max_relerr = 0.07;
-    opt.adaptive_fold_overflow = true;
     opt.signal_channels = Channels::signal_keys();
     opt.y_title = "Events / bin";
     opt.run_numbers = {"1"};

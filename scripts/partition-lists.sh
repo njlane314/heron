@@ -6,7 +6,7 @@ RELEASE="${RELEASE:-v08_00_00_82}"
 NAME="${NAME:-numi_fhc_run1}"
 
 BASE="/pnfs/uboone/scratch/users/${USER_NAME}/ntuples/${RELEASE}/${NAME}"
-OUTPUT_DIR="${HERON_OUTPUT_DIR}/filelists"
+OUTPUT_DIR="${HERON_OUTPUT_DIR}/inputs"
 FILE_PATTERN="${FILE_PATTERN:-nu_selection_data.root,nu_selection.root}"
 
 mkdir -p "${OUTPUT_DIR}"

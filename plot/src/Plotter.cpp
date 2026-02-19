@@ -255,6 +255,11 @@ void Plotter::set_global_style() const
     style->SetOptTitle(0);
     style->SetPadTickX(1);
     style->SetPadTickY(1);
+    // MicroBooNE-like error bar appearance: no horizontal x-error bars on binned points.
+    style->SetErrorX(0.0);
+    // Slightly heavier axes/frame for publication-style plots.
+    style->SetLineWidth(2);
+    style->SetFrameLineWidth(2);
     TGaxis::SetMaxDigits(4);
     style->SetPadLeftMargin(0.15);
     style->SetPadRightMargin(0.05);

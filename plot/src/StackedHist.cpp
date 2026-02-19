@@ -24,10 +24,13 @@
 #include "TArrow.h"
 #include "TCanvas.h"
 #include "TColor.h"
+#include "TDecompChol.h"
 #include "TImage.h"
 #include "TLine.h"
 #include "TList.h"
 #include "TMatrixDSym.h"
+#include "TPaveText.h"
+#include "TVectorD.h"
 
 #include "PlotChannels.hh"
 #include "ParticleChannels.hh"
@@ -39,8 +42,12 @@ namespace nu
 namespace
 {
 constexpr int k_panel_fill_colour = kWhite;
-constexpr int k_uncertainty_fill_colour = kGray + 2;
-constexpr int k_uncertainty_fill_style = 3345;
+// Ratio-band uncertainty should read as a light, solid grey (MicroBooNE-like).
+constexpr int k_uncertainty_fill_colour = kGray + 1;
+constexpr int k_uncertainty_fill_style = 1001;
+constexpr int k_uncertainty_line_colour = kBlack;
+constexpr int k_uncertainty_line_style = kDotted;
+constexpr int k_uncertainty_line_width = 2;
 
 bool stack_debug_enabled()
 {
@@ -80,6 +87,47 @@ ROOT::VecOps::RVec<double> select_particle_values(const ROOT::VecOps::RVec<doubl
         }
     }
     return out;
+}
+
+std::pair<int, int> visible_bin_range(const TH1D &h, double xmin, double xmax)
+{
+    const TAxis *axis = h.GetXaxis();
+    int first_bin = 1;
+    int last_bin = h.GetNbinsX();
+    if (axis && xmin < xmax)
+    {
+        first_bin = std::max(1, axis->FindFixBin(xmin));
+        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
+        if (xmax <= axis->GetBinLowEdge(last_bin))
+        {
+            last_bin = std::max(first_bin, last_bin - 1);
+        }
+    }
+    return {first_bin, last_bin};
+}
+
+std::string fmt_sci_tex(double value, int precision = 2)
+{
+    if (!(value > 0.0))
+    {
+        return {};
+    }
+    const double e = std::floor(std::log10(value));
+    const int ie = static_cast<int>(e);
+    const double mant = value / std::pow(10.0, ie);
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(precision) << mant;
+    std::string m = ss.str();
+    // Trim trailing zeros for cleaner legend headers.
+    while (m.size() > 1 && m.back() == '0' && m.find('.') != std::string::npos)
+    {
+        m.pop_back();
+    }
+    if (!m.empty() && m.back() == '.')
+    {
+        m.pop_back();
+    }
+    return m + " #times 10^{" + std::to_string(ie) + "}";
 }
 
 } // namespace
@@ -388,8 +436,12 @@ void StackedHist::build_histograms()
     }
     mc_ch_hists_.clear();
     mc_total_.reset();
+    mc_total_stat_.reset();
+    chi2_box_.reset();
     data_hist_.reset();
     sig_hist_.reset();
+    mc_unc_up_.reset();
+    mc_unc_down_.reset();
     ratio_hist_.reset();
     ratio_band_.reset();
     signal_events_ = 0.0;
@@ -551,6 +603,12 @@ void StackedHist::build_histograms()
 
     // Cache the event-count total before any density scaling.
     total_mc_events_ = mc_total_ ? mc_total_->Integral() : 0.0;
+    // Keep a stat-only copy before we inflate errors with systematics.
+    if (mc_total_)
+    {
+        mc_total_stat_.reset(static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_total_stat").c_str())));
+        mc_total_stat_->SetDirectory(nullptr);
+    }
 
     if (!data_.empty())
     {
@@ -616,6 +674,35 @@ void StackedHist::build_histograms()
         sig_hist_ = std::move(sig);
     }
 
+    // Optional density rendering (events / bin width), matching publication plots.
+    if (opt_.normalise_by_bin_width)
+    {
+        density_mode_ = true;
+        for (auto &h : mc_ch_hists_)
+        {
+            if (h)
+            {
+                h->Scale(1.0, "width");
+            }
+        }
+        if (mc_total_)
+        {
+            mc_total_->Scale(1.0, "width");
+        }
+        if (mc_total_stat_)
+        {
+            mc_total_stat_->Scale(1.0, "width");
+        }
+        if (data_hist_)
+        {
+            data_hist_->Scale(1.0, "width");
+        }
+        if (sig_hist_)
+        {
+            sig_hist_->Scale(1.0, "width");
+        }
+    }
+
 }
 
 void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
@@ -642,7 +729,9 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     {
         const std::string default_x = !spec_.name.empty() ? spec_.name : spec_.id;
         const std::string x = opt_.x_title.empty() ? default_x : opt_.x_title;
-        const std::string default_y = opt_.particle_level ? "Particles" : "Events";
+        const std::string default_y = opt_.particle_level
+                                          ? (density_mode_ ? "Particles / bin width" : "Particles")
+                                          : (density_mode_ ? "Events / bin width" : "Events");
         const std::string y = opt_.y_title.empty() ? default_y : opt_.y_title;
         stack_->SetTitle((";" + x + ";" + y).c_str());
     }
@@ -663,8 +752,17 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
     {
         frame->GetXaxis()->SetNdivisions(510);
         frame->GetXaxis()->SetTickLength(0.02);
-        frame->GetXaxis()->SetLabelSize(0.04);
-        frame->GetXaxis()->SetTitleSize(0.05);
+        // When a ratio pad exists, the x-axis labels/titles live on the ratio pad.
+        if (want_ratio())
+        {
+            frame->GetXaxis()->SetLabelSize(0.0);
+            frame->GetXaxis()->SetTitleSize(0.0);
+        }
+        else
+        {
+            frame->GetXaxis()->SetLabelSize(0.04);
+            frame->GetXaxis()->SetTitleSize(0.05);
+        }
         frame->GetXaxis()->CenterTitle(false);
         frame->GetYaxis()->SetLabelSize(0.04);
         frame->GetYaxis()->SetTitleSize(0.05);
@@ -678,7 +776,7 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
             const std::string cur = frame->GetYaxis() ? frame->GetYaxis()->GetTitle() : "";
             if (cur.empty() || cur == "Events")
             {
-                frame->GetYaxis()->SetTitle("Particles");
+                frame->GetYaxis()->SetTitle(density_mode_ ? "Particles / bin width" : "Particles");
             }
         }
         if (!opt_.x_title.empty())
@@ -711,15 +809,31 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         stack_->SetMaximum(max_y * (opt_.use_log_y ? 10. : 1.3));
         stack_->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
 
-        auto *h = static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_totband").c_str()));
-        h->SetDirectory(nullptr);
-        h->SetFillColor(k_uncertainty_fill_colour);
-        h->SetFillStyle(k_uncertainty_fill_style);
-        h->SetMarkerSize(0);
-        h->SetLineColor(k_uncertainty_fill_colour);
-        h->SetLineStyle(kSolid);
-        h->SetLineWidth(1);
-        h->Draw("E2 SAME");
+        // MicroBooNE-like uncertainty rendering: dotted step envelope (±1σ) instead of a filled band.
+        mc_unc_up_.reset(static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_unc_up").c_str())));
+        mc_unc_down_.reset(static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_unc_down").c_str())));
+        mc_unc_up_->SetDirectory(nullptr);
+        mc_unc_down_->SetDirectory(nullptr);
+        const int nb = mc_total_->GetNbinsX();
+        for (int i = 1; i <= nb; ++i)
+        {
+            const double m = mc_total_->GetBinContent(i);
+            const double e = mc_total_->GetBinError(i);
+            mc_unc_up_->SetBinContent(i, m + e);
+            mc_unc_up_->SetBinError(i, 0.0);
+            mc_unc_down_->SetBinContent(i, std::max(0.0, m - e));
+            mc_unc_down_->SetBinError(i, 0.0);
+        }
+        for (auto *u : {mc_unc_up_.get(), mc_unc_down_.get()})
+        {
+            u->SetFillStyle(0);
+            u->SetMarkerSize(0);
+            u->SetLineColor(k_uncertainty_line_colour);
+            u->SetLineStyle(k_uncertainty_line_style);
+            u->SetLineWidth(k_uncertainty_line_width);
+        }
+        mc_unc_up_->Draw("HIST SAME");
+        mc_unc_down_->Draw("HIST SAME");
     }
 
     // THStack can refresh its internal frame after range/max updates.
@@ -755,8 +869,26 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     ratio_hist_.reset(static_cast<TH1D *>(
         data_hist_->Clone((spec_.id + "_ratio").c_str())));
     ratio_hist_->SetDirectory(nullptr);
-    ratio_hist_->Divide(mc_total_.get());
-    ratio_hist_->SetTitle("; ;Data / MC");
+    // MicroBooNE-like ratio: points carry *data statistical* uncertainty only.
+    // MC uncertainty is shown separately as a band around unity.
+    const int nb = ratio_hist_->GetNbinsX();
+    for (int i = 1; i <= nb; ++i)
+    {
+        const double d = data_hist_->GetBinContent(i);
+        const double ed = data_hist_->GetBinError(i);
+        const double m = mc_total_->GetBinContent(i);
+        if (m > 0.0)
+        {
+            ratio_hist_->SetBinContent(i, d / m);
+            ratio_hist_->SetBinError(i, ed / m);
+        }
+        else
+        {
+            ratio_hist_->SetBinContent(i, 0.0);
+            ratio_hist_->SetBinError(i, 0.0);
+        }
+    }
+    ratio_hist_->SetTitle("; ;ratio");
     ratio_hist_->SetMaximum(1.20);
     ratio_hist_->SetMinimum(0.80);
     ratio_hist_->GetYaxis()->SetNdivisions(505);
@@ -766,7 +898,7 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     ratio_hist_->GetYaxis()->SetLabelSize(0.10);
     ratio_hist_->GetYaxis()->SetTitleSize(0.10);
     ratio_hist_->GetYaxis()->SetTitleOffset(0.55);
-    ratio_hist_->GetYaxis()->SetTitle("Data / MC");
+    ratio_hist_->GetYaxis()->SetTitle("ratio");
     ratio_hist_->GetXaxis()->CenterTitle(false);
     ratio_hist_->GetXaxis()->SetTitle(opt_.x_title.empty() ? data_hist_->GetXaxis()->GetTitle() : opt_.x_title.c_str());
 
@@ -776,8 +908,8 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     {
         ratio_band_.reset(static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_ratio_band").c_str())));
         ratio_band_->SetDirectory(nullptr);
-        const int nb = ratio_band_->GetNbinsX();
-        for (int i = 1; i <= nb; ++i)
+        const int nb2 = ratio_band_->GetNbinsX();
+        for (int i = 1; i <= nb2; ++i)
         {
             const double m = mc_total_->GetBinContent(i);
             const double em = mc_total_->GetBinError(i);
@@ -786,7 +918,7 @@ void StackedHist::draw_ratio(TPad *p_ratio)
         }
         ratio_band_->SetFillColor(k_uncertainty_fill_colour);
         ratio_band_->SetFillStyle(k_uncertainty_fill_style);
-        ratio_band_->SetLineColor(k_uncertainty_fill_colour);
+        ratio_band_->SetLineColor(kGray + 2);
         ratio_band_->SetLineStyle(kSolid);
         ratio_band_->SetLineWidth(1);
         ratio_band_->SetMarkerSize(0);
@@ -807,6 +939,185 @@ void StackedHist::draw_ratio(TPad *p_ratio)
     ratio_hist_->Draw("E1 SAME");
 }
 
+bool StackedHist::compute_chi2(double &chi2_out, int &ndf_out) const
+{
+    chi2_out = 0.0;
+    ndf_out = 0;
+    if (!has_data() || !mc_total_ || !data_hist_)
+    {
+        return false;
+    }
+
+    const TH1D &d = *data_hist_;
+    const TH1D &m = *mc_total_;
+    const TH1D &mstat = (mc_total_stat_ ? *mc_total_stat_ : *mc_total_);
+
+    const auto [first_bin, last_bin] = visible_bin_range(m, spec_.xmin, spec_.xmax);
+    std::vector<int> bins;
+    bins.reserve(std::max(0, last_bin - first_bin + 1));
+
+    for (int i = first_bin; i <= last_bin; ++i)
+    {
+        const double v_data = std::pow(d.GetBinError(i), 2);
+        const double v_mcstat = std::pow(mstat.GetBinError(i), 2);
+        double v_syst = 0.0;
+        if (opt_.total_cov && (i - 1) < opt_.total_cov->GetNrows())
+        {
+            v_syst = (*opt_.total_cov)(i - 1, i - 1);
+            if (density_mode_)
+            {
+                const double w = m.GetXaxis() ? m.GetXaxis()->GetBinWidth(i) : 0.0;
+                if (w > 0.0)
+                {
+                    v_syst /= (w * w);
+                }
+            }
+        }
+        else if (!opt_.syst_bin.empty() && (i - 1) < static_cast<int>(opt_.syst_bin.size()))
+        {
+            double s = std::max(0.0, opt_.syst_bin[i - 1]);
+            if (density_mode_)
+            {
+                const double w = m.GetXaxis() ? m.GetXaxis()->GetBinWidth(i) : 0.0;
+                if (w > 0.0)
+                {
+                    s /= w;
+                }
+            }
+            v_syst = s * s;
+        }
+        const double v_tot = v_data + v_mcstat + v_syst;
+        if (v_tot > 0.0)
+        {
+            bins.push_back(i);
+        }
+    }
+
+    if (bins.empty())
+    {
+        return false;
+    }
+    ndf_out = static_cast<int>(bins.size());
+
+    if (opt_.total_cov)
+    {
+        const int n = static_cast<int>(bins.size());
+        TMatrixDSym V(n);
+        for (int a = 0; a < n; ++a)
+        {
+            const int i = bins[a];
+            const double wi = density_mode_ && m.GetXaxis() ? m.GetXaxis()->GetBinWidth(i) : 1.0;
+            for (int b = 0; b < n; ++b)
+            {
+                const int j = bins[b];
+                const double wj = density_mode_ && m.GetXaxis() ? m.GetXaxis()->GetBinWidth(j) : 1.0;
+
+                double v = 0.0;
+                if (a == b)
+                {
+                    v += std::pow(d.GetBinError(i), 2);
+                    v += std::pow(mstat.GetBinError(i), 2);
+                }
+
+                if ((i - 1) < opt_.total_cov->GetNrows() && (j - 1) < opt_.total_cov->GetNrows())
+                {
+                    double c = (*opt_.total_cov)(i - 1, j - 1);
+                    if (density_mode_ && wi > 0.0 && wj > 0.0)
+                    {
+                        c /= (wi * wj);
+                    }
+                    v += c;
+                }
+                V(a, b) = v;
+            }
+        }
+
+        TVectorD r(n);
+        for (int a = 0; a < n; ++a)
+        {
+            const int i = bins[a];
+            r[a] = d.GetBinContent(i) - m.GetBinContent(i);
+        }
+
+        TDecompChol chol(V);
+        if (chol.Decompose())
+        {
+            TVectorD x(r);
+            chol.Solve(x);
+            chi2_out = r * x;
+            return true;
+        }
+    }
+
+    double chi2 = 0.0;
+    for (int i : bins)
+    {
+        const double diff = d.GetBinContent(i) - m.GetBinContent(i);
+        const double v_data = std::pow(d.GetBinError(i), 2);
+        const double v_mcstat = std::pow(mstat.GetBinError(i), 2);
+        double v_syst = 0.0;
+        if (!opt_.syst_bin.empty() && (i - 1) < static_cast<int>(opt_.syst_bin.size()))
+        {
+            double s = std::max(0.0, opt_.syst_bin[i - 1]);
+            if (density_mode_)
+            {
+                const double w = m.GetXaxis() ? m.GetXaxis()->GetBinWidth(i) : 0.0;
+                if (w > 0.0)
+                {
+                    s /= w;
+                }
+            }
+            v_syst = s * s;
+        }
+        else if (opt_.total_cov && (i - 1) < opt_.total_cov->GetNrows())
+        {
+            v_syst = (*opt_.total_cov)(i - 1, i - 1);
+            if (density_mode_)
+            {
+                const double w = m.GetXaxis() ? m.GetXaxis()->GetBinWidth(i) : 0.0;
+                if (w > 0.0)
+                {
+                    v_syst /= (w * w);
+                }
+            }
+        }
+        const double v = v_data + v_mcstat + v_syst;
+        if (v > 0.0)
+        {
+            chi2 += (diff * diff) / v;
+        }
+    }
+    chi2_out = chi2;
+    return true;
+}
+
+void StackedHist::draw_chi2_box(TPad *p_main)
+{
+    if (!p_main || !opt_.show_chi2)
+    {
+        return;
+    }
+    double chi2 = 0.0;
+    int ndf = 0;
+    if (!compute_chi2(chi2, ndf) || ndf <= 0)
+    {
+        return;
+    }
+    p_main->cd();
+    chi2_box_ = std::make_unique<TPaveText>(0.16, 0.83, 0.44, 0.91, "NDC");
+    chi2_box_->SetFillColor(kWhite);
+    chi2_box_->SetFillStyle(1001);
+    chi2_box_->SetLineColor(kBlack);
+    chi2_box_->SetBorderSize(1);
+    chi2_box_->SetTextFont(42);
+    chi2_box_->SetTextAlign(12);
+    chi2_box_->SetTextSize(0.04);
+    std::ostringstream ss;
+    ss << "#chi^{2} = " << std::fixed << std::setprecision(2) << chi2 << "/" << ndf << " bins";
+    chi2_box_->AddText(ss.str().c_str());
+    chi2_box_->Draw("SAME");
+}
+
 void StackedHist::draw_legend(TPad *p)
 {
     if (!p)
@@ -821,9 +1132,11 @@ void StackedHist::draw_legend(TPad *p)
     const double y2 = compact_legend ? 0.97 : 0.75;
     legend_ = std::make_unique<TLegend>(x1, y1, x2, y2);
     auto *leg = legend_.get();
-    leg->SetBorderSize(0);
-    leg->SetFillColor(k_panel_fill_colour);
-    leg->SetFillStyle(0);
+    // MicroBooNE-like legend: white box with border.
+    leg->SetBorderSize(1);
+    leg->SetLineColor(kBlack);
+    leg->SetFillColor(kWhite);
+    leg->SetFillStyle(1001);
     leg->SetTextFont(42);
     leg->SetMargin(0.25);
 
@@ -851,6 +1164,41 @@ void StackedHist::draw_legend(TPad *p)
     }
 
     legend_proxies_.clear();
+
+    if (opt_.show_watermark)
+    {
+        std::string header;
+        if (!opt_.analysis_region_label.empty())
+        {
+            header = opt_.analysis_region_label;
+        }
+        else if (!opt_.beamline.empty())
+        {
+            header = opt_.beamline;
+        }
+        if (opt_.total_protons_on_target > 0.0)
+        {
+            const std::string pot = fmt_sci_tex(opt_.total_protons_on_target, 2);
+            if (!pot.empty())
+            {
+                if (!header.empty())
+                {
+                    header += " ";
+                }
+                header += pot + " POT";
+            }
+        }
+        if (!header.empty())
+        {
+            leg->SetHeader(header.c_str(), "C");
+        }
+    }
+
+    if (has_data())
+    {
+        const std::string data_label = opt_.beamline.empty() ? "Data" : (opt_.beamline + " data");
+        leg->AddEntry(data_hist_.get(), data_label.c_str(), "lep");
+    }
 
     for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
     {
@@ -892,12 +1240,11 @@ void StackedHist::draw_legend(TPad *p)
             mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
-        proxy->SetFillColor(k_uncertainty_fill_colour);
-        proxy->SetFillStyle(k_uncertainty_fill_style);
-        proxy->SetLineColor(k_uncertainty_fill_colour);
-        proxy->SetLineStyle(kSolid);
-        proxy->SetLineWidth(1);
-        leg->AddEntry(proxy.get(), "Stat. #oplus Syst. Unc.", "f");
+        proxy->SetFillStyle(0);
+        proxy->SetLineColor(k_uncertainty_line_colour);
+        proxy->SetLineStyle(k_uncertainty_line_style);
+        proxy->SetLineWidth(k_uncertainty_line_width);
+        leg->AddEntry(proxy.get(), "Stat + syst unc.", "l");
         legend_proxies_.push_back(std::move(proxy));
     }
 
@@ -909,11 +1256,6 @@ void StackedHist::draw_legend(TPad *p)
                      << Plotter::fmt_commas(signal_events_, 2)
                      << " (x" << std::fixed << std::setprecision(2) << signal_scale_ << ")";
         leg->AddEntry(sig_hist_.get(), signal_label.str().c_str(), "l");
-    }
-
-    if (has_data())
-    {
-        leg->AddEntry(data_hist_.get(), "Data", "lep");
     }
 
     leg->Draw();
@@ -961,6 +1303,7 @@ void StackedHist::draw(TCanvas &canvas)
     double max_y = 1.;
     draw_stack_and_unc(p_main, max_y);
     draw_cuts(p_main, max_y);
+    draw_chi2_box(p_main);
     if (opt_.show_legend)
     {
         draw_legend(p_legend ? p_legend : p_main);

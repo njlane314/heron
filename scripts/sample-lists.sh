@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_DIR="scratch/out/sample-lists"
-ART_DIR="scratch/out/${HERON_SET:-template}/art"
+OUTPUT_DIR="${HERON_OUTPUT_DIR}/sample-lists"
+ART_DIR="${HERON_OUTPUT_DIR}/${HERON_SET:-template}/art"
 
 mkdir -p "${OUTPUT_DIR}"
 shopt -s nullglob

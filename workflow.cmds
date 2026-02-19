@@ -6,29 +6,29 @@ USER_NAME=nlane RELEASE=v08_00_00_82 NAME=numi_fhc_run1
 source scripts/partition-lists.sh
 
 # aggregate art output
-heron art "beam_s0:scratch/out/filelists/beam_s0.list:overlay:numi"
-heron art "beam_s1:scratch/out/filelists/beam_s1.list:overlay:numi"
-heron art "beam_s2:scratch/out/filelists/beam_s2.list:overlay:numi"
-heron art "beam_s3:scratch/out/filelists/beam_s3.list:overlay:numi"
-heron art "dirt_s0:scratch/out/filelists/dirt_s0.list:dirt:numi"
-heron art "dirt_s1:scratch/out/filelists/dirt_s1.list:dirt:numi"
-heron art "strangeness_run1_fhc:scratch/out/filelists/strangeness_run1_fhc.list:strangeness:numi"
-heron art "ext_p0:scratch/out/filelists/ext_p0.list:ext:numi"
-heron art "ext_p1:scratch/out/filelists/ext_p1.list:ext:numi"
-heron art "ext_p2:scratch/out/filelists/ext_p2.list:ext:numi"
+heron art "beam_s0:${HERON_OUTPUT_DIR}/inputs/beam_s0.list:overlay:numi"
+heron art "beam_s1:${HERON_OUTPUT_DIR}/inputs/beam_s1.list:overlay:numi"
+heron art "beam_s2:${HERON_OUTPUT_DIR}/inputs/beam_s2.list:overlay:numi"
+heron art "beam_s3:${HERON_OUTPUT_DIR}/inputs/beam_s3.list:overlay:numi"
+heron art "dirt_s0:${HERON_OUTPUT_DIR}/inputs/dirt_s0.list:dirt:numi"
+heron art "dirt_s1:${HERON_OUTPUT_DIR}/inputs/dirt_s1.list:dirt:numi"
+heron art "strangeness_run1_fhc:${HERON_OUTPUT_DIR}/inputs/strangeness_run1_fhc.list:strangeness:numi"
+heron art "ext_p0:${HERON_OUTPUT_DIR}/inputs/ext_p0.list:ext:numi"
+heron art "ext_p1:${HERON_OUTPUT_DIR}/inputs/ext_p1.list:ext:numi"
+heron art "ext_p2:${HERON_OUTPUT_DIR}/inputs/ext_p2.list:ext:numi"
 
 # group art output into logical samples
 source scripts/sample-lists.sh
-heron sample "beam:scratch/out/sample-lists/numi_fhc_run1_sample_beam.list"
-heron sample "strangeness:scratch/out/sample-lists/numi_fhc_run1_sample_strangeness.list"
+heron sample "beam:${HERON_OUTPUT_DIR}/sample-lists/numi_fhc_run1_sample_beam.list"
+heron sample "strangeness:${HERON_OUTPUT_DIR}/sample-lists/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_inclusive_mu_cc apps/config/event_columns.tsv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_inclusive_mu_cc apps/config/event_columns.tsv
 
 
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root true apps/config/event_columns.tsv
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_muon
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_inclusive_mu_cc
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_triggered_muon
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_triggered_slice
-heron event scratch/out/template/sample/samples.tsv scratch/out/template/event/events.root sel_reco_fv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root true apps/config/event_columns.tsv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_muon
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_inclusive_mu_cc
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_triggered_muon
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_triggered_slice
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-template}/event/events.root sel_reco_fv

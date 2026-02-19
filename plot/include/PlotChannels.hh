@@ -50,13 +50,13 @@ class Channels
 
     static const std::vector<int> &signal_keys()
     {
-        static const std::vector<int> v = {15, 16};
+        static const std::vector<int> v = {15, 16, 17, 18};
         return v;
     }
 
     static const std::vector<int> &mc_keys()
     {
-        static const std::vector<int> v = {1, 2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 99};
+        static const std::vector<int> v = {1, 2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 99};
         return v;
     }
 
@@ -77,10 +77,12 @@ class Channels
             {12, {12, "numu_cc_pi0gg", "#nu_{#mu}CC #pi^{0}/#gamma#gamma", colour_from_hex("#ff006e"), 1001}},
             {13, {13, "numu_cc_npnpi", "#nu_{#mu}CC multi-#pi^{#pm}", colour_from_hex("#5e60ce"), 1001}},
             {14, {14, "nc", "#nu_{x}NC", colour_from_hex("#4361ee"), 1001}},
-            {15, {15, "signal_lambda_qe", "Signal #Lambda (QE-like)", colour_from_hex("#39ff14"), 1001}},
-            {16, {16, "signal_lambda_assoc", "Signal #Lambda + K assoc.", colour_from_hex("#00e676"), 1001}},
-            {17, {17, "nue_cc", "#nu_{e}CC", colour_from_hex("#00f5d4"), 1001}},
-            {18, {18, "numu_cc_other", "#nu_{#mu}CC Other", colour_from_hex("#118ab2"), 1001}},
+            {15, {15, "signal_lambda_ccqe", "Signal #Lambda^{0} CCQE (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#39ff14"), 1001}},
+            {16, {16, "signal_lambda_ccres", "Signal #Lambda^{0} CCRES (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#00e676"), 1001}},
+            {17, {17, "signal_lambda_ccdis", "Signal #Lambda^{0} CCDIS (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#7ae582"), 1001}},
+            {18, {18, "signal_lambda_ccother", "Signal #Lambda^{0} CC Other (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#2dc653"), 1001}},
+            {19, {19, "nue_cc", "#nu_{e}CC", colour_from_hex("#00f5d4"), 1001}},
+            {20, {20, "numu_cc_other", "#nu_{#mu}CC Other", colour_from_hex("#118ab2"), 1001}},
             {99, {99, "other", "Other", colour_from_hex("#ff3d00"), 1001}}};
         return m;
     }

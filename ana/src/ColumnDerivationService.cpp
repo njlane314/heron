@@ -122,6 +122,27 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
                     node = node.Define("interaction_mode", [] { return -1; });
                 }
             }
+
+            if (has_mc("interaction_type"))
+            {
+                // Keep existing interaction_type column.
+            }
+            else if (has_mc("int_type"))
+            {
+                node = node.Define("interaction_type", [](int t) { return t; }, {"int_type"});
+            }
+            else if (has_mc("interaction_mode"))
+            {
+                node = node.Define("interaction_type", [](int m) { return m; }, {"interaction_mode"});
+            }
+            else if (has_mc("int_mode"))
+            {
+                node = node.Define("interaction_type", [](int m) { return m; }, {"int_mode"});
+            }
+            else
+            {
+                node = node.Define("interaction_type", [] { return -1; });
+            }
         }
 
         node = node.Define(
@@ -129,13 +150,14 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
             [](bool in_fiducial,
                int nu_pdg,
                int ccnc,
-               int interaction_mode,
+               int interaction_type,
                int n_p,
                int n_pi_minus,
                int n_pi_plus,
                int n_pi0,
                int n_gamma,
                bool is_nu_mu_cc,
+               int lam_pdg,
                float mu_p,
                float p_p,
                float pi_p,
@@ -145,13 +167,14 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
                         in_fiducial,
                         nu_pdg,
                         ccnc,
-                        interaction_mode,
+                        interaction_type,
                         n_p,
                         n_pi_minus,
                         n_pi_plus,
                         n_pi0,
                         n_gamma,
                         is_nu_mu_cc,
+                        lam_pdg,
                         mu_p,
                         p_p,
                         pi_p,
@@ -160,13 +183,14 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
             {"in_fiducial",
              "nu_pdg",
              "int_ccnc",
-             "interaction_mode",
+             "interaction_type",
              "n_p",
              "n_pi_minus",
              "n_pi_plus",
              "n_pi0",
              "n_gamma",
              "is_nu_mu_cc",
+             "lam_pdg",
              "mu_p",
              "p_p",
              "pi_p",
@@ -175,17 +199,18 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
 
         node = node.Define(
             "is_signal",
-            [](bool is_nu_mu_cc, int ccnc, bool in_fiducial, float mu_p, float p_p, float pi_p, float lam_decay_sep) {
+            [](bool is_nu_mu_cc, int ccnc, bool in_fiducial, int lam_pdg, float mu_p, float p_p, float pi_p, float lam_decay_sep) {
                 return AnalysisChannels::is_signal(
                     is_nu_mu_cc,
                     ccnc,
                     in_fiducial,
+                    lam_pdg,
                     mu_p,
                     p_p,
                     pi_p,
                     lam_decay_sep);
             },
-            {"is_nu_mu_cc", "int_ccnc", "in_fiducial", "mu_p", "p_p", "pi_p", "lam_decay_sep"});
+            {"is_nu_mu_cc", "int_ccnc", "in_fiducial", "lam_pdg", "mu_p", "p_p", "pi_p", "lam_decay_sep"});
     }
     else
     {
@@ -201,6 +226,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
         node = node.Define("is_strange", [] { return false; });
         node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
         node = node.Define("interaction_mode", [] { return -1; });
+        node = node.Define("interaction_type", [] { return -1; });
         node = node.Define("is_signal", [] { return false; });
         node = node.Define("recognised_signal", [] { return false; });
     }

@@ -41,8 +41,10 @@ std::vector<LegendEntry> default_entries()
     dirt_entry.colour = TColor::GetColor("#ffb703");
     entries.push_back(dirt_entry);
     entries.push_back({"Other", TColor::GetColor("#ff3d00"), 1001});
-    entries.push_back({"Signal #Lambda (QE-like)", TColor::GetColor("#39ff14"), 1001});
-    entries.push_back({"Signal #Lambda + K assoc.", TColor::GetColor("#00e676"), 1001});
+    entries.push_back({"Signal #Lambda^{0} CCQE (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#39ff14"), 1001});
+    entries.push_back({"Signal #Lambda^{0} CCRES (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#00e676"), 1001});
+    entries.push_back({"Signal #Lambda^{0} CCDIS (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#7ae582"), 1001});
+    entries.push_back({"Signal #Lambda^{0} CC Other (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#2dc653"), 1001});
     return entries;
 }
 } // namespace

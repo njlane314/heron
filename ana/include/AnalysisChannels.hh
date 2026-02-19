@@ -25,31 +25,40 @@ class AnalysisChannels
         MuCCPi0OrGamma = 12, ///< Muon-neutrino charged-current with π0 or photon activity.
         MuCCNpi = 13,        ///< Muon-neutrino charged-current with more than one pion.
         NC = 14,             ///< Neutral-current interaction in fiducial volume.
-        SignalLambdaQE = 15,   ///< Signal interaction in Lambda quasi-elastic mode.
-        SignalLambdaAssociated = 16, ///< Signal interaction in associated Lambda production mode.
-        ECCC = 17,           ///< Electron-neutrino charged-current interaction.
-        MuCCOther = 18,      ///< Other muon-neutrino charged-current topologies.
-        DataInclusive = 99   ///< Inclusive data channel (non-MC).
+        SignalLambdaCCQE = 15,    ///< Signal interaction in CCQE Lambda mode.
+        SignalLambdaCCRES = 16,   ///< Signal interaction in CCRES Lambda mode.
+        SignalLambdaCCDIS = 17,   ///< Signal interaction in CCDIS Lambda mode.
+        SignalLambdaCCOther = 18, ///< Signal interaction in other CC Lambda modes.
+        ECCC = 19,                ///< Electron-neutrino charged-current interaction.
+        MuCCOther = 20,           ///< Other muon-neutrino charged-current topologies.
+        DataInclusive = 99        ///< Inclusive data channel (non-MC).
     };
 
-    static bool is_lambda_associated_mode(int interaction_mode)
+    static AnalysisChannel classify_lambda_signal_channel(int interaction_type)
     {
-        // Based on simb::int_type_ / Nuance-offset values carried in MCNeutrino::Mode().
-        return interaction_mode == 1073 || // kResCCNuKaonPlusLambda0
-               interaction_mode == 1076;   // kResCCNuBarKaon0Lambda0
+        // Support both low-number simb::int_type_ values and Nuance-offset values.
+        // Some ntuples persist 0/1/2 (QE/Res/DIS), others store 1001/10xx variants.
+        if (interaction_type == 0 || interaction_type == 1001)
+            return AnalysisChannel::SignalLambdaCCQE;
+        if (interaction_type == 1 || interaction_type == 1073 || interaction_type == 1076)
+            return AnalysisChannel::SignalLambdaCCRES;
+        if (interaction_type == 2 || interaction_type == 1091)
+            return AnalysisChannel::SignalLambdaCCDIS;
+        return AnalysisChannel::SignalLambdaCCOther;
     }
 
     static AnalysisChannel classify_analysis_channel(
         bool in_fiducial,
         int nu_pdg,
         int ccnc,
-        int interaction_mode,
+        int interaction_type,
         int n_p,
         int n_pi_minus,
         int n_pi_plus,
         int n_pi0,
         int n_gamma,
         bool is_nu_mu_cc,
+        int lam_pdg,
         float mu_p,
         float p_p,
         float pi_p,
@@ -67,12 +76,8 @@ class AnalysisChannels
         if (ccnc == 1)
             return AnalysisChannel::NC;
 
-        if (is_signal(is_nu_mu_cc, ccnc, in_fiducial, mu_p, p_p, pi_p, lam_decay_sep))
-        {
-            if (is_lambda_associated_mode(interaction_mode))
-                return AnalysisChannel::SignalLambdaAssociated;
-            return AnalysisChannel::SignalLambdaQE;
-        }
+        if (is_signal(is_nu_mu_cc, ccnc, in_fiducial, lam_pdg, mu_p, p_p, pi_p, lam_decay_sep))
+            return classify_lambda_signal_channel(interaction_type);
 
         if (std::abs(nu_pdg) == 12 && ccnc == 0)
             return AnalysisChannel::ECCC;
@@ -102,6 +107,7 @@ class AnalysisChannels
         bool is_nu_mu_cc,
         int ccnc,
         bool in_fiducial,
+        int lam_pdg,
         float mu_p,
         float p_p,
         float pi_p,
@@ -117,6 +123,8 @@ class AnalysisChannels
         if (ccnc != 0)
             return false;
         if (!in_fiducial)
+            return false;
+        if (lam_pdg != 3122)
             return false;
         if (!std::isfinite(mu_p) || !std::isfinite(p_p) || !std::isfinite(pi_p) ||
             !std::isfinite(lam_decay_sep))

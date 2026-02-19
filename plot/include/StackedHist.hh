@@ -47,7 +47,6 @@ class StackedHist
     void draw_ratio(TPad *p_ratio);
     void draw_legend(TPad *p);
     void draw_cuts(TPad *p, double max_y);
-    void draw_watermark(TPad *p, double total_mc) const;
 
     TH1DModel spec_;
     Options opt_;

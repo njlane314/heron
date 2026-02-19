@@ -1,9 +1,0 @@
-type	name
-int	run
-int	sub
-int	evt
-bool	is_signal
-double	w_nominal
-ROOT::VecOps::RVec<float>	detector_image_u
-ROOT::VecOps::RVec<float>	detector_image_v
-ROOT::VecOps::RVec<float>	detector_image_w

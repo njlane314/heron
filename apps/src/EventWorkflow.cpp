@@ -59,27 +59,11 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         inputs.push_back(std::move(input));
     }
 
-    const std::vector<std::string> default_columns = {
-        "run",
-        "sub",
-        "evt",
-        "is_signal",
-        "w_nominal",
-        "detector_image_u",
-        "detector_image_v",
-        "detector_image_w"
-    };
-
-    const std::vector<std::pair<std::string, std::string>> default_schema_columns = {
-        {"int", "run"},
-        {"int", "sub"},
-        {"int", "evt"},
-        {"bool", "is_signal"},
-        {"double", "w_nominal"},
-        {"ROOT::VecOps::RVec<float>", "detector_image_u"},
-        {"ROOT::VecOps::RVec<float>", "detector_image_v"},
-        {"ROOT::VecOps::RVec<float>", "detector_image_w"}
-    };
+    const std::filesystem::path default_columns_tsv =
+        repo_root_dir() / "apps" / "config" / "event_columns.tsv";
+    const std::string columns_tsv_path = event_args.columns_tsv_path.empty()
+                                             ? default_columns_tsv.string()
+                                             : event_args.columns_tsv_path;
 
     const std::string provenance_tree = "heron_art_provenance/run_subrun";
     const std::string event_tree = analysis.tree_name();
@@ -102,9 +86,9 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     }
 
     const EventColumnProvider column_provider(
-        default_columns,
-        default_schema_columns,
-        event_args.columns_tsv_path);
+        {},
+        {},
+        columns_tsv_path);
 
     nu::EventListIO::init(event_args.output_root,
                           header,

@@ -83,11 +83,11 @@ Some module-level cues to help orient a new contributor:
 
 * ``io/`` for input data layouts, provenance output, and SampleIO metadata.
 * ``ana/`` for derived column definitions and selection logic.
-* ``cols/event_columns.tsv`` for the event output schema reference.
+* ``apps/config/event_columns.tsv`` for the event output schema reference.
 
 If you need to locate column naming conventions or event layouts, search within
 the ``io/`` module first, then trace any references into ``ana/``. The
-``cols/event_columns.tsv`` file provides a reference list of tracked event
+``apps/config/event_columns.tsv`` file provides a reference list of tracked event
 columns.
 
 Contributing notes

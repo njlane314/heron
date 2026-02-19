@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_DIR="${HERON_OUTPUT_DIR}/sample-lists"
+OUTPUT_DIR="${HERON_OUTPUT_DIR}/samples"
 ART_DIR="${HERON_OUTPUT_DIR}/art"
 
 if [[ ! -d "${ART_DIR}" && -n "${HERON_SET:-}" && -d "${HERON_OUTPUT_DIR}/${HERON_SET}/art" ]]

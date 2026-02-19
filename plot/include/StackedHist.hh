@@ -18,8 +18,6 @@
 #include "TH1.h"
 #include "THStack.h"
 #include "TImage.h"
-#include "TLegend.h"
-#include "TLegendEntry.h"
 #include "TPaveText.h"
 #include "TPad.h"
 
@@ -47,7 +45,6 @@ class StackedHist
     void setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p_legend) const;
     void draw_stack_and_unc(TPad *p_main, double &max_y);
     void draw_ratio(TPad *p_ratio);
-    void draw_legend(TPad *p);
     void draw_chi2_box(TPad *p_main);
     void draw_cuts(TPad *p, double max_y);
     bool compute_chi2(double &chi2_out, int &ndf_out) const;
@@ -78,8 +75,6 @@ class StackedHist
     double signal_events_ = 0.0;
     double signal_scale_ = 1.0;
     std::unique_ptr<TPaveText> chi2_box_;
-    mutable std::vector<std::unique_ptr<TH1D>> legend_proxies_;
-    mutable std::unique_ptr<TLegend> legend_;
 };
 
 } // namespace nu

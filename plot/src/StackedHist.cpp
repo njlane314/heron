@@ -27,7 +27,6 @@
 #include "TDecompChol.h"
 #include "TImage.h"
 #include "TLine.h"
-#include "TLegendEntry.h"
 #include "TList.h"
 #include "TMatrixDSym.h"
 #include "TPaveText.h"
@@ -260,7 +259,6 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         {
             return;
         }
-        // Keep stacked plots visually light: ticks only on the left/bottom axes.
         pad->SetTickx(0);
         pad->SetTicky(0);
     };
@@ -270,41 +268,19 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
     c.SetFrameFillColor(k_panel_fill_colour);
     c.SetTickx(0);
     c.SetTicky(0);
+
     p_main = nullptr;
     p_ratio = nullptr;
     p_legend = nullptr;
 
-    // STV-style layout: full-width plot, optional ratio pad at bottom, optional legend band pad at top.
     if (opt_.stv_style)
     {
-        const bool want_leg_pad = opt_.show_legend && opt_.legend_on_top;
-        const double y_leg_split = want_leg_pad ? 0.85 : 1.00;
-
         const std::string main_name = plot_name_ + "_pad_main";
-        const std::string ratio_name = plot_name_ + "_pad_ratio";
-        const std::string legend_name = plot_name_ + "_pad_legend";
-
         if (want_ratio())
         {
+            const std::string ratio_name = plot_name_ + "_pad_ratio";
             p_ratio = new TPad(ratio_name.c_str(), ratio_name.c_str(), 0.0, 0.01, 1.0, 0.23);
-            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0.0, 0.23, 1.0, y_leg_split);
-            if (want_leg_pad)
-            {
-                p_legend = new TPad(legend_name.c_str(), legend_name.c_str(), 0.0, y_leg_split, 1.0, 1.0);
-            }
-
-            p_main->SetTopMargin(0.02);
-            p_main->SetBottomMargin(0.00);
-            p_main->SetLeftMargin(0.13);
-            p_main->SetRightMargin(0.06);
-            p_main->SetFillColor(k_panel_fill_colour);
-            p_main->SetFrameFillColor(k_panel_fill_colour);
-            p_main->SetGridx();
-            use_single_sided_ticks(p_main);
-            if (opt_.use_log_y)
-            {
-                p_main->SetLogy();
-            }
+            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0.0, 0.23, 1.0, 1.0);
 
             p_ratio->SetTopMargin(0.00);
             p_ratio->SetBottomMargin(0.38);
@@ -315,41 +291,16 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_ratio->SetFrameFillStyle(4000);
             p_ratio->SetGridx();
             use_single_sided_ticks(p_ratio);
-
-            if (p_legend)
-            {
-                p_legend->SetTopMargin(0.10);
-                p_legend->SetBottomMargin(0.02);
-                p_legend->SetLeftMargin(0.00);
-                p_legend->SetRightMargin(0.00);
-                p_legend->SetFillColor(k_panel_fill_colour);
-                p_legend->SetFrameFillColor(k_panel_fill_colour);
-            }
-
             p_ratio->Draw();
-            p_main->Draw();
-            if (p_legend)
-            {
-                p_legend->Draw();
-            }
             disable_primitive_ownership(p_ratio);
-            disable_primitive_ownership(p_main);
-            disable_primitive_ownership(p_legend);
-            return;
-        }
-
-        if (want_leg_pad)
-        {
-            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0.0, 0.00, 1.0, y_leg_split);
-            p_legend = new TPad(legend_name.c_str(), legend_name.c_str(), 0.0, y_leg_split, 1.0, 1.0);
         }
         else
         {
-            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0.0, 0.00, 1.0, 1.0);
+            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0.0, 0.0, 1.0, 1.0);
         }
 
         p_main->SetTopMargin(0.02);
-        p_main->SetBottomMargin(0.12);
+        p_main->SetBottomMargin(want_ratio() ? 0.00 : 0.12);
         p_main->SetLeftMargin(0.13);
         p_main->SetRightMargin(0.06);
         p_main->SetFillColor(k_panel_fill_colour);
@@ -361,102 +312,8 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_main->SetLogy();
         }
 
-        if (p_legend)
-        {
-            p_legend->SetTopMargin(0.10);
-            p_legend->SetBottomMargin(0.02);
-            p_legend->SetLeftMargin(0.00);
-            p_legend->SetRightMargin(0.00);
-            p_legend->SetFillColor(k_panel_fill_colour);
-            p_legend->SetFrameFillColor(k_panel_fill_colour);
-        }
-
         p_main->Draw();
-        if (p_legend)
-        {
-            p_legend->Draw();
-        }
         disable_primitive_ownership(p_main);
-        disable_primitive_ownership(p_legend);
-        return;
-    }
-
-    const double split_top = 0.85;
-    const bool separate_legend = opt_.show_legend;
-
-    if (opt_.legend_on_top)
-    {
-        if (want_ratio())
-        {
-            const std::string ratio_name = plot_name_ + "_pad_ratio";
-            const std::string main_name = plot_name_ + "_pad_main";
-            const std::string legend_name = plot_name_ + "_pad_legend";
-            p_ratio = new TPad(ratio_name.c_str(), ratio_name.c_str(), 0., 0.00, 1., 0.30);
-            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0., 0.30, 1., split_top);
-            p_legend = new TPad(legend_name.c_str(), legend_name.c_str(), 0., split_top, 1., 1.00);
-
-            p_main->SetTopMargin(0.02);
-            p_main->SetBottomMargin(0.02);
-            p_main->SetLeftMargin(0.12);
-            p_main->SetRightMargin(0.05);
-            p_main->SetFillColor(k_panel_fill_colour);
-            p_main->SetFrameFillColor(k_panel_fill_colour);
-            use_single_sided_ticks(p_main);
-
-            p_ratio->SetTopMargin(0.05);
-            p_ratio->SetBottomMargin(0.35);
-            p_ratio->SetLeftMargin(0.12);
-            p_ratio->SetRightMargin(0.05);
-            p_ratio->SetFillColor(k_panel_fill_colour);
-            p_ratio->SetFrameFillColor(k_panel_fill_colour);
-            use_single_sided_ticks(p_ratio);
-
-            p_legend->SetTopMargin(0.05);
-            p_legend->SetBottomMargin(0.01);
-            p_legend->SetLeftMargin(0.00);
-            p_legend->SetRightMargin(0.00);
-            p_legend->SetFillColor(k_panel_fill_colour);
-            p_legend->SetFrameFillColor(k_panel_fill_colour);
-        }
-        else
-        {
-            const std::string main_name = plot_name_ + "_pad_main";
-            const std::string legend_name = plot_name_ + "_pad_legend";
-            p_main = new TPad(main_name.c_str(), main_name.c_str(), 0., 0.00, 1., split_top);
-            p_legend = new TPad(legend_name.c_str(), legend_name.c_str(), 0., split_top, 1., 1.00);
-
-            p_main->SetTopMargin(0.01);
-            p_main->SetBottomMargin(0.12);
-            p_main->SetLeftMargin(0.12);
-            p_main->SetRightMargin(0.05);
-            p_main->SetFillColor(k_panel_fill_colour);
-            p_main->SetFrameFillColor(k_panel_fill_colour);
-            use_single_sided_ticks(p_main);
-
-            p_legend->SetTopMargin(0.05);
-            p_legend->SetBottomMargin(0.01);
-            p_legend->SetFillColor(k_panel_fill_colour);
-            p_legend->SetFrameFillColor(k_panel_fill_colour);
-        }
-        if (opt_.use_log_y && p_main)
-        {
-            p_main->SetLogy();
-        }
-        if (p_ratio)
-        {
-            p_ratio->Draw();
-        }
-        if (p_main)
-        {
-            p_main->Draw();
-            disable_primitive_ownership(p_main);
-        }
-        if (p_legend)
-        {
-            p_legend->Draw();
-        }
-        disable_primitive_ownership(p_ratio);
-        disable_primitive_ownership(p_legend);
         return;
     }
 
@@ -496,20 +353,6 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         use_single_sided_ticks(p_main);
     }
 
-    if (separate_legend && p_main)
-    {
-        const double split = std::min(std::max(opt_.legend_split, 0.40), 0.90);
-        p_main->SetPad(0., 0., split, 1.0);
-        const std::string legend_name = plot_name_ + "_pad_legend";
-        p_legend = new TPad(legend_name.c_str(), legend_name.c_str(), split, 0., 1.0, 1.0);
-        p_legend->SetFillColor(k_panel_fill_colour);
-        p_legend->SetFrameFillColor(k_panel_fill_colour);
-        p_legend->SetTopMargin(0.06);
-        p_legend->SetBottomMargin(0.12);
-        p_legend->SetLeftMargin(0.00);
-        p_legend->SetRightMargin(0.00);
-    }
-
     if (opt_.use_log_y && p_main)
     {
         p_main->SetLogy();
@@ -522,13 +365,8 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
     {
         p_main->Draw();
     }
-    if (p_legend)
-    {
-        p_legend->Draw();
-    }
     disable_primitive_ownership(p_ratio);
     disable_primitive_ownership(p_main);
-    disable_primitive_ownership(p_legend);
 }
 
 void StackedHist::build_histograms()
@@ -1228,216 +1066,6 @@ void StackedHist::draw_chi2_box(TPad *p_main)
     chi2_box_->Draw("SAME");
 }
 
-void StackedHist::draw_legend(TPad *p)
-{
-    if (!p)
-    {
-        return;
-    }
-    p->cd();
-    const bool compact_legend = p->GetWNDC() < 0.30;
-
-    double x1 = 0.12, y1 = 0.00, x2 = 0.98, y2 = 0.75;
-    if (opt_.stv_style)
-    {
-        if (compact_legend)
-        {
-            x1 = 0.02;
-            y1 = 0.05;
-            x2 = 0.98;
-            y2 = 0.95;
-        }
-        else
-        {
-            x1 = 0.13;
-            y1 = 0.88;
-            x2 = 0.94;
-            y2 = 0.99;
-        }
-    }
-    else
-    {
-        x1 = compact_legend ? 0.04 : 0.12;
-        y1 = compact_legend ? 0.03 : 0.00;
-        x2 = 0.98;
-        y2 = compact_legend ? 0.97 : 0.75;
-    }
-
-    legend_ = std::make_unique<TLegend>(x1, y1, x2, y2);
-    auto *leg = legend_.get();
-    if (opt_.stv_style)
-    {
-        leg->SetBorderSize(1);
-        leg->SetLineColor(kBlack);
-        leg->SetFillColor(kWhite);
-        leg->SetFillStyle(1001);
-        leg->SetTextSize(0.028);
-        leg->SetMargin(0.18);
-    }
-    else
-    {
-        leg->SetBorderSize(0);
-        leg->SetFillColor(k_panel_fill_colour);
-        leg->SetFillStyle(0);
-        leg->SetMargin(0.25);
-    }
-    leg->SetTextFont(42);
-
-    int n_entries = static_cast<int>(mc_ch_hists_.size());
-    if (mc_total_)
-    {
-        ++n_entries;
-    }
-    if (sig_hist_)
-    {
-        ++n_entries;
-    }
-    if (has_data())
-    {
-        ++n_entries;
-    }
-    if (n_entries > 0)
-    {
-        int n_cols = 2;
-        if (opt_.stv_style)
-        {
-            n_cols = 3;
-        }
-        else
-        {
-            n_cols = (n_entries > 4) ? 3 : 2;
-            if (compact_legend)
-            {
-                n_cols = 1;
-            }
-        }
-        leg->SetNColumns(n_cols);
-    }
-
-    legend_proxies_.clear();
-
-    if (opt_.stv_style && opt_.show_watermark)
-    {
-        std::string header;
-        if (!opt_.beamline.empty())
-        {
-            header = opt_.beamline;
-        }
-        if (opt_.total_protons_on_target > 0.0)
-        {
-            const std::string pot = fmt_times10(opt_.total_protons_on_target, 2);
-            if (!pot.empty())
-            {
-                if (!header.empty())
-                {
-                    header += " ";
-                }
-                header += pot + " POT";
-            }
-        }
-        if (!header.empty())
-        {
-            leg->SetHeader(header.c_str(), "C");
-            if (auto *hdr = dynamic_cast<TLegendEntry *>(leg->GetListOfPrimitives()->First()))
-            {
-                hdr->SetTextSize(0.03);
-            }
-        }
-    }
-    else if (opt_.show_watermark)
-    {
-        std::string header;
-        if (!opt_.analysis_region_label.empty())
-        {
-            header = opt_.analysis_region_label;
-        }
-        else if (!opt_.beamline.empty())
-        {
-            header = opt_.beamline;
-        }
-        if (opt_.total_protons_on_target > 0.0)
-        {
-            const std::string pot = fmt_times10(opt_.total_protons_on_target, 2);
-            if (!pot.empty())
-            {
-                if (!header.empty())
-                {
-                    header += " ";
-                }
-                header += pot + " POT";
-            }
-        }
-        if (!header.empty())
-        {
-            leg->SetHeader(header.c_str(), "C");
-        }
-    }
-
-    if (has_data())
-    {
-        const std::string data_label = opt_.beamline.empty() ? "Data" : (opt_.beamline + " data");
-        leg->AddEntry(data_hist_.get(), data_label.c_str(), "lep");
-    }
-
-    for (size_t i = 0; i < mc_ch_hists_.size(); ++i)
-    {
-        int ch = chan_order_.at(i);
-        double sum = 0.0;
-        if (i < chan_event_yields_.size())
-        {
-            sum = chan_event_yields_[i];
-        }
-        else if (mc_ch_hists_[i])
-        {
-            sum = density_mode_ ? mc_ch_hists_[i]->Integral("width") : mc_ch_hists_[i]->Integral();
-        }
-        std::string label = opt_.particle_level ? ParticleChannels::label(ch) : Channels::label(ch);
-        if (label == "#emptyset")
-        {
-            label = "\xE2\x88\x85";
-        }
-        if (opt_.annotate_numbers)
-        {
-            label += " : " + Plotter::fmt_commas(sum, 2);
-        }
-        auto proxy = std::unique_ptr<TH1D>(static_cast<TH1D *>(
-            mc_ch_hists_[i]->Clone((spec_.id + "_leg_ch" + std::to_string(ch)).c_str())));
-        proxy->SetDirectory(nullptr);
-        proxy->Reset("ICES");
-
-        auto *entry = leg->AddEntry(proxy.get(), label.c_str(), "f");
-        leg->SetEntrySeparation(0.01);
-        legend_proxies_.push_back(std::move(proxy));
-        (void)entry;
-    }
-
-    if (mc_total_)
-    {
-        auto proxy = std::unique_ptr<TH1D>(static_cast<TH1D *>(
-            mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
-        proxy->SetDirectory(nullptr);
-        proxy->Reset("ICES");
-        proxy->SetFillStyle(0);
-        proxy->SetLineColor(k_uncertainty_line_colour);
-        proxy->SetLineStyle(k_uncertainty_line_style);
-        proxy->SetLineWidth(k_uncertainty_line_width);
-        leg->AddEntry(proxy.get(), "Stat + syst unc.", "l");
-        legend_proxies_.push_back(std::move(proxy));
-    }
-
-    if (sig_hist_)
-    {
-        std::ostringstream signal_label;
-        signal_label << "Signal";
-        signal_label << " : "
-                     << Plotter::fmt_commas(signal_events_, 2)
-                     << " (x" << std::fixed << std::setprecision(2) << signal_scale_ << ")";
-        leg->AddEntry(sig_hist_.get(), signal_label.str().c_str(), "l");
-    }
-
-    leg->Draw();
-}
-
 void StackedHist::draw_cuts(TPad *p, double max_y)
 {
     if (!opt_.show_cuts || opt_.cuts.empty())
@@ -1481,10 +1109,6 @@ void StackedHist::draw(TCanvas &canvas)
     draw_stack_and_unc(p_main, max_y);
     draw_cuts(p_main, max_y);
     draw_chi2_box(p_main);
-    if (opt_.show_legend)
-    {
-        draw_legend(p_legend ? p_legend : p_main);
-    }
     if (want_ratio())
     {
         draw_ratio(p_ratio);

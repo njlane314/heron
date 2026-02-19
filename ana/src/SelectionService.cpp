@@ -116,11 +116,10 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
         names.emplace_back(name);
     };
 
-    switch (p)
-    {
-    case Preset::Empty:
+    if (p == Preset::Empty)
         return node;
-    case Preset::Trigger:
+
+    if (p == Preset::Trigger || p == Preset::Slice || p == Preset::Fiducial || p == Preset::Muon)
     {
         if (has("beam_mode") && has("run") && has("software_trigger") && has("software_trigger_pre") && has("software_trigger_post"))
         {
@@ -138,24 +137,23 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
                     return sw > 0;
                 },
                 {"beam_mode", "run", "software_trigger", "software_trigger_pre", "software_trigger_post"});
-            return node;
         }
-
-        define_if_missing("sel_trigger", [](int sw) { return sw > 0; }, {"software_trigger"});
-        return node;
+        else
+        {
+            define_if_missing("sel_trigger", [](int sw) { return sw > 0; }, {"software_trigger"});
+        }
     }
-    case Preset::Slice:
+
+    if (p == Preset::Slice || p == Preset::Fiducial || p == Preset::Muon)
+    {
         define_if_missing(
             "sel_slice",
             [](int ns, float topo) { return passes_slice(ns, topo); },
             {"num_slices", "topological_score"});
-        return node;
-    case Preset::Fiducial:
-    case Preset::Muon:
-        define_if_missing(
-            "sel_slice",
-            [](int ns, float topo) { return passes_slice(ns, topo); },
-            {"num_slices", "topological_score"});
+    }
+
+    if (p == Preset::Fiducial || p == Preset::Muon)
+    {
         define_if_missing(
             "sel_fiducial",
             [](bool slice, bool fv) { return slice && fv; },
@@ -164,55 +162,28 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, Preset p, con
             "sel_topology",
             [](bool fid) { return fid; },
             {"sel_fiducial"});
-        if (p == Preset::Muon)
-        {
-            define_if_missing(
-                "sel_muon",
-                [](bool topo,
-                   const ROOT::RVec<float> &scores,
-                   const ROOT::RVec<float> &lengths,
-                   const ROOT::RVec<float> &distances,
-                   const ROOT::RVec<unsigned> &generations) {
-                    if (!topo)
-                        return false;
-                    return passes_muon(scores, lengths, distances, generations);
-                },
-                {"sel_topology",
-                 "track_shower_scores",
-                 "track_length",
-                 "track_distance_to_vertex",
-                 "pfp_generations"});
-        }
-        return node;
-    default:
-        return node;
     }
-}
 
-ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node, const SelectionEntry &rec)
-{
-    node = decorate(node, Preset::Trigger, rec);
-    node = decorate(node, Preset::Muon, rec);
+    if (p == Preset::Muon)
+    {
+        define_if_missing(
+            "sel_muon",
+            [](bool topo,
+               const ROOT::RVec<float> &scores,
+               const ROOT::RVec<float> &lengths,
+               const ROOT::RVec<float> &distances,
+               const ROOT::RVec<unsigned> &generations) {
+                if (!topo)
+                    return false;
+                return passes_muon(scores, lengths, distances, generations);
+            },
+            {"sel_topology",
+             "track_shower_scores",
+             "track_length",
+             "track_distance_to_vertex",
+             "pfp_generations"});
+    }
 
-    std::vector<std::string> names = node.GetColumnNames();
-    auto has = [&](const std::string &name) {
-        return std::find(names.begin(), names.end(), name) != names.end();
-    };
-    auto define_if_missing = [&](const char *name, auto &&f, std::initializer_list<const char *> deps) {
-        if (has(name))
-            return;
-        const std::vector<std::string> columns{deps.begin(), deps.end()};
-        node = node.Define(name, std::forward<decltype(f)>(f), columns);
-        names.emplace_back(name);
-    };
-
-    define_if_missing(
-        "sel_inclusive_mu_cc",
-        [](bool mu) { return mu; },
-        {"sel_muon"});
-    define_if_missing("sel_reco_fv", [](bool fv) { return fv; }, {"in_reco_fiducial"});
-    define_if_missing("sel_triggered_slice", [](bool t, bool s) { return t && s; }, {"sel_trigger", "sel_slice"});
-    define_if_missing("sel_triggered_muon", [](bool t, bool m) { return t && m; }, {"sel_trigger", "sel_muon"});
     return node;
 }
 

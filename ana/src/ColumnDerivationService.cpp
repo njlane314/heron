@@ -108,39 +108,21 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
 
         node = node.Define(
             "analysis_channels",
-            [](bool fv, int nu, int ccnc, int s, int np, int npim, int npip, int npi0, int ngamma) {
-                const int npi = npim + npip;
-                if (!fv)
-                {
-                    if (nu == 0)
-                        return static_cast<int>(Channel::External);
-                    return static_cast<int>(Channel::OutFV);
-                }
-                if (ccnc == 1)
-                    return static_cast<int>(Channel::NC);
-                if (ccnc == 0 && s > 0)
-                {
-                    if (s == 1)
-                        return static_cast<int>(Channel::CCS1);
-                    return static_cast<int>(Channel::CCSgt1);
-                }
-                if (std::abs(nu) == 12 && ccnc == 0)
-                    return static_cast<int>(Channel::ECCC);
-                if (std::abs(nu) == 14 && ccnc == 0)
-                {
-                    if (npi == 0 && np > 0)
-                        return static_cast<int>(Channel::MuCC0pi_ge1p);
-                    if (npi == 1 && npi0 == 0)
-                        return static_cast<int>(Channel::MuCC1pi);
-                    if (npi0 > 0 || ngamma >= 2)
-                        return static_cast<int>(Channel::MuCCPi0OrGamma);
-                    if (npi > 1)
-                        return static_cast<int>(Channel::MuCCNpi);
-                    return static_cast<int>(Channel::MuCCOther);
-                }
-                return static_cast<int>(Channel::Unknown);
+            [](bool in_fiducial, int nu_pdg, int ccnc, int count_strange, int n_p, int n_pi_minus, int n_pi_plus, int n_pi0, int n_gamma) {
+                return AnalysisChannels::to_int(
+                    AnalysisChannels::classify_analysis_channel(
+                        in_fiducial,
+                        nu_pdg,
+                        ccnc,
+                        count_strange,
+                        n_p,
+                        n_pi_minus,
+                        n_pi_plus,
+                        n_pi0,
+                        n_gamma));
             },
             {"in_fiducial", "nu_pdg", "int_ccnc", "count_strange", "n_p", "n_pi_minus", "n_pi_plus", "n_pi0", "n_gamma"});
+
 
         node = node.Define(
             "is_signal",
@@ -167,9 +149,9 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
     }
     else
     {
-        const int nonmc_channel = is_ext ? static_cast<int>(Channel::External)
-                                : (is_data ? static_cast<int>(Channel::DataInclusive)
-                                : static_cast<int>(Channel::Unknown));
+        const int nonmc_channel = is_ext ? static_cast<int>(AnalysisChannels::AnalysisChannel::External)
+                                : (is_data ? static_cast<int>(AnalysisChannels::AnalysisChannel::DataInclusive)
+                                : static_cast<int>(AnalysisChannels::AnalysisChannel::Unknown));
 
         node = node.Define("nu_vtx_x", [] { return -9999.0f; });
         node = node.Define("nu_vtx_y", [] { return -9999.0f; });

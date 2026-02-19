@@ -48,10 +48,8 @@ std::string find_default_event_list_path()
     }
 
     const std::vector<std::string> candidates{
-        analysis_path.str(),
-        "./scratch/out/event_list.root",
-        "./scratch/out/event_list_myana.root",
-        "./scratch/out/event_list_heron.root"};
+        "/exp/uboone/data/users/nlane/heron/out/event/events.root",
+        analysis_path.str()};
 
     for (const auto &path : candidates)
     {

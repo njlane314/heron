@@ -11,7 +11,6 @@
 
 #include <TSystem.h>
 
-#include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
 
 
@@ -38,10 +37,7 @@ std::string default_samples_tsv()
 
 std::string default_event_list_root()
 {
-    const std::string user = env_or("USER", "");
-    const std::string out_base = env_or("HERON_OUT_BASE", "/exp/uboone/data/users/" + user);
-    const auto &analysis = AnalysisConfigService::instance();
-    return out_base + "/event_list_" + analysis.name() + ".root";
+    return "/exp/uboone/data/users/nlane/heron/out/event/events.root";
 }
 
 bool is_data_origin(SampleIO::SampleOrigin o)

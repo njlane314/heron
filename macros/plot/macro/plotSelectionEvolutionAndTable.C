@@ -6,9 +6,9 @@
 // Default stage sequence follows the inclusive νμ CC selection flags in this codebase:
 //   Stage 0: no cuts
 //   Stage 1: sel_trigger
-//   Stage 2: sel_trigger && sel_triggered_slice
-//   Stage 3: ... && sel_reco_fv
-//   Stage 4: ... && sel_triggered_muon
+//   Stage 2: ... && sel_slice
+//   Stage 3: ... && sel_fiducial
+//   Stage 4: ... && sel_muon
 //
 // Run with:
 //   ./heron macro plotSelectionEvolutionAndTable.C
@@ -17,7 +17,7 @@
 //
 //   // Custom cut sequence (comma-separated cumulative flags and labels)
 //   ./heron macro plotSelectionEvolutionAndTable.C \
-//     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "is_signal", "sel_trigger,sel_triggered_slice,sel_reco_fv,sel_triggered_muon", "trigger,slice,reco fv,muon")'
+//     'plotSelectionEvolutionAndTable("./scratch/out/event_list_myana.root", "is_signal", "sel_trigger,sel_slice,sel_fiducial,sel_muon", "trigger,slice,fiducial,muon")'
 
 #include <algorithm>
 #include <cmath>
@@ -46,6 +46,7 @@
 #include "PlotEnv.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "SelectionService.hh"
 
 using namespace nu;
 
@@ -155,8 +156,8 @@ std::string tex_number(double x)
 
 int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
                                    const std::string &signal_sel = "is_signal",
-                                   const std::string &cuts_csv = "sel_trigger,sel_triggered_slice,sel_reco_fv,sel_triggered_muon",
-                                   const std::string &labels_csv = "trigger,slice,reco fv,muon",
+                                   const std::string &cuts_csv = "sel_trigger,sel_slice,sel_fiducial,sel_muon",
+                                   const std::string &labels_csv = "trigger,slice,fiducial,muon",
                                    const std::string &mc_weight = "w_nominal",
                                    const std::string &output_stem = "selection_evolution")
 {
@@ -192,7 +193,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     }
 
     EventListIO el(input_path);
-    ROOT::RDataFrame rdf = el.rdf();
+    ROOT::RDF::RNode rdf = SelectionService::decorate(el.rdf());
 
     auto mask_mc = build_truth_mc_mask(el);
     auto mask_ext = el.mask_for_ext();

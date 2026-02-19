@@ -10,6 +10,8 @@ setup eigen v3_4_0
 
 HERON_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export HERON_ROOT
+export HERON_OUTPUT_DIR="/exp/uboone/data/users/${USER}/heron"
+mkdir -p "${HERON_OUTPUT_DIR}"
 
 source "${HERON_ROOT}/scripts/heron-completion.bash"
 
@@ -17,7 +19,5 @@ export PATH="${HERON_ROOT}/build/bin:${PATH}"
 export LD_LIBRARY_PATH="${HERON_ROOT}/build/lib:${HERON_ROOT}/build/framework:${LD_LIBRARY_PATH}"
 export ROOT_INCLUDE_PATH="${HERON_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"
 
-if [ -d "/exp/uboone/data/users/${USER}/cache" ]; then
-  export HERON_TMPDIR="/exp/uboone/data/users/${USER}/cache/heron_tmp"
-  mkdir -p "${HERON_TMPDIR}"
-fi
+export HERON_SCRATCH_DIR="${HERON_OUTPUT_DIR}/scratch"
+mkdir -p "${HERON_SCRATCH_DIR}"

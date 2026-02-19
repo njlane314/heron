@@ -882,28 +882,14 @@ void StackedHist::draw_stack_and_unc(TPad *p_main, double &max_y)
         stack_->SetMaximum(max_y * headroom);
         stack_->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
 
-        // Uncertainty visual:
-        //  - STV-style: dotted outline (no fill), matching the reference plots.
-        //  - Default: filled band.
+        // Uncertainty visual: draw a line-only stat+syst template.
         mc_unc_hist_.reset(static_cast<TH1D *>(mc_total_->Clone((spec_.id + "_mc_unc").c_str())));
         mc_unc_hist_->SetDirectory(nullptr);
         mc_unc_hist_->SetMarkerSize(0);
-        if (opt_.stv_style)
-        {
-            mc_unc_hist_->SetFillStyle(0);
-            mc_unc_hist_->SetFillColor(0);
-            mc_unc_hist_->SetLineColor(kBlack);
-            mc_unc_hist_->SetLineStyle(k_uncertainty_outline_style);
-            mc_unc_hist_->SetLineWidth(2);
-        }
-        else
-        {
-            mc_unc_hist_->SetFillColor(k_uncertainty_fill_colour);
-            mc_unc_hist_->SetFillStyle(k_uncertainty_fill_style);
-            mc_unc_hist_->SetLineColor(k_uncertainty_fill_colour);
-            mc_unc_hist_->SetLineStyle(kSolid);
-            mc_unc_hist_->SetLineWidth(1);
-        }
+        mc_unc_hist_->SetFillStyle(0);
+        mc_unc_hist_->SetLineColor(k_uncertainty_line_colour);
+        mc_unc_hist_->SetLineStyle(k_uncertainty_line_style);
+        mc_unc_hist_->SetLineWidth(k_uncertainty_line_width);
         mc_unc_hist_->Draw("E2 SAME");
     }
 
@@ -1406,24 +1392,11 @@ void StackedHist::draw_legend(TPad *p)
             mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
-        if (opt_.stv_style)
-        {
-            proxy->SetFillStyle(0);
-            proxy->SetFillColor(0);
-            proxy->SetLineColor(kBlack);
-            proxy->SetLineStyle(k_uncertainty_outline_style);
-            proxy->SetLineWidth(2);
-            leg->AddEntry(proxy.get(), "Stat + syst unc.", "l");
-        }
-        else
-        {
-            proxy->SetFillColor(k_uncertainty_fill_colour);
-            proxy->SetFillStyle(k_uncertainty_fill_style);
-            proxy->SetLineColor(k_uncertainty_fill_colour);
-            proxy->SetLineStyle(kSolid);
-            proxy->SetLineWidth(1);
-            leg->AddEntry(proxy.get(), "Stat. #oplus Syst. Unc.", "f");
-        }
+        proxy->SetFillStyle(0);
+        proxy->SetLineColor(k_uncertainty_line_colour);
+        proxy->SetLineStyle(k_uncertainty_line_style);
+        proxy->SetLineWidth(k_uncertainty_line_width);
+        leg->AddEntry(proxy.get(), "Stat + syst unc.", "l");
         legend_proxies_.push_back(std::move(proxy));
     }
 

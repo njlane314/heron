@@ -268,7 +268,7 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
     opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
     opt.beamline = el.beamline_label();
 
-    TH1DModel spec = make_spec("inf_score_0", 50, -10.0, 10.0, "w_nominal");
+    TH1DModel spec = make_spec("inf_score_0", 50, -15.0, 15.0, "w_nominal");
     spec.sel = Preset::Empty;
 
     opt.x_title = "Inference score [0]";

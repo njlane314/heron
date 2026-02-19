@@ -214,7 +214,7 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
 
     {
         SelectionEntry srec{rec.source, Frame{node}};
-        node = SelectionService::decorate(node, srec);
+        node = SelectionService::decorate(node, Preset::Muon, srec);
     }
 
     return node;

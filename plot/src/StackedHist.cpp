@@ -292,7 +292,6 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
             p_ratio->SetFillColor(k_panel_fill_colour);
             p_ratio->SetFrameFillColor(k_panel_fill_colour);
             p_ratio->SetFrameFillStyle(4000);
-            p_ratio->SetGridx();
             use_single_sided_ticks(p_ratio);
             p_ratio->Draw();
             disable_primitive_ownership(p_ratio);
@@ -308,7 +307,6 @@ void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p
         p_main->SetRightMargin(0.06);
         p_main->SetFillColor(k_panel_fill_colour);
         p_main->SetFrameFillColor(k_panel_fill_colour);
-        p_main->SetGridx();
         use_single_sided_ticks(p_main);
         if (opt_.use_log_y)
         {

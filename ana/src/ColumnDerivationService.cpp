@@ -218,17 +218,32 @@ ROOT::RDF::RNode ColumnDerivationService::define(ROOT::RDF::RNode node, const Pr
                                 : (is_data ? static_cast<int>(AnalysisChannels::AnalysisChannel::DataInclusive)
                                 : static_cast<int>(AnalysisChannels::AnalysisChannel::Unknown));
 
-        node = node.Define("nu_vtx_x", [] { return -9999.0f; });
-        node = node.Define("nu_vtx_y", [] { return -9999.0f; });
-        node = node.Define("nu_vtx_z", [] { return -9999.0f; });
+        auto has_nonmc = [&node](const std::string &name) {
+            const auto cnames = node.GetColumnNames();
+            return std::find(cnames.begin(), cnames.end(), name) != cnames.end();
+        };
 
-        node = node.Define("in_fiducial", [] { return false; });
-        node = node.Define("is_strange", [] { return false; });
-        node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
-        node = node.Define("interaction_mode", [] { return -1; });
-        node = node.Define("interaction_type", [] { return -1; });
-        node = node.Define("is_signal", [] { return false; });
-        node = node.Define("recognised_signal", [] { return false; });
+        if (!has_nonmc("nu_vtx_x"))
+            node = node.Define("nu_vtx_x", [] { return -9999.0f; });
+        if (!has_nonmc("nu_vtx_y"))
+            node = node.Define("nu_vtx_y", [] { return -9999.0f; });
+        if (!has_nonmc("nu_vtx_z"))
+            node = node.Define("nu_vtx_z", [] { return -9999.0f; });
+
+        if (!has_nonmc("in_fiducial"))
+            node = node.Define("in_fiducial", [] { return false; });
+        if (!has_nonmc("is_strange"))
+            node = node.Define("is_strange", [] { return false; });
+        if (!has_nonmc("analysis_channels"))
+            node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
+        if (!has_nonmc("interaction_mode"))
+            node = node.Define("interaction_mode", [] { return -1; });
+        if (!has_nonmc("interaction_type"))
+            node = node.Define("interaction_type", [] { return -1; });
+        if (!has_nonmc("is_signal"))
+            node = node.Define("is_signal", [] { return false; });
+        if (!has_nonmc("recognised_signal"))
+            node = node.Define("recognised_signal", [] { return false; });
     }
 
     node = node.Define(

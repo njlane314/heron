@@ -20,6 +20,8 @@ heron art "ext_p2:${HERON_OUTPUT_DIR}/inputs/ext_p2.list:ext:numi"
 # group art output into logical samples
 source scripts/sample-lists.sh
 heron sample "beam:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_beam.list"
+heron sample "dirt:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_dirt.list"
+heron sample "ext:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_ext.list"
 heron sample "strangeness:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples

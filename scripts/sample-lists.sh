@@ -35,6 +35,8 @@ then
 fi
 
 write_list "art_prov_beam_s*.root" "numi_fhc_run1_sample_beam.list"
+write_list "art_prov_dirt_s*.root" "numi_fhc_run1_sample_dirt.list"
+write_list "art_prov_ext_p*.root" "numi_fhc_run1_sample_ext.list"
 write_list "art_prov_strangeness_run1_fhc.root" "numi_fhc_run1_sample_strangeness.list"
 
 shopt -u nullglob

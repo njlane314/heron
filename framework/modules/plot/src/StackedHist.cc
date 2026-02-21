@@ -108,30 +108,6 @@ std::pair<int, int> visible_bin_range(const TH1D &h, double xmin, double xmax)
     return {first_bin, last_bin};
 }
 
-std::string fmt_times10(double value, int precision = 2)
-{
-    if (!(value > 0.0) || !std::isfinite(value))
-    {
-        return {};
-    }
-    const double e = std::floor(std::log10(value));
-    const int ie = static_cast<int>(e);
-    const double mant = value / std::pow(10.0, ie);
-    std::ostringstream ss;
-    ss << std::fixed << std::setprecision(precision) << mant;
-    std::string m = ss.str();
-    // Trim trailing zeros for cleaner legend headers.
-    while (m.size() > 1 && m.back() == '0' && m.find('.') != std::string::npos)
-    {
-        m.pop_back();
-    }
-    if (!m.empty() && m.back() == '.')
-    {
-        m.pop_back();
-    }
-    return m + " #times 10^{" + std::to_string(ie) + "}";
-}
-
 } // namespace
 
 void apply_total_errors(TH1D &h,

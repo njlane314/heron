@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-#include "../../../framework/evd/include/EventDisplay.hh"
+#include "../../../framework/modules/evd/include/EventDisplay.hh"
 #include "MacroGuard.hh"
 
 using namespace heron::evd;

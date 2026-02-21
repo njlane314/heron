@@ -42,7 +42,7 @@ int plotMySummary(const std::string &event_list_path = "")
 
 - Keep macro function signatures small and explicit.
 - Prefer one macro entry function per file.
-- Avoid duplicating generic helpers that already exist in `framework/plot` and `framework/io`.
+- Avoid duplicating generic helpers that already exist in `framework/modules/plot` and `framework/modules/io`.
 - Prefer imperative method names and early returns for validation failures.
 
 ## Standardised manifest entrypoints

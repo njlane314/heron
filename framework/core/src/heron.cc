@@ -128,7 +128,7 @@ std::filesystem::path find_repo_root()
         for (int i = 0; i < 6; ++i)
         {
             if (std::filesystem::exists(base / "macros/macro/.plot_driver.retired") ||
-                std::filesystem::exists(base / "framework/plot/macro/.plot_driver.retired"))
+                std::filesystem::exists(base / "framework/modules/plot/macro/.plot_driver.retired"))
             {
                 return base;
             }

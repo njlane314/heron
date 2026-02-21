@@ -17,6 +17,7 @@
 #include "ColumnDerivationService.hh"
 #include "EventCLI.hh"
 #include "EventColumnProvider.hh"
+#include "EventListIO.hh"
 #include "EventSampleFilterService.hh"
 #include "RDataFrameService.hh"
 #include "StatusMonitor.hh"

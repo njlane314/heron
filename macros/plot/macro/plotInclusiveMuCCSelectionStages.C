@@ -485,7 +485,7 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
         std::cerr << "[plotInclusiveMuCCSelectionStages] missing required event-list columns:\n";
         for (const auto &c : missing)
             std::cerr << "  - " << c << "\n";
-        std::cerr << "Rebuild the event list including these branches (default schema: apps/config/event_columns.tsv).\n";
+        std::cerr << "Rebuild the event list including these branches (default schema: mod/apps/config/event_columns.tsv).\n";
         return 2;
     }
 

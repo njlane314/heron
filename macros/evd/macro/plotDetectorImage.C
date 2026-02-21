@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "../../../evd/include/EventDisplay.hh"
+#include "../../../mod/evd/include/EventDisplay.hh"
 
 using namespace heron::evd;
 

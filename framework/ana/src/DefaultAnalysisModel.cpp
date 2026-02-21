@@ -86,34 +86,6 @@ const std::string &DefaultAnalysisModel::tree_name() const noexcept
     return m_tree_name;
 }
 
-ProcessorEntry DefaultAnalysisModel::make_processor(const SampleIO::Sample &sample) const noexcept
-{
-    ProcessorEntry proc_entry;
-
-    switch (sample.origin)
-    {
-    case SampleIO::SampleOrigin::kData:
-        proc_entry.source = Type::kData;
-        break;
-    case SampleIO::SampleOrigin::kEXT:
-        proc_entry.source = Type::kExt;
-        proc_entry.trig_nom = sample.db_tor101_pot_sum;
-        proc_entry.trig_eqv = sample.subrun_pot_sum;
-        break;
-    case SampleIO::SampleOrigin::kOverlay:
-    case SampleIO::SampleOrigin::kDirt:
-    case SampleIO::SampleOrigin::kStrangeness:
-        proc_entry.source = Type::kMC;
-        proc_entry.pot_nom = sample.db_tortgt_pot_sum;
-        proc_entry.pot_eqv = sample.subrun_pot_sum;
-        break;
-    default:
-        proc_entry.source = Type::kUnknown;
-        break;
-    }
-
-    return proc_entry;
-}
 
 ROOT::RDF::RNode DefaultAnalysisModel::define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const
 {
@@ -340,45 +312,9 @@ ROOT::RDF::RNode DefaultAnalysisModel::define(ROOT::RDF::RNode node, const Proce
     return node;
 }
 
-const char *DefaultAnalysisModel::filter_stage(SampleIO::SampleOrigin origin) const
-{
-    using SampleOrigin = SampleIO::SampleOrigin;
 
-    if (origin == SampleOrigin::kOverlay)
-        return "filter_overlay";
-    if (origin == SampleOrigin::kStrangeness)
-        return "filter_strangeness";
-    return NULL;
-}
 
-ROOT::RDF::RNode DefaultAnalysisModel::apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin) const
-{
-    using SampleOrigin = SampleIO::SampleOrigin;
 
-    if (origin == SampleOrigin::kOverlay)
-        return node.Filter([](int strange) { return strange == 0; }, {"count_strange"});
-    if (origin == SampleOrigin::kStrangeness)
-        return node.Filter([](int strange) { return strange > 0; }, {"count_strange"});
-    return node;
-}
-
-ROOT::RDataFrame DefaultAnalysisModel::load_sample(const SampleIO::Sample &sample,
-                                                   const std::string &tree_name) const
-{
-    std::vector<std::string> files = SampleIO::resolve_root_files(sample);
-    return ROOT::RDataFrame(tree_name, files);
-}
-
-ROOT::RDF::RNode DefaultAnalysisModel::define_variables(ROOT::RDF::RNode node,
-                                                        const std::vector<Column> &definitions) const
-{
-    ROOT::RDF::RNode updated_node = std::move(node);
-    for (const Column &definition : definitions)
-    {
-        updated_node = updated_node.Define(definition.name, definition.expression);
-    }
-    return updated_node;
-}
 
 int DefaultAnalysisModel::slice_required_count() const noexcept { return 1; }
 float DefaultAnalysisModel::slice_min_topology_score() const noexcept { return 0.06f; }

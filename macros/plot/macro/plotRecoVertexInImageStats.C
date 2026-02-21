@@ -37,6 +37,7 @@
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -147,7 +148,7 @@ int plotRecoVertexInImageStats(const std::string &samples_tsv = "",
                                const std::string &extra_sel = "true",
                                bool include_data = false)
 {
-    ROOT::EnableImplicitMT();
+    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
     std::cout << "[plotRecoVertexInImageStats] implicit MT enabled\n";
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

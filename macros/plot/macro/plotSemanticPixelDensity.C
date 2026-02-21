@@ -36,7 +36,7 @@
 #include <TSystem.h>
 
 #include "EventListIO.hh"
-#include "ExecPolicy.hh"
+#include "ExecutionPolicy.hh"
 #include "PlottingHelper.hh"
 
 using namespace nu;
@@ -152,7 +152,7 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
                              double xmin_pct = 1e-4,
                              double xmax_pct = 1e1)
 {
-  const ExecPolicy pol{.nThreads = 16, .enableImplicitMT = true, .deterministic = true};
+  const ExecutionPolicy pol{.nThreads = 16, .enableImplicitMT = true, .deterministic = true};
   pol.apply("plotSemanticPixelDensity");
 
   const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

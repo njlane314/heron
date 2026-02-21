@@ -36,6 +36,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -98,7 +99,7 @@ int plotPREffLambdaSignalVsDecayDistance(
         " && (p_p>0.0)"
         " && (pi_p>0.0)")
 {
-    ROOT::EnableImplicitMT();
+    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotPREffLambdaSignalVsDecayDistance] input=" << list_path << "\n";

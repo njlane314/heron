@@ -14,16 +14,15 @@
 
 #include "AppUtils.hh"
 #include "EventCLI.hh"
+#include "DefaultAnalysisModel.hh"
 #include "EventColumnProvider.hh"
-#include "EventSampleFilterService.hh"
-#include "RDataFrameService.hh"
 #include "StatusMonitor.hh"
 
 int run(const EventArgs &event_args, const std::string &log_prefix)
 {
     ROOT::EnableImplicitMT();
 
-    const auto &analysis = AnalysisConfigService::instance();
+    const auto &analysis = DefaultAnalysisModel::instance();
     const auto entries = read_samples(event_args.list_path);
 
     const auto start_time = std::chrono::steady_clock::now();
@@ -117,7 +116,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
             "load_rdf",
             "sample=" + sample.sample_name);
 
-        ROOT::RDataFrame rdf = RDataFrameService::instance().load_sample(sample, event_tree);
+        ROOT::RDataFrame rdf = DefaultAnalysisModel::instance().load_sample(sample, event_tree);
 
         log_stage(
             log_prefix,
@@ -125,7 +124,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
             "sample=" + sample.sample_name);
 
         const ProcessorEntry proc_entry = analysis.make_processor(sample);
-        const auto &processor = ColumnDerivationService::instance();
+        const auto &processor = DefaultAnalysisModel::instance();
 
         log_stage(
             log_prefix,
@@ -134,14 +133,14 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
 
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
-        const char *filter_stage = EventSampleFilterService::instance().filter_stage(sample.origin);
+        const char *filter_stage = DefaultAnalysisModel::instance().filter_stage(sample.origin);
         if (filter_stage != nullptr)
         {
             log_stage(
                 log_prefix,
                 filter_stage,
                 "sample=" + sample.sample_name);
-            node = EventSampleFilterService::instance().apply(node, sample.origin);
+            node = DefaultAnalysisModel::instance().apply(node, sample.origin);
         }
 
         std::string snapshot_message = "sample=" + sample.sample_name;

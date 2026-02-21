@@ -18,8 +18,6 @@ class EventSampleFilterService
   public:
     virtual ~EventSampleFilterService() = default;
 
-    static const EventSampleFilterService &instance();
-
     virtual const char *filter_stage(SampleIO::SampleOrigin origin) const = 0;
     virtual ROOT::RDF::RNode apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin) const = 0;
 };

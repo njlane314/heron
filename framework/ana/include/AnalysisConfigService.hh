@@ -20,8 +20,6 @@ class AnalysisConfigService
   public:
     virtual ~AnalysisConfigService() = default;
 
-    static const AnalysisConfigService &instance();
-
     virtual const std::string &name() const noexcept = 0;
     virtual const std::string &tree_name() const noexcept = 0;
     virtual ProcessorEntry make_processor(const SampleIO::Sample &sample) const noexcept = 0;

@@ -35,7 +35,6 @@ class ColumnDerivationService
   public:
     virtual ~ColumnDerivationService() = default;
 
-    static const ColumnDerivationService &instance();
     virtual ROOT::RDF::RNode define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const = 0;
 };
 

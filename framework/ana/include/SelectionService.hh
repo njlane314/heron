@@ -42,8 +42,6 @@ class SelectionService
   public:
     virtual ~SelectionService() = default;
 
-    static const SelectionService &instance();
-
     virtual int slice_required_count() const noexcept = 0;
     virtual float slice_min_topology_score() const noexcept = 0;
     virtual float muon_min_track_score() const noexcept = 0;
@@ -57,12 +55,6 @@ class SelectionService
     virtual bool is_in_truth_volume(float x, float y, float z) const noexcept = 0;
     virtual bool is_in_reco_volume(float x, float y, float z) const noexcept = 0;
 };
-
-inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection = NULL)
-{
-    return SelectionService::instance().apply(node, p, selection);
-}
-
 
 
 #endif // HERON_ANA_SELECTION_SERVICE_H

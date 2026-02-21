@@ -29,8 +29,6 @@ class RDataFrameService
   public:
     virtual ~RDataFrameService() = default;
 
-    static const RDataFrameService &instance();
-
     virtual ROOT::RDataFrame load_sample(const SampleIO::Sample &sample,
                                          const std::string &tree_name) const = 0;
 

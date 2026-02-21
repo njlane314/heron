@@ -7,6 +7,8 @@
 
 #include "UnstackedHist.hh"
 
+#include "DefaultAnalysisModel.hh"
+
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -1012,7 +1014,7 @@ void UnstackedHist::draw_watermark(TPad *p, double total_mc) const
     std::string region_label = opt_.analysis_region_label;
     if (region_label.empty())
     {
-        region_label = SelectionService::instance().selection_label(spec_.sel);
+        region_label = DefaultAnalysisModel::instance().selection_label(spec_.sel);
     }
 
     const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +

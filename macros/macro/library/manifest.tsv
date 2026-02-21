@@ -1,4 +1,1 @@
 # name	macro	call
-plot.cutflow.inclusive_mucc	../plotInclusiveMuCCCutFlow.C	plotInclusiveMuCCCutFlow()
-plot.eff.pr_vs_nu_kin	../plotPREffVsNeutrinoKinematics.C	plotPREffVsNeutrinoKinematics()
-plot.stack.true_vertex	../plotStackedHistTrueVertex.C	plotStackedHistTrueVertex()

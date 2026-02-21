@@ -6,7 +6,7 @@
 //   ./heron macro printAnalysisChannelStats.C 'printAnalysisChannelStats("/path/to/event_list.root","your_selection_here","w_nominal",true)'
 //
 // Notes:
-//   - Input is an event_list_<analysis>.root (same event-list mode as plotStackedHistTrueVertex.C).
+//   - Input is an event_list_<analysis>.root in event-list mode.
 //   - Expects input event list to already contain "analysis_channels".
 //   - Prints per-channel counts and weighted yields (MC/EXT weighted by mc_weight).
 //   - Data (if requested) is printed as counts (no weight).

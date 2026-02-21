@@ -491,7 +491,7 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
         return 2;
     }
 
-    // Split into sources (same pattern as plotStackedHistTrueVertex)
+    // Split into sources (same pattern as other stacked plotting macros)
     auto mask_ext = el.mask_for_ext();
     auto mask_mc = el.mask_for_mc_like();
     auto mask_data = el.mask_for_data();

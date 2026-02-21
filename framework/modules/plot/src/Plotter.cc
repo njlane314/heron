@@ -30,36 +30,59 @@ namespace nu
 
 namespace
 {
-bool stack_debug_enabled()
+bool debug_enabled(const char *env_name)
 {
-    const char *env = std::getenv("HERON_DEBUG_PLOT_STACK");
+    const char *env = std::getenv(env_name);
     return env != nullptr && std::string(env) != "0";
 }
 
-void stack_debug_log(const std::string &msg)
+void debug_log(bool enabled, const char *prefix, const std::string &msg)
 {
-    if (!stack_debug_enabled())
+    if (!enabled)
     {
         return;
     }
-    std::cout << "[Plotter][debug] " << msg << "\n";
+    std::cout << prefix << msg << "\n";
     std::cout.flush();
 }
 
-bool unstack_debug_enabled()
+template <typename PlotType>
+void draw_plot(const TH1DModel &spec,
+               const Options &opt,
+               const std::vector<const Entry *> &mc,
+               const std::vector<const Entry *> &data,
+               bool debug,
+               const char *debug_prefix,
+               const char *plot_label,
+               const char *constructed_label)
 {
-    const char *env = std::getenv("HERON_DEBUG_PLOT_UNSTACK");
-    return env != nullptr && std::string(env) != "0";
+    debug_log(debug,
+              debug_prefix,
+              std::string("draw_") + plot_label + " enter: hist='" + spec.name +
+                  "', expr='" + spec.expr +
+                  "', mc_entries=" + std::to_string(mc.size()) +
+                  ", data_entries=" + std::to_string(data.size()));
+    PlotType plot(spec, opt, mc, data);
+    debug_log(debug, debug_prefix, std::string(constructed_label) + " constructed for hist='" + spec.name + "'");
+    plot.draw_and_save(opt.image_format);
+    debug_log(debug,
+              debug_prefix,
+              std::string("draw_") + plot_label + " exit: hist='" + spec.name + "'");
 }
 
-void unstack_debug_log(const std::string &msg)
+template <typename PlotType>
+void draw_plot_cov(const TH1DModel &spec,
+                   const Options &opt,
+                   const std::vector<const Entry *> &mc,
+                   const std::vector<const Entry *> &data,
+                   const TMatrixDSym &total_cov)
 {
-    if (!unstack_debug_enabled())
-    {
-        return;
-    }
-    std::cout << "[Plotter][unstack-debug] " << msg << "\n";
-    std::cout.flush();
+    Plotter plotter(opt);
+    plotter.set_global_style();
+    auto cov_opt = opt;
+    cov_opt.total_cov = std::make_shared<TMatrixDSym>(total_cov);
+    PlotType plot(spec, std::move(cov_opt), mc, data);
+    plot.draw_and_save(cov_opt.image_format);
 }
 } // namespace
 
@@ -108,16 +131,15 @@ void Plotter::draw_stack(const TH1DModel &spec,
                          const std::vector<const Entry *> &mc,
                          const std::vector<const Entry *> &data) const
 {
-    stack_debug_log("draw_stack enter: hist='" + spec.name +
-                    "', expr='" + spec.expr +
-                    "', mc_entries=" + std::to_string(mc.size()) +
-                    ", data_entries=" + std::to_string(data.size()));
     set_global_style();
-    stack_debug_log("global style set for hist='" + spec.name + "'");
-    StackedHist plot(spec, opt_, mc, data);
-    stack_debug_log("StackedHist constructed for hist='" + spec.name + "'");
-    plot.draw_and_save(opt_.image_format);
-    stack_debug_log("draw_stack exit: hist='" + spec.name + "'");
+    draw_plot<StackedHist>(spec,
+                           opt_,
+                           mc,
+                           data,
+                           debug_enabled("HERON_DEBUG_PLOT_STACK"),
+                           "[Plotter][debug] ",
+                           "stack",
+                           "StackedHist");
 }
 
 void Plotter::draw_stack_cov(const TH1DModel &spec,
@@ -125,11 +147,7 @@ void Plotter::draw_stack_cov(const TH1DModel &spec,
                              const std::vector<const Entry *> &data,
                              const TMatrixDSym &total_cov) const
 {
-    set_global_style();
-    auto opt2 = opt_;
-    opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
-    StackedHist plot(spec, std::move(opt2), mc, data);
-    plot.draw_and_save(opt2.image_format);
+    draw_plot_cov<StackedHist>(spec, opt_, mc, data, total_cov);
 }
 
 void Plotter::draw_unstack(const TH1DModel &spec, const std::vector<const Entry *> &mc) const
@@ -142,16 +160,15 @@ void Plotter::draw_unstack(const TH1DModel &spec,
                            const std::vector<const Entry *> &mc,
                            const std::vector<const Entry *> &data) const
 {
-    unstack_debug_log("draw_unstack enter: hist='" + spec.name +
-                      "', expr='" + spec.expr +
-                      "', mc_entries=" + std::to_string(mc.size()) +
-                      ", data_entries=" + std::to_string(data.size()));
     set_global_style();
-    unstack_debug_log("global style set for hist='" + spec.name + "'");
-    UnstackedHist plot(spec, opt_, mc, data);
-    unstack_debug_log("UnstackedHist constructed for hist='" + spec.name + "'");
-    plot.draw_and_save(opt_.image_format);
-    unstack_debug_log("draw_unstack exit: hist='" + spec.name + "'");
+    draw_plot<UnstackedHist>(spec,
+                             opt_,
+                             mc,
+                             data,
+                             debug_enabled("HERON_DEBUG_PLOT_UNSTACK"),
+                             "[Plotter][unstack-debug] ",
+                             "unstack",
+                             "UnstackedHist");
 }
 
 void Plotter::draw_unstack_cov(const TH1DModel &spec,
@@ -159,11 +176,7 @@ void Plotter::draw_unstack_cov(const TH1DModel &spec,
                                const std::vector<const Entry *> &data,
                                const TMatrixDSym &total_cov) const
 {
-    set_global_style();
-    auto opt2 = opt_;
-    opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
-    UnstackedHist plot(spec, std::move(opt2), mc, data);
-    plot.draw_and_save(opt2.image_format);
+    draw_plot_cov<UnstackedHist>(spec, opt_, mc, data, total_cov);
 }
 
 std::string Plotter::sanitise(const std::string &name)
@@ -175,10 +188,6 @@ std::string Plotter::sanitise(const std::string &name)
         if (std::isalnum(c) || c == '_' || c == '-')
         {
             out.push_back(static_cast<char>(c));
-        }
-        else if (c == '.' || c == ' ')
-        {
-            out.push_back('_');
         }
         else
         {

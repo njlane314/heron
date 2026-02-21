@@ -12,7 +12,9 @@
 #include <utility>
 #include <vector>
 
+#include "AnalysisConfigService.hh"
 #include "AppUtils.hh"
+#include "ColumnDerivationService.hh"
 #include "EventCLI.hh"
 #include "EventColumnProvider.hh"
 #include "EventSampleFilterService.hh"
@@ -77,13 +79,11 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     header.heron_set = workspace_set();
 
     const std::filesystem::path output_path(event_args.output_root);
-    if (!output_path.parent_path().empty())
+    const auto output_parent = output_path.parent_path();
+    if (!output_parent.empty())
     {
-        header.event_output_dir = output_path.parent_path().string();
-    }
-    if (!output_path.parent_path().empty())
-    {
-        std::filesystem::create_directories(output_path.parent_path());
+        header.event_output_dir = output_parent.string();
+        std::filesystem::create_directories(output_parent);
     }
 
     const EventColumnProvider column_provider(

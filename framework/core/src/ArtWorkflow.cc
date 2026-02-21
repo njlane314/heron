@@ -55,8 +55,6 @@ int run(const ArtArgs &art_args, const std::string &log_prefix)
         std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
     log_scan_finish(log_prefix, rec.summary.n_entries, elapsed_seconds);
 
-    rec.summary.pot_sum *= 1;
-    rec.scale = 1;
 
     std::ostringstream log_message;
     log_message << "action=input_register status=complete input=" << rec.input.input_name

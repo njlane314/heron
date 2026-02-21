@@ -8,34 +8,21 @@
 #ifndef HERON_CORE_EVENTCLI_H
 #define HERON_CORE_EVENTCLI_H
 
-#include <algorithm>
-#include <chrono>
-#include <cstdint>
 #include <filesystem>
 #include <iomanip>
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include <ROOT/RDFHelpers.hxx>
-#include <ROOT/RDataFrame.hxx>
 #include <TFile.h>
 #include <TTree.h>
 
 #include "AppLog.hh"
 #include "AppUtils.hh"
-#include "AnalysisConfigService.hh"
-#include "ColumnDerivationService.hh"
-#include "EventListIO.hh"
 #include "SampleCLI.hh"
 #include "SampleIO.hh"
-
-
-
 
 inline void log_event_start(const std::string &log_prefix, const size_t sample_count)
 {
@@ -139,8 +126,5 @@ inline EventArgs parse_event_args(const std::vector<std::string> &args, const st
 }
 
 int run(const EventArgs &event_args, const std::string &log_prefix);
-
-
-
 
 #endif // HERON_CORE_EVENTCLI_H

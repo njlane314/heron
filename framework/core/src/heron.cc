@@ -23,9 +23,9 @@
 #include <TROOT.h>
 #include <TSystem.h>
 
+#include "AppUtils.hh"
 #include "ArtCLI.hh"
 #include "EventCLI.hh"
-#include "AppUtils.hh"
 #include "SampleCLI.hh"
 
 
@@ -164,9 +164,8 @@ std::filesystem::path path_from_env_or_default(
 
 std::filesystem::path out_base_dir(const std::filesystem::path &repo_root)
 {
-    const auto fallback = path_from_env_or_default("HERON_OUTPUT_DIR",
-                                                   repo_root / "scratch" / "out");
-    return path_from_env_or_default("HERON_OUT_BASE", fallback);
+    (void)repo_root;
+    return ::out_base_dir();
 }
 
 std::filesystem::path plot_base_dir(const std::filesystem::path &repo_root)
@@ -189,8 +188,8 @@ std::filesystem::path stage_dir(const std::filesystem::path &repo_root,
                                 const char *override_env,
                                 const std::string &stage)
 {
-    const auto fallback = out_base_dir(repo_root) / workspace_set() / stage;
-    return path_from_env_or_default(override_env, fallback);
+    (void)repo_root;
+    return stage_output_dir(override_env, stage);
 }
 
 std::filesystem::path plot_dir(const std::filesystem::path &repo_root)
@@ -206,7 +205,8 @@ std::filesystem::path plot_dir(const std::filesystem::path &repo_root)
 
 std::filesystem::path default_samples_tsv(const std::filesystem::path &repo_root)
 {
-    return out_base_dir(repo_root) / workspace_set() / "sample" / "samples.tsv";
+    (void)repo_root;
+    return stage_output_dir("HERON_SAMPLE_DIR", "sample") / "samples.tsv";
 }
 
 std::string shell_quote(const std::string &value)
@@ -822,78 +822,64 @@ int handle_status_command(const std::vector<std::string> &args,
     return 0;
 }
 
+CommandEntry make_usage_command(const char *name,
+                                const std::function<int(const std::vector<std::string> &)> &handler,
+                                const char *usage)
+{
+    return CommandEntry{
+        name,
+        handler,
+        [usage]()
+        {
+            std::cout << usage << "\n";
+        }
+    };
+}
+
+CommandEntry make_main_help_command(const char *name)
+{
+    return CommandEntry{
+        name,
+        [](const std::vector<std::string> &)
+        {
+            print_main_help(std::cout);
+            return 0;
+        },
+        []()
+        {
+            print_main_help(std::cout);
+        }
+    };
+}
+
 std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_root)
 {
     std::vector<CommandEntry> table;
-    table.push_back(CommandEntry{
-        "help",
-        [](const std::vector<std::string> &)
-        {
-            print_main_help(std::cout);
-            return 0;
-        },
-        []()
-        {
-            print_main_help(std::cout);
-        }
-    });
-    table.push_back(CommandEntry{
-        "-h",
-        [](const std::vector<std::string> &)
-        {
-            print_main_help(std::cout);
-            return 0;
-        },
-        []()
-        {
-            print_main_help(std::cout);
-        }
-    });
-    table.push_back(CommandEntry{
-        "--help",
-        [](const std::vector<std::string> &)
-        {
-            print_main_help(std::cout);
-            return 0;
-        },
-        []()
-        {
-            print_main_help(std::cout);
-        }
-    });
-    table.push_back(CommandEntry{
+    table.push_back(make_main_help_command("help"));
+    table.push_back(make_main_help_command("-h"));
+    table.push_back(make_main_help_command("--help"));
+
+    table.push_back(make_usage_command(
         "paths",
         [repo_root](const std::vector<std::string> &args)
         {
             return handle_paths_command(args, repo_root);
         },
-        []()
-        {
-            std::cout << "Usage: heron paths\n";
-        }
-    });
-    table.push_back(CommandEntry{
+        "Usage: heron paths"));
+    table.push_back(make_usage_command(
         "env",
         [repo_root](const std::vector<std::string> &args)
         {
             return handle_env_command(args, repo_root);
         },
-        []()
-        {
-            std::cout << "Usage: heron env [SET]\n";
-        }
-    });
-    table.push_back(CommandEntry{
+        "Usage: heron env [SET]"));
+    table.push_back(make_usage_command(
         "status",
         [repo_root](const std::vector<std::string> &args)
         {
             return handle_status_command(args, repo_root);
         },
-        []()
-        {
-            std::cout << "Usage: heron status [--interval SECONDS] [--count COUNT] [--once]\n";
-        }
-    });
+        "Usage: heron status [--interval SECONDS] [--count COUNT] [--once]"));
     table.push_back(CommandEntry{
         "macro",
         [](const std::vector<std::string> &args)
@@ -906,39 +892,27 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
             print_macro_list(std::cout, find_repo_root());
         }
     });
-    table.push_back(CommandEntry{
+    table.push_back(make_usage_command(
         "art",
         [](const std::vector<std::string> &args)
         {
             return handle_art_command(args);
         },
-        []()
-        {
-            std::cout << "Usage: heron art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]\n";
-        }
-    });
-    table.push_back(CommandEntry{
+        "Usage: heron art INPUT_NAME:FILELIST[:SAMPLE_KIND:BEAM_MODE]"));
+    table.push_back(make_usage_command(
         "sample",
         [](const std::vector<std::string> &args)
         {
             return handle_sample_command(args);
         },
-        []()
-        {
-            std::cout << "Usage: heron sample NAME:FILELIST\n";
-        }
-    });
-    table.push_back(CommandEntry{
+        "Usage: heron sample NAME:FILELIST"));
+    table.push_back(make_usage_command(
         "event",
         [repo_root](const std::vector<std::string> &args)
         {
             return handle_event_command(args, repo_root);
         },
-        []()
-        {
-            std::cout << "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
-        }
-    });
+        "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]"));
     return table;
 }
 

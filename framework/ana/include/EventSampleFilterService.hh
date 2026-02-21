@@ -18,8 +18,27 @@ class EventSampleFilterService
   public:
     virtual ~EventSampleFilterService() = default;
 
-    virtual const char *filter_stage(SampleIO::SampleOrigin origin) const = 0;
-    virtual ROOT::RDF::RNode apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin) const = 0;
+    virtual const char *filter_stage(SampleIO::SampleOrigin origin) const
+    {
+        using SampleOrigin = SampleIO::SampleOrigin;
+
+        if (origin == SampleOrigin::kOverlay)
+            return "filter_overlay";
+        if (origin == SampleOrigin::kStrangeness)
+            return "filter_strangeness";
+        return NULL;
+    }
+
+    virtual ROOT::RDF::RNode apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin) const
+    {
+        using SampleOrigin = SampleIO::SampleOrigin;
+
+        if (origin == SampleOrigin::kOverlay)
+            return node.Filter([](int strange) { return strange == 0; }, {"count_strange"});
+        if (origin == SampleOrigin::kStrangeness)
+            return node.Filter([](int strange) { return strange > 0; }, {"count_strange"});
+        return node;
+    }
 };
 
 

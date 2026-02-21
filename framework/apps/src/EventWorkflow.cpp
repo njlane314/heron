@@ -116,7 +116,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
             "load_rdf",
             "sample=" + sample.sample_name);
 
-        ROOT::RDataFrame rdf = DefaultAnalysisModel::instance().load_sample(sample, event_tree);
+        ROOT::RDataFrame rdf = analysis.load_sample(sample, event_tree);
 
         log_stage(
             log_prefix,
@@ -124,7 +124,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
             "sample=" + sample.sample_name);
 
         const ProcessorEntry proc_entry = analysis.make_processor(sample);
-        const auto &processor = DefaultAnalysisModel::instance();
+        const auto &processor = analysis;
 
         log_stage(
             log_prefix,
@@ -133,14 +133,14 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
 
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
-        const char *filter_stage = DefaultAnalysisModel::instance().filter_stage(sample.origin);
+        const char *filter_stage = analysis.filter_stage(sample.origin);
         if (filter_stage != nullptr)
         {
             log_stage(
                 log_prefix,
                 filter_stage,
                 "sample=" + sample.sample_name);
-            node = DefaultAnalysisModel::instance().apply(node, sample.origin);
+            node = analysis.apply(node, sample.origin);
         }
 
         std::string snapshot_message = "sample=" + sample.sample_name;

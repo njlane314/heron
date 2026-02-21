@@ -32,17 +32,7 @@ class DefaultAnalysisModel : public heron::AnalysisModel,
 
     const std::string &name() const noexcept override;
     const std::string &tree_name() const noexcept override;
-    ProcessorEntry make_processor(const SampleIO::Sample &sample) const noexcept override;
-
     ROOT::RDF::RNode define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const override;
-
-    const char *filter_stage(SampleIO::SampleOrigin origin) const override;
-    ROOT::RDF::RNode apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin) const override;
-
-    ROOT::RDataFrame load_sample(const SampleIO::Sample &sample,
-                                 const std::string &tree_name) const override;
-    ROOT::RDF::RNode define_variables(ROOT::RDF::RNode node,
-                                      const std::vector<Column> &definitions) const override;
 
     int slice_required_count() const noexcept override;
     float slice_min_topology_score() const noexcept override;

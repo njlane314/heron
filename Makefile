@@ -14,67 +14,69 @@ endif
 CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell $(ROOT_CONFIG) --cflags) $(NLOHMANN_JSON_CFLAGS)
 LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -lsqlite3
 
-IO_LIB_NAME = build/lib/libheronIO.so
-IO_SRC = framework/io/src/ArtFileProvenanceIO.cc \
-         framework/io/src/EventListIO.cc \
-         framework/io/src/NormalisationService.cc \
-         framework/io/src/RunDatabaseService.cc \
-         framework/io/src/SnapshotService.cc \
-         framework/io/src/SampleIO.cc \
-         framework/io/src/SubRunInventoryService.cc
-OBJ_DIR = build/obj
+FRAMEWORK_DIR = framework
+BUILD_DIR = build
+LIB_DIR = $(BUILD_DIR)/lib
+BIN_DIR = $(BUILD_DIR)/bin
+OBJ_DIR = $(BUILD_DIR)/obj
+MODULES_DIR = $(FRAMEWORK_DIR)/modules
+
+MODULES = io ana plot evd
+INCLUDES = -I./$(FRAMEWORK_DIR)/core/include $(addprefix -I./$(MODULES_DIR)/,$(addsuffix /include,$(MODULES)))
+
+IO_LIB_NAME = $(LIB_DIR)/libheronIO.so
+IO_SRC = $(MODULES_DIR)/io/src/ArtFileProvenanceIO.cc \
+         $(MODULES_DIR)/io/src/EventListIO.cc \
+         $(MODULES_DIR)/io/src/NormalisationService.cc \
+         $(MODULES_DIR)/io/src/RunDatabaseService.cc \
+         $(MODULES_DIR)/io/src/SnapshotService.cc \
+         $(MODULES_DIR)/io/src/SampleIO.cc \
+         $(MODULES_DIR)/io/src/SubRunInventoryService.cc
 IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-ANA_LIB_NAME = build/lib/libheronAna.so
-ANA_SRC = framework/ana/src/AnalysisConfigService.cc \
-          framework/ana/src/ColumnDerivationService.cc \
-          framework/ana/src/EventSampleFilterService.cc \
-          framework/ana/src/RDataFrameService.cc \
-          framework/ana/src/SelectionService.cc
+ANA_LIB_NAME = $(LIB_DIR)/libheronAna.so
+ANA_SRC = $(MODULES_DIR)/ana/src/AnalysisConfigService.cc \
+          $(MODULES_DIR)/ana/src/ColumnDerivationService.cc \
+          $(MODULES_DIR)/ana/src/EventSampleFilterService.cc \
+          $(MODULES_DIR)/ana/src/RDataFrameService.cc \
+          $(MODULES_DIR)/ana/src/SelectionService.cc
 ANA_OBJ = $(ANA_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-PLOT_LIB_NAME = build/lib/libheronPlot.so
-PLOT_SRC = framework/plot/src/Plotter.cc \
-           framework/plot/src/StackedHist.cc \
-           framework/plot/src/UnstackedHist.cc \
-           framework/plot/src/PlottingHelper.cc \
-           framework/plot/src/EfficiencyPlot.cc
+PLOT_LIB_NAME = $(LIB_DIR)/libheronPlot.so
+PLOT_SRC = $(MODULES_DIR)/plot/src/Plotter.cc \
+           $(MODULES_DIR)/plot/src/StackedHist.cc \
+           $(MODULES_DIR)/plot/src/UnstackedHist.cc \
+           $(MODULES_DIR)/plot/src/PlottingHelper.cc \
+           $(MODULES_DIR)/plot/src/EfficiencyPlot.cc
 PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-EVD_LIB_NAME = build/lib/libheronEvd.so
-EVD_SRC = framework/evd/src/EventDisplay.cc
+EVD_LIB_NAME = $(LIB_DIR)/libheronEvd.so
+EVD_SRC = $(MODULES_DIR)/evd/src/EventDisplay.cc
 EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-HERON_NAME = build/bin/heron
-CORE_SRC = framework/core/src/heron.cc \
-           framework/core/src/ArtWorkflow.cc \
-           framework/core/src/SampleWorkflow.cc \
-           framework/core/src/EventWorkflow.cc
+HERON_NAME = $(BIN_DIR)/heron
+CORE_SRC = $(FRAMEWORK_DIR)/core/src/heron.cc \
+           $(FRAMEWORK_DIR)/core/src/ArtWorkflow.cc \
+           $(FRAMEWORK_DIR)/core/src/SampleWorkflow.cc \
+           $(FRAMEWORK_DIR)/core/src/EventWorkflow.cc
 CORE_OBJ = $(CORE_SRC:%.cc=$(OBJ_DIR)/%.o)
-
-INCLUDES = -I./framework/io/include -I./framework/ana/include -I./framework/plot/include -I./framework/evd/include -I./framework/core/include
 
 all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) $(HERON_NAME)
 
-$(IO_LIB_NAME): $(IO_OBJ)
-	mkdir -p $(dir $(IO_LIB_NAME))
-	$(CXX) -shared $(CXXFLAGS) $(IO_OBJ) $(LDFLAGS) -o $(IO_LIB_NAME)
+define build_shared_library
+$($(1)_LIB_NAME): $($(1)_OBJ)
+	mkdir -p $$(dir $$@)
+	$$(CXX) -shared $$(CXXFLAGS) $$^ $$(LDFLAGS) -o $$@
+endef
 
-$(ANA_LIB_NAME): $(ANA_OBJ)
-	mkdir -p $(dir $(ANA_LIB_NAME))
-	$(CXX) -shared $(CXXFLAGS) $(ANA_OBJ) $(LDFLAGS) -o $(ANA_LIB_NAME)
-
-$(PLOT_LIB_NAME): $(PLOT_OBJ)
-	mkdir -p $(dir $(PLOT_LIB_NAME))
-	$(CXX) -shared $(CXXFLAGS) $(PLOT_OBJ) $(LDFLAGS) -o $(PLOT_LIB_NAME)
-
-$(EVD_LIB_NAME): $(EVD_OBJ)
-	mkdir -p $(dir $(EVD_LIB_NAME))
-	$(CXX) -shared $(CXXFLAGS) $(EVD_OBJ) $(LDFLAGS) -o $(EVD_LIB_NAME)
+$(eval $(call build_shared_library,IO))
+$(eval $(call build_shared_library,ANA))
+$(eval $(call build_shared_library,PLOT))
+$(eval $(call build_shared_library,EVD))
 
 $(HERON_NAME): $(CORE_OBJ) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
 	mkdir -p $(dir $(HERON_NAME))
-	$(CXX) $(CXXFLAGS) $(CORE_OBJ) -Lbuild/lib -lheronIO \
+	$(CXX) $(CXXFLAGS) $(CORE_OBJ) -L$(LIB_DIR) -lheronIO \
 		-lheronAna -lheronPlot $(LDFLAGS) -o $(HERON_NAME)
 
 $(OBJ_DIR)/%.o: %.cc
@@ -82,4 +84,4 @@ $(OBJ_DIR)/%.o: %.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -fPIC -c $< -o $@
 
 clean:
-	rm -rf build/lib build/bin build/obj
+	rm -rf $(LIB_DIR) $(BIN_DIR) $(OBJ_DIR)

@@ -24,7 +24,6 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
-#include <TFile.h>
 
 #include "AnalysisConfigService.hh"
 #include "ColumnDerivationService.hh"
@@ -41,23 +40,6 @@ using namespace nu;
 
 namespace
 {
-bool looks_like_event_list_root(const std::string &p)
-{
-    const auto n = p.size();
-    if (n < 5 || p.substr(n - 5) != ".root")
-        return false;
-
-    std::unique_ptr<TFile> f(TFile::Open(p.c_str(), "READ"));
-    if (!f || f->IsZombie())
-        return false;
-
-    const bool has_refs = (f->Get("sample_refs") != nullptr);
-    const bool has_events_tree = (f->Get("events") != nullptr);
-    const bool has_event_tree_key = (f->Get("event_tree") != nullptr);
-
-    return has_refs && (has_events_tree || has_event_tree_key);
-}
-
 
 bool debug_enabled()
 {
@@ -122,26 +104,11 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
               ", mc=" + std::to_string(mask_mc ? mask_mc->size() : 0) +
               ", data=" + std::to_string(mask_data ? mask_data->size() : 0));
 
-    auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
-        return n.Filter(
-            [mask](int sid) {
-                return sid >= 0
-                       && sid < static_cast<int>(mask->size())
-                       && (*mask)[static_cast<size_t>(sid)];
-            },
-            {"sample_id"});
-    };
-
     ROOT::RDF::RNode base = rdf;
-    ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext);
-    ROOT::RDF::RNode node_mc = filter_by_mask(base, mask_mc)
-                                   .Filter([mask_ext](int sid) {
-                                       return !(sid >= 0
-                                                && sid < static_cast<int>(mask_ext->size())
-                                                && (*mask_ext)[static_cast<size_t>(sid)]);
-                                   },
-                                   {"sample_id"});
-    ROOT::RDF::RNode node_data = filter_by_mask(base, mask_data);
+    ROOT::RDF::RNode node_ext = filter_by_sample_mask(base, mask_ext);
+    ROOT::RDF::RNode node_mc = filter_by_sample_mask(base, mask_mc);
+    node_mc = filter_not_sample_mask(node_mc, mask_ext);
+    ROOT::RDF::RNode node_data = filter_by_sample_mask(base, mask_data);
 
     std::vector<Entry> entries;
     entries.reserve(include_data ? 3 : 2);

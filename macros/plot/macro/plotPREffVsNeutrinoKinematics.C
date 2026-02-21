@@ -27,7 +27,6 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <TEfficiency.h>
-#include <TFile.h>
 
 #include "EfficiencyPlot.hh"
 #include "EventListIO.hh"
@@ -39,23 +38,6 @@ using namespace nu;
 
 namespace
 {
-bool looks_like_event_list_root(const std::string &p)
-{
-    const auto n = p.size();
-    if (n < 5 || p.substr(n - 5) != ".root")
-        return false;
-
-    std::unique_ptr<TFile> f(TFile::Open(p.c_str(), "READ"));
-    if (!f || f->IsZombie())
-        return false;
-
-    const bool has_refs = (f->Get("sample_refs") != nullptr);
-    const bool has_events_tree = (f->Get("events") != nullptr);
-    const bool has_event_tree_key = (f->Get("event_tree") != nullptr);
-
-    return has_refs && (has_events_tree || has_event_tree_key);
-}
-
 struct VarSpec
 {
     std::string expr;
@@ -98,29 +80,8 @@ int plotPREffVsNeutrinoKinematics(const std::string &samples_tsv = "",
     auto mask_ext = el.mask_for_ext();
     auto mask_mc = el.mask_for_mc_like();
 
-    auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) -> ROOT::RDF::RNode {
-        if (!mask)
-            return n;
-        return n.Filter(
-            [mask](int sid) {
-                return sid >= 0
-                       && sid < static_cast<int>(mask->size())
-                       && (*mask)[static_cast<size_t>(sid)];
-            },
-            {"sample_id"});
-    };
-
-    ROOT::RDF::RNode node_mc = filter_by_mask(rdf, mask_mc);
-    if (mask_ext)
-    {
-        node_mc = node_mc.Filter(
-            [mask_ext](int sid) {
-                return !(sid >= 0
-                         && sid < static_cast<int>(mask_ext->size())
-                         && (*mask_ext)[static_cast<size_t>(sid)]);
-            },
-            {"sample_id"});
-    }
+    ROOT::RDF::RNode node_mc = filter_by_sample_mask(rdf, mask_mc);
+    node_mc = filter_not_sample_mask(node_mc, mask_ext);
 
     const std::vector<VarSpec> vars = {
         {"nu_E",            30, 0.0, 10.0, "True #nu energy E_{#nu} [GeV]"},

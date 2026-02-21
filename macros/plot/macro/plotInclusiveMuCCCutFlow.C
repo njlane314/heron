@@ -31,7 +31,6 @@
 #include <ROOT/RDataFrame.hxx>
 
 #include <TCanvas.h>
-#include <TFile.h>
 #include <TGraph.h>
 #include <TLegend.h>
 #include <TH1D.h>
@@ -55,23 +54,6 @@ struct CutFlowPoint
     double purity = 0.0;
     double mc_purity = 0.0;
 };
-
-bool looks_like_event_list_root(const std::string &path)
-{
-    const auto n = path.size();
-    if (n < 5 || path.substr(n - 5) != ".root")
-        return false;
-
-    std::unique_ptr<TFile> f(TFile::Open(path.c_str(), "READ"));
-    if (!f || f->IsZombie())
-        return false;
-
-    const bool has_refs = (f->Get("sample_refs") != nullptr);
-    const bool has_events_tree = (f->Get("events") != nullptr);
-    const bool has_event_tree_key = (f->Get("event_tree") != nullptr);
-
-    return has_refs && (has_events_tree || has_event_tree_key);
-}
 
 std::shared_ptr<const std::vector<char>> build_truth_mc_mask(const EventListIO &el)
 {
@@ -155,18 +137,8 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
     auto mask_mc = build_truth_mc_mask(el);
     auto mask_ext = el.mask_for_ext();
 
-    auto filter_by_mask = [](ROOT::RDF::RNode n, std::shared_ptr<const std::vector<char>> mask) {
-        return n.Filter(
-            [mask](int sid) {
-                return sid >= 0
-                       && sid < static_cast<int>(mask->size())
-                       && (*mask)[static_cast<size_t>(sid)];
-            },
-            {"sample_id"});
-    };
-
-    ROOT::RDF::RNode node_mc = filter_by_mask(rdf, mask_mc).Define("__w__", mc_weight);
-    ROOT::RDF::RNode node_ext = filter_by_mask(rdf, mask_ext).Define("__w__", mc_weight);
+    ROOT::RDF::RNode node_mc = filter_by_sample_mask(rdf, mask_mc).Define("__w__", mc_weight);
+    ROOT::RDF::RNode node_ext = filter_by_sample_mask(rdf, mask_ext).Define("__w__", mc_weight);
 
     const double signal_total = *(node_mc.Filter(signal_sel).Sum<double>("__w__"));
     if (signal_total <= 0.0)

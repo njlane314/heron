@@ -108,6 +108,7 @@ wrapper script:
 - `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macros/macro/library`).
 - `HERON_MACRO_PATH` sets additional colon-separated macro search paths (searched after `HERON_MACRO_LIBRARY_DIR`).
 - `manifest.tsv` inside `HERON_MACRO_LIBRARY_DIR` can register logical macro names as `name<TAB>macro[<TAB>call]`.
+- Standardised macro aliases are tracked in `macros/macro/library/manifest.tsv` (for example `plot.cutflow.inclusive_mucc`, `plot.eff.pr_vs_nu_kin`, and `plot.stack.true_vertex`).
 - `HERON_REPO_ROOT` can be set to override the repo discovery used by the CLI.
 - `HERON_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
 

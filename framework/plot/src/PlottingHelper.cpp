@@ -7,8 +7,11 @@
 
 #include "PlottingHelper.hh"
 
+#include <memory>
 #include <string>
+#include <vector>
 
+#include <TFile.h>
 #include <TSystem.h>
 
 #include "ColumnDerivationService.hh"
@@ -38,6 +41,55 @@ std::string default_samples_tsv()
 std::string default_event_list_root()
 {
     return "/exp/uboone/data/users/nlane/heron/out/event/events.root";
+}
+
+bool looks_like_event_list_root(const std::string &path)
+{
+    const auto n = path.size();
+    if (n < 5 || path.substr(n - 5) != ".root")
+        return false;
+
+    std::unique_ptr<TFile> f(TFile::Open(path.c_str(), "READ"));
+    if (!f || f->IsZombie())
+        return false;
+
+    const bool has_refs = (f->Get("sample_refs") != nullptr);
+    const bool has_events_tree = (f->Get("events") != nullptr);
+    const bool has_event_tree_key = (f->Get("event_tree") != nullptr);
+
+    return has_refs && (has_events_tree || has_event_tree_key);
+}
+
+ROOT::RDF::RNode filter_by_sample_mask(ROOT::RDF::RNode node,
+                                       std::shared_ptr<const std::vector<char>> mask,
+                                       const std::string &sample_id_column)
+{
+    if (!mask)
+        return node;
+
+    return node.Filter(
+        [mask](int sid) {
+            return sid >= 0
+                   && sid < static_cast<int>(mask->size())
+                   && (*mask)[static_cast<size_t>(sid)];
+        },
+        {sample_id_column});
+}
+
+ROOT::RDF::RNode filter_not_sample_mask(ROOT::RDF::RNode node,
+                                        std::shared_ptr<const std::vector<char>> mask,
+                                        const std::string &sample_id_column)
+{
+    if (!mask)
+        return node;
+
+    return node.Filter(
+        [mask](int sid) {
+            return !(sid >= 0
+                     && sid < static_cast<int>(mask->size())
+                     && (*mask)[static_cast<size_t>(sid)]);
+        },
+        {sample_id_column});
 }
 
 bool is_data_origin(SampleIO::SampleOrigin o)

@@ -59,7 +59,6 @@ struct ExecutionPolicy
     }
 };
 
-using ExecPolicy = ExecutionPolicy;
 }
 
 #endif

@@ -8,6 +8,7 @@
 #ifndef HERON_CORE_EXECUTION_POLICY_H
 #define HERON_CORE_EXECUTION_POLICY_H
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -22,6 +23,25 @@ struct ExecutionPolicy
     unsigned int nThreads = 0;
     bool enableImplicitMT = false;
     bool deterministic = false;
+    bool deterministicMerging = false;
+
+    bool implicit_mt_enabled() const noexcept { return enableImplicitMT; }
+
+    static bool env_enabled(const char *name, bool defaultValue = false)
+    {
+        const char *v = std::getenv(name);
+        if (v == NULL || *v == '\0')
+            return defaultValue;
+
+        return std::string(v) != "0";
+    }
+
+    static ExecutionPolicy from_env(const char *name = "HERON_PLOT_IMT")
+    {
+        ExecutionPolicy policy;
+        policy.enableImplicitMT = env_enabled(name, false);
+        return policy;
+    }
 
     bool apply(const std::string &label = "ExecutionPolicy") const
     {
@@ -43,6 +63,8 @@ struct ExecutionPolicy
                 std::cout << " (nThreads=" << nThreads << ")";
             if (deterministic)
                 std::cout << ", deterministic seed=1";
+            if (deterministicMerging)
+                std::cout << ", deterministic merge ordering requested";
             std::cout << "\n";
             return true;
         }
@@ -53,6 +75,8 @@ struct ExecutionPolicy
         std::cout << "[" << label << "] implicit MT disabled";
         if (deterministic)
             std::cout << ", deterministic seed=1";
+        if (deterministicMerging)
+            std::cout << ", deterministic merge ordering requested";
         std::cout << "\n";
 
         return true;

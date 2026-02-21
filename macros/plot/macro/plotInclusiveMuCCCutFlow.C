@@ -131,8 +131,8 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
 {
     {
         const ExecutionPolicy policy{.enableImplicitMT = true};
-        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-        context.policy().apply(__func__);
+        heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+        context.apply_runtime(__func__);
     }
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;

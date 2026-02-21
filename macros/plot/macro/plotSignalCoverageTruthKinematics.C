@@ -104,11 +104,6 @@ std::string sanitize_for_filename(const std::string &s)
     return out;
 }
 
-bool implicit_mt_enabled()
-{
-    const char *env = std::getenv("HERON_PLOT_IMT");
-    return env != nullptr && std::string(env) != "0";
-}
 
 struct Var1D
 {
@@ -304,15 +299,12 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
                                       bool make_2d = true,
                                       bool signal_only_2d = false)
 {
-    if (implicit_mt_enabled())
-    {
-        {
-            const ExecutionPolicy policy{.enableImplicitMT = true};
-            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-            context.policy().apply(__func__);
-        }
-        std::cout << "[plotSignalCoverageTruthKinematics] ROOT implicit MT enabled (HERON_PLOT_IMT != 0)\n";
-    }
+    const ExecutionPolicy policy = ExecutionPolicy::from_env();
+    heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+    context.apply_runtime(__func__);
+    std::cout << "[plotSignalCoverageTruthKinematics] ROOT implicit MT "
+              << (context.implicit_mt_enabled() ? "enabled (HERON_PLOT_IMT != 0)" : "disabled (set HERON_PLOT_IMT=1 to enable)")
+              << "\n";
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotSignalCoverageTruthKinematics] input=" << list_path << "\n";

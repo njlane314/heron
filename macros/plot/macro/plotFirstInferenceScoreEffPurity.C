@@ -53,11 +53,6 @@ bool looks_like_event_list_root(const std::string &path)
     return has_refs && (has_events_tree || has_event_tree_key);
 }
 
-bool implicit_mt_enabled()
-{
-    const char *env = std::getenv("HERON_PLOT_IMT");
-    return env != nullptr && std::string(env) != "0";
-}
 }
 
 int plotFirstInferenceScoreEffPurity(const std::string &event_list_path = "",
@@ -82,12 +77,9 @@ int plotFirstInferenceScoreEffPurity(const std::string &event_list_path = "",
     if (n_thresholds < 2)
         n_thresholds = 2;
 
-    if (implicit_mt_enabled())
-        {
-            const ExecutionPolicy policy{.enableImplicitMT = true};
-            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-            context.policy().apply(__func__);
-        }
+    const ExecutionPolicy policy = ExecutionPolicy::from_env();
+    heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+    context.apply_runtime(__func__);
 
     EventListIO el(input_path);
     ROOT::RDataFrame rdf = el.rdf();

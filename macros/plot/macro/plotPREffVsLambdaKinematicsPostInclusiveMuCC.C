@@ -124,24 +124,13 @@ int plotPREffVsLambdaKinematicsPostInclusiveMuCC(const std::string &samples_tsv 
                                     " && (pi_p>0.0)")
 {
     const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
-    if (use_imt)
-    {
-        {
-            const ExecutionPolicy policy{.enableImplicitMT = true};
-            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-            context.policy().apply(__func__);
-        }
-        std::cout << "[plotPREffVsLambdaKinematicsPostInclusiveMuCC] implicit MT enabled via HERON_ENABLE_IMT\n";
-    }
-    else
-    {
-        {
-            const ExecutionPolicy policy{.enableImplicitMT = false};
-            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-            context.policy().apply(__func__);
-        }
-        std::cout << "[plotPREffVsLambdaKinematicsPostInclusiveMuCC] implicit MT disabled (set HERON_ENABLE_IMT=1 to enable)\n";
-    }
+    const ExecutionPolicy policy{.enableImplicitMT = use_imt};
+    heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+    context.apply_runtime(__func__);
+
+    std::cout << "[plotPREffVsLambdaKinematicsPostInclusiveMuCC] implicit MT "
+              << (context.implicit_mt_enabled() ? "enabled via HERON_ENABLE_IMT" : "disabled (set HERON_ENABLE_IMT=1 to enable)")
+              << "\n";
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotPREffVsLambdaKinematicsPostInclusiveMuCC] input=" << list_path << "\n";
@@ -257,7 +246,7 @@ int plotPREffVsLambdaKinematicsPostInclusiveMuCC(const std::string &samples_tsv 
         cfg.draw_distributions = true;
 
         Options opt;
-        opt.out_dir.clear();
+        opt.out_dir = context.outputs().plot_dir;
         opt.image_format.clear();
 
         EfficiencyPlot eff(spec, opt, cfg);

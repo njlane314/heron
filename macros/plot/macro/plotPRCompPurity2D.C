@@ -229,8 +229,8 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
 {
     {
         const ExecutionPolicy policy{.enableImplicitMT = true};
-        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-        context.policy().apply(__func__);
+        heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+        context.apply_runtime(__func__);
     }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

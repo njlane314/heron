@@ -86,8 +86,8 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
 {
     {
         const ExecutionPolicy policy{.enableImplicitMT = true};
-        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-        context.policy().apply(__func__);
+        heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+        context.apply_runtime(__func__);
     }
 
     debug_log("starting plot_stacked_hist_impl");

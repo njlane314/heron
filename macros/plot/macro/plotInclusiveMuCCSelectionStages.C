@@ -84,11 +84,6 @@ bool looks_like_event_list_root(const std::string &p)
     return has_refs && (has_events_tree || has_event_tree_key);
 }
 
-bool implicit_mt_enabled()
-{
-    const char *env = std::getenv("HERON_PLOT_IMT");
-    return env != nullptr && std::string(env) != "0";
-}
 
 std::string getenv_or(const char *key, const std::string &fallback)
 {
@@ -418,12 +413,9 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
                                      float mu_dist_cut_cm = 4.0f,
                                      unsigned mu_req_gen = 2u)
 {
-    if (implicit_mt_enabled())
-        {
-            const ExecutionPolicy policy{.enableImplicitMT = true};
-            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-            context.policy().apply(__func__);
-        }
+    const ExecutionPolicy policy = ExecutionPolicy::from_env();
+    heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+    context.apply_runtime(__func__);
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotInclusiveMuCCSelectionStages] input=" << list_path << "\n";

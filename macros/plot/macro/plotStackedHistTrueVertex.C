@@ -77,11 +77,6 @@ void debug_log(const std::string &msg)
     std::cout.flush();
 }
 
-bool implicit_mt_enabled()
-{
-    const char *env = std::getenv("HERON_PLOT_IMT");
-    return env != nullptr && std::string(env) != "0";
-}
 } // namespace
 
 int plot_stacked_hist_impl(const std::string &samples_tsv,
@@ -90,19 +85,11 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
                            bool use_logy,
                            bool include_data)
 {
-    if (implicit_mt_enabled())
-    {
-        {
-            const ExecutionPolicy policy{.enableImplicitMT = true};
-            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
-            context.policy().apply(__func__);
-        }
-        debug_log("ROOT implicit MT enabled (HERON_PLOT_IMT != 0)");
-    }
-    else
-    {
-        debug_log("ROOT implicit MT disabled (set HERON_PLOT_IMT=1 to enable)");
-    }
+    const ExecutionPolicy policy = ExecutionPolicy::from_env();
+    heron::AnalysisContext<ExecutionPolicy> context(policy, __func__);
+    context.apply_runtime(__func__);
+    debug_log(std::string("ROOT implicit MT ") + (context.implicit_mt_enabled() ? "enabled" : "disabled")
+              + (context.implicit_mt_enabled() ? " (HERON_PLOT_IMT != 0)" : " (set HERON_PLOT_IMT=1 to enable)"));
 
     debug_log("starting plot_stacked_hist_impl");
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

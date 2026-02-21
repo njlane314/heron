@@ -23,10 +23,7 @@ void AnalysisModelExample(const char *sample_list_path = "scratch/out/out/sample
         policy.apply("AnalysisModelExample");
 
         heron::Dataset dataset;
-        if (!dataset.load_samples(sample_list_path))
-        {
-            throw std::runtime_error(std::string("AnalysisModelExample: failed to load sample list: ") + sample_list_path);
-        }
+        dataset.load_samples(sample_list_path);
 
         heron::AnalysisContext<nu::ExecutionPolicy> context(policy, "default");
 

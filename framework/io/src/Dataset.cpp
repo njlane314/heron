@@ -8,19 +8,20 @@
 #include "Dataset.hh"
 
 #include <fstream>
+#include <stdexcept>
 #include <sstream>
 
 namespace heron
 {
 
-bool Dataset::load_samples(const std::string &sample_list_path)
+void Dataset::load_samples(const std::string &sample_list_path)
 {
     this->clear();
 
     std::ifstream fin(sample_list_path);
     if (!fin)
     {
-        return false;
+        throw std::runtime_error(std::string("Dataset::load_samples: failed to open sample list: ") + sample_list_path);
     }
 
     std::string line;
@@ -53,7 +54,6 @@ bool Dataset::load_samples(const std::string &sample_list_path)
         m_samples.push_back(SampleIO::read(output_path));
     }
 
-    return true;
 }
 
 void Dataset::clear()

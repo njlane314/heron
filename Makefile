@@ -38,7 +38,8 @@ PLOT_SRC = plot/src/Plotter.cpp \
            plot/src/StackedHist.cpp \
            plot/src/UnstackedHist.cpp \
            plot/src/PlottingHelper.cpp \
-           plot/src/EfficiencyPlot.cpp
+           plot/src/EfficiencyPlot.cpp \
+           plot/src/TemplateBinningOptimiser1D.cpp
 PLOT_OBJ = $(PLOT_SRC:%.cpp=$(OBJ_DIR)/%.o)
 
 EVD_LIB_NAME = build/lib/libheronEvd.so

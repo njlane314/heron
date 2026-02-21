@@ -35,6 +35,7 @@
 #include "RDataFrameService.hh"
 #include "SampleCLI.hh"
 #include "SampleIO.hh"
+#include "ExecutionPolicy.hh"
 
 
 using namespace nu;
@@ -90,7 +91,7 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
 {
     if (implicit_mt_enabled())
     {
-        ROOT::EnableImplicitMT();
+        ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
         debug_log("ROOT implicit MT enabled (HERON_PLOT_IMT != 0)");
     }
     else

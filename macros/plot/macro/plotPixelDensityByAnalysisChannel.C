@@ -41,6 +41,7 @@
 
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -103,7 +104,7 @@ int plotPixelDensityByAnalysisChannel(const std::string &samples_tsv = "",
                                       const std::string &weight_expr = "",
                                       bool include_data = false)
 {
-    ROOT::EnableImplicitMT();
+    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
     std::cout << "[plotPixelDensityByAnalysisChannel] implicit MT enabled\n";
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

@@ -34,6 +34,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -145,7 +146,7 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
     }
 
     if (implicit_mt_enabled())
-        ROOT::EnableImplicitMT();
+        ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
 
     EventListIO el(list_path);
     ROOT::RDataFrame rdf = el.rdf();

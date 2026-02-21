@@ -33,6 +33,7 @@
 #include "PlotChannels.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -92,7 +93,7 @@ int printAnalysisChannelStats(const std::string &samples_tsv = "",
                               const std::string &mc_weight = "w_nominal",
                               bool include_data = false)
 {
-    ROOT::EnableImplicitMT();
+    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
 

@@ -50,6 +50,7 @@
 #include "EventListIO.hh"
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -135,7 +136,7 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                        double xmax_pct = 1e1,
                        bool draw_planes = true)
 {
-  ROOT::EnableImplicitMT();
+  ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
   std::cout << "[plotImageOccupancy] implicit MT enabled\n";
 
   const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

@@ -44,6 +44,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "ExecutionPolicy.hh"
 
 using namespace nu;
 
@@ -119,12 +120,12 @@ int plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC(const std::string &sample
     const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
     if (use_imt)
     {
-        ROOT::EnableImplicitMT();
+        ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
         std::cout << "[plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT enabled via HERON_ENABLE_IMT\n";
     }
     else
     {
-        ROOT::DisableImplicitMT();
+        ExecutionPolicy{.enableImplicitMT = false}.apply(__func__);
         std::cout << "[plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC] implicit MT disabled (set HERON_ENABLE_IMT=1 to enable)\n";
     }
 

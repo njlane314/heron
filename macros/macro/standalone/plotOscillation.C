@@ -49,7 +49,7 @@
 #include "TAxis.h"
 #include "TStyle.h"
 #include "TString.h"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 static double sinsq(double x) {
   const double s = std::sin(x);

@@ -32,7 +32,7 @@
 #include "RDataFrameService.hh"
 #include "SampleCLI.hh"
 #include "SampleIO.hh"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 
 using namespace nu;

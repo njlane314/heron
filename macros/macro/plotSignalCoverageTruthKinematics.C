@@ -54,7 +54,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 using namespace nu;
 

@@ -14,7 +14,7 @@
 #include "AnalysisConfigService.hh"
 
 #include "../../../framework/modules/evd/include/EventDisplay.hh"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 using namespace heron::evd;
 

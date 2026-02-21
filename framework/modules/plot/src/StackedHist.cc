@@ -149,24 +149,7 @@ void apply_total_errors(TH1D &h,
 
 double integral_in_visible_range(const TH1D &h, double xmin, double xmax)
 {
-    const TAxis *axis = h.GetXaxis();
-    if (!axis)
-    {
-        return h.Integral();
-    }
-
-    int first_bin = 1;
-    int last_bin = h.GetNbinsX();
-    if (xmin < xmax)
-    {
-        first_bin = std::max(1, axis->FindFixBin(xmin));
-        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
-        if (xmax <= axis->GetBinLowEdge(last_bin))
-        {
-            last_bin = std::max(first_bin, last_bin - 1);
-        }
-    }
-
+    const auto [first_bin, last_bin] = visible_bin_range(h, xmin, xmax);
     if (first_bin > last_bin)
     {
         return 0.0;
@@ -176,24 +159,7 @@ double integral_in_visible_range(const TH1D &h, double xmin, double xmax)
 
 double maximum_in_visible_range(const TH1D &h, double xmin, double xmax, bool include_error)
 {
-    const TAxis *axis = h.GetXaxis();
-    if (!axis)
-    {
-        return include_error ? h.GetMaximum() + h.GetBinError(h.GetMaximumBin()) : h.GetMaximum();
-    }
-
-    int first_bin = 1;
-    int last_bin = h.GetNbinsX();
-    if (xmin < xmax)
-    {
-        first_bin = std::max(1, axis->FindFixBin(xmin));
-        last_bin = std::min(h.GetNbinsX(), axis->FindFixBin(xmax));
-        if (xmax <= axis->GetBinLowEdge(last_bin))
-        {
-            last_bin = std::max(first_bin, last_bin - 1);
-        }
-    }
-
+    const auto [first_bin, last_bin] = visible_bin_range(h, xmin, xmax);
     if (first_bin > last_bin)
     {
         return 0.0;

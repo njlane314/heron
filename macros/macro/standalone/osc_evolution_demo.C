@@ -15,7 +15,7 @@
 #include "TPad.h"
 #include "TStyle.h"
 #include "TString.h"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 namespace {
 

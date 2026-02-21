@@ -60,7 +60,7 @@
 #include "TMatrixDSym.h"
 #include "TMatrixDSymEigen.h"
 #include "TVectorD.h"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 static double sinsq(double x) {
   const double s = std::sin(x);

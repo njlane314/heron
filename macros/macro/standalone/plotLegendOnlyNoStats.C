@@ -16,7 +16,7 @@
 #include "TH1D.h"
 #include "TLegend.h"
 #include "TStyle.h"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 namespace
 {

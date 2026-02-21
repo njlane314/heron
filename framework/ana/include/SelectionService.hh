@@ -9,14 +9,11 @@
 #ifndef HERON_ANA_SELECTION_SERVICE_H
 #define HERON_ANA_SELECTION_SERVICE_H
 
-#include <cstddef>
 #include <string>
 
 #include <ROOT/RDataFrame.hxx>
-#include <ROOT/RVec.hxx>
 
 #include "ColumnDerivationService.hh"
-
 
 
 struct Frame
@@ -43,24 +40,27 @@ enum class Preset
 class SelectionService
 {
   public:
-    static const int slice_required_count;
-    static const float slice_min_topology_score;
+    virtual ~SelectionService() = default;
 
-    static const float muon_min_track_score;
-    static const float muon_min_track_length;
-    static const float muon_max_track_distance;
-    static const unsigned muon_required_generation;
+    static const SelectionService &instance();
 
-    static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection = NULL);
-    static ROOT::RDF::RNode decorate(ROOT::RDF::RNode node);
-    static std::string selection_label(Preset p);
-    static bool is_in_truth_volume(float x, float y, float z) noexcept;
-    static bool is_in_reco_volume(float x, float y, float z) noexcept;
+    virtual int slice_required_count() const noexcept = 0;
+    virtual float slice_min_topology_score() const noexcept = 0;
+    virtual float muon_min_track_score() const noexcept = 0;
+    virtual float muon_min_track_length() const noexcept = 0;
+    virtual float muon_max_track_distance() const noexcept = 0;
+    virtual unsigned muon_required_generation() const noexcept = 0;
+
+    virtual ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection = NULL) const = 0;
+    virtual ROOT::RDF::RNode decorate(ROOT::RDF::RNode node) const = 0;
+    virtual std::string selection_label(Preset p) const = 0;
+    virtual bool is_in_truth_volume(float x, float y, float z) const noexcept = 0;
+    virtual bool is_in_reco_volume(float x, float y, float z) const noexcept = 0;
 };
 
 inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection = NULL)
 {
-    return SelectionService::apply(node, p, selection);
+    return SelectionService::instance().apply(node, p, selection);
 }
 
 

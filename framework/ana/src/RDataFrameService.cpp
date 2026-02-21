@@ -2,30 +2,14 @@
 /**
  *  @file  ana/src/RDataFrameService.cpp
  *
- *  @brief Sample loading and variable definitions for ROOT RDataFrame.
+ *  @brief RDataFrame service accessors.
  */
 
 #include "RDataFrameService.hh"
 
-#include <utility>
+#include "DefaultAnalysisModel.hh"
 
-
-ROOT::RDataFrame RDataFrameService::load_sample(const SampleIO::Sample &sample,
-                                                const std::string &tree_name)
+const RDataFrameService &RDataFrameService::instance()
 {
-    std::vector<std::string> files = SampleIO::resolve_root_files(sample);
-    return ROOT::RDataFrame(tree_name, files);
+    return DefaultAnalysisModel::instance();
 }
-
-ROOT::RDF::RNode RDataFrameService::define_variables(ROOT::RDF::RNode node,
-                                             const std::vector<Column> &definitions)
-{
-    ROOT::RDF::RNode updated_node = std::move(node);
-    for (const Column &definition : definitions)
-    {
-        updated_node = updated_node.Define(definition.name, definition.expression);
-    }
-
-    return updated_node;
-}
-

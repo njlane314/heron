@@ -10,26 +10,21 @@
 #define HERON_ANA_ANALYSIS_CONFIG_SERVICE_H
 
 #include <string>
-#include <vector>
 
 #include "ColumnDerivationService.hh"
 #include "SampleIO.hh"
 
 
-class AnalysisConfigService final
+class AnalysisConfigService
 {
   public:
+    virtual ~AnalysisConfigService() = default;
+
     static const AnalysisConfigService &instance();
 
-    const std::string &name() const noexcept { return m_name; }
-    const std::string &tree_name() const noexcept { return m_tree_name; }
-    ProcessorEntry make_processor(const SampleIO::Sample &sample) const noexcept;
-
-  private:
-    AnalysisConfigService();
-
-    std::string m_name;
-    std::string m_tree_name;
+    virtual const std::string &name() const noexcept = 0;
+    virtual const std::string &tree_name() const noexcept = 0;
+    virtual ProcessorEntry make_processor(const SampleIO::Sample &sample) const noexcept = 0;
 };
 
 

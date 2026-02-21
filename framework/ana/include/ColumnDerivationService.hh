@@ -10,7 +10,6 @@
 #define HERON_ANA_COLUMN_DERIVATION_SERVICE_H
 
 #include <ROOT/RDataFrame.hxx>
-#include <ROOT/RVec.hxx>
 
 #include "AnalysisChannels.hh"
 
@@ -34,13 +33,10 @@ struct ProcessorEntry
 class ColumnDerivationService
 {
   public:
-    ROOT::RDF::RNode define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const;
+    virtual ~ColumnDerivationService() = default;
+
     static const ColumnDerivationService &instance();
-
-  private:
-    static const double kRecognisedPurityMin;
-    static const double kRecognisedCompletenessMin;
-
+    virtual ROOT::RDF::RNode define(ROOT::RDF::RNode node, const ProcessorEntry &rec) const = 0;
 };
 
 

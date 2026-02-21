@@ -27,11 +27,15 @@ struct Column
 class RDataFrameService
 {
   public:
-    static ROOT::RDataFrame load_sample(const SampleIO::Sample &sample,
-                                        const std::string &tree_name);
+    virtual ~RDataFrameService() = default;
 
-    static ROOT::RDF::RNode define_variables(ROOT::RDF::RNode node,
-                                             const std::vector<Column> &definitions);
+    static const RDataFrameService &instance();
+
+    virtual ROOT::RDataFrame load_sample(const SampleIO::Sample &sample,
+                                         const std::string &tree_name) const = 0;
+
+    virtual ROOT::RDF::RNode define_variables(ROOT::RDF::RNode node,
+                                               const std::vector<Column> &definitions) const = 0;
 };
 
 

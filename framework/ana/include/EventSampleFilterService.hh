@@ -13,12 +13,15 @@
 #include "SampleIO.hh"
 
 
-
 class EventSampleFilterService
 {
   public:
-    static const char *filter_stage(SampleIO::SampleOrigin origin);
-    static ROOT::RDF::RNode apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin);
+    virtual ~EventSampleFilterService() = default;
+
+    static const EventSampleFilterService &instance();
+
+    virtual const char *filter_stage(SampleIO::SampleOrigin origin) const = 0;
+    virtual ROOT::RDF::RNode apply(ROOT::RDF::RNode node, SampleIO::SampleOrigin origin) const = 0;
 };
 
 

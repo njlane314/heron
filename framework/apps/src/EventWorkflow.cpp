@@ -117,7 +117,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
             "load_rdf",
             "sample=" + sample.sample_name);
 
-        ROOT::RDataFrame rdf = RDataFrameService::load_sample(sample, event_tree);
+        ROOT::RDataFrame rdf = RDataFrameService::instance().load_sample(sample, event_tree);
 
         log_stage(
             log_prefix,
@@ -134,14 +134,14 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
 
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
 
-        const char *filter_stage = EventSampleFilterService::filter_stage(sample.origin);
+        const char *filter_stage = EventSampleFilterService::instance().filter_stage(sample.origin);
         if (filter_stage != nullptr)
         {
             log_stage(
                 log_prefix,
                 filter_stage,
                 "sample=" + sample.sample_name);
-            node = EventSampleFilterService::apply(node, sample.origin);
+            node = EventSampleFilterService::instance().apply(node, sample.origin);
         }
 
         std::string snapshot_message = "sample=" + sample.sample_name;

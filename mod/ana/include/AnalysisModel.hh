@@ -128,6 +128,25 @@ class AnalysisModel
         configure();
     }
 
+    /// Reset and build the model using default configuration.
+    bool initialise()
+    {
+        clear();
+        configure();
+        define();
+        return true;
+    }
+
+    /// Reset and build the model using an analysis context.
+    template <typename TPolicy, typename TServices>
+    bool initialise(const AnalysisContext<TPolicy, TServices> &context)
+    {
+        clear();
+        configure(context);
+        define();
+        return true;
+    }
+
     const std::vector<Var<double> > &vars() const noexcept { return m_vars; }
     const std::vector<Cut> &cuts() const noexcept { return m_cuts; }
     const std::vector<Weight> &weights() const noexcept { return m_weights; }

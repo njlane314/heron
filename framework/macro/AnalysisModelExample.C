@@ -19,7 +19,7 @@ void AnalysisModelExample(const char *sample_list_path = "scratch/out/out/sample
 {
     try
     {
-        nu::ExecutionPolicy policy{.nThreads = 4, .enableImplicitMT = nu::ExecutionPolicy::env_enabled("HERON_PLOT_IMT"), .deterministic = true};
+        nu::ExecutionPolicy policy{.nThreads = 4, .enableImplicitMT = true, .deterministic = true};
         policy.apply("AnalysisModelExample");
 
         heron::Dataset dataset;

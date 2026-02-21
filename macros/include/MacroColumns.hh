@@ -1,5 +1,5 @@
 /* -- C++ -- */
-/// \file macros/macro/include/MacroColumns.hh
+/// \file macros/include/MacroColumns.hh
 /// \brief Header-only column checks shared by ROOT macros.
 
 #ifndef heron_macro_MACROCOLUMNS_H

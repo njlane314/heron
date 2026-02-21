@@ -33,7 +33,7 @@ const char *kUsageMacro =
     "Usage: heron macro MACRO.C [CALL]\n"
     "       heron macro list\n"
     "\nEnvironment:\n"
-    "  HERON_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macros/macro/library)\n"
+    "  HERON_MACRO_LIBRARY_DIR  In-repo macro library directory (default: <repo>/macros/library)\n"
     "  HERON_MACRO_PATH         Colon-separated extra macro directories (searched after library)\n"
     "  HERON_PLOT_BASE    Plot base directory (default: <repo>/scratch/plot)\n"
     "  HERON_PLOT_DIR     Output directory override (default: HERON_PLOT_BASE/<set>)\n"
@@ -125,7 +125,7 @@ std::filesystem::path find_repo_root()
     {
         for (int i = 0; i < 6; ++i)
         {
-            if (std::filesystem::exists(base / "macros/macro/.plot_driver.retired") ||
+            if (std::filesystem::exists(base / "macros/.plot_driver.retired") ||
                 std::filesystem::exists(base / "framework/modules/plot/macro/.plot_driver.retired"))
             {
                 return base;
@@ -278,7 +278,7 @@ std::vector<std::string> split_path_list(const std::string &raw)
 
 std::filesystem::path macro_library_dir(const std::filesystem::path &repo_root)
 {
-    const std::filesystem::path fallback = macro_repo_dir(repo_root) / "macro" / "library";
+    const std::filesystem::path fallback = macro_repo_dir(repo_root) / "library";
     return path_from_env_or_default("HERON_MACRO_LIBRARY_DIR", fallback);
 }
 
@@ -335,25 +335,15 @@ std::filesystem::path resolve_macro_path(const std::filesystem::path &repo_root,
         }
 
         const auto macro_root = macro_repo_dir(repo_root);
-        const auto standalone_candidate = macro_root / "standalone" / "macro" / candidate;
+        const auto standalone_candidate = macro_root / "standalone" / candidate;
         if (std::filesystem::exists(standalone_candidate))
         {
             return standalone_candidate;
         }
-        const auto macro_candidate = macro_root / "plot" / "macro" / candidate;
+        const auto macro_candidate = macro_root / candidate;
         if (std::filesystem::exists(macro_candidate))
         {
             return macro_candidate;
-        }
-        const auto evd_candidate = macro_root / "evd" / "macro" / candidate;
-        if (std::filesystem::exists(evd_candidate))
-        {
-            return evd_candidate;
-        }
-        const auto io_candidate = macro_root / "io" / "macro" / candidate;
-        if (std::filesystem::exists(io_candidate))
-        {
-            return io_candidate;
         }
     }
     return candidate;
@@ -544,10 +534,8 @@ void print_macro_list(std::ostream &out, const std::filesystem::path &repo_root)
     }
 
     const auto macro_root = macro_repo_dir(repo_root);
-    list_macros(macro_root / "plot" / "macro", "Plot macros in", "");
-    list_macros(macro_root / "standalone" / "macro", "Standalone macros in", "");
-    list_macros(macro_root / "evd" / "macro", "Event-display macros in", "");
-    list_macros(macro_root / "io" / "macro", "I/O macros in", "");
+    list_macros(macro_root, "Macros in", "");
+    list_macros(macro_root / "standalone", "Standalone macros in", "standalone/");
 }
 
 int handle_macro_command(const std::vector<std::string> &args)

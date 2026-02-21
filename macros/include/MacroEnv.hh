@@ -1,5 +1,5 @@
 /* -- C++ -- */
-/// \file macros/macro/include/MacroEnv.hh
+/// \file macros/include/MacroEnv.hh
 /// \brief Header-only environment and path helpers shared by ROOT macros.
 
 #ifndef heron_macro_MACROENV_H

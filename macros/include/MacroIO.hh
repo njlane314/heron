@@ -1,5 +1,5 @@
 /* -- C++ -- */
-/// \file macros/macro/include/MacroIO.hh
+/// \file macros/include/MacroIO.hh
 /// \brief Header-only I/O helpers shared by ROOT macros.
 
 #ifndef heron_macro_MACROIO_H

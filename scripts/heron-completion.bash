@@ -17,12 +17,12 @@ _heron()
     local exe
     local exe_dir
 
-    if [[ -n "${HERON_REPO_ROOT:-}" && -d "${HERON_REPO_ROOT}/macros/macro" ]]; then
+    if [[ -n "${HERON_REPO_ROOT:-}" && -d "${HERON_REPO_ROOT}/macros" ]]; then
       printf "%s" "${HERON_REPO_ROOT}"
       return 0
     fi
 
-    if [[ -n "${HERON_ROOT:-}" && -d "${HERON_ROOT}/macros/macro" ]]; then
+    if [[ -n "${HERON_ROOT:-}" && -d "${HERON_ROOT}/macros" ]]; then
       printf "%s" "${HERON_ROOT}"
       return 0
     fi
@@ -32,7 +32,7 @@ _heron()
       exe_dir="$(dirname "$(readlink -f "${exe}" 2>/dev/null || printf "%s" "${exe}")")"
       dir="${exe_dir}"
       while [[ -n "${dir}" && "${dir}" != "/" ]]; do
-        if [[ -d "${dir}/macros/macro" ]]; then
+        if [[ -d "${dir}/macros" ]]; then
           printf "%s" "${dir}"
           return 0
         fi
@@ -42,7 +42,7 @@ _heron()
 
     dir="${PWD}"
     while [[ "${dir}" != "/" ]]; do
-      if [[ -d "${dir}/macros/macro" ]]; then
+      if [[ -d "${dir}/macros" ]]; then
         printf "%s" "${dir}"
         return 0
       fi
@@ -60,7 +60,7 @@ _heron()
 
     repo_root="$(_heron_find_root 2>/dev/null || true)"
     if [[ -n "${repo_root}" ]]; then
-      macro_dir="${repo_root}/macros/macro"
+      macro_dir="${repo_root}/macros"
       if [[ -d "${macro_dir}" ]]; then
         for macro in "${macro_dir}"/*.C; do
           if [[ -f "${macro}" ]]; then

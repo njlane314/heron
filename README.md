@@ -108,7 +108,7 @@ wrapper script:
 - `HERON_OUTPUT_DIR` is required by `heron art`; outputs are written to `$HERON_OUTPUT_DIR/art`.
 - `HERON_SAMPLE_DIR` and `HERON_EVENT_DIR` override per-stage output directories for `sample` and `event`.
 - `HERON_PLOT_DIR` and `HERON_PLOT_FORMAT` control plot output location and file extension.
-- `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macros/macro/library`).
+- `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macros/library`).
 - `HERON_MACRO_PATH` sets additional colon-separated macro search paths (searched after `HERON_MACRO_LIBRARY_DIR`).
 - `HERON_REPO_ROOT` can be set to override the repo discovery used by the CLI.
 - `HERON_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
@@ -234,12 +234,12 @@ Plotting is macro-driven. Use the `heron macro` helper to run a plot macro
 heron --set template macro plotPotSimple.C
 ```
 
-For an in-repo macro library, keep macros under `macros/macro/library/` (for example,
+For an in-repo macro library, keep macros under `macros/library/` (for example,
 in this repository), and optionally add extra search paths.
 
 ```bash
-export HERON_MACRO_LIBRARY_DIR=macros/macro/library
-export HERON_MACRO_PATH=macros/macro/library/custom
+export HERON_MACRO_LIBRARY_DIR=macros/library
+export HERON_MACRO_PATH=macros/library/custom
 heron --set template macro list
 ```
 

@@ -1,5 +1,5 @@
 /* -- C++ -- */
-/// \file macros/macro/include/MacroGuard.hh
+/// \file macros/include/MacroGuard.hh
 /// \brief Shared helpers to provide consistent exception guards for ROOT macros.
 
 #ifndef heron_macro_MACROGUARD_H

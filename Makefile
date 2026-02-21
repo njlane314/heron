@@ -30,6 +30,7 @@ ANA_LIB_NAME = build/lib/libheronAna.so
 ANA_SRC = framework/core/src/AnalysisModel.cpp \
           framework/ana/src/AnalysisConfigService.cpp \
           framework/ana/src/ColumnDerivationService.cpp \
+          framework/ana/src/DefaultAnalysisModel.cpp \
           framework/ana/src/EventSampleFilterService.cpp \
           framework/ana/src/RDataFrameService.cpp \
           framework/ana/src/SelectionService.cpp

@@ -1,13 +1,13 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/include/AppLog.hh
+ *  @file  framework/core/include/AppLog.hh
  *
  *  @brief Logging helpers that format and emit consistent status messages for
  *         application command-line workflows, covering informational, warning,
  *         and error reporting paths.
  */
-#ifndef HERON_APPS_APPLOG_H
-#define HERON_APPS_APPLOG_H
+#ifndef HERON_CORE_APPLOG_H
+#define HERON_CORE_APPLOG_H
 
 #include <iomanip>
 #include <iostream>
@@ -109,4 +109,4 @@ inline void log_stage(const std::string &log_prefix,
 
 
 
-#endif // HERON_APPS_APPLOG_H
+#endif // HERON_CORE_APPLOG_H

@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/include/SampleCLI.hh
+ *  @file  framework/core/include/SampleCLI.hh
  *
  *  @brief CLI helpers that manage sample-level workflows, from input handling
  *         through reporting and normalisation for data preparation tasks.
  */
-#ifndef HERON_APPS_SAMPLECLI_H
-#define HERON_APPS_SAMPLECLI_H
+#ifndef HERON_CORE_SAMPLECLI_H
+#define HERON_CORE_SAMPLECLI_H
 
 #include <algorithm>
 #include <cerrno>

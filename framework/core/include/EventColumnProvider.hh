@@ -1,13 +1,13 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/include/EventColumnProvider.hh
+ *  @file  framework/core/include/EventColumnProvider.hh
  *
  *  @brief Column provider that assembles event output schemas with consistent
  *         names, metadata, and formatting for downstream CLI reporting.
  */
 
-#ifndef HERON_APPS_EVENT_COLUMN_PROVIDER_H
-#define HERON_APPS_EVENT_COLUMN_PROVIDER_H
+#ifndef HERON_CORE_EVENT_COLUMN_PROVIDER_H
+#define HERON_CORE_EVENT_COLUMN_PROVIDER_H
 
 #include <algorithm>
 #include <cctype>
@@ -153,4 +153,4 @@ class EventColumnProvider
 
 
 
-#endif // HERON_APPS_EVENT_COLUMN_PROVIDER_H
+#endif // HERON_CORE_EVENT_COLUMN_PROVIDER_H

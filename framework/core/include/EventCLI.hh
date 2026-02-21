@@ -1,12 +1,12 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/include/EventCLI.hh
+ *  @file  framework/core/include/EventCLI.hh
  *
  *  @brief CLI helpers that drive event-level workflows, including configuration,
  *         input selection, and summary output for analysis-ready datasets.
  */
-#ifndef HERON_APPS_EVENTCLI_H
-#define HERON_APPS_EVENTCLI_H
+#ifndef HERON_CORE_EVENTCLI_H
+#define HERON_CORE_EVENTCLI_H
 
 #include <algorithm>
 #include <chrono>
@@ -143,4 +143,4 @@ int run(const EventArgs &event_args, const std::string &log_prefix);
 
 
 
-#endif // HERON_APPS_EVENTCLI_H
+#endif // HERON_CORE_EVENTCLI_H

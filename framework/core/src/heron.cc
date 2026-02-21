@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/src/heron.cc
+ *  @file  framework/core/src/heron.cc
  *
  *  @brief Unified CLI for HERON utilities.
  */
@@ -461,7 +461,7 @@ void add_plot_include_paths(const std::filesystem::path &repo_root)
     add(repo_root / "plot" / "include");
     add(repo_root / "ana" / "include");
     add(repo_root / "io" / "include");
-    add(repo_root / "apps" / "include");
+    add(repo_root / "core" / "include");
 }
 
 void ensure_plot_lib_loaded(const std::filesystem::path &repo_root)

@@ -46,13 +46,13 @@ EVD_SRC = framework/evd/src/EventDisplay.cc
 EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 HERON_NAME = build/bin/heron
-APPS_SRC = framework/apps/src/heron.cc \
-           framework/apps/src/ArtWorkflow.cc \
-           framework/apps/src/SampleWorkflow.cc \
-           framework/apps/src/EventWorkflow.cc
-APPS_OBJ = $(APPS_SRC:%.cc=$(OBJ_DIR)/%.o)
+CORE_SRC = framework/core/src/heron.cc \
+           framework/core/src/ArtWorkflow.cc \
+           framework/core/src/SampleWorkflow.cc \
+           framework/core/src/EventWorkflow.cc
+CORE_OBJ = $(CORE_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-INCLUDES = -I./framework/io/include -I./framework/ana/include -I./framework/plot/include -I./framework/evd/include -I./framework/apps/include
+INCLUDES = -I./framework/io/include -I./framework/ana/include -I./framework/plot/include -I./framework/evd/include -I./framework/core/include
 
 all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) $(HERON_NAME)
 
@@ -72,9 +72,9 @@ $(EVD_LIB_NAME): $(EVD_OBJ)
 	mkdir -p $(dir $(EVD_LIB_NAME))
 	$(CXX) -shared $(CXXFLAGS) $(EVD_OBJ) $(LDFLAGS) -o $(EVD_LIB_NAME)
 
-$(HERON_NAME): $(APPS_OBJ) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
+$(HERON_NAME): $(CORE_OBJ) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
 	mkdir -p $(dir $(HERON_NAME))
-	$(CXX) $(CXXFLAGS) $(APPS_OBJ) -Lbuild/lib -lheronIO \
+	$(CXX) $(CXXFLAGS) $(CORE_OBJ) -Lbuild/lib -lheronIO \
 		-lheronAna -lheronPlot $(LDFLAGS) -o $(HERON_NAME)
 
 $(OBJ_DIR)/%.o: %.cc

@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/src/EventWorkflow.cc
+ *  @file  framework/core/src/EventWorkflow.cc
  *
  *  @brief Event-level output builder (invoked by the unified heron CLI).
  */
@@ -60,7 +60,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     }
 
     const std::filesystem::path default_columns_tsv =
-        repo_root_dir() / "apps" / "config" / "event_columns.tsv";
+        repo_root_dir() / "core" / "config" / "event_columns.tsv";
     const std::string columns_tsv_path = event_args.columns_tsv_path.empty()
                                              ? default_columns_tsv.string()
                                              : event_args.columns_tsv_path;

@@ -1,13 +1,13 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/include/AppUtils.hh
+ *  @file  framework/core/include/AppUtils.hh
  *
  *  @brief Utility helpers that support application command-line execution,
  *         including shared parsing, formatting, and I/O conveniences used by
  *         multiple app entry points.
  */
-#ifndef HERON_APPS_APP_UTILS_H
-#define HERON_APPS_APP_UTILS_H
+#ifndef HERON_CORE_APP_UTILS_H
+#define HERON_CORE_APP_UTILS_H
 
 #include <algorithm>
 #include <cctype>

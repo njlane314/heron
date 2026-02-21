@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  ana/src/AnalysisModel.cpp
+ *  @file  core/src/AnalysisModel.cpp
  *
  *  @brief Declarative base model helpers.
  */
@@ -58,6 +58,7 @@ SnapshotSpec AnalysisModel::snapshot(std::string name, std::vector<std::string> 
 void AnalysisModel::clear() noexcept
 {
     m_vars.clear();
+    m_channels.clear();
     m_cuts.clear();
     m_weights.clear();
     m_selections.clear();

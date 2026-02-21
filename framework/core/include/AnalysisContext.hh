@@ -1,13 +1,13 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/AnalysisContext.hh
+ *  @file  core/include/AnalysisContext.hh
  *
  *  @brief Analysis macro context that centralises execution policy, services,
  *         provenance metadata and output destinations.
  */
 
-#ifndef HERON_ANA_ANALYSIS_CONTEXT_H
-#define HERON_ANA_ANALYSIS_CONTEXT_H
+#ifndef HERON_CORE_ANALYSIS_CONTEXT_H
+#define HERON_CORE_ANALYSIS_CONTEXT_H
 
 #include <cstddef>
 #include <cstdlib>
@@ -130,4 +130,4 @@ class AnalysisContext
 } // namespace heron
 
 
-#endif // HERON_ANA_ANALYSIS_CONTEXT_H
+#endif // HERON_CORE_ANALYSIS_CONTEXT_H

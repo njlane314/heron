@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  ana/macro/AnalysisModelExample.C
+ *  @file  macro/AnalysisModelExample.C
  *
  *  @brief Example macro showing a user-defined AnalysisModel wired through
  *         ExecutionPolicy and AnalysisContext.
@@ -89,12 +89,21 @@ class ExampleAnalysisModel : public AnalysisModel
         }
     }
 
-    void define() override
+    void define_channels() override
     {
-        const auto p_weight = weight("w_nominal", []() { return 1.0; }, {"w_nominal"});
-        const auto p_muon = var("muon_p", []() { return 0.0; }, {"mu_p"});
+        channel("inclusive", []() { return 99; }, {"is_data"});
+    }
+
+    void define_selections() override
+    {
+        m_weight = weight("w_nominal", []() { return 1.0; }, {"w_nominal"});
         const auto c_trigger = cut("trigger", []() { return true; }, {"sel_trigger"});
-        const auto s_nominal = selection(m_selection_name, c_trigger, p_weight);
+        m_nominal = selection(m_selection_name, c_trigger, m_weight);
+    }
+
+    void define_outputs() override
+    {
+        const auto p_muon = var("muon_p", []() { return 0.0; }, {"mu_p"});
 
         hist1d("h_muon_p",
                p_muon.name,
@@ -102,14 +111,16 @@ class ExampleAnalysisModel : public AnalysisModel
                0.0,
                2.0,
                "Muon momentum;p [GeV];Events",
-               s_nominal.name,
-               p_weight.name);
+               m_nominal.name,
+               m_weight.name);
 
-        snapshot("events", {"run", "sub", "evt", p_muon.name, p_weight.name}, s_nominal.name);
+        snapshot("events", {"run", "sub", "evt", p_muon.name, m_weight.name}, m_nominal.name);
     }
 
   private:
     std::string m_selection_name;
+    Weight m_weight;
+    Selection m_nominal;
 };
 
 } // namespace

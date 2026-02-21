@@ -220,6 +220,6 @@ heron --set template event scratch/out/template/event/events.root sel_reco_fv
 4) **Plotting via macros**
 
 Macro support and the in-repository plotting macro collection are temporarily removed from the CLI path.
-For standalone ROOT usage, see `framework/ana/macro/AnalysisModelExample.C`, which demonstrates loading
+For standalone ROOT usage, see `framework/macro/AnalysisModelExample.C`, which demonstrates loading
 a `samples.tsv` list via `SampleIO`, calling `ExecutionPolicy` first, constructing an
 `AnalysisContext`, and then initialising a user-defined `AnalysisModel` subclass.

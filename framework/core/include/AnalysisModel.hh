@@ -1,13 +1,13 @@
 /* -- C++ -- */
 /**
- *  @file  ana/include/AnalysisModel.hh
+ *  @file  core/include/AnalysisModel.hh
  *
  *  @brief Declarative base model for analysis variables, selections,
  *         histograms, and snapshots.
  */
 
-#ifndef HERON_ANA_ANALYSIS_MODEL_H
-#define HERON_ANA_ANALYSIS_MODEL_H
+#ifndef HERON_CORE_ANALYSIS_MODEL_H
+#define HERON_CORE_ANALYSIS_MODEL_H
 
 #include <functional>
 #include <string>
@@ -63,6 +63,16 @@ struct Selection
 };
 
 /**
+ *  \brief Named analysis channel declaration.
+ */
+struct Channel
+{
+    std::string name;
+    std::function<int()> classifier;
+    std::vector<std::string> dependencies;
+};
+
+/**
  *  \brief Descriptor for a one-dimensional histogram declaration.
  */
 struct Hist1DSpec
@@ -114,8 +124,52 @@ class AnalysisModel
   public:
     virtual ~AnalysisModel() = default;
 
-    /// Declare model variables, cuts, histograms, and snapshots.
-    virtual void define() = 0;
+    /// Build the model from channel, selection, service, and output hooks.
+    virtual void define()
+    {
+        define_channels();
+        define_selections();
+        define_services();
+        define_outputs();
+    }
+
+    /// Declare analysis channels.
+    virtual void define_channels() {}
+
+    /// Declare analysis selections.
+    virtual void define_selections() {}
+
+    /// Define analysis-library service behaviour.
+    virtual void define_services()
+    {
+        define_analysis_channels_service();
+        define_analysis_config_service();
+        define_column_derivation_service();
+        define_event_sample_filter_service();
+        define_rdataframe_service();
+        define_selection_service();
+    }
+
+    /// Declare model variables, histograms, and snapshots.
+    virtual void define_outputs() {}
+
+    /// Override AnalysisChannels service behaviour.
+    virtual void define_analysis_channels_service() {}
+
+    /// Override AnalysisConfigService behaviour.
+    virtual void define_analysis_config_service() {}
+
+    /// Override ColumnDerivationService behaviour.
+    virtual void define_column_derivation_service() {}
+
+    /// Override EventSampleFilterService behaviour.
+    virtual void define_event_sample_filter_service() {}
+
+    /// Override RDataFrameService behaviour.
+    virtual void define_rdataframe_service() {}
+
+    /// Override SelectionService behaviour.
+    virtual void define_selection_service() {}
 
     /// Optional hook for external configuration/services.
     virtual void configure() {}
@@ -148,6 +202,7 @@ class AnalysisModel
     }
 
     const std::vector<Var<double> > &vars() const noexcept { return m_vars; }
+    const std::vector<Channel> &channels() const noexcept { return m_channels; }
     const std::vector<Cut> &cuts() const noexcept { return m_cuts; }
     const std::vector<Weight> &weights() const noexcept { return m_weights; }
     const std::vector<Selection> &selections() const noexcept { return m_selections; }
@@ -155,6 +210,17 @@ class AnalysisModel
     const std::vector<SnapshotSpec> &snapshots() const noexcept { return m_snapshots; }
 
   protected:
+    template <typename TClassifier>
+    Channel channel(std::string name, TClassifier classifier, std::vector<std::string> dependencies = {})
+    {
+        Channel c;
+        c.name = std::move(name);
+        c.classifier = std::function<int()>(std::move(classifier));
+        c.dependencies = std::move(dependencies);
+        m_channels.push_back(c);
+        return c;
+    }
+
     template <typename TExpression>
     Var<double> var(std::string name, TExpression expression, std::vector<std::string> dependencies = {})
     {
@@ -203,6 +269,7 @@ class AnalysisModel
 
   private:
     std::vector<Var<double> > m_vars;
+    std::vector<Channel> m_channels;
     std::vector<Cut> m_cuts;
     std::vector<Weight> m_weights;
     std::vector<Selection> m_selections;
@@ -212,4 +279,4 @@ class AnalysisModel
 
 } // namespace heron
 
-#endif // HERON_ANA_ANALYSIS_MODEL_H
+#endif // HERON_CORE_ANALYSIS_MODEL_H

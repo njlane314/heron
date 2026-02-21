@@ -26,7 +26,8 @@ OBJ_DIR = build/obj
 IO_OBJ = $(IO_SRC:%.cpp=$(OBJ_DIR)/%.o)
 
 ANA_LIB_NAME = build/lib/libheronAna.so
-ANA_SRC = mod/ana/src/AnalysisConfigService.cpp \
+ANA_SRC = mod/ana/src/AnalysisModel.cpp \
+          mod/ana/src/AnalysisConfigService.cpp \
           mod/ana/src/ColumnDerivationService.cpp \
           mod/ana/src/EventSampleFilterService.cpp \
           mod/ana/src/RDataFrameService.cpp \

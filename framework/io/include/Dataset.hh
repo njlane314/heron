@@ -23,7 +23,7 @@ class Dataset
     using Sample = SampleIO::Sample;
 
     /// Load samples from a TSV sample list.
-    bool load_samples(const std::string &sample_list_path);
+    void load_samples(const std::string &sample_list_path);
 
     /// Clear loaded samples.
     void clear();

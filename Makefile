@@ -16,6 +16,7 @@ LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -lsqlite3
 
 IO_LIB_NAME = build/lib/libheronIO.so
 IO_SRC = framework/io/src/ArtFileProvenanceIO.cpp \
+         framework/io/src/Dataset.cpp \
          framework/io/src/EventListIO.cpp \
          framework/io/src/NormalisationService.cpp \
          framework/io/src/RunDatabaseService.cpp \

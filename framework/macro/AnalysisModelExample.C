@@ -6,71 +6,25 @@
  *         ExecutionPolicy and AnalysisContext.
  */
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "AnalysisContext.hh"
 #include "AnalysisModel.hh"
+#include "Dataset.hh"
 #include "ExecutionPolicy.hh"
-#include "SampleIO.hh"
 
 namespace
 {
 
 using AnalysisModel = heron::AnalysisModel;
 using ExecutionPolicy = nu::ExecutionPolicy;
-using Sample = SampleIO::Sample;
+using Dataset = heron::Dataset;
 
 template <typename TPolicy, typename TServices = std::nullptr_t>
 using AnalysisContext = heron::AnalysisContext<TPolicy, TServices>;
-
-std::vector<Sample> load_samples(const std::string &sample_list_path)
-{
-    std::ifstream fin(sample_list_path);
-    if (!fin)
-    {
-        throw std::runtime_error("AnalysisModelExample: failed to open sample list: " + sample_list_path);
-    }
-
-    std::vector<Sample> samples;
-    std::string line;
-    while (std::getline(fin, line))
-    {
-        if (line.empty() || line[0] == '#')
-        {
-            continue;
-        }
-
-        std::istringstream row(line);
-        std::string sample_name;
-        std::string sample_origin;
-        std::string beam_mode;
-        std::string output_path;
-
-        if (!std::getline(row, sample_name, '	') ||
-            !std::getline(row, sample_origin, '	') ||
-            !std::getline(row, beam_mode, '	') ||
-            !std::getline(row, output_path))
-        {
-            continue;
-        }
-
-        if (sample_name == "sample_name" || output_path.empty())
-        {
-            continue;
-        }
-
-        samples.push_back(SampleIO::read(output_path));
-    }
-
-    return samples;
-}
-
-
 class ExampleAnalysisModel : public AnalysisModel
 {
   public:
@@ -129,8 +83,13 @@ void AnalysisModelExample(const char *sample_list_path = "scratch/out/out/sample
 {
     ExecutionPolicy policy = []() { ExecutionPolicy p = ExecutionPolicy::from_env("HERON_PLOT_IMT"); p.nThreads = 4; p.deterministic = true; p.apply("AnalysisModelExample"); return p; }();
 
-    const std::vector<Sample> samples = load_samples(sample_list_path);
-    std::cout << "[AnalysisModelExample] loaded_samples=" << samples.size() << " from=" << sample_list_path << "\n";
+    Dataset dataset;
+    if (!dataset.load_samples(sample_list_path))
+    {
+        throw std::runtime_error(std::string("AnalysisModelExample: failed to load sample list: ") + sample_list_path);
+    }
+
+    std::cout << "[AnalysisModelExample] loaded_samples=" << dataset.samples().size() << " from=" << sample_list_path << "\n";
 
     AnalysisContext<ExecutionPolicy> context(policy, "triggered_muon");
 

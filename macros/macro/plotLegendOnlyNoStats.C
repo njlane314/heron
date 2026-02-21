@@ -16,6 +16,7 @@
 #include "TH1D.h"
 #include "TLegend.h"
 #include "TStyle.h"
+#include "MacroGuard.hh"
 
 namespace
 {
@@ -51,6 +52,7 @@ std::vector<LegendEntry> default_entries()
 
 void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.pdf")
 {
+  heron::macro::run_with_guard("plotLegendOnlyNoStats", [&]() {
     gStyle->SetOptStat(0);
 
     TCanvas canvas("c_legend_only", "Legend only", 700, 360);
@@ -92,4 +94,6 @@ void plotLegendOnlyNoStats(const char *output_name = "legend_only_no_stats.pdf")
     {
         delete proxy;
     }
+
+  });
 }

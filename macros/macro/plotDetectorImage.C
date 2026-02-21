@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "../../../framework/evd/include/EventDisplay.hh"
+#include "MacroGuard.hh"
 
 using namespace heron::evd;
 
@@ -124,6 +125,7 @@ void plot_random_detector_image(const std::string &input_file,
 ///     'plotDetectorImage("/path/to/event_list.root", 1, 1, 1)'
 void plotDetectorImage()
 {
+  heron::macro::run_with_guard("plotDetectorImage", [&]() {
     const auto input_file = find_default_event_list_path();
     if (input_file.empty())
     {
@@ -139,6 +141,8 @@ void plotDetectorImage()
 
     std::cout << "[plotDetectorImage] Using default event list: " << input_file << "\n";
     plot_random_detector_image(input_file);
+
+  });
 }
 
 void plotDetectorImage(const std::string &input_file,

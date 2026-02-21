@@ -15,6 +15,7 @@
 #include "AnalysisConfigService.hh"
 
 #include "../../../framework/evd/include/EventDisplay.hh"
+#include "MacroGuard.hh"
 
 using namespace heron::evd;
 
@@ -99,6 +100,7 @@ void plotSelMuonInferenceThresholdEventDisplays(const std::string &input_file,
                                                 const std::string &tree_name = "events",
                                                 const std::string &signal_expr = "is_signal")
 {
+  heron::macro::run_with_guard("plotSelMuonInferenceThresholdEventDisplays", [&]() {
     ROOT::RDataFrame df(tree_name, input_file);
 
     auto base = df.Define("inf_score_0",
@@ -137,6 +139,8 @@ void plotSelMuonInferenceThresholdEventDisplays(const std::string &input_file,
                              EventDisplay::Mode::Semantic,
                              n_events,
                              out_dir + "/semantic_background");
+
+  });
 }
 
 void plotSelMuonInferenceThresholdEventDisplays(unsigned long long n_events = 25,

@@ -50,6 +50,7 @@
 #include "EventListIO.hh"
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -135,6 +136,7 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
                        double xmax_pct = 1e1,
                        bool draw_planes = true)
 {
+  return heron::macro::run_with_guard("plotImageOccupancy", [&]() -> int {
   ROOT::EnableImplicitMT();
   std::cout << "[plotImageOccupancy] implicit MT enabled\n";
 
@@ -408,4 +410,6 @@ int plotImageOccupancy(const std::string &samples_tsv = "",
   }
 
   return 0;
+
+  });
 }

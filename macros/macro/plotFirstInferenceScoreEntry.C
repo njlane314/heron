@@ -34,6 +34,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -134,6 +135,7 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
                                  bool use_logy = true,
                                  bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotFirstInferenceScoreEntry", [&]() -> int {
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotFirstInferenceScoreEntry] input=" << list_path << "\n";
 
@@ -350,4 +352,6 @@ int plotFirstInferenceScoreEntry(const std::string &samples_tsv = "",
 
     std::cout << "[plotFirstInferenceScoreEntry] done\n";
     return 0;
+
+  });
 }

@@ -49,6 +49,7 @@
 #include "TAxis.h"
 #include "TStyle.h"
 #include "TString.h"
+#include "MacroGuard.hh"
 
 static double sinsq(double x) {
   const double s = std::sin(x);
@@ -923,6 +924,7 @@ void sbn_plot_all() {
 // -------------------------------------------
 
 void plotOscillation(const char* which = "all") {
+  heron::macro::run_with_guard("plotOscillation", [&]() {
   std::string w(which ? which : "all");
 
   if      (w == "prob_le")            sbn_prob_vs_LE();
@@ -956,4 +958,6 @@ void plotOscillation(const char* which = "all") {
               << "3fl_LE_overview, 3fl_biprob_SBND, 3fl_biprob_MicroBooNE, 3fl_biprob_ICARUS, 3fl_biprob_SBN, 3fl_all, "
               << "all\n";
   }
+
+  });
 }

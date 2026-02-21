@@ -60,6 +60,7 @@
 #include "TMatrixDSym.h"
 #include "TMatrixDSymEigen.h"
 #include "TVectorD.h"
+#include "MacroGuard.hh"
 
 static double sinsq(double x) {
   const double s = std::sin(x);
@@ -1446,6 +1447,7 @@ void sbn_plot_all() {
 }
 
 void sbn_osc_plots(const char* which = "all") {
+  heron::macro::run_with_guard("sbn_osc_plots", [&]() {
   std::string w(which ? which : "all");
 
   if      (w == "prob_le")            sbn_prob_vs_LE();
@@ -1486,4 +1488,6 @@ void sbn_osc_plots(const char* which = "all") {
               << "3fl_biprob_DUNE, 3fl_biprob_SBND, 3fl_biprob_MicroBooNE, 3fl_biprob_ICARUS, 3fl_biprob_SBN, "
               << "all\n";
   }
+
+  });
 }

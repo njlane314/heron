@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <vector>
 #include <string>
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -306,6 +307,7 @@ void plotFluxMinimal(
   const char* fhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_FHC.root",
   const char* rhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root"
 ){
+  heron::macro::run_with_guard("plotFluxMinimal", [&]() {
   set_global_style();
   const std::string out_fhc = plot_output_file("uboone_flux_FHC").string();
   const std::string out_rhc = plot_output_file("uboone_flux_RHC").string();
@@ -321,4 +323,6 @@ void plotFluxMinimal(
   make_tables_one(fhc_file,"FHC",outdir.c_str());
   make_tables_one(rhc_file,"RHC",outdir.c_str());
   printf("[tables] Wrote CSVs under %s/{bins,flux}/\n", outdir.c_str());
+
+  });
 }

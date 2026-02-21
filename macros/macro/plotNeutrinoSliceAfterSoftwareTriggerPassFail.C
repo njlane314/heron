@@ -26,6 +26,7 @@
 #include "PlotChannels.hh"
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -77,6 +78,7 @@ int plotNeutrinoSliceAfterSoftwareTriggerPassFail(const std::string &input = "",
                                                   bool use_logy = false,
                                                   bool include_data = true)
 {
+  return heron::macro::run_with_guard("plotNeutrinoSliceAfterSoftwareTriggerPassFail", [&]() -> int {
     const std::string list_path = input.empty() ? default_event_list_root() : input;
     std::cout << "[plotNeutrinoSliceAfterSoftwareTriggerPassFail] input=" << list_path << "\n";
 
@@ -198,4 +200,6 @@ int plotNeutrinoSliceAfterSoftwareTriggerPassFail(const std::string &input = "",
               << plotter.options().image_format << "\n";
 
     return 0;
+
+  });
 }

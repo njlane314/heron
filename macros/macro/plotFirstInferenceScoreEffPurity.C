@@ -30,6 +30,7 @@
 #include "PlotEnv.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -67,6 +68,7 @@ int plotFirstInferenceScoreEffPurity(const std::string &event_list_path = "",
                                      double raw_threshold_max = 15.0,
                                      const std::string &output_stem = "first_inference_score_eff_purity")
 {
+  return heron::macro::run_with_guard("plotFirstInferenceScoreEffPurity", [&]() -> int {
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
     std::cout << "[plotFirstInferenceScoreEffPurity] input=" << input_path << "\n";
 
@@ -324,4 +326,6 @@ int plotFirstInferenceScoreEffPurity(const std::string &event_list_path = "",
     std::cout << "[plotFirstInferenceScoreEffPurity] done\n";
 
     return 0;
+
+  });
 }

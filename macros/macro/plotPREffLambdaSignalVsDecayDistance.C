@@ -36,6 +36,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -98,6 +99,7 @@ int plotPREffLambdaSignalVsDecayDistance(
         " && (p_p>0.0)"
         " && (pi_p>0.0)")
 {
+  return heron::macro::run_with_guard("plotPREffLambdaSignalVsDecayDistance", [&]() -> int {
     ROOT::EnableImplicitMT();
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
@@ -185,4 +187,6 @@ int plotPREffLambdaSignalVsDecayDistance(
         return rc;
 
     return eff.draw_and_save("pr_eff_lambda_signal_vs_decay_distance_post_neutrino_slice");
+
+  });
 }

@@ -41,6 +41,7 @@
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 #include "SelectionService.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -109,6 +110,7 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
                              const std::string &mc_weight = "w_nominal",
                              const std::string &output_stem = "inclusive_mucc_cutflow")
 {
+  return heron::macro::run_with_guard("plotInclusiveMuCCCutFlow", [&]() -> int {
     ROOT::EnableImplicitMT();
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
@@ -244,4 +246,6 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
     std::cout << "\n[plotInclusiveMuCCCutFlow] saved plot: " << out << "\n";
 
     return 0;
+
+  });
 }

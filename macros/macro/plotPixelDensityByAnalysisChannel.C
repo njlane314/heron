@@ -41,6 +41,7 @@
 
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -103,6 +104,7 @@ int plotPixelDensityByAnalysisChannel(const std::string &samples_tsv = "",
                                       const std::string &weight_expr = "",
                                       bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotPixelDensityByAnalysisChannel", [&]() -> int {
     ROOT::EnableImplicitMT();
     std::cout << "[plotPixelDensityByAnalysisChannel] implicit MT enabled\n";
 
@@ -280,4 +282,6 @@ int plotPixelDensityByAnalysisChannel(const std::string &samples_tsv = "",
     std::cout << "[plotPixelDensityByAnalysisChannel] wrote " << out << "\n";
 
     return 0;
+
+  });
 }

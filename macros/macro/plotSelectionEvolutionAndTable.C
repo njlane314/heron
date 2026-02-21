@@ -47,6 +47,7 @@
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 #include "SelectionService.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -161,6 +162,7 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
                                    const std::string &mc_weight = "w_nominal",
                                    const std::string &output_stem = "selection_evolution")
 {
+  return heron::macro::run_with_guard("plotSelectionEvolutionAndTable", [&]() -> int {
     ROOT::EnableImplicitMT();
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
@@ -392,4 +394,6 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
     std::cout << "[plotSelectionEvolutionAndTable] signal_sel='" << signal_sel << "'  mc_weight='" << mc_weight << "'\n";
 
     return 0;
+
+  });
 }

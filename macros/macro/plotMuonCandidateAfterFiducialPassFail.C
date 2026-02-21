@@ -27,6 +27,7 @@
 #include "PlotChannels.hh"
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -78,6 +79,7 @@ int plotMuonCandidateAfterFiducialPassFail(const std::string &input = "",
                                            bool use_logy = false,
                                            bool include_data = true)
 {
+  return heron::macro::run_with_guard("plotMuonCandidateAfterFiducialPassFail", [&]() -> int {
     const std::string list_path = input.empty() ? default_event_list_root() : input;
     std::cout << "[plotMuonCandidateAfterFiducialPassFail] input=" << list_path << "\n";
 
@@ -199,4 +201,6 @@ int plotMuonCandidateAfterFiducialPassFail(const std::string &input = "",
               << plotter.options().image_format << "\n";
 
     return 0;
+
+  });
 }

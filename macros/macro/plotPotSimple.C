@@ -26,6 +26,7 @@
 
 #include "../include/Plotter.hh"
 #include "../include/PlotEnv.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -531,5 +532,8 @@ int heron_plot(const char *out = nullptr)
 
 void plotPotSimple(const char *out = nullptr)
 {
+  heron::macro::run_with_guard("plotPotSimple", [&]() {
     plotPotSimpleInternal(out);
+
+  });
 }

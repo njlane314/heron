@@ -60,6 +60,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -416,6 +417,7 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
                                      float mu_dist_cut_cm = 4.0f,
                                      unsigned mu_req_gen = 2u)
 {
+  return heron::macro::run_with_guard("plotInclusiveMuCCSelectionStages", [&]() -> int {
     if (implicit_mt_enabled())
         ROOT::EnableImplicitMT();
 
@@ -726,4 +728,6 @@ int plotInclusiveMuCCSelectionStages(const std::string &samples_tsv = "",
             50, 0.0, 2.0);
 
     return 0;
+
+  });
 }

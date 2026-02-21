@@ -44,6 +44,7 @@
 
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -188,6 +189,7 @@ int plotPixelChargeIntensity(const std::string &samples_tsv = "",
                              double sum_xmin = 1.0,
                              double sum_xmax = 1e7)
 {
+  return heron::macro::run_with_guard("plotPixelChargeIntensity", [&]() -> int {
   ROOT::EnableImplicitMT();
   std::cout << "[plotPixelChargeIntensity] implicit MT enabled\n";
 
@@ -403,4 +405,6 @@ int plotPixelChargeIntensity(const std::string &samples_tsv = "",
   draw_one(&(*h_sum_all), "All active pixels", "img_sum_adc_all_active", true);
 
   return 0;
+
+  });
 }

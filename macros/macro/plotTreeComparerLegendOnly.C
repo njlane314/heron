@@ -17,11 +17,13 @@
 #include "TStyle.h"
 
 #include "../include/PlotChannels.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
 void plotTreeComparerLegendOnly(const char *output_name = "analysis_channel_legend_only.pdf")
 {
+  heron::macro::run_with_guard("plotTreeComparerLegendOnly", [&]() {
     gStyle->SetOptStat(0);
 
     TCanvas canvas("c_analysis_channel_legend", "Analysis channel legend only", 1200, 180);
@@ -56,4 +58,6 @@ void plotTreeComparerLegendOnly(const char *output_name = "analysis_channel_lege
 
     legend.Draw();
     canvas.SaveAs(output_name);
+
+  });
 }

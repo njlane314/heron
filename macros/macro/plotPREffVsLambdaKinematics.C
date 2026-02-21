@@ -42,6 +42,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -118,6 +119,7 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
                                     " && (p_p>0.0)"
                                     " && (pi_p>0.0)")
 {
+  return heron::macro::run_with_guard("plotPREffVsLambdaKinematics", [&]() -> int {
     const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
     if (use_imt)
     {
@@ -274,4 +276,6 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
     }
 
     return rc;
+
+  });
 }

@@ -44,6 +44,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -116,6 +117,7 @@ int plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC(const std::string &sample
                                                        " && (p_p>0.0)"
                                                        " && (pi_p>0.0)")
 {
+  return heron::macro::run_with_guard("plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC", [&]() -> int {
     const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
     if (use_imt)
     {
@@ -260,4 +262,6 @@ int plotSignalEffVsTrueMuonKinematicsPostInclusiveMuCC(const std::string &sample
     }
 
     return rc;
+
+  });
 }

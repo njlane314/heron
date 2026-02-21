@@ -50,6 +50,7 @@
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -225,6 +226,7 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
                        bool filter_unit_interval = true,
                        bool logz = true)
 {
+  return heron::macro::run_with_guard("plotPRCompPurity2D", [&]() -> int {
     ROOT::EnableImplicitMT();
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
@@ -346,4 +348,6 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
     }
 
     return 0;
+
+  });
 }

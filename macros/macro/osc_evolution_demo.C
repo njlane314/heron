@@ -15,6 +15,7 @@
 #include "TPad.h"
 #include "TStyle.h"
 #include "TString.h"
+#include "MacroGuard.hh"
 
 namespace {
 
@@ -172,6 +173,7 @@ void FillVectors(const std::vector<Bounds>& src,
 
 void osc_evolution_demo()
 {
+  heron::macro::run_with_guard("osc_evolution_demo", [&]() {
   // Global style cleanup (keeps plots looking modern and consistent).
   gStyle->SetOptStat(0);
   gStyle->SetCanvasColor(0);
@@ -351,4 +353,6 @@ void osc_evolution_demo()
             yr, lo1_6, hi1_6, lo2_6, hi2_6, lo3_6, hi3_6, bf6, true);
 
   c->SaveAs("osc_evolution_demo.pdf");
+
+  });
 }

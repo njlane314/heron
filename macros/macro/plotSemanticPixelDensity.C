@@ -37,6 +37,7 @@
 
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -151,6 +152,7 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
                              double xmin_pct = 1e-4,
                              double xmax_pct = 1e1)
 {
+  return heron::macro::run_with_guard("plotSemanticPixelDensity", [&]() -> int {
   ROOT::EnableImplicitMT();
   std::cout << "[plotSemanticPixelDensity] implicit MT enabled\n";
 
@@ -326,4 +328,6 @@ int plotSemanticPixelDensity(const std::string &samples_tsv = "",
   }
 
   return 0;
+
+  });
 }

@@ -31,6 +31,7 @@
 #include "RDataFrameService.hh"
 #include "SampleCLI.hh"
 #include "SampleIO.hh"
+#include "MacroGuard.hh"
 
 
 using namespace nu;
@@ -226,6 +227,7 @@ int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
                               bool use_logy = false,
                               bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotStackedHistTrueVertex", [&]() -> int {
     const std::string mc_weight = "w_nominal";
 
     return plot_stacked_hist_impl(samples_tsv,
@@ -233,4 +235,6 @@ int plotStackedHistTrueVertex(const std::string &samples_tsv = "",
                                   extra_sel,
                                   use_logy,
                                   include_data);
+
+  });
 }

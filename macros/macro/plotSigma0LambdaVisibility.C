@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -52,6 +53,7 @@ static inline double clip(double x, double lo, double hi) {
 }
 
 void plotSigma0LambdaVisibility() {
+  heron::macro::run_with_guard("plotSigma0LambdaVisibility", [&]() {
   Plotter{}.set_global_style();
   gStyle->SetOptStat(0);
 
@@ -217,4 +219,6 @@ void plotSigma0LambdaVisibility() {
   const std::string out =
       plot_output_file("sigma0_lambda_gamma_visibility_efficiency").string();
   c.SaveAs(out.c_str());
+
+  });
 }

@@ -14,6 +14,7 @@
 #include "AnalysisConfigService.hh"
 
 #include "../../../framework/evd/include/EventDisplay.hh"
+#include "MacroGuard.hh"
 
 using namespace heron::evd;
 
@@ -68,6 +69,7 @@ void plotSignalTriggerFailDetectorImages(const std::string &input_file,
                                          const std::string &signal_expr = "is_signal",
                                          const std::string &trigger_expr = "sel_trigger")
 {
+  heron::macro::run_with_guard("plotSignalTriggerFailDetectorImages", [&]() {
     ROOT::RDataFrame df(tree_name, input_file);
 
     const std::string selection = "(" + signal_expr + ") && !(" + trigger_expr + ")";
@@ -92,6 +94,8 @@ void plotSignalTriggerFailDetectorImages(const std::string &input_file,
               << "[plotSignalTriggerFailDetectorImages] selection=" << selection << "\n";
 
     EventDisplay::render_from_rdf(filtered, opt);
+
+  });
 }
 
 void plotSignalTriggerFailDetectorImages(unsigned long long n_events = 25,

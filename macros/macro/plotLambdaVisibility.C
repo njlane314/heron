@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -37,6 +38,7 @@ using namespace nu;
 }
 
 void plotLambdaVisibility() {
+  heron::macro::run_with_guard("plotLambdaVisibility", [&]() {
   Plotter{}.set_global_style();
   gStyle->SetOptStat(0);
 
@@ -131,4 +133,6 @@ void plotLambdaVisibility() {
 
   const std::string out = plot_output_file("lambda_visibility_efficiency").string();
   c.SaveAs(out.c_str());
+
+  });
 }

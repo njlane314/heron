@@ -23,6 +23,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -56,6 +57,7 @@ int plotTopologicalScorePreSelectionLogY(const std::string &samples_tsv = "",
                                          bool use_logy = true,
                                          bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotTopologicalScorePreSelectionLogY", [&]() -> int {
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotTopologicalScorePreSelectionLogY] input=" << list_path << "\n";
 
@@ -163,4 +165,6 @@ int plotTopologicalScorePreSelectionLogY(const std::string &samples_tsv = "",
 
     std::cout << "[plotTopologicalScorePreSelectionLogY] done\n";
     return 0;
+
+  });
 }

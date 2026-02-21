@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include "MacroGuard.hh"
 
 namespace {
 
@@ -377,6 +378,9 @@ void printFluxInputTreesAndBranches(
   const char* fhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_FHC.root",
   const char* rhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root"
 ) {
+  heron::macro::run_with_guard("printFluxInputTreesAndBranches", [&]() {
   print_file_tree_summary(fhc_file);
   print_file_tree_summary(rhc_file);
+
+  });
 }

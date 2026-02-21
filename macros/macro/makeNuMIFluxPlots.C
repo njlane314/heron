@@ -34,6 +34,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include "MacroGuard.hh"
 
 namespace {
 
@@ -1101,6 +1102,7 @@ void makeNuMIFluxPlots(
   const char* rhc_file = "/exp/uboone/data/users/bnayak/ppfx/flugg_studies/NuMIFlux_dk2nu_RHC.root",
   const char* outdir_in   = "NuMIFlux_dk2nu_plots"
 ) {
+  heron::macro::run_with_guard("makeNuMIFluxPlots", [&]() {
   gROOT->SetBatch(kTRUE);
   SetNiceStyle();
 
@@ -1158,4 +1160,6 @@ void makeNuMIFluxPlots(
   fRHC->Close();
 
   std::cout << "[INFO] Wrote PDFs under: " << outdir << "\n";
+
+  });
 }

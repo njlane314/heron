@@ -54,6 +54,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -291,6 +292,7 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
                                       bool make_2d = true,
                                       bool signal_only_2d = false)
 {
+  return heron::macro::run_with_guard("plotSignalCoverageTruthKinematics", [&]() -> int {
     if (implicit_mt_enabled())
     {
         ROOT::EnableImplicitMT();
@@ -446,4 +448,6 @@ int plotSignalCoverageTruthKinematics(const std::string &samples_tsv = "",
     }
 
     return 0;
+
+  });
 }

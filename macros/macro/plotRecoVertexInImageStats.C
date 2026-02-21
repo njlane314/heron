@@ -37,6 +37,7 @@
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -147,6 +148,7 @@ int plotRecoVertexInImageStats(const std::string &samples_tsv = "",
                                const std::string &extra_sel = "true",
                                bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotRecoVertexInImageStats", [&]() -> int {
     ROOT::EnableImplicitMT();
     std::cout << "[plotRecoVertexInImageStats] implicit MT enabled\n";
 
@@ -302,4 +304,6 @@ int plotRecoVertexInImageStats(const std::string &samples_tsv = "",
     std::cout << "[plotRecoVertexInImageStats] wrote " << out << "\n";
 
     return 0;
+
+  });
 }

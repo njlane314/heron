@@ -15,6 +15,7 @@
 #include "AnalysisConfigService.hh"
 
 #include "../../../framework/evd/include/EventDisplay.hh"
+#include "MacroGuard.hh"
 
 using namespace heron::evd;
 
@@ -67,6 +68,7 @@ void plotMuonCCHighInferenceDetectorImages(const std::string &input_file,
                                            const std::string &out_dir = "./plots/evd_detector_mucc_inf8",
                                            const std::string &tree_name = "events")
 {
+  heron::macro::run_with_guard("plotMuonCCHighInferenceDetectorImages", [&]() {
     ROOT::RDataFrame df(tree_name, input_file);
 
     auto filtered = df.Define("inf_score_0",
@@ -96,6 +98,8 @@ void plotMuonCCHighInferenceDetectorImages(const std::string &input_file,
               << ", rendering up to " << n_events << " event(s).\n";
 
     EventDisplay::render_from_rdf(filtered, opt);
+
+  });
 }
 
 void plotMuonCCHighInferenceDetectorImages(unsigned long long n_events = 25,

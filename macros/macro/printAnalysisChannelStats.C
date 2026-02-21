@@ -33,6 +33,7 @@
 #include "PlotChannels.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -92,6 +93,7 @@ int printAnalysisChannelStats(const std::string &samples_tsv = "",
                               const std::string &mc_weight = "w_nominal",
                               bool include_data = false)
 {
+  return heron::macro::run_with_guard("printAnalysisChannelStats", [&]() -> int {
     ROOT::EnableImplicitMT();
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
@@ -286,4 +288,6 @@ int printAnalysisChannelStats(const std::string &samples_tsv = "",
 
     std::cout.flush();
     return 0;
+
+  });
 }

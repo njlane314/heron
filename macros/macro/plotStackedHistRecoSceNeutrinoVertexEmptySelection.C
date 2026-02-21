@@ -25,6 +25,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -79,6 +80,7 @@ int plotStackedHistRecoSceNeutrinoVertexEmptySelection(const std::string &event_
                                                        bool use_logy = false,
                                                        bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotStackedHistRecoSceNeutrinoVertexEmptySelection", [&]() -> int {
     if (implicit_mt_enabled())
     {
         ROOT::EnableImplicitMT();
@@ -212,4 +214,6 @@ int plotStackedHistRecoSceNeutrinoVertexEmptySelection(const std::string &event_
     draw_one("reco_neutrino_vertex_sce_z", nbins, -50.0, 1100.0, "Reco SCE neutrino vertex z [cm]");
 
     return 0;
+
+  });
 }

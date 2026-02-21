@@ -10,6 +10,7 @@
 #include <string>
 
 #include "../../../framework/evd/include/EventDisplay.hh"
+#include "MacroGuard.hh"
 
 using namespace heron::evd;
 
@@ -20,6 +21,7 @@ void plot_semantic_image(const std::string &input_file,
                          const std::string &out_dir = "./plots/evd_semantic",
                          const std::string &tree_name = "events")
 {
+  heron::macro::run_with_guard("plot_semantic_image", [&]() {
     ROOT::RDataFrame df(tree_name, input_file);
 
     EventDisplay::BatchOptions opt;
@@ -33,6 +35,8 @@ void plot_semantic_image(const std::string &input_file,
     opt.mode = EventDisplay::Mode::Semantic;
 
     EventDisplay::render_from_rdf(df, opt);
+
+  });
 }
 
 void plot_semantic_image_by_channel(const std::string &input_file,
@@ -40,6 +44,7 @@ void plot_semantic_image_by_channel(const std::string &input_file,
                                     const std::string &out_dir = "./plots/evd_semantic",
                                     const std::string &tree_name = "events")
 {
+  heron::macro::run_with_guard("plot_semantic_image_by_channel", [&]() {
     ROOT::RDataFrame df(tree_name, input_file);
     auto filtered = df.Filter([channel](int ch) { return ch == channel; },
                               {"analysis_channels"});
@@ -62,4 +67,6 @@ void plot_semantic_image_by_channel(const std::string &input_file,
     opt.mode = EventDisplay::Mode::Semantic;
 
     EventDisplay::render_from_rdf(picked, opt);
+
+  });
 }

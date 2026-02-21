@@ -21,6 +21,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "MacroGuard.hh"
 
 using namespace nu;
 
@@ -58,6 +59,7 @@ int plotSelMuonInferenceScoreSingleBin(const std::string &event_list_root = "",
                                        bool use_logy = false,
                                        bool include_data = false)
 {
+  return heron::macro::run_with_guard("plotSelMuonInferenceScoreSingleBin", [&]() -> int {
     const std::string list_path = event_list_root.empty() ? default_event_list_root() : event_list_root;
     if (!looks_like_event_list_root(list_path))
     {
@@ -167,4 +169,6 @@ int plotSelMuonInferenceScoreSingleBin(const std::string &event_list_root = "",
     }
 
     return 0;
+
+  });
 }

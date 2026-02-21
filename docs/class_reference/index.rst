@@ -1,9 +1,8 @@
 Class Reference
-==============
+===============
 
-This section provides a lightweight map from key C++ classes to their defining
-headers. The project does not ship Python bindings, so these references point to
-C++ headers and namespaces instead of Sphinx autodoc output.
+.. note::
+   Framework placeholder. Content to be added.
 
 .. toctree::
    :maxdepth: 1

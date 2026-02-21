@@ -1,11 +1,5 @@
 StatusMonitor
 =============
 
-``StatusMonitor`` provides lightweight status logging for long-running CLI
-operations.
-
-Location
---------
-
-* Header: ``apps/include/AppUtils.hh``
-* Namespace: ``global``
+.. note::
+   Framework placeholder. Content to be added.

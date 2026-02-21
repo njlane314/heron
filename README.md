@@ -18,13 +18,16 @@ also supports producing a CNN training snapshot: sample-level ROOT outputs can b
 saved as an offline training set before event-level aggregation or plotting.
 
 ```
-framework/io/    LArSoft output discovery, file manifests, provenance, and run databases
-framework/ana/   analysis configuration, selection logic, and ROOT::RDataFrame column derivations
-framework/plot/  stacked-histogram and channel plotting helpers
-framework/core/  CLI entrypoints that orchestrate the pipeline
+framework/core/           CLI entrypoints that orchestrate the pipeline
+framework/modules/io/     LArSoft output discovery, file manifests, provenance, and run databases
+framework/modules/ana/    analysis configuration, selection logic, and ROOT::RDataFrame column derivations
+framework/modules/plot/   stacked-histogram and channel plotting helpers
+framework/modules/evd/    event display helpers
+framework/apps/           small executables (optional split from core)
+framework/tests/          module-level tests and fixtures
 ```
 
-### Runtime 
+## Runtime 
 
 - `$HERON_OUTPUT_DIR/art/` stores provenance ROOT outputs from `heron art` (the variable must be set).
 - `scratch/out/<set>/sample/` stores per-sample ROOT outputs and `samples.tsv` produced by `heron sample`.

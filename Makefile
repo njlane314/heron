@@ -42,7 +42,7 @@ PLOT_SRC = framework/plot/src/Plotter.cpp \
 PLOT_OBJ = $(PLOT_SRC:%.cpp=$(OBJ_DIR)/%.o)
 
 EVD_LIB_NAME = build/lib/libheronEvd.so
-EVD_SRC = evd/src/EventDisplay.cpp
+EVD_SRC = framework/evd/src/EventDisplay.cpp
 EVD_OBJ = $(EVD_SRC:%.cpp=$(OBJ_DIR)/%.o)
 
 HERON_NAME = build/bin/heron
@@ -52,7 +52,7 @@ APPS_SRC = framework/apps/src/heron.cpp \
            framework/apps/src/EventWorkflow.cpp
 APPS_OBJ = $(APPS_SRC:%.cpp=$(OBJ_DIR)/%.o)
 
-INCLUDES = -I./framework/io/include -I./framework/ana/include -I./framework/plot/include -I./evd/include -I./framework/apps/include
+INCLUDES = -I./framework/io/include -I./framework/ana/include -I./framework/plot/include -I./framework/evd/include -I./framework/apps/include
 
 all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) $(HERON_NAME)
 

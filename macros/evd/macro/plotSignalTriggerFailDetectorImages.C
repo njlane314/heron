@@ -13,7 +13,7 @@
 
 #include "AnalysisConfigService.hh"
 
-#include "../../../evd/include/EventDisplay.hh"
+#include "../../../framework/evd/include/EventDisplay.hh"
 
 using namespace heron::evd;
 

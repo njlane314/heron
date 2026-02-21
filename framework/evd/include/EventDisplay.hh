@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  evd/include/EventDisplay.hh
+ *  @file  framework/evd/include/EventDisplay.hh
  *
  *  @brief Rendering helpers for detector and semantic event display images.
  */

@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-#include "../../../evd/include/EventDisplay.hh"
+#include "../../../framework/evd/include/EventDisplay.hh"
 
 using namespace heron::evd;
 

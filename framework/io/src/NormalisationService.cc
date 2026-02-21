@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/io/src/NormalisationService.cpp
+ *  @file  framework/io/src/NormalisationService.cc
  *
  *  @brief Implementation for Sample normalisation service helpers.
  */

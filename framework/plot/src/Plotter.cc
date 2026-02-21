@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/plot/src/Plotter.cpp
+ *  @file  framework/plot/src/Plotter.cc
  *
  *  @brief Plot orchestration helpers.
  */

@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/io/src/ArtFileProvenanceIO.cpp
+ *  @file  framework/io/src/ArtFileProvenanceIO.cc
  *
  *  @brief Implementation for Art file provenance ROOT IO.
  */

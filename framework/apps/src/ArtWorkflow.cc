@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/src/ArtWorkflow.cpp
+ *  @file  framework/apps/src/ArtWorkflow.cc
  *
  *  @brief Provenance generation workflow (invoked by the unified heron CLI).
  */

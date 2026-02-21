@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/ana/src/TemplateBinningOptimizer1D.cpp
+ *  @file  framework/ana/src/TemplateBinningOptimizer1D.cc
  *
  *  @brief Implementation for template-based 1D binning optimisation.
  */

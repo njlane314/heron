@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/plot/src/StackedHist.cpp
+ *  @file  framework/plot/src/StackedHist.cc
  *
  *  @brief Stacked histogram plotting helper.
  */

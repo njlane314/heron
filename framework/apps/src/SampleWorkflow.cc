@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/src/SampleWorkflow.cpp
+ *  @file  framework/apps/src/SampleWorkflow.cc
  *
  *  @brief Sample aggregation workflow (invoked by the unified heron CLI).
  */

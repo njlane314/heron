@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/ana/src/SelectionService.cpp
+ *  @file  framework/ana/src/SelectionService.cc
  *
  *  @brief Selection helpers for analysis filters and summaries.
  */

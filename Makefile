@@ -15,42 +15,42 @@ CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra $(shell $(ROOT_CONFIG) --cflags) $(NLOH
 LDFLAGS ?= $(shell $(ROOT_CONFIG) --libs) -lsqlite3
 
 IO_LIB_NAME = build/lib/libheronIO.so
-IO_SRC = framework/io/src/ArtFileProvenanceIO.cpp \
-         framework/io/src/EventListIO.cpp \
-         framework/io/src/NormalisationService.cpp \
-         framework/io/src/RunDatabaseService.cpp \
-         framework/io/src/SnapshotService.cpp \
-         framework/io/src/SampleIO.cpp \
-         framework/io/src/SubRunInventoryService.cpp
+IO_SRC = framework/io/src/ArtFileProvenanceIO.cc \
+         framework/io/src/EventListIO.cc \
+         framework/io/src/NormalisationService.cc \
+         framework/io/src/RunDatabaseService.cc \
+         framework/io/src/SnapshotService.cc \
+         framework/io/src/SampleIO.cc \
+         framework/io/src/SubRunInventoryService.cc
 OBJ_DIR = build/obj
-IO_OBJ = $(IO_SRC:%.cpp=$(OBJ_DIR)/%.o)
+IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 ANA_LIB_NAME = build/lib/libheronAna.so
-ANA_SRC = framework/ana/src/AnalysisConfigService.cpp \
-          framework/ana/src/ColumnDerivationService.cpp \
-          framework/ana/src/EventSampleFilterService.cpp \
-          framework/ana/src/RDataFrameService.cpp \
-          framework/ana/src/SelectionService.cpp
-ANA_OBJ = $(ANA_SRC:%.cpp=$(OBJ_DIR)/%.o)
+ANA_SRC = framework/ana/src/AnalysisConfigService.cc \
+          framework/ana/src/ColumnDerivationService.cc \
+          framework/ana/src/EventSampleFilterService.cc \
+          framework/ana/src/RDataFrameService.cc \
+          framework/ana/src/SelectionService.cc
+ANA_OBJ = $(ANA_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 PLOT_LIB_NAME = build/lib/libheronPlot.so
-PLOT_SRC = framework/plot/src/Plotter.cpp \
-           framework/plot/src/StackedHist.cpp \
-           framework/plot/src/UnstackedHist.cpp \
-           framework/plot/src/PlottingHelper.cpp \
-           framework/plot/src/EfficiencyPlot.cpp
-PLOT_OBJ = $(PLOT_SRC:%.cpp=$(OBJ_DIR)/%.o)
+PLOT_SRC = framework/plot/src/Plotter.cc \
+           framework/plot/src/StackedHist.cc \
+           framework/plot/src/UnstackedHist.cc \
+           framework/plot/src/PlottingHelper.cc \
+           framework/plot/src/EfficiencyPlot.cc
+PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 EVD_LIB_NAME = build/lib/libheronEvd.so
-EVD_SRC = framework/evd/src/EventDisplay.cpp
-EVD_OBJ = $(EVD_SRC:%.cpp=$(OBJ_DIR)/%.o)
+EVD_SRC = framework/evd/src/EventDisplay.cc
+EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 HERON_NAME = build/bin/heron
-APPS_SRC = framework/apps/src/heron.cpp \
-           framework/apps/src/ArtWorkflow.cpp \
-           framework/apps/src/SampleWorkflow.cpp \
-           framework/apps/src/EventWorkflow.cpp
-APPS_OBJ = $(APPS_SRC:%.cpp=$(OBJ_DIR)/%.o)
+APPS_SRC = framework/apps/src/heron.cc \
+           framework/apps/src/ArtWorkflow.cc \
+           framework/apps/src/SampleWorkflow.cc \
+           framework/apps/src/EventWorkflow.cc
+APPS_OBJ = $(APPS_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 INCLUDES = -I./framework/io/include -I./framework/ana/include -I./framework/plot/include -I./framework/evd/include -I./framework/apps/include
 
@@ -77,7 +77,7 @@ $(HERON_NAME): $(APPS_OBJ) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
 	$(CXX) $(CXXFLAGS) $(APPS_OBJ) -Lbuild/lib -lheronIO \
 		-lheronAna -lheronPlot $(LDFLAGS) -o $(HERON_NAME)
 
-$(OBJ_DIR)/%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cc
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -fPIC -c $< -o $@
 

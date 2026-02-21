@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/io/src/SampleIO.cpp
+ *  @file  framework/io/src/SampleIO.cc
  *
  *  @brief Implementation for SampleIO helpers.
  */

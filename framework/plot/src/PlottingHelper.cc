@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/plot/src/PlottingHelper.cpp
+ *  @file  framework/plot/src/PlottingHelper.cc
  *
  *  @brief Plotting helper utilities and plotStackedHist implementation.
  */

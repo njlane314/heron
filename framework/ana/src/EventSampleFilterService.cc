@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/ana/src/EventSampleFilterService.cpp
+ *  @file  framework/ana/src/EventSampleFilterService.cc
  *
  *  @brief Sample-origin filters for event-level RDataFrame processing.
  */

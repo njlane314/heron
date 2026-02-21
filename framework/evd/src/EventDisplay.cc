@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/evd/src/EventDisplay.cpp
+ *  @file  framework/evd/src/EventDisplay.cc
  *
  *  @brief Implementation of event display rendering utilities.
  */

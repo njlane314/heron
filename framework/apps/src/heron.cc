@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/apps/src/heron.cpp
+ *  @file  framework/apps/src/heron.cc
  *
  *  @brief Unified CLI for HERON utilities.
  */

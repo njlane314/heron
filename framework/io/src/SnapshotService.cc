@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/io/src/SnapshotService.cpp
+ *  @file  framework/io/src/SnapshotService.cc
  *
  *  @brief Implementation of snapshot helpers for event-level output.
  */

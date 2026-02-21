@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/plot/src/UnstackedHist.cpp
+ *  @file  framework/plot/src/UnstackedHist.cc
  *
  *  @brief Unstacked (overlay) histogram plotting helper.
  */
@@ -37,7 +37,7 @@ namespace nu
 {
 
 // NOTE:
-// These utilities are already defined in framework/plot/src/StackedHist.cpp in namespace nu.
+// These utilities are already defined in framework/plot/src/StackedHist.cc in namespace nu.
 // We forward-declare them here to reuse the same implementation and avoid duplicate
 // symbol definitions.
 void apply_total_errors(TH1D &h,

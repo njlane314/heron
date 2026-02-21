@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/io/src/RunDatabaseService.cpp
+ *  @file  framework/io/src/RunDatabaseService.cc
  *
  *  @brief Implementation of SQLite-backed run info summaries.
  */

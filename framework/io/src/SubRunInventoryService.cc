@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- *  @file  framework/io/src/SubRunInventoryService.cpp
+ *  @file  framework/io/src/SubRunInventoryService.cc
  *
  *  @brief Implementation of the SubRun inventory helpers.
  */

@@ -53,7 +53,7 @@ APPS_SRC = mod/apps/src/heron.cpp \
            mod/apps/src/EventWorkflow.cpp
 APPS_OBJ = $(APPS_SRC:%.cpp=$(OBJ_DIR)/%.o)
 
-INCLUDES = -I./mod/io/include -I./mod/ana/include -I./mod/plot/include -I./mod/evd/include -I./mod/apps/include
+INCLUDES = -I./mod/core/include -I./mod/io/include -I./mod/ana/include -I./mod/plot/include -I./mod/evd/include -I./mod/apps/include
 
 all: $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME) $(EVD_LIB_NAME) $(HERON_NAME)
 

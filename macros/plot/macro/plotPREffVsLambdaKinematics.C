@@ -42,6 +42,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -122,12 +123,20 @@ int plotPREffVsLambdaKinematics(const std::string &samples_tsv = "",
     const bool use_imt = env_truthy(std::getenv("HERON_ENABLE_IMT"));
     if (use_imt)
     {
-        ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+        {
+            const ExecutionPolicy policy{.enableImplicitMT = true};
+            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+            context.policy().apply(__func__);
+        }
         std::cout << "[plotPREffVsLambdaKinematics] implicit MT enabled via HERON_ENABLE_IMT\n";
     }
     else
     {
-        ExecutionPolicy{.enableImplicitMT = false}.apply(__func__);
+        {
+            const ExecutionPolicy policy{.enableImplicitMT = false};
+            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+            context.policy().apply(__func__);
+        }
         std::cout << "[plotPREffVsLambdaKinematics] implicit MT disabled (set HERON_ENABLE_IMT=1 to enable)\n";
     }
 

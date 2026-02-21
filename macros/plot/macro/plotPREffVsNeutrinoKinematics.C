@@ -34,6 +34,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -82,7 +83,11 @@ int plotPREffVsNeutrinoKinematics(const std::string &samples_tsv = "",
                                       " && (p_p>0.0)"
                                       " && (pi_p>0.0)")
 {
-    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+    {
+        const ExecutionPolicy policy{.enableImplicitMT = true};
+        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+        context.policy().apply(__func__);
+    }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotPREffVsNeutrinoKinematics] input=" << list_path << "\n";

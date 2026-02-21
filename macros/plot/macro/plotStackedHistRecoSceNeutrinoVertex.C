@@ -35,6 +35,7 @@
 #include "RDataFrameService.hh"
 #include "SampleCLI.hh"
 #include "SampleIO.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 
@@ -83,7 +84,11 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
                            bool use_logy,
                            bool include_data)
 {
-    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+    {
+        const ExecutionPolicy policy{.enableImplicitMT = true};
+        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+        context.policy().apply(__func__);
+    }
 
     debug_log("starting plot_stacked_hist_impl");
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

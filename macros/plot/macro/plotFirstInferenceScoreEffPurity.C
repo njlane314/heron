@@ -30,6 +30,7 @@
 #include "PlotEnv.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -82,7 +83,11 @@ int plotFirstInferenceScoreEffPurity(const std::string &event_list_path = "",
         n_thresholds = 2;
 
     if (implicit_mt_enabled())
-        ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+        {
+            const ExecutionPolicy policy{.enableImplicitMT = true};
+            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+            context.policy().apply(__func__);
+        }
 
     EventListIO el(input_path);
     ROOT::RDataFrame rdf = el.rdf();

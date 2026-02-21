@@ -44,6 +44,7 @@
 
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -189,7 +190,11 @@ int plotPixelChargeIntensity(const std::string &samples_tsv = "",
                              double sum_xmin = 1.0,
                              double sum_xmax = 1e7)
 {
-  ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+  {
+      const ExecutionPolicy policy{.enableImplicitMT = true};
+      AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+      context.policy().apply(__func__);
+  }
   std::cout << "[plotPixelChargeIntensity] implicit MT enabled\n";
 
   const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;

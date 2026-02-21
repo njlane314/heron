@@ -50,6 +50,7 @@
 #include "EventListIO.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -226,7 +227,11 @@ int plotPRCompPurity2D(const std::string &samples_tsv = "",
                        bool filter_unit_interval = true,
                        bool logz = true)
 {
-    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+    {
+        const ExecutionPolicy policy{.enableImplicitMT = true};
+        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+        context.policy().apply(__func__);
+    }
 
     const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plotPRCompPurity2D] input=" << list_path << "\n";

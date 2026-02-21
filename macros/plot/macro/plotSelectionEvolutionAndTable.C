@@ -47,6 +47,7 @@
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
 #include "SelectionService.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -162,7 +163,11 @@ int plotSelectionEvolutionAndTable(const std::string &event_list_path = "",
                                    const std::string &mc_weight = "w_nominal",
                                    const std::string &output_stem = "selection_evolution")
 {
-    ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+    {
+        const ExecutionPolicy policy{.enableImplicitMT = true};
+        AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+        context.policy().apply(__func__);
+    }
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
 

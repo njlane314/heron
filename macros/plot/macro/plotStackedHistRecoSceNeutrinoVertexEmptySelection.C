@@ -25,6 +25,7 @@
 #include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SampleCLI.hh"
+#include "AnalysisContext.hh"
 #include "ExecutionPolicy.hh"
 
 using namespace nu;
@@ -82,7 +83,11 @@ int plotStackedHistRecoSceNeutrinoVertexEmptySelection(const std::string &event_
 {
     if (implicit_mt_enabled())
     {
-        ExecutionPolicy{.enableImplicitMT = true}.apply(__func__);
+        {
+            const ExecutionPolicy policy{.enableImplicitMT = true};
+            AnalysisContext<ExecutionPolicy, decltype(nullptr)> context(policy, nullptr);
+            context.policy().apply(__func__);
+        }
         debug_log("ROOT implicit MT enabled (HERON_PLOT_IMT != 0)");
     }
     else

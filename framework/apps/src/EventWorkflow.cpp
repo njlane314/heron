@@ -60,7 +60,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     }
 
     const std::filesystem::path default_columns_tsv =
-        repo_root_dir() / "mod" / "apps" / "config" / "event_columns.tsv";
+        repo_root_dir() / "framework" / "apps" / "config" / "event_columns.tsv";
     const std::string columns_tsv_path = event_args.columns_tsv_path.empty()
                                              ? default_columns_tsv.string()
                                              : event_args.columns_tsv_path;

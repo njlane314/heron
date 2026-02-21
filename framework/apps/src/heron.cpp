@@ -462,7 +462,7 @@ void add_plot_include_paths(const std::filesystem::path &repo_root)
     add(repo_root / "ana" / "include");
     add(repo_root / "io" / "include");
     add(repo_root / "apps" / "include");
-    add(repo_root / "mod" / "core" / "include");
+    add(repo_root / "framework" / "core" / "include");
 }
 
 void ensure_plot_lib_loaded(const std::filesystem::path &repo_root)

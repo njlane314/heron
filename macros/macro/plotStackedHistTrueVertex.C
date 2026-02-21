@@ -12,11 +12,8 @@
 //   - Output dir/format follow PlotEnv defaults (HERON_PLOT_DIR / HERON_PLOT_FORMAT).
 //   - Default input uses the generated event list (event_list_<analysis>.root).
 
-#include <algorithm>
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
-#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -170,79 +167,22 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
     debug_log("plot options configured: include_data=" + std::string(include_data ? "true" : "false") +
               ", use_logy=" + std::string(use_logy ? "true" : "false"));
 
-    struct DynamicAxis
-    {
-        int nbins = 50;
-        double xmin = 0.0;
-        double xmax = 1.0;
-    };
-
-    const auto build_dynamic_axis = [&](const std::string &expr,
-                                        int fallback_nbins,
-                                        double fallback_xmin,
-                                        double fallback_xmax) {
-        DynamicAxis out;
-        out.nbins = fallback_nbins;
-        out.xmin = fallback_xmin;
-        out.xmax = fallback_xmax;
-
-        double global_min = std::numeric_limits<double>::infinity();
-        double global_max = -std::numeric_limits<double>::infinity();
-
-        const auto update_minmax = [&](ROOT::RDF::RNode node) {
-            const auto n_evt = node.Count().GetValue();
-            if (n_evt == 0)
-            {
-                return;
-            }
-
-            const double local_min = static_cast<double>(node.Min(expr).GetValue());
-            const double local_max = static_cast<double>(node.Max(expr).GetValue());
-            global_min = std::min(global_min, local_min);
-            global_max = std::max(global_max, local_max);
-        };
-
-        update_minmax(e_mc.selection.nominal.node);
-        update_minmax(e_ext.selection.nominal.node);
-        if (p_data != nullptr)
-        {
-            update_minmax(p_data->selection.nominal.node);
-        }
-
-        if (!std::isfinite(global_min) || !std::isfinite(global_max) || global_max <= global_min)
-        {
-            return out;
-        }
-
-        const double fallback_span = std::max(1.0, fallback_xmax - fallback_xmin);
-        const double nominal_fine_width = fallback_span / static_cast<double>(fallback_nbins);
-        const double span = std::max(nominal_fine_width, global_max - global_min);
-
-        int dynamic_nbins = static_cast<int>(std::ceil(span / nominal_fine_width)) + 2;
-        dynamic_nbins = std::max(12, dynamic_nbins);
-        out.nbins = dynamic_nbins;
-
-        const double padded_width = span / static_cast<double>(std::max(1, dynamic_nbins - 2));
-        out.xmin = global_min - padded_width;
-        out.xmax = global_max + padded_width;
-
-        return out;
-    };
-
     const auto draw_one = [&](const std::string &expr,
                               int nbins,
                               double xmin,
                               double xmax,
                               const std::string &x_title,
                               bool add_leading_empty_bin = false) {
-        DynamicAxis axis = build_dynamic_axis(expr, nbins, xmin, xmax);
+        int axis_nbins = nbins;
+        double axis_xmin = xmin;
+        double axis_xmax = xmax;
 
         std::string draw_expr = expr;
-        if (add_leading_empty_bin && axis.nbins > 0)
+        if (add_leading_empty_bin && axis_nbins > 0)
         {
-            const double bin_width = (axis.xmax - axis.xmin) / static_cast<double>(axis.nbins);
-            axis.xmax += 2.0 * bin_width;
-            axis.nbins += 2;
+            const double bin_width = (axis_xmax - axis_xmin) / static_cast<double>(axis_nbins);
+            axis_xmax += 2.0 * bin_width;
+            axis_nbins += 2;
             draw_expr = "(" + expr + ") + " + std::to_string(bin_width);
         }
 
@@ -250,12 +190,12 @@ int plot_stacked_hist_impl(const std::string &samples_tsv,
         debug_log("drawing start: expr=" + expr +
                   ", draw_expr=" + draw_expr +
                   ", x_title=" + opt.x_title +
-                  ", nbins=" + std::to_string(axis.nbins) +
-                  ", xmin=" + std::to_string(axis.xmin) +
-                  ", xmax=" + std::to_string(axis.xmax));
+                  ", axis_nbins=" + std::to_string(axis_nbins) +
+                  ", axis_xmin=" + std::to_string(axis_xmin) +
+                  ", axis_xmax=" + std::to_string(axis_xmax));
 
         const std::string weight = mc_weight.empty() ? "w_nominal" : mc_weight;
-        TH1DModel spec = make_spec(expr, axis.nbins, axis.xmin, axis.xmax, weight);
+        TH1DModel spec = make_spec(expr, axis_nbins, axis_xmin, axis_xmax, weight);
         spec.expr = draw_expr;
         spec.sel = Preset::Empty;
 

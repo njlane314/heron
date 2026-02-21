@@ -92,7 +92,7 @@ struct EventInput
 
 inline EventArgs parse_event_args(const std::vector<std::string> &args, const std::string &usage)
 {
-    if (args.size() < 2 || args.size() > 4)
+    if (args.size() != 4)
     {
         throw std::runtime_error(usage);
     }
@@ -100,18 +100,12 @@ inline EventArgs parse_event_args(const std::vector<std::string> &args, const st
     EventArgs out;
     out.list_path = trim(args.at(0));
     out.output_root = trim(args.at(1));
-    if (args.size() > 2)
-    {
-        out.selection = trim(args.at(2));
-    }
-    if (args.size() > 3)
-    {
-        out.columns_tsv_path = trim(args.at(3));
-    }
+    out.selection = trim(args.at(2));
+    out.columns_tsv_path = trim(args.at(3));
 
-    if (out.list_path.empty() || out.output_root.empty())
+    if (out.list_path.empty() || out.output_root.empty() || out.selection.empty() || out.columns_tsv_path.empty())
     {
-        throw std::runtime_error("Invalid arguments (empty path)");
+        throw std::runtime_error("Invalid arguments (empty value)");
     }
 
     std::filesystem::path output_root(out.output_root);

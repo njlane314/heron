@@ -630,24 +630,28 @@ int handle_event_command(const std::vector<std::string> &args,
         [&]()
         {
             std::vector<std::string> rewritten = args;
-            if (args.size() == 1)
-            {
-                rewritten.clear();
-                rewritten.push_back(default_samples_tsv(repo_root).string());
-                rewritten.push_back(args[0]);
-            }
-            else if (args.size() == 2 && has_suffix(args[0], ".root"))
+            if (args.size() == 3 && has_suffix(args[0], ".root"))
             {
                 rewritten.clear();
                 rewritten.push_back(default_samples_tsv(repo_root).string());
                 rewritten.push_back(args[0]);
                 rewritten.push_back(args[1]);
+                rewritten.push_back(args[2]);
+            }
+            else if (args.size() == 4 && has_suffix(args[0], ".root"))
+            {
+                rewritten.clear();
+                rewritten.push_back(default_samples_tsv(repo_root).string());
+                rewritten.push_back(args[0]);
+                rewritten.push_back(args[1]);
+                rewritten.push_back(args[2]);
+                rewritten.push_back(args[3]);
             }
 
             const EventArgs event_args =
                 parse_event_args(
                     rewritten,
-                    "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]");
+                    "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root SELECTION COLUMNS.tsv");
             return run(event_args, "heronEventIOdriver");
         });
 }
@@ -936,7 +940,7 @@ std::vector<CommandEntry> build_command_table(const std::filesystem::path &repo_
         },
         []()
         {
-            std::cout << "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root [SELECTION] [COLUMNS.tsv]\n";
+            std::cout << "Usage: heron event SAMPLE_LIST.tsv OUTPUT.root SELECTION COLUMNS.tsv\n";
         }
     });
     return table;

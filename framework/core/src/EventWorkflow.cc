@@ -8,6 +8,7 @@
 #include <chrono>
 #include <filesystem>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -61,11 +62,13 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         inputs.push_back(std::move(input));
     }
 
-    const std::filesystem::path default_columns_tsv =
-        repo_root_dir() / "core" / "config" / "event_columns.tsv";
-    const std::string columns_tsv_path = event_args.columns_tsv_path.empty()
-                                             ? default_columns_tsv.string()
-                                             : event_args.columns_tsv_path;
+    if (event_args.columns_tsv_path.empty())
+    {
+        throw std::runtime_error(
+            "Event columns TSV is required; pass selection (use 'true' for empty selection) and COLUMNS.tsv");
+    }
+
+    const std::string columns_tsv_path = event_args.columns_tsv_path;
 
     const std::string provenance_tree = "heron_art_provenance/run_subrun";
     const std::string event_tree = analysis.tree_name();

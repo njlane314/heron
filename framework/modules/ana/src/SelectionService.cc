@@ -149,6 +149,7 @@ ROOT::RDF::RNode SelectionService::decorate(ROOT::RDF::RNode node)
         define_if_missing("sel_trigger", [](int sw) { return sw > 0; }, {"software_trigger"});
     }
 
+
     define_if_missing(
         "sel_slice",
         [](int ns, float topo) { return passes_slice(ns, topo); },

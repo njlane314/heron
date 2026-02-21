@@ -6,8 +6,8 @@
 //   Panel B: Truth W distribution
 //   Panel D (optional): 2D truth-kinematics coverage plots
 //
-// The 1D plots are stacked by analysis channel via Plotter (same machinery used in
-// plotStackedHistTrueVertex.C), with signal overlay enabled.
+// The 1D plots are stacked by analysis channel via Plotter, with signal overlay
+// enabled.
 //
 // Run with:
 //   ./heron macro plotSignalCoverageTruthKinematics.C

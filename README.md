@@ -107,8 +107,6 @@ wrapper script:
 - `HERON_PLOT_DIR` and `HERON_PLOT_FORMAT` control plot output location and file extension.
 - `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macros/macro/library`).
 - `HERON_MACRO_PATH` sets additional colon-separated macro search paths (searched after `HERON_MACRO_LIBRARY_DIR`).
-- `manifest.tsv` inside `HERON_MACRO_LIBRARY_DIR` can register logical macro names as `name<TAB>macro[<TAB>call]`.
-- Standardised macro aliases are tracked in `macros/macro/library/manifest.tsv` (for example `plot.cutflow.inclusive_mucc`, `plot.eff.pr_vs_nu_kin`, and `plot.stack.true_vertex`).
 - `HERON_REPO_ROOT` can be set to override the repo discovery used by the CLI.
 - `HERON_TREE_NAME` selects the input tree name for the event builder (default: `Events`).
 
@@ -241,10 +239,6 @@ export HERON_MACRO_LIBRARY_DIR=macros/macro/library
 export HERON_MACRO_PATH=macros/macro/library/custom
 heron --set template macro list
 ```
-
-Optional: create `macros/macro/library/manifest.tsv` with entries like
-`name<TAB>macro<TAB>call` so users can run logical names, for example
-`heron macro pr_eff`.
 
 Macro resolution order for relative names is: `HERON_MACRO_LIBRARY_DIR`, then
 `HERON_MACRO_PATH` entries, then repository macro directories.

@@ -47,7 +47,7 @@
 
 #include "../include/Plotter.hh"
 #include "../include/PlotEnv.hh"
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 using namespace nu;
 

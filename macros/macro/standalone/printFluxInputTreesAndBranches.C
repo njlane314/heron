@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include "MacroGuard.hh"
+#include "include/MacroGuard.hh"
 
 namespace {
 

@@ -51,6 +51,11 @@ class SelectionService
     virtual float muon_max_track_distance() const noexcept = 0;
     virtual unsigned muon_required_generation() const noexcept = 0;
 
+    ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection = NULL)
+    {
+        return static_cast<const SelectionService *>(this)->apply(node, p, selection);
+    }
+
     virtual ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, SelectionEntry *selection = NULL) const = 0;
     virtual ROOT::RDF::RNode decorate(ROOT::RDF::RNode node) const = 0;
     virtual std::string selection_label(Preset p) const = 0;

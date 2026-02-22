@@ -160,7 +160,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     const double elapsed_seconds =
         std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time).count();
 
-    log_event_finish(log_prefix, entries.size(), elapsed_seconds);
+    log_event_finish(log_prefix, inputs.size(), elapsed_seconds);
 
     return 0;
 }

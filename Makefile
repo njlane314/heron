@@ -57,6 +57,7 @@ EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 HERON_NAME = $(BIN_DIR)/heron
 CORE_SRC = $(FRAMEWORK_DIR)/core/src/heron.cc \
            $(FRAMEWORK_DIR)/core/src/ArtWorkflow.cc \
+           $(FRAMEWORK_DIR)/core/src/Dataset.cc \
            $(FRAMEWORK_DIR)/core/src/SampleWorkflow.cc \
            $(FRAMEWORK_DIR)/core/src/EventWorkflow.cc
 CORE_OBJ = $(CORE_SRC:%.cc=$(OBJ_DIR)/%.o)

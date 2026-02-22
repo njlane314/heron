@@ -84,12 +84,6 @@ struct EventArgs
     std::string columns_tsv_path;
 };
 
-struct EventInput
-{
-    SampleListEntry entry;
-    SampleIO::Sample sample;
-};
-
 inline EventArgs parse_event_args(const std::vector<std::string> &args, const std::string &usage)
 {
     if (args.size() != 4)

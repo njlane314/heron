@@ -16,6 +16,7 @@
 #include "AnalysisConfigService.hh"
 #include "AppUtils.hh"
 #include "ColumnDerivationService.hh"
+#include "Dataset.hh"
 #include "EventCLI.hh"
 #include "EventColumnProvider.hh"
 #include "EventListIO.hh"
@@ -28,40 +29,17 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
     ROOT::EnableImplicitMT();
 
     const auto &analysis = AnalysisConfigService::instance();
-    const auto entries = read_samples(event_args.list_path);
+    const Dataset dataset = Dataset::load(event_args.list_path);
 
     const auto start_time = std::chrono::steady_clock::now();
-    log_event_start(log_prefix, entries.size());
+    log_event_start(log_prefix, dataset.inputs().size());
 
     StatusMonitor status_monitor(
         log_prefix,
         "action=event_build status=running message=processing");
 
-    std::vector<EventInput> inputs;
-    inputs.reserve(entries.size());
-
-    std::vector<nu::SampleInfo> sample_infos;
-    sample_infos.reserve(entries.size());
-
-    for (const auto &entry : entries)
-    {
-        SampleIO::Sample sample = SampleIO::read(entry.output_path);
-
-        nu::SampleInfo info;
-        info.sample_name = sample.sample_name;
-        info.sample_rootio_path = entry.output_path;
-        info.sample_origin = static_cast<int>(sample.origin);
-        info.beam_mode = static_cast<int>(sample.beam);
-        info.subrun_pot_sum = sample.subrun_pot_sum;
-        info.db_tortgt_pot_sum = sample.db_tortgt_pot_sum;
-        info.db_tor101_pot_sum = sample.db_tor101_pot_sum;
-        sample_infos.push_back(std::move(info));
-
-        EventInput input;
-        input.entry = entry;
-        input.sample = std::move(sample);
-        inputs.push_back(std::move(input));
-    }
+    const auto &inputs = dataset.inputs();
+    const auto &sample_infos = dataset.sample_infos();
 
     if (event_args.columns_tsv_path.empty())
     {

@@ -47,7 +47,8 @@ PLOT_SRC = $(MODULES_DIR)/plot/src/Plotter.cc \
            $(MODULES_DIR)/plot/src/StackedHist.cc \
            $(MODULES_DIR)/plot/src/UnstackedHist.cc \
            $(MODULES_DIR)/plot/src/PlottingHelper.cc \
-           $(MODULES_DIR)/plot/src/EfficiencyPlot.cc
+           $(MODULES_DIR)/plot/src/EfficiencyPlot.cc \
+           $(MODULES_DIR)/plot/src/TemplateBinningOptimiser1D.cc
 PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
 EVD_LIB_NAME = $(LIB_DIR)/libHeronEVD.so

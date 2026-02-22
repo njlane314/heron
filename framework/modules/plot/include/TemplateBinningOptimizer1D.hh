@@ -1,13 +1,13 @@
 /* -- C++ -- */
 /**
- *  @file  framework/ana/include/TemplateBinningOptimizer1D.hh
+ *  @file  framework/modules/plot/include/TemplateBinningOptimizer1D.hh
  *
  *  @brief Greedy adjacent-bin merger for 1D reco-space binning, optimised for
  *         forward-folded binned likelihood/template fits.
  */
 
-#ifndef HERON_ANA_TEMPLATE_BINNING_OPTIMIZER_1D_H
-#define HERON_ANA_TEMPLATE_BINNING_OPTIMIZER_1D_H
+#ifndef HERON_PLOT_TEMPLATE_BINNING_OPTIMIZER_1D_H
+#define HERON_PLOT_TEMPLATE_BINNING_OPTIMIZER_1D_H
 
 #include <iosfwd>
 #include <limits>
@@ -110,4 +110,4 @@ class TemplateBinningOptimizer1D final
     Config m_cfg;
 };
 
-#endif // HERON_ANA_TEMPLATE_BINNING_OPTIMIZER_1D_H
+#endif // HERON_PLOT_TEMPLATE_BINNING_OPTIMIZER_1D_H

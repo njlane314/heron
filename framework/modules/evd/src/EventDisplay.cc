@@ -295,6 +295,7 @@ void EventDisplay::draw_semantic_legend()
 {
     constexpr int palette_size = 15;
     const int background = TColor::GetColor(230, 230, 230);
+    const double margin = std::clamp(opt_.margin, 0.02, 0.25);
 
     std::array<int, palette_size> counts{};
     if (std::holds_alternative<SemanticData>(data_))
@@ -311,7 +312,9 @@ void EventDisplay::draw_semantic_legend()
     std::stable_sort(order.begin(), order.end(),
                      [&](int a, int b) { return counts[a] > counts[b]; });
 
-    legend_.reset(new TLegend(0.12, 0.86, 0.95, 0.975, "", "brNDC"));
+    const double legend_y_max = 1.0 - margin - 0.01;
+    const double legend_y_min = std::max(0.80, legend_y_max - 0.10);
+    legend_.reset(new TLegend(0.12, legend_y_min, 0.95, legend_y_max, "", "brNDC"));
     legend_->SetNColumns(std::max(1, opt_.legend_cols));
     legend_->SetFillColor(background);
     legend_->SetFillStyle(1001);

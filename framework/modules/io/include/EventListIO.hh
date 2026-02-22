@@ -57,6 +57,8 @@ class EventListIO
                      const std::string &event_schema_tsv,
                      const std::string &schema_tag);
 
+    static EventListIO read(std::string path);
+
     explicit EventListIO(std::string path, OpenMode mode = OpenMode::kRead);
 
     const std::string &path() const noexcept { return m_path; }

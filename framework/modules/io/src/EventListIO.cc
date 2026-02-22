@@ -114,6 +114,11 @@ void EventListIO::init(const std::string &out_path,
     fout->Close();
 }
 
+EventListIO EventListIO::read(std::string path)
+{
+    return EventListIO(std::move(path), OpenMode::kRead);
+}
+
 EventListIO::EventListIO(std::string path, OpenMode mode)
     : m_path(std::move(path)), m_mode(mode)
 {

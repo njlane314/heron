@@ -24,7 +24,7 @@ MODULES_DIR = $(FRAMEWORK_DIR)/modules
 MODULES = io ana plot evd
 INCLUDES = -I./$(FRAMEWORK_DIR)/core/include $(addprefix -I./$(MODULES_DIR)/,$(addsuffix /include,$(MODULES)))
 
-IO_LIB_NAME = $(LIB_DIR)/libheronIO.so
+IO_LIB_NAME = $(LIB_DIR)/libHeronIO.so
 IO_SRC = $(MODULES_DIR)/io/src/ArtFileProvenanceIO.cc \
          $(MODULES_DIR)/io/src/EventListIO.cc \
          $(MODULES_DIR)/io/src/NormalisationService.cc \
@@ -34,7 +34,7 @@ IO_SRC = $(MODULES_DIR)/io/src/ArtFileProvenanceIO.cc \
          $(MODULES_DIR)/io/src/SubRunInventoryService.cc
 IO_OBJ = $(IO_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-ANA_LIB_NAME = $(LIB_DIR)/libheronAna.so
+ANA_LIB_NAME = $(LIB_DIR)/libHeronAna.so
 ANA_SRC = $(MODULES_DIR)/ana/src/AnalysisConfigService.cc \
           $(MODULES_DIR)/ana/src/ColumnDerivationService.cc \
           $(MODULES_DIR)/ana/src/EventSampleFilterService.cc \
@@ -42,7 +42,7 @@ ANA_SRC = $(MODULES_DIR)/ana/src/AnalysisConfigService.cc \
           $(MODULES_DIR)/ana/src/SelectionService.cc
 ANA_OBJ = $(ANA_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-PLOT_LIB_NAME = $(LIB_DIR)/libheronPlot.so
+PLOT_LIB_NAME = $(LIB_DIR)/libHeronPlot.so
 PLOT_SRC = $(MODULES_DIR)/plot/src/Plotter.cc \
            $(MODULES_DIR)/plot/src/StackedHist.cc \
            $(MODULES_DIR)/plot/src/UnstackedHist.cc \
@@ -50,7 +50,7 @@ PLOT_SRC = $(MODULES_DIR)/plot/src/Plotter.cc \
            $(MODULES_DIR)/plot/src/EfficiencyPlot.cc
 PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 
-EVD_LIB_NAME = $(LIB_DIR)/libheronEvd.so
+EVD_LIB_NAME = $(LIB_DIR)/libHeronEVD.so
 EVD_SRC = $(MODULES_DIR)/evd/src/EventDisplay.cc
 EVD_OBJ = $(EVD_SRC:%.cc=$(OBJ_DIR)/%.o)
 
@@ -76,8 +76,8 @@ $(eval $(call build_shared_library,EVD))
 
 $(HERON_NAME): $(CORE_OBJ) $(IO_LIB_NAME) $(ANA_LIB_NAME) $(PLOT_LIB_NAME)
 	mkdir -p $(dir $(HERON_NAME))
-	$(CXX) $(CXXFLAGS) $(CORE_OBJ) -L$(LIB_DIR) -lheronIO \
-		-lheronAna -lheronPlot $(LDFLAGS) -o $(HERON_NAME)
+	$(CXX) $(CXXFLAGS) $(CORE_OBJ) -L$(LIB_DIR) -lHeronIO \
+		-lHeronAna -lHeronPlot $(LDFLAGS) -o $(HERON_NAME)
 
 $(OBJ_DIR)/%.o: %.cc
 	mkdir -p $(dir $@)

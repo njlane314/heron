@@ -1,84 +1,120 @@
 // plot/macro/plotMinimal.C
 //
-// Minimal plotting macro for heron that uses framework helpers.
+// Minimal plotting macro for muon-neutrino selection stages, using
+// Dataset + StackedHist library classes.
 //
 // Usage:
 //   heron --set template macro plotMinimal.C
-//   heron --set template macro plotMinimal.C 'plotMinimal("./scratch/out/template/event/events.root")'
+//   heron --set template macro plotMinimal.C \
+//     'plotMinimal("./scratch/out/template/sample/samples.tsv", "./scratch/out/template/event/events.root")'
 
 #include <filesystem>
 #include <iostream>
+#include <algorithm>
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "TCanvas.h"
-#include "TH1D.h"
-#include "TTree.h"
+#include <ROOT/RDataFrame.hxx>
 
-#include "framework/core/include/EventColumnProvider.hh"
-#include "framework/modules/plot/include/PlotEnv.hh"
+#include "framework/core/include/Dataset.hh"
+#include "framework/modules/plot/include/PlottingHelper.hh"
+#include "framework/modules/plot/include/StackedHist.hh"
 #include "macros/include/MacroIO.hh"
 
-bool plotMinimal(const char* input_file = "./scratch/out/template/event/events.root",
+bool plotMinimal(const char* sample_list = "./scratch/out/template/sample/samples.tsv",
+                 const char* event_list_root = "./scratch/out/template/event/events.root",
                  const char* tree_name = "events",
-                 const char* branch_name = "reco_nslice",
-                 const char* output_name = "plotMinimal",
-                 const char* columns_tsv_path = "") {
-  if (!input_file || !tree_name || !branch_name || !output_name || !columns_tsv_path) {
+                 const char* output_name = "plotMinimal") {
+  if (!sample_list || !event_list_root || !tree_name || !output_name) {
     std::cerr << "plotMinimal: invalid NULL argument" << std::endl;
     return false;
   }
 
-  if (!heron::macro::validate_root_input_path(input_file)) {
+  if (!heron::macro::validate_root_input_path(event_list_root)) {
     std::cerr << "plotMinimal: invalid input ROOT file path" << std::endl;
     return false;
   }
 
-  EventColumnProvider provider(columns_tsv_path);
-  bool known_column = (provider.columns().empty() && std::string(branch_name) == "reco_nslice");
-  for (const std::string& column : provider.columns()) {
-    if (column == branch_name) {
-      known_column = true;
-      break;
+  Dataset dataset;
+  try {
+    dataset = Dataset::load(sample_list);
+  } catch (const std::exception& e) {
+    std::cerr << "plotMinimal: failed to load dataset: " << e.what() << std::endl;
+    return false;
+  }
+
+  ROOT::RDataFrame df(tree_name, event_list_root);
+  const auto base = SelectionService::decorate(df);
+
+  std::vector<char> mc_mask(dataset.inputs().size(), 0);
+  std::vector<char> data_mask(dataset.inputs().size(), 0);
+  for (size_t i = 0; i < dataset.inputs().size(); ++i) {
+    const auto origin = dataset.inputs()[i].sample.origin;
+    if (origin == SampleIO::SampleOrigin::kData || origin == SampleIO::SampleOrigin::kEXT) {
+      data_mask[i] = 1;
+      continue;
+    }
+    mc_mask[i] = 1;
+  }
+
+  const auto p_mc_mask = std::make_shared<const std::vector<char>>(mc_mask);
+  const auto p_data_mask = std::make_shared<const std::vector<char>>(data_mask);
+
+  auto mc_node = nu::filter_by_sample_mask(base, p_mc_mask);
+  auto data_node = nu::filter_by_sample_mask(base, p_data_mask);
+
+  const auto stage_expr =
+      "sel_muon ? 5 : (sel_topology ? 4 : (sel_fiducial ? 3 : (sel_slice ? 2 : (sel_trigger ? 1 : 0))))";
+  mc_node = mc_node.Define("sel_stage", stage_expr);
+  data_node = data_node.Define("sel_stage", stage_expr);
+
+  std::vector<nu::Entry> mc_entries;
+  std::vector<nu::Entry> data_entries;
+  std::vector<const nu::Entry*> mc_ptrs;
+  std::vector<const nu::Entry*> data_ptrs;
+
+  if (!mc_mask.empty()) {
+    const bool have_mc = std::any_of(mc_mask.begin(), mc_mask.end(), [](char v) { return v != 0; });
+    if (have_mc) {
+      SelectionEntry sel{Type::kMC, Frame{std::move(mc_node)}};
+      mc_entries.push_back(nu::Entry{std::move(sel), 0.0, 0.0, std::string(), std::string()});
     }
   }
 
-  if (!known_column) {
-    std::cerr << "plotMinimal: branch not declared in configured event columns: " << branch_name << std::endl;
-    return false;
+  if (!data_mask.empty()) {
+    const bool have_data = std::any_of(data_mask.begin(), data_mask.end(), [](char v) { return v != 0; });
+    if (have_data) {
+      SelectionEntry sel{Type::kData, Frame{std::move(data_node)}};
+      data_entries.push_back(nu::Entry{std::move(sel), 0.0, 0.0, std::string(), std::string()});
+    }
   }
 
-  std::unique_ptr<TFile> p_file = heron::macro::open_root_file_read(input_file);
-  if (!p_file) {
-    std::cerr << "plotMinimal: could not open file: " << input_file << std::endl;
-    return false;
-  }
+  for (auto& e : mc_entries) mc_ptrs.push_back(&e);
+  for (auto& e : data_entries) data_ptrs.push_back(&e);
 
-  TTree* tree = dynamic_cast<TTree*>(p_file->Get(tree_name));
-  if (!tree) {
-    std::cerr << "plotMinimal: tree not found: " << tree_name << std::endl;
-    return false;
-  }
+  nu::TH1DModel spec;
+  spec.id = output_name;
+  spec.name = "Muon neutrino selection stage";
+  spec.title = "Muon neutrino selection stage";
+  spec.expr = "sel_stage";
+  spec.nbins = 6;
+  spec.xmin = -0.5;
+  spec.xmax = 5.5;
+  spec.sel = Preset::Empty;
 
-  TH1D* hist = new TH1D("h_minimal", branch_name, 40, 0.0, 40.0);
-  hist->SetLineWidth(2);
+  nu::Options opt;
+  opt.out_dir = std::filesystem::path(output_name).parent_path().string();
+  if (opt.out_dir.empty()) opt.out_dir = ".";
+  opt.image_format = "pdf";
+  opt.show_ratio = false;
+  opt.show_ratio_band = false;
+  opt.normalise_by_bin_width = false;
+  opt.x_title = "Selection stage (0=All, 1=Trigger, 2=Slice, 3=Fiducial, 4=Topology, 5=Muon)";
+  opt.y_title = "Entries";
 
-  const std::string draw_expr = std::string(branch_name) + ">>h_minimal";
-  tree->Draw(draw_expr.c_str(), "", "goff");
+  nu::StackedHist plot(spec, opt, mc_ptrs, data_ptrs);
+  plot.draw_and_save(opt.image_format);
 
-  TCanvas* c = new TCanvas("c_minimal", "c_minimal", nu::kCanvasWidth, nu::kCanvasHeight);
-  c->SetGrid();
-  hist->GetXaxis()->SetTitle(branch_name);
-  hist->GetYaxis()->SetTitle("Entries");
-  hist->Draw("HIST");
-
-  const std::filesystem::path output_file = nu::resolve_output_file(output_name, "plotMinimal", "pdf");
-  c->SaveAs(output_file.string().c_str());
-
-  delete c;
-  delete hist;
-
-  std::cout << "plotMinimal: wrote " << output_file << std::endl;
+  std::cout << "plotMinimal: wrote " << output_name << ".pdf" << std::endl;
   return true;
 }

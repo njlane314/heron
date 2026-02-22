@@ -35,8 +35,8 @@ bool plotMinimal(const char* input_file = "./scratch/out/template/event/events.r
     return false;
   }
 
-  EventColumnProvider provider({"reco_nslice"}, {{"int", "reco_nslice"}}, columns_tsv_path);
-  bool known_column = false;
+  EventColumnProvider provider(columns_tsv_path);
+  bool known_column = (provider.columns().empty() && std::string(branch_name) == "reco_nslice");
   for (const std::string& column : provider.columns()) {
     if (column == branch_name) {
       known_column = true;

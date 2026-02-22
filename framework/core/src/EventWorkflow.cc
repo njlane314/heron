@@ -90,10 +90,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
         std::filesystem::create_directories(output_parent);
     }
 
-    const EventColumnProvider column_provider(
-        {},
-        {},
-        columns_tsv_path);
+    const EventColumnProvider column_provider(columns_tsv_path);
 
     nu::EventListIO::init(event_args.output_root,
                           header,

@@ -27,12 +27,8 @@
 class EventColumnProvider
 {
   public:
-    EventColumnProvider(std::vector<std::string> columns,
-                        std::vector<std::pair<std::string, std::string>> schema_columns,
-                        std::string columns_tsv_path)
-        : m_columns(std::move(columns)),
-          m_schema_columns(std::move(schema_columns)),
-          m_schema_tag(columns_tsv_path.empty() ? "compiled" : "columns")
+    explicit EventColumnProvider(std::string columns_tsv_path)
+        : m_schema_tag(columns_tsv_path.empty() ? "compiled" : "columns")
     {
         if (!columns_tsv_path.empty())
         {

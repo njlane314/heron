@@ -11,10 +11,12 @@
 
 #include <iosfwd>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
 class TH1;
+class TemplateBinningBlock;
 
 /**
  *  @brief Template-based 1D binning optimiser.
@@ -96,6 +98,11 @@ class TemplateBinningOptimizer1D final
         std::vector<double> edges;
         double expected_sigma_poi = std::numeric_limits<double>::infinity();
         std::vector<BinReport> bins;
+
+        std::shared_ptr<TemplateBinningBlock> make_block(const std::string &name,
+                                                         const std::string &title,
+                                                         const std::string &selection = "",
+                                                         int bin_type = 1) const;
     };
 
     explicit TemplateBinningOptimizer1D(Config cfg);

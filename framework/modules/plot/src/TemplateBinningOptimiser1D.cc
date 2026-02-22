@@ -16,9 +16,12 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <utility>
+
+#include "TemplateBinningBlock.hh"
 
 namespace
 {
@@ -633,4 +636,12 @@ TemplateBinningOptimizer1D::Result TemplateBinningOptimizer1D::optimise(const st
     }
 
     return out;
+}
+
+std::shared_ptr<TemplateBinningBlock> TemplateBinningOptimizer1D::Result::make_block(const std::string &name,
+                                                                                      const std::string &title,
+                                                                                      const std::string &selection,
+                                                                                      int bin_type) const
+{
+    return std::make_shared<TemplateBinningBlock>(name, title, edges, selection, bin_type);
 }

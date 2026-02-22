@@ -48,6 +48,7 @@ PLOT_SRC = $(MODULES_DIR)/plot/src/Plotter.cc \
            $(MODULES_DIR)/plot/src/UnstackedHist.cc \
            $(MODULES_DIR)/plot/src/PlottingHelper.cc \
            $(MODULES_DIR)/plot/src/EfficiencyPlot.cc \
+           $(MODULES_DIR)/plot/src/TemplateBinningBlock.cc \
            $(MODULES_DIR)/plot/src/TemplateBinningOptimiser1D.cc
 PLOT_OBJ = $(PLOT_SRC:%.cc=$(OBJ_DIR)/%.o)
 

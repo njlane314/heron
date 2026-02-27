@@ -44,24 +44,6 @@ struct CutFlowPoint {
     double mc_purity = 0.0;
 };
 
-bool looks_like_event_list_root(const std::string& path) {
-    const auto n = path.size();
-    if (n < 5 || path.substr(n - 5) != ".root") {
-        return false;
-    }
-
-    std::unique_ptr<TFile> input_file(TFile::Open(path.c_str(), "READ"));
-    if (!input_file || input_file->IsZombie()) {
-        return false;
-    }
-
-    const bool has_refs = (input_file->Get("sample_refs") != nullptr);
-    const bool has_events_tree = (input_file->Get("events") != nullptr);
-    const bool has_event_tree_key = (input_file->Get("event_tree") != nullptr);
-
-    return has_refs && (has_events_tree || has_event_tree_key);
-}
-
 std::shared_ptr<const std::vector<char>> build_truth_mc_mask(const EventListIO& event_list) {
     const auto& refs = event_list.sample_refs();
     int max_sample_id = -1;

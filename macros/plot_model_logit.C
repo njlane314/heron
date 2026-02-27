@@ -294,11 +294,12 @@ void draw_effpur_plots(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext, cons
 }
 }
 
-int plot_model_logit(const std::string& samples_tsv = "", const std::string& extra_sel = "sel_muon", bool use_logy = true,
+int plot_model_logit(const std::string& samples_tsv = "", const char* extra_sel = "sel_muon", bool use_logy = true,
                      bool include_data = false, const std::string& signal_sel = "is_signal",
                      const std::string& mc_weight = "w_nominal", int n_thresholds = 101,
                      double raw_threshold_min = -15.0, double raw_threshold_max = 15.0,
                      const std::string& output_stem = "first_inference_score_eff_purity") {
+  const std::string extra_sel_expr = (extra_sel != nullptr) ? extra_sel : "";
   const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
   std::cout << "[plot_model_logit] input=" << list_path << "\n";
 
@@ -380,20 +381,20 @@ int plot_model_logit(const std::string& samples_tsv = "", const std::string& ext
 
   ROOT::RDF::RNode auc_node = filter_by_mask(base, mask_mc);
 
-  if (!extra_sel.empty()) {
-    const bool named_column = rdf.HasColumn(extra_sel);
+  if (!extra_sel_expr.empty()) {
+    const bool named_column = rdf.HasColumn(extra_sel_expr);
 
     if (named_column) {
-      e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel});
-      e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel});
-      auc_node = auc_node.Filter([](bool pass) { return pass; }, {extra_sel});
+      e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel_expr});
+      e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel_expr});
+      auc_node = auc_node.Filter([](bool pass) { return pass; }, {extra_sel_expr});
       if (p_data != nullptr)
-        p_data->selection.nominal.node = p_data->selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel});
+        p_data->selection.nominal.node = p_data->selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel_expr});
     } else {
-      e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(extra_sel);
-      e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(extra_sel);
-      auc_node = auc_node.Filter(extra_sel);
-      if (p_data != nullptr) p_data->selection.nominal.node = p_data->selection.nominal.node.Filter(extra_sel);
+      e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(extra_sel_expr);
+      e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(extra_sel_expr);
+      auc_node = auc_node.Filter(extra_sel_expr);
+      if (p_data != nullptr) p_data->selection.nominal.node = p_data->selection.nominal.node.Filter(extra_sel_expr);
     }
   }
 

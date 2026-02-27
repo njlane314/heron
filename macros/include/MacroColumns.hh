@@ -1,6 +1,4 @@
-/* -- C++ -- */
-/// \file macros/include/MacroColumns.hh
-/// \brief Header-only column checks shared by ROOT macros.
+
 
 #ifndef heron_macro_MACROCOLUMNS_H
 #define heron_macro_MACROCOLUMNS_H
@@ -73,7 +71,7 @@ inline int require_columns(const std::unordered_set<std::string> &available_colu
   return 1;
 }
 
-} // namespace macro
-} // namespace heron
+}
+}
 
 #endif

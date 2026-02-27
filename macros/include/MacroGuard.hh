@@ -1,6 +1,4 @@
-/* -- C++ -- */
-/// \file macros/include/MacroGuard.hh
-/// \brief Shared helpers to provide consistent exception guards for ROOT macros.
+
 
 #ifndef heron_macro_MACROGUARD_H
 #define heron_macro_MACROGUARD_H
@@ -53,7 +51,7 @@ inline bool run_with_guard_no_throw(const std::string &macro_name, Callable &&ca
   }
 }
 
-} // namespace macro
-} // namespace heron
+}
+}
 
 #endif

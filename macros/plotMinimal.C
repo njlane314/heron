@@ -1,12 +1,4 @@
-// plot/macro/plotMinimal.C
-//
-// Minimal plotting macro for muon-neutrino selection stages, using
-// EventListIO + StackedHist library classes.
-//
-// Usage:
-//   heron --set template macro plotMinimal.C
-//   heron --set template macro plotMinimal.C \
-//     'plotMinimal("./scratch/out/template/event/events.root")'
+
 
 #include <exception>
 #include <filesystem>

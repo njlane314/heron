@@ -22,7 +22,7 @@
 #include "AppLog.hh"
 #include "AppUtils.hh"
 #include "SampleCLI.hh"
-#include "SampleIO.hh"
+#include "../../modules/io/include/SampleIO.hh"
 
 inline void log_event_start(const std::string &log_prefix, const size_t sample_count)
 {

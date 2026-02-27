@@ -18,9 +18,9 @@
 
 #include "AppLog.hh"
 #include "AppUtils.hh"
-#include "ArtFileProvenanceIO.hh"
-#include "SampleIO.hh"
-#include "SubRunInventoryService.hh"
+#include "../../modules/io/include/ArtFileProvenanceIO.hh"
+#include "../../modules/io/include/SampleIO.hh"
+#include "../../modules/io/include/SubRunInventoryService.hh"
 
 inline void log_scan_start(const std::string &log_prefix)
 {

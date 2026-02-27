@@ -1,6 +1,4 @@
-/* -- C++ -- */
-/// \file macros/include/MacroEnv.hh
-/// \brief Header-only environment and path helpers shared by ROOT macros.
+
 
 #ifndef heron_macro_MACROENV_H
 #define heron_macro_MACROENV_H
@@ -66,7 +64,7 @@ inline std::string find_default_event_list_path()
   return find_first_existing_path(candidates);
 }
 
-} // namespace macro
-} // namespace heron
+}
+}
 
 #endif

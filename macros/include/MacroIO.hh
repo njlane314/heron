@@ -1,6 +1,4 @@
-/* -- C++ -- */
-/// \file macros/include/MacroIO.hh
-/// \brief Header-only I/O helpers shared by ROOT macros.
+
 
 #ifndef heron_macro_MACROIO_H
 #define heron_macro_MACROIO_H
@@ -68,7 +66,7 @@ inline bool looks_like_event_list_root(const std::string &path)
   return has_sample_refs && (has_events_tree || has_event_tree_key);
 }
 
-} // namespace macro
-} // namespace heron
+}
+}
 
 #endif

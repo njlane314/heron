@@ -6,6 +6,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #endif
 
 #include <ROOT/RDataFrame.hxx>
+#include <ROOT/RVec.hxx>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -84,10 +85,7 @@ int plot_asimov_significance_distribution(
     const std::string& output_stem = "asimov_significance_distribution") {
     ROOT::EnableImplicitMT();
 
-    if (variable.empty()) {
-        std::cerr << "[plot_asimov_significance_distribution] variable must be non-empty.\n";
-        return 1;
-    }
+    const std::string variable_expr = variable.empty() ? "inf_score_0" : variable;
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
     if (!looks_like_event_list_root(input_path)) {
@@ -96,7 +94,16 @@ int plot_asimov_significance_distribution(
     }
 
     EventListIO event_list(input_path);
-    ROOT::RDF::RNode rdf = SelectionService::decorate(event_list.rdf());
+    ROOT::RDF::RNode rdf = SelectionService::decorate(event_list.rdf())
+                              .Define(
+                                  "inf_score_0",
+                                  [](const ROOT::RVec<float>& scores) {
+                                      if (scores.empty()) {
+                                          return -1.0f;
+                                      }
+                                      return scores[0];
+                                  },
+                                  {"inf_scores"});
 
     auto mask_mc = build_truth_mc_mask(event_list);
     auto mask_ext = event_list.mask_for_ext();
@@ -120,13 +127,13 @@ int plot_asimov_significance_distribution(
 
     const auto model = ROOT::RDF::TH1DModel("h_tmp", ";;", nbins, xmin, xmax);
 
-    auto h_signal_mc = node_mc.Filter(signal_selected).Histo1D(model, variable, "__w__");
-    auto h_background_mc = node_mc.Filter(background_selected).Histo1D(model, variable, "__w__");
-    auto h_background_ext = node_ext.Filter(selected).Histo1D(model, variable, "__w__");
+    auto h_signal_mc = node_mc.Filter(signal_selected).Histo1D(model, variable_expr, "__w__");
+    auto h_background_mc = node_mc.Filter(background_selected).Histo1D(model, variable_expr, "__w__");
+    auto h_background_ext = node_ext.Filter(selected).Histo1D(model, variable_expr, "__w__");
 
-    TH1D h_asimov("h_asimov", ("Asimov significance;" + variable + ";Z_{A} per bin").c_str(), nbins, xmin, xmax);
+    TH1D h_asimov("h_asimov", ("Asimov significance;" + variable_expr + ";Z_{A} per bin").c_str(), nbins, xmin, xmax);
 
-    std::cout << "\n[plot_asimov_significance_distribution] Variable: " << variable << "\n";
+    std::cout << "\n[plot_asimov_significance_distribution] Variable: " << variable_expr << "\n";
     std::cout << "bin\txlow\txhigh\tS\tB\tZ_A\n";
 
     for (int i = 1; i <= nbins; ++i) {
@@ -165,8 +172,5 @@ int plot_asimov_significance_distribution(
 }
 
 int plot_asimov_significance() {
-    std::cerr
-        << "[plot_asimov_significance] please provide a variable name via "
-        << "plot_asimov_significance_distribution(\"<variable>\", ...).\n";
-    return 1;
+    return plot_asimov_significance_distribution("inf_score_0");
 }

@@ -1,3 +1,10 @@
+#if defined(__CLING__)
+R__ADD_INCLUDE_PATH(../framework/core/include)
+R__ADD_INCLUDE_PATH(../framework/modules/ana/include)
+R__ADD_INCLUDE_PATH(../framework/modules/io/include)
+R__ADD_INCLUDE_PATH(../framework/modules/plot/include)
+#endif
+
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <TCanvas.h>
@@ -18,12 +25,12 @@
 #include <utility>
 #include <vector>
 
-#include "../framework/core/include/SampleCLI.hh"
-#include "../framework/modules/io/include/EventListIO.hh"
-#include "../framework/modules/plot/include/PlotChannels.hh"
-#include "../framework/modules/plot/include/PlotEnv.hh"
-#include "../framework/modules/plot/include/Plotter.hh"
-#include "../framework/modules/plot/include/PlottingHelper.hh"
+#include "SampleCLI.hh"
+#include "EventListIO.hh"
+#include "PlotChannels.hh"
+#include "PlotEnv.hh"
+#include "Plotter.hh"
+#include "PlottingHelper.hh"
 
 using namespace nu;
 

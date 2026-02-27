@@ -59,21 +59,6 @@ struct FineBinStats {
     double b_w2 = 0.0;
 };
 
-bool looks_like_event_list_root(const std::string &path) {
-    const auto n = path.size();
-    if (n < 5 || path.substr(n - 5) != ".root")
-        return false;
-
-    std::unique_ptr<TFile> input_file(TFile::Open(path.c_str(), "READ"));
-    if (!input_file || input_file->IsZombie())
-        return false;
-
-    const bool has_refs = (input_file->Get("sample_refs") != nullptr);
-    const bool has_events_tree = (input_file->Get("events") != nullptr);
-    const bool has_event_tree_key = (input_file->Get("event_tree") != nullptr);
-    return has_refs && (has_events_tree || has_event_tree_key);
-}
-
 bool implicit_mt_enabled() {
     const char *env = std::getenv("HERON_PLOT_IMT");
     return env != nullptr && std::string(env) != "0";

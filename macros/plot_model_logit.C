@@ -16,6 +16,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <TSystem.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -53,6 +54,19 @@ struct MetricScan {
 bool implicit_mt_enabled() {
   const char* env = std::getenv("HERON_PLOT_IMT");
   return env != nullptr && std::string(env) != "0";
+}
+
+bool is_simple_identifier(const std::string& expr) {
+  if (expr.empty()) return false;
+  const unsigned char first = static_cast<unsigned char>(expr.front());
+  if (!(std::isalpha(first) || expr.front() == '_')) return false;
+
+  for (size_t i = 1; i < expr.size(); ++i) {
+    const unsigned char c = static_cast<unsigned char>(expr[i]);
+    if (!(std::isalnum(c) || expr[i] == '_')) return false;
+  }
+
+  return true;
 }
 
 RocCurve make_roc_curve(const std::vector<float>& scores, const std::vector<int>& labels) {
@@ -390,6 +404,9 @@ int plot_model_logit(const std::string& samples_tsv = "", const char* extra_sel 
       auc_node = auc_node.Filter([](bool pass) { return pass; }, {extra_sel_expr});
       if (p_data != nullptr)
         p_data->selection.nominal.node = p_data->selection.nominal.node.Filter([](bool pass) { return pass; }, {extra_sel_expr});
+    } else if (is_simple_identifier(extra_sel_expr)) {
+      std::cerr << "[plot_model_logit] selection column '" << extra_sel_expr
+                << "' is missing; skipping extra selection.\n";
     } else {
       e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(extra_sel_expr);
       e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(extra_sel_expr);

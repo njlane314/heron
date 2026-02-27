@@ -8,6 +8,7 @@ auto	sel_trigger
 auto	sel_slice
 auto	sel_fiducial
 auto	sel_topology
+auto	sel_muon
 auto	optical_filter_pe_beam
 auto	optical_filter_pe_veto
 auto	software_trigger

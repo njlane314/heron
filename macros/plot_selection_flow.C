@@ -18,11 +18,11 @@
 #include <string>
 #include <vector>
 
-#include "framework/core/include/SampleCLI.hh"
-#include "framework/modules/ana/include/SelectionService.hh"
-#include "framework/modules/io/include/EventListIO.hh"
-#include "framework/modules/plot/include/PlotEnv.hh"
-#include "framework/modules/plot/include/PlottingHelper.hh"
+#include "../framework/core/include/SampleCLI.hh"
+#include "../framework/modules/ana/include/SelectionService.hh"
+#include "../framework/modules/io/include/EventListIO.hh"
+#include "../framework/modules/plot/include/PlotEnv.hh"
+#include "../framework/modules/plot/include/PlottingHelper.hh"
 
 using namespace nu;
 

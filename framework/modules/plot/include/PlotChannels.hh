@@ -50,13 +50,13 @@ class Channels
 
     static const std::vector<int> &signal_keys()
     {
-        static const std::vector<int> v = {15, 16, 17, 18};
+        static const std::vector<int> v = {15};
         return v;
     }
 
     static const std::vector<int> &mc_keys()
     {
-        static const std::vector<int> v = {1, 2, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 99};
+        static const std::vector<int> v = {1, 2, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 99};
         return v;
     }
 
@@ -87,10 +87,9 @@ class Channels
             {12, {12, "numu_cc_pi0gg", "#nu_{#mu}CC #pi^{0}/#gamma#gamma", colour_from_hex("#1832c7"), 1001}},
             {13, {13, "numu_cc_npnpi", "#nu_{#mu}CC multi-#pi^{#pm}", colour_from_hex("#0c1dae"), 1001}},
             {14, {14, "nc", "#nu_{x}NC", colour_from_hex("#fbcf38"), 1001}},
-            {15, {15, "signal_lambda_ccqe", "Signal #Lambda^{0} CCQE (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#5cfd3f"), 1001}},
-            {16, {16, "signal_lambda_ccres", "Signal #Lambda^{0} CCRES (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#48ca31"), 1001}},
-            {17, {17, "signal_lambda_ccdis", "Signal #Lambda^{0} CCDIS (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#7ae582"), 1001}},
-            {18, {18, "signal_lambda_ccother", "Signal #Lambda^{0} CC Other (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#2dc653"), 1001}},
+            {15, {15, "signal_lambda", "Signal #Lambda^{0} (#Lambda^{0} #rightarrow p#pi^{-})", colour_from_hex("#48ca31"), 1001}},
+            {16, {16, "numu_cc_sigma0", "#nu_{#mu}CC #Sigma^{0} inclusive", colour_from_hex("#5cfd3f"), 1001}},
+            {17, {17, "numu_cc_k0", "#nu_{#mu}CC K^{0} inclusive", colour_from_hex("#7ae582"), 1001}},
             {19, {19, "nue_cc", "#nu_{e}CC", colour_from_hex("#c110f9"), 1001}},
             {20, {20, "numu_cc_other", "#nu_{#mu}CC Other", colour_from_hex("#000895"), 1001}},
             {99, {99, "other", "Other", colour_from_hex("#c32910"), 1001}}};

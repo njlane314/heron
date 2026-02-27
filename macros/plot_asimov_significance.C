@@ -19,10 +19,11 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <string>
 #include <vector>
 
-#include "SampleCLI.hh"
-#include "SelectionService.hh"
 #include "EventListIO.hh"
 #include "PlotEnv.hh"
+#include "PlottingHelper.hh"
+#include "SampleCLI.hh"
+#include "SelectionService.hh"
 
 using namespace nu;
 

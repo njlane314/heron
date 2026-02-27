@@ -25,5 +25,5 @@ heron sample "ext:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_ext.list"
 heron sample "strangeness:${HERON_OUTPUT_DIR}/samples/numi_fhc_run1_sample_strangeness.list"
 
 # skim events from persistent samples
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root true framework/core/config/event_columns.tsv
-heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_muon framework/core/config/event_columns.tsv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root true framework/core/config/event_columns_empty.tsv
+heron event ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/sample/samples.tsv ${HERON_OUTPUT_DIR}/${HERON_SET:-out}/event/events.root sel_muon framework/core/config/event_columns_muon.tsv

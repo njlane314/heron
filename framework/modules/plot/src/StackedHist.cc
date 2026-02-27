@@ -224,6 +224,19 @@ StackedHist::StackedHist(TH1DModel spec, Options opt, const EventListIO &event_l
     data_.push_back(&owned_entries_.back());
 }
 
+StackedHist::StackedHist(TH1DModel spec,
+                         Options opt,
+                         std::vector<const Entry *> mc,
+                         std::vector<const Entry *> data)
+    : spec_(std::move(spec)),
+      opt_(std::move(opt)),
+      mc_(std::move(mc)),
+      data_(std::move(data)),
+      plot_name_(Plotter::sanitise(spec_.id)),
+      output_directory_(opt_.out_dir)
+{
+}
+
 
 void StackedHist::setup_pads(TCanvas &c, TPad *&p_main, TPad *&p_ratio, TPad *&p_legend) const
 {

@@ -31,6 +31,10 @@ namespace nu
 class StackedHist
 {
   public:
+    StackedHist(TH1DModel spec,
+                Options opt,
+                std::vector<const Entry *> mc,
+                std::vector<const Entry *> data);
     StackedHist(TH1DModel spec, Options opt, const EventListIO &event_list);
     ~StackedHist() = default;
 

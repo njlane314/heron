@@ -1,4 +1,8 @@
 #if defined(__CLING__)
+R__ADD_INCLUDE_PATH(framework/core/include)
+R__ADD_INCLUDE_PATH(framework/modules/ana/include)
+R__ADD_INCLUDE_PATH(framework/modules/io/include)
+R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 R__ADD_INCLUDE_PATH(../framework/core/include)
 R__ADD_INCLUDE_PATH(../framework/modules/ana/include)
 R__ADD_INCLUDE_PATH(../framework/modules/io/include)

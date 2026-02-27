@@ -236,3 +236,7 @@ int plot_selection_cut_flow(
 
     return 0;
 }
+
+int plot_selection_flow() {
+    return plot_selection_cut_flow();
+}

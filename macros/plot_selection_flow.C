@@ -249,11 +249,3 @@ int plot_selection_cut_flow(
 
     return 0;
 }
-
-int plot_inclusive_mu_cc_cut_flow(
-    const std::string& event_list_path = "",
-    const std::string& signal_sel = "is_signal",
-    const std::string& mc_weight = "w_nominal",
-    const std::string& output_stem = "inclusive_mucc_cutflow") {
-    return plot_selection_cut_flow(event_list_path, signal_sel, mc_weight, output_stem);
-}

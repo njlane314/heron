@@ -18,7 +18,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -58,11 +57,6 @@ struct FineBinStats {
     double b_w = 0.0;
     double b_w2 = 0.0;
 };
-
-bool implicit_mt_enabled() {
-    const char *env = std::getenv("HERON_PLOT_IMT");
-    return env != nullptr && std::string(env) != "0";
-}
 
 RocCurve make_roc_curve(const std::vector<float> &scores,
                         const std::vector<int> &labels) {
@@ -439,8 +433,7 @@ int plot_model_logit_adaptive_binning(
         return 2;
     }
 
-    if (implicit_mt_enabled())
-        ROOT::EnableImplicitMT();
+    ROOT::EnableImplicitMT();
 
     EventListIO el(list_path);
     ROOT::RDataFrame rdf = el.rdf();

@@ -163,3 +163,10 @@ int plot_asimov_significance_distribution(
 
     return 0;
 }
+
+int plot_asimov_significance() {
+    std::cerr
+        << "[plot_asimov_significance] please provide a variable name via "
+        << "plot_asimov_significance_distribution(\"<variable>\", ...).\n";
+    return 1;
+}

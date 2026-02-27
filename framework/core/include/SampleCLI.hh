@@ -22,8 +22,7 @@
 
 #include "AppLog.hh"
 #include "AppUtils.hh"
-#include "NormalisationService.hh"
-#include "SampleIO.hh"
+#include "../../modules/io/include/SampleIO.hh"
 
 inline std::vector<std::string> split_tabs(const std::string &line)
 {

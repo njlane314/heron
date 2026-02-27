@@ -19,7 +19,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <cctype>
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -50,11 +49,6 @@ struct MetricScan {
   double best_thr = 0.0;
   double best_effpur = -1.0;
 };
-
-bool implicit_mt_enabled() {
-  const char* env = std::getenv("HERON_PLOT_IMT");
-  return env != nullptr && std::string(env) != "0";
-}
 
 bool is_simple_identifier(const std::string& expr) {
   if (expr.empty()) return false;
@@ -322,7 +316,7 @@ int plot_model_logit(const std::string& samples_tsv = "", const char* extra_sel 
     return 2;
   }
 
-  if (implicit_mt_enabled()) ROOT::EnableImplicitMT();
+  ROOT::EnableImplicitMT();
 
   EventListIO el(list_path);
   ROOT::RDataFrame rdf = el.rdf();

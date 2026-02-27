@@ -101,7 +101,7 @@ std::string cumulative_expr(const std::vector<std::string>& flags, std::size_t u
 
 }
 
-int plotInclusiveMuCCCutFlow(
+int plot_selection_cut_flow(
     const std::string& event_list_path = "",
     const std::string& signal_sel = "is_signal",
     const std::string& mc_weight = "w_nominal",
@@ -110,7 +110,7 @@ int plotInclusiveMuCCCutFlow(
 
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
     if (!looks_like_event_list_root(input_path)) {
-        std::cerr << "[plotInclusiveMuCCCutFlow] input is not an event-list root file: " << input_path << "\n";
+        std::cerr << "[plot_selection_cut_flow] input is not an event-list root file: " << input_path << "\n";
         return 1;
     }
 
@@ -148,7 +148,7 @@ int plotInclusiveMuCCCutFlow(
 
     const double signal_total = *(node_mc.Filter(signal_sel).Sum<double>("__w__"));
     if (signal_total <= 0.0) {
-        std::cerr << "[plotInclusiveMuCCCutFlow] signal denominator is <= 0 for signal_sel='"
+        std::cerr << "[plot_selection_cut_flow] signal denominator is <= 0 for signal_sel='"
                     << signal_sel << "'.\n";
         return 1;
     }
@@ -156,7 +156,7 @@ int plotInclusiveMuCCCutFlow(
     std::vector<CutFlowPoint> points;
     points.reserve(cut_flags.size() + 1);
 
-    std::cout << "\n[plotInclusiveMuCCCutFlow] Inclusive νμ CC selection cut-flow\n";
+    std::cout << "\n[plot_selection_cut_flow] Inclusive νμ CC selection cut-flow\n";
     std::cout << "stage\tlabel\tefficiency\tpurity\tmc_purity\n";
 
     for (std::size_t i = 0; i <= cut_flags.size(); ++i) {
@@ -245,7 +245,7 @@ int plotInclusiveMuCCCutFlow(
     const auto out = plot_output_file(output_stem).string();
     c.SaveAs(out.c_str());
 
-    std::cout << "\n[plotInclusiveMuCCCutFlow] saved plot: " << out << "\n";
+    std::cout << "\n[plot_selection_cut_flow] saved plot: " << out << "\n";
 
     return 0;
 }
@@ -255,5 +255,5 @@ int plot_inclusive_mu_cc_cut_flow(
     const std::string& signal_sel = "is_signal",
     const std::string& mc_weight = "w_nominal",
     const std::string& output_stem = "inclusive_mucc_cutflow") {
-    return plotInclusiveMuCCCutFlow(event_list_path, signal_sel, mc_weight, output_stem);
+    return plot_selection_cut_flow(event_list_path, signal_sel, mc_weight, output_stem);
 }

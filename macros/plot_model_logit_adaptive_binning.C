@@ -123,8 +123,23 @@ MetricScan scan_thresholds(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
     if (thr_max < thr_min)
         std::swap(thr_min, thr_max);
 
-    const double signal_total =
-        *(node_mc.Filter(signal_sel).Sum<double>("__w__"));
+    const int n_bins = n_thresholds - 1;
+    ROOT::RDF::TH1DModel model_signal("h_signal_scan", "", n_bins, thr_min,
+                                      thr_max);
+    ROOT::RDF::TH1DModel model_mc("h_mc_scan", "", n_bins, thr_min, thr_max);
+    ROOT::RDF::TH1DModel model_ext("h_ext_scan", "", n_bins, thr_min,
+                                   thr_max);
+
+    auto h_signal =
+        node_mc.Filter(signal_sel).Histo1D(model_signal, score_expr, "__w__");
+    auto h_mc = node_mc.Histo1D(model_mc, score_expr, "__w__");
+    auto h_ext = node_ext.Histo1D(model_ext, score_expr, "__w__");
+
+    const TH1D &h_sig_ref = *h_signal;
+    const TH1D &h_mc_ref = *h_mc;
+    const TH1D &h_ext_ref = *h_ext;
+
+    const double signal_total = h_sig_ref.Integral(0, n_bins + 1);
     if (signal_total <= 0.0)
         return out;
 
@@ -137,16 +152,12 @@ MetricScan scan_thresholds(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
         const double frac =
             static_cast<double>(i) / static_cast<double>(n_thresholds - 1);
         const double thr = thr_min + frac * (thr_max - thr_min);
-        const std::string pass_expr =
-            "(" + score_expr + " >= " + std::to_string(thr) + ")";
+        const int bin = h_sig_ref.FindFixBin(thr);
+        const int first_bin = std::max(0, std::min(bin, n_bins + 1));
 
-        const double signal_pass =
-            *(node_mc.Filter("(" + signal_sel + ") && " + pass_expr)
-                  .Sum<double>("__w__"));
-        const double selected_mc =
-            *(node_mc.Filter(pass_expr).Sum<double>("__w__"));
-        const double selected_ext =
-            *(node_ext.Filter(pass_expr).Sum<double>("__w__"));
+        const double signal_pass = h_sig_ref.Integral(first_bin, n_bins + 1);
+        const double selected_mc = h_mc_ref.Integral(first_bin, n_bins + 1);
+        const double selected_ext = h_ext_ref.Integral(first_bin, n_bins + 1);
 
         const double selected_all = selected_mc + selected_ext;
         const double efficiency = signal_pass / signal_total;
@@ -260,24 +271,37 @@ std::vector<double> make_adaptive_sigmoid_bins(
     std::vector<FineBinStats> fine;
     fine.reserve(static_cast<size_t>(n_fine_bins));
 
+    ROOT::RDF::TH1DModel model_sig_w("h_sig_w", "", n_fine_bins, 0.0, 1.0);
+    ROOT::RDF::TH1DModel model_sig_w2("h_sig_w2", "", n_fine_bins, 0.0,
+                                      1.0);
+    ROOT::RDF::TH1DModel model_bkg_w("h_bkg_w", "", n_fine_bins, 0.0, 1.0);
+    ROOT::RDF::TH1DModel model_bkg_w2("h_bkg_w2", "", n_fine_bins, 0.0,
+                                      1.0);
+
+    auto h_sig_w = node_mc.Filter(signal_sel)
+                       .Histo1D(model_sig_w, "inf_score_0_sigmoid", "__w__");
+    auto h_sig_w2 = node_mc.Filter(signal_sel)
+                        .Histo1D(model_sig_w2, "inf_score_0_sigmoid", "__w2__");
+    auto h_bkg_w =
+        node_mc.Filter("!(" + signal_sel + ")")
+            .Histo1D(model_bkg_w, "inf_score_0_sigmoid", "__w__");
+    auto h_bkg_w2 =
+        node_mc.Filter("!(" + signal_sel + ")")
+            .Histo1D(model_bkg_w2, "inf_score_0_sigmoid", "__w2__");
+
     const double width = 1.0 / static_cast<double>(n_fine_bins);
     for (int i = 0; i < n_fine_bins; ++i) {
         const double lo = i * width;
         const double hi = (i + 1) * width;
-
-        const std::string in_bin =
-            "(inf_score_0_sigmoid >= " + std::to_string(lo) +
-            ") && (inf_score_0_sigmoid < " + std::to_string(hi) + ")";
-        const std::string sig_bin = "(" + signal_sel + ") && " + in_bin;
-        const std::string bkg_bin = "(!(" + signal_sel + ")) && " + in_bin;
+        const int bin = i + 1;
 
         FineBinStats stat;
         stat.lo = lo;
         stat.hi = hi;
-        stat.s_w = *(node_mc.Filter(sig_bin).Sum<double>("__w__"));
-        stat.s_w2 = *(node_mc.Filter(sig_bin).Sum<double>("__w2__"));
-        stat.b_w = *(node_mc.Filter(bkg_bin).Sum<double>("__w__"));
-        stat.b_w2 = *(node_mc.Filter(bkg_bin).Sum<double>("__w2__"));
+        stat.s_w = h_sig_w->GetBinContent(bin);
+        stat.s_w2 = h_sig_w2->GetBinContent(bin);
+        stat.b_w = h_bkg_w->GetBinContent(bin);
+        stat.b_w2 = h_bkg_w2->GetBinContent(bin);
         fine.push_back(stat);
     }
 

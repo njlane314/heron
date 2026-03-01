@@ -280,7 +280,7 @@ int plot_model_logit_adaptive_binning(
     bool include_data = false, const std::string &signal_sel = "is_signal",
     const std::string &mc_weight = "w_nominal",
     double raw_threshold_min = -15.0, double raw_threshold_max = 15.0,
-    int n_fine_bins = 200, double nmin_signal = 10.0,
+    int n_fine_bins = 200, double nmin_signal = 3.0,
     double nmin_background = 30.0, int max_bins = 15) {
     (void)samples_tsv;
     (void)mc_weight;

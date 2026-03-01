@@ -131,4 +131,23 @@ TH1DModel make_spec(const std::string &expr,
     return spec;
 }
 
+TH1DModel make_spec(const std::string &expr,
+                    const std::vector<double> &bin_edges,
+                    const std::string &weight)
+{
+    TH1DModel spec;
+    spec.id = "h_" + expr;
+    spec.name = expr;
+    spec.expr = expr;
+    spec.weight = weight;
+    spec.bin_edges = bin_edges;
+    if (bin_edges.size() >= 2)
+    {
+        spec.nbins = static_cast<int>(bin_edges.size()) - 1;
+        spec.xmin = bin_edges.front();
+        spec.xmax = bin_edges.back();
+    }
+    return spec;
+}
+
 } // namespace nu

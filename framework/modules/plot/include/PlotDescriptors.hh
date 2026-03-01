@@ -113,6 +113,11 @@ struct TH1DModel
     int nbins = 1;
     double xmin = 0.0;
     double xmax = 1.0;
+    // Optional variable-width bin edges. When populated with at least two
+    // entries, histogram booking uses these edges instead of
+    // (nbins, xmin, xmax). xmin/xmax remain the visible x-range and are
+    // initialised to the first/last edge by make_spec(...).
+    std::vector<double> bin_edges;
     Preset sel = Preset::Muon;
 
     ROOT::RDF::TH1DModel model(const std::string &suffix = "") const
@@ -120,8 +125,17 @@ struct TH1DModel
         const std::string base = !id.empty() ? id : name;
         const std::string hist_name = sanitise(base + suffix);
         const std::string hist_title = title.empty() ? base : title;
+        if (bin_edges.size() >= 2)
+        {
+            return ROOT::RDF::TH1DModel(hist_name.c_str(),
+                                        hist_title.c_str(),
+                                        static_cast<int>(bin_edges.size()) - 1,
+                                        bin_edges.data());
+        }
         return ROOT::RDF::TH1DModel(hist_name.c_str(), hist_title.c_str(), nbins, xmin, xmax);
     }
+
+    bool has_custom_bins() const noexcept { return bin_edges.size() >= 2; }
 
     std::string axis_title() const
     {

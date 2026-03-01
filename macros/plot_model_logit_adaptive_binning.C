@@ -11,7 +11,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <TFile.h>
 #include <TGraph.h>
 #include <TLegend.h>
-#include <TLine.h>
 #include <TStyle.h>
 #include <TSystem.h>
 
@@ -34,12 +33,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 using namespace nu;
 
 namespace {
-struct RocCurve {
-    std::vector<double> fpr;
-    std::vector<double> tpr;
-    double auc = 0.0;
-};
-
 struct MetricScan {
     std::vector<double> x;
     std::vector<double> eff;
@@ -102,61 +95,6 @@ ScoreRange find_score_range(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext)
                                                     : 1.0);
         out.lo -= span;
         out.hi += span;
-    }
-
-    return out;
-}
-
-RocCurve make_roc_curve(const std::vector<float> &scores,
-                        const std::vector<int> &labels) {
-    RocCurve out;
-    if (scores.size() != labels.size() || scores.empty())
-        return out;
-
-    size_t n_pos = 0;
-    size_t n_neg = 0;
-    std::vector<std::pair<float, int>> ranked;
-    ranked.reserve(scores.size());
-
-    for (size_t i = 0; i < scores.size(); ++i) {
-        const int y = labels[i] ? 1 : 0;
-        ranked.emplace_back(scores[i], y);
-        if (y)
-            ++n_pos;
-        else
-            ++n_neg;
-    }
-
-    if (n_pos == 0 || n_neg == 0)
-        return out;
-
-    std::sort(ranked.begin(), ranked.end(),
-              [](const std::pair<float, int> &a,
-                 const std::pair<float, int> &b) { return a.first > b.first; });
-
-    double tp = 0.0;
-    double fp = 0.0;
-    out.fpr.push_back(0.0);
-    out.tpr.push_back(0.0);
-
-    size_t i = 0;
-    while (i < ranked.size()) {
-        const float thr = ranked[i].first;
-        while (i < ranked.size() && ranked[i].first == thr) {
-            if (ranked[i].second)
-                tp += 1.0;
-            else
-                fp += 1.0;
-            ++i;
-        }
-        out.tpr.push_back(tp / static_cast<double>(n_pos));
-        out.fpr.push_back(fp / static_cast<double>(n_neg));
-    }
-
-    for (size_t k = 1; k < out.fpr.size(); ++k) {
-        const double dx = out.fpr[k] - out.fpr[k - 1];
-        const double yavg = 0.5 * (out.tpr[k] + out.tpr[k - 1]);
-        out.auc += dx * yavg;
     }
 
     return out;
@@ -399,64 +337,6 @@ std::vector<double> make_adaptive_sigmoid_bins(
     return edges;
 }
 
-void draw_roc_plot(ROOT::RDF::RNode auc_node) {
-    auto v_logit = auc_node.Take<float>("inf_score_0");
-    auto v_sigmoid = auc_node.Take<float>("inf_score_0_sigmoid");
-    auto v_label = auc_node.Take<int>("is_signal_label");
-
-    const RocCurve roc_logit = make_roc_curve(*v_logit, *v_label);
-    const RocCurve roc_sigmoid = make_roc_curve(*v_sigmoid, *v_label);
-
-    if (roc_logit.fpr.empty() || roc_sigmoid.fpr.empty()) {
-        std::cerr << "[plot_model_logit] unable to compute ROC/AUC (missing "
-                     "signal/background entries).\n";
-        return;
-    }
-
-    gStyle->SetOptStat(0);
-    TCanvas c("c_infscore_auc", "c_infscore_auc", 800, 700);
-
-    TGraph g_logit(static_cast<int>(roc_logit.fpr.size()), roc_logit.fpr.data(),
-                   roc_logit.tpr.data());
-    g_logit.SetTitle(";False positive rate;True positive rate");
-    g_logit.SetLineColor(kBlue + 1);
-    g_logit.SetLineWidth(3);
-    g_logit.Draw("AL");
-
-    TGraph g_sigmoid(static_cast<int>(roc_sigmoid.fpr.size()),
-                     roc_sigmoid.fpr.data(), roc_sigmoid.tpr.data());
-    g_sigmoid.SetLineColor(kRed + 1);
-    g_sigmoid.SetLineStyle(2);
-    g_sigmoid.SetLineWidth(3);
-    g_sigmoid.Draw("L SAME");
-
-    TLine diagonal(0.0, 0.0, 1.0, 1.0);
-    diagonal.SetLineStyle(3);
-    diagonal.SetLineColor(kGray + 2);
-    diagonal.Draw("SAME");
-
-    TLegend leg(0.16, 0.70, 0.60, 0.88);
-    leg.SetBorderSize(0);
-    leg.SetFillStyle(0);
-    char label_logit[64];
-    char label_sigmoid[64];
-    std::snprintf(label_logit, sizeof(label_logit), "Raw logit (AUC = %.4f)",
-                  roc_logit.auc);
-    std::snprintf(label_sigmoid, sizeof(label_sigmoid),
-                  "Sigmoid(logit) (AUC = %.4f)", roc_sigmoid.auc);
-    leg.AddEntry(&g_logit, label_logit, "l");
-    leg.AddEntry(&g_sigmoid, label_sigmoid, "l");
-    leg.Draw();
-
-    const std::string out_dir = env_or("HERON_PLOT_OUT_DIR", "./scratch/out");
-    const std::string out_fmt = env_or("HERON_PLOT_OUT_FMT", "pdf");
-    gSystem->mkdir(out_dir.c_str(), true);
-    const std::string out_path =
-        out_dir + "/first_inference_score_roc_auc." + out_fmt;
-    c.SaveAs(out_path.c_str());
-    std::cout << "[plot_model_logit] wrote " << out_path << "\n";
-}
-
 void draw_effpur_plots(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
                        const std::string &signal_sel, int n_thresholds,
                        double raw_threshold_min, double raw_threshold_max,
@@ -603,8 +483,6 @@ int plot_model_logit_adaptive_binning(
         data.push_back(p_data);
     }
 
-    ROOT::RDF::RNode auc_node = filter_by_mask(base, mask_mc);
-
     if (!extra_sel.empty()) {
         const bool named_column = rdf.HasColumn(extra_sel);
 
@@ -613,8 +491,6 @@ int plot_model_logit_adaptive_binning(
                 [](bool pass) { return pass; }, {extra_sel});
             e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(
                 [](bool pass) { return pass; }, {extra_sel});
-            auc_node =
-                auc_node.Filter([](bool pass) { return pass; }, {extra_sel});
             if (p_data != nullptr)
                 p_data->selection.nominal.node =
                     p_data->selection.nominal.node.Filter(
@@ -624,7 +500,6 @@ int plot_model_logit_adaptive_binning(
                 e_mc.selection.nominal.node.Filter(extra_sel);
             e_ext.selection.nominal.node =
                 e_ext.selection.nominal.node.Filter(extra_sel);
-            auc_node = auc_node.Filter(extra_sel);
             if (p_data != nullptr)
                 p_data->selection.nominal.node =
                     p_data->selection.nominal.node.Filter(extra_sel);
@@ -673,7 +548,6 @@ int plot_model_logit_adaptive_binning(
     for (double e : adaptive_edges)
         std::cout << " " << e;
     std::cout << "\n";
-    draw_roc_plot(auc_node);
     draw_effpur_plots(e_mc.selection.nominal.node, e_ext.selection.nominal.node,
                       signal_sel, n_thresholds, score_range.lo,
                       score_range.hi, sigmoid_lo, sigmoid_hi, output_stem);

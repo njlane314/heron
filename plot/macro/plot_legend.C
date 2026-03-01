@@ -28,24 +28,22 @@ struct LegendEntry
 
 std::vector<LegendEntry> default_entries()
 {
-    std::vector<LegendEntry> entries;
-    entries.push_back({"Out FV", TColor::GetColor("#ff9f1c"), 1001});
-    entries.push_back({"#nu_{#mu}CC #pi^{0}/#gamma#gamma", TColor::GetColor("#ff006e"), 1001});
-    entries.push_back({"#nu_{#mu}CC 0p1#pi^{#pm}", TColor::GetColor("#8338ec"), 1001});
-    entries.push_back({"#nu_{#mu}CC Np0#pi", TColor::GetColor("#3a86ff"), 1001});
-    entries.push_back({"#nu_{#mu}CC multi-#pi^{#pm}", TColor::GetColor("#5e60ce"), 1001});
-    entries.push_back({"#nu_{x}NC", TColor::GetColor("#4361ee"), 1001});
-    entries.push_back({"Cosmic", TColor::GetColor("#1f2a44"), 3345});
-    entries.push_back({"#nu_{#mu}CC Other", TColor::GetColor("#118ab2"), 1001});
-    LegendEntry dirt_entry = {"Dirt", kYellow, 1001};
-    dirt_entry.colour = TColor::GetColor("#ffb703");
-    entries.push_back(dirt_entry);
-    entries.push_back({"Other", TColor::GetColor("#ff3d00"), 1001});
-    entries.push_back({"Signal #Lambda^{0} CCQE (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#39ff14"), 1001});
-    entries.push_back({"Signal #Lambda^{0} CCRES (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#00e676"), 1001});
-    entries.push_back({"Signal #Lambda^{0} CCDIS (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#7ae582"), 1001});
-    entries.push_back({"Signal #Lambda^{0} CC Other (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#2dc653"), 1001});
-    return entries;
+    return {
+        {"Out FV", TColor::GetColor("#ff9f1c"), 1001},
+        {"#nu_{#mu} CC #pi^{0}/#gamma#gamma", TColor::GetColor("#ff006e"), 1001},
+        {"#nu_{#mu} CC 0p1#pi^{#pm}", TColor::GetColor("#8338ec"), 1001},
+        {"#nu_{#mu} CC Np0#pi", TColor::GetColor("#3a86ff"), 1001},
+        {"#nu_{#mu} CC multi-#pi^{#pm}", TColor::GetColor("#5e60ce"), 1001},
+        {"#nu_{x} NC", TColor::GetColor("#4361ee"), 1001},
+        {"Cosmic", TColor::GetColor("#1f2a44"), 3345},
+        {"#nu_{#mu} CC other", TColor::GetColor("#118ab2"), 1001},
+        {"Dirt", TColor::GetColor("#ffb703"), 1001},
+        {"Other background", TColor::GetColor("#ff3d00"), 1001},
+        {"Signal #Lambda^{0} CCQE (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#39ff14"), 1001},
+        {"Signal #Lambda^{0} CCRES (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#00e676"), 1001},
+        {"Signal #Lambda^{0} CCDIS (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#7ae582"), 1001},
+        {"Signal #Lambda^{0} CC other (#Lambda^{0} #rightarrow p#pi^{-})", TColor::GetColor("#2dc653"), 1001}
+    };
 }
 } // namespace
 

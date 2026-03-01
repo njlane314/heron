@@ -34,9 +34,7 @@ struct FineBinStats {
     double lo = 0.0;
     double hi = 0.0;
     double s_w = 0.0;
-    double s_w2 = 0.0;
     double b_w = 0.0;
-    double b_w2 = 0.0;
 };
 
 struct ScoreRange {
@@ -98,12 +96,6 @@ void draw_stack_plots(Plotter &plotter, std::vector<const Entry *> &mc,
         plotter.draw_stack(spec, mc);
 }
 
-double effective_count(double sum_w, double sum_w2) {
-    if (sum_w2 <= 0.0)
-        return 0.0;
-    return (sum_w * sum_w) / sum_w2;
-}
-
 std::vector<double> make_adaptive_score_bins(
     ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
     const std::string &signal_sel, int n_fine_bins,
@@ -121,31 +113,19 @@ std::vector<double> make_adaptive_score_bins(
 
     ROOT::RDF::TH1DModel model_sig_w("h_sig_w", "", n_fine_bins, score_lo,
                                      score_hi);
-    ROOT::RDF::TH1DModel model_sig_w2("h_sig_w2", "", n_fine_bins,
-                                      score_lo, score_hi);
     ROOT::RDF::TH1DModel model_bkg_mc_w("h_bkg_mc_w", "", n_fine_bins,
                                         score_lo, score_hi);
-    ROOT::RDF::TH1DModel model_bkg_mc_w2("h_bkg_mc_w2", "", n_fine_bins,
-                                         score_lo, score_hi);
     ROOT::RDF::TH1DModel model_ext_w("h_ext_w", "", n_fine_bins, score_lo,
                                      score_hi);
-    ROOT::RDF::TH1DModel model_ext_w2("h_ext_w2", "", n_fine_bins,
-                                      score_lo, score_hi);
 
     auto node_mc_tagged = node_mc.Define("__is_sig_bin__", signal_sel);
 
     auto h_sig_w = node_mc_tagged.Filter("__is_sig_bin__")
                        .Histo1D(model_sig_w, "inf_score_0", "__w__");
-    auto h_sig_w2 = node_mc_tagged.Filter("__is_sig_bin__")
-                        .Histo1D(model_sig_w2, "inf_score_0", "__w2__");
     auto h_bkg_mc_w =
         node_mc_tagged.Filter("!__is_sig_bin__")
             .Histo1D(model_bkg_mc_w, "inf_score_0", "__w__");
-    auto h_bkg_mc_w2 =
-        node_mc_tagged.Filter("!__is_sig_bin__")
-            .Histo1D(model_bkg_mc_w2, "inf_score_0", "__w2__");
     auto h_ext_w = node_ext.Histo1D(model_ext_w, "inf_score_0", "__w__");
-    auto h_ext_w2 = node_ext.Histo1D(model_ext_w2, "inf_score_0", "__w2__");
 
     const double width =
         (score_hi - score_lo) / static_cast<double>(n_fine_bins);
@@ -158,31 +138,19 @@ std::vector<double> make_adaptive_score_bins(
         stat.lo = lo;
         stat.hi = hi;
         stat.s_w = h_sig_w->GetBinContent(bin);
-        stat.s_w2 = h_sig_w2->GetBinContent(bin);
         stat.b_w =
             h_bkg_mc_w->GetBinContent(bin) + h_ext_w->GetBinContent(bin);
-        stat.b_w2 =
-            h_bkg_mc_w2->GetBinContent(bin) + h_ext_w2->GetBinContent(bin);
         fine.push_back(stat);
     }
 
     edges.push_back(score_lo);
 
     double acc_sw = 0.0;
-    double acc_sw2 = 0.0;
     double acc_bw = 0.0;
-    double acc_bw2 = 0.0;
 
     for (int i = n_fine_bins - 1; i >= 0; --i) {
         acc_sw += fine[static_cast<size_t>(i)].s_w;
-        acc_sw2 += fine[static_cast<size_t>(i)].s_w2;
         acc_bw += fine[static_cast<size_t>(i)].b_w;
-        acc_bw2 += fine[static_cast<size_t>(i)].b_w2;
-
-        const double neff_s = effective_count(acc_sw, acc_sw2);
-        const double neff_b = effective_count(acc_bw, acc_bw2);
-        (void)neff_s;
-        (void)neff_b;
 
         // Apply adaptive thresholds to the expected yields in the current
         // coarse bin. Background includes both non-signal MC and EXT.
@@ -198,9 +166,7 @@ std::vector<double> make_adaptive_score_bins(
         if (i == 0 || (pass && can_add_split)) {
             edges.push_back(fine[static_cast<size_t>(i)].lo);
             acc_sw = 0.0;
-            acc_sw2 = 0.0;
             acc_bw = 0.0;
-            acc_bw2 = 0.0;
         }
     }
 
@@ -281,9 +247,8 @@ int plot_model_logit_adaptive_binning(
                            {"is_signal"});
     }
 
-    ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext)
-                                    .Define("__w__", mc_weight)
-                                    .Define("__w2__", "__w__*__w__");
+    ROOT::RDF::RNode node_ext =
+        filter_by_mask(base, mask_ext).Define("__w__", mc_weight);
     ROOT::RDF::RNode node_mc =
         filter_by_mask(base, mask_mc)
             .Filter(
@@ -293,8 +258,7 @@ int plot_model_logit_adaptive_binning(
                              (*mask_ext)[static_cast<std::size_t>(sid)]);
                 },
                 {"sample_id"})
-            .Define("__w__", mc_weight)
-            .Define("__w2__", "__w__*__w__");
+            .Define("__w__", mc_weight);
     ROOT::RDF::RNode node_data = filter_by_mask(base, mask_data);
 
     std::vector<Entry> entries;

@@ -105,12 +105,16 @@ double effective_count(double sum_w, double sum_w2) {
 }
 
 std::vector<double> make_adaptive_score_bins(
-    ROOT::RDF::RNode node_mc, const std::string &signal_sel, int n_fine_bins,
+    ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
+    const std::string &signal_sel, int n_fine_bins,
     double nmin_signal, double nmin_background, int max_bins,
     double score_lo, double score_hi) {
     std::vector<double> edges;
     if (n_fine_bins < 10)
         n_fine_bins = 10;
+    if (max_bins < 1)
+        max_bins = 1;
+    edges.reserve(static_cast<size_t>(max_bins) + 1);
 
     std::vector<FineBinStats> fine;
     fine.reserve(static_cast<size_t>(n_fine_bins));
@@ -119,21 +123,29 @@ std::vector<double> make_adaptive_score_bins(
                                      score_hi);
     ROOT::RDF::TH1DModel model_sig_w2("h_sig_w2", "", n_fine_bins,
                                       score_lo, score_hi);
-    ROOT::RDF::TH1DModel model_bkg_w("h_bkg_w", "", n_fine_bins, score_lo,
+    ROOT::RDF::TH1DModel model_bkg_mc_w("h_bkg_mc_w", "", n_fine_bins,
+                                        score_lo, score_hi);
+    ROOT::RDF::TH1DModel model_bkg_mc_w2("h_bkg_mc_w2", "", n_fine_bins,
+                                         score_lo, score_hi);
+    ROOT::RDF::TH1DModel model_ext_w("h_ext_w", "", n_fine_bins, score_lo,
                                      score_hi);
-    ROOT::RDF::TH1DModel model_bkg_w2("h_bkg_w2", "", n_fine_bins,
+    ROOT::RDF::TH1DModel model_ext_w2("h_ext_w2", "", n_fine_bins,
                                       score_lo, score_hi);
 
-    auto h_sig_w = node_mc.Filter(signal_sel)
+    auto node_mc_tagged = node_mc.Define("__is_sig_bin__", signal_sel);
+
+    auto h_sig_w = node_mc_tagged.Filter("__is_sig_bin__")
                        .Histo1D(model_sig_w, "inf_score_0", "__w__");
-    auto h_sig_w2 = node_mc.Filter(signal_sel)
+    auto h_sig_w2 = node_mc_tagged.Filter("__is_sig_bin__")
                         .Histo1D(model_sig_w2, "inf_score_0", "__w2__");
-    auto h_bkg_w =
-        node_mc.Filter("!(" + signal_sel + ")")
-            .Histo1D(model_bkg_w, "inf_score_0", "__w__");
-    auto h_bkg_w2 =
-        node_mc.Filter("!(" + signal_sel + ")")
-            .Histo1D(model_bkg_w2, "inf_score_0", "__w2__");
+    auto h_bkg_mc_w =
+        node_mc_tagged.Filter("!__is_sig_bin__")
+            .Histo1D(model_bkg_mc_w, "inf_score_0", "__w__");
+    auto h_bkg_mc_w2 =
+        node_mc_tagged.Filter("!__is_sig_bin__")
+            .Histo1D(model_bkg_mc_w2, "inf_score_0", "__w2__");
+    auto h_ext_w = node_ext.Histo1D(model_ext_w, "inf_score_0", "__w__");
+    auto h_ext_w2 = node_ext.Histo1D(model_ext_w2, "inf_score_0", "__w2__");
 
     const double width =
         (score_hi - score_lo) / static_cast<double>(n_fine_bins);
@@ -147,8 +159,10 @@ std::vector<double> make_adaptive_score_bins(
         stat.hi = hi;
         stat.s_w = h_sig_w->GetBinContent(bin);
         stat.s_w2 = h_sig_w2->GetBinContent(bin);
-        stat.b_w = h_bkg_w->GetBinContent(bin);
-        stat.b_w2 = h_bkg_w2->GetBinContent(bin);
+        stat.b_w =
+            h_bkg_mc_w->GetBinContent(bin) + h_ext_w->GetBinContent(bin);
+        stat.b_w2 =
+            h_bkg_mc_w2->GetBinContent(bin) + h_ext_w2->GetBinContent(bin);
         fine.push_back(stat);
     }
 
@@ -170,19 +184,23 @@ std::vector<double> make_adaptive_score_bins(
         (void)neff_s;
         (void)neff_b;
 
-        // Apply adaptive thresholds to normalisation-scaled yields (sum of
-        // event weights), while retaining the effective counts for optional
-        // diagnostics and future tuning.
+        // Apply adaptive thresholds to the expected yields in the current
+        // coarse bin. Background includes both non-signal MC and EXT.
         const bool pass = (acc_sw >= nmin_signal && acc_bw >= nmin_background);
+        const int n_splits = static_cast<int>(edges.size()) - 1;
+        const bool can_add_split = (n_splits < max_bins - 1);
 
-        if (pass || i == 0) {
-            edges.push_back(fine[static_cast<size_t>(i)].hi);
+        // We scan from high score to low score, so when a bin closes the new
+        // boundary is the low edge of the accumulated interval, not the high
+        // edge of the current fine bin. Once we already have max_bins - 1
+        // interior splits, keep merging the remaining low-score region into
+        // the final bin.
+        if (i == 0 || (pass && can_add_split)) {
+            edges.push_back(fine[static_cast<size_t>(i)].lo);
             acc_sw = 0.0;
             acc_sw2 = 0.0;
             acc_bw = 0.0;
             acc_bw2 = 0.0;
-            if (static_cast<int>(edges.size()) - 1 >= max_bins && i > 0)
-                break;
         }
     }
 
@@ -359,9 +377,14 @@ int plot_model_logit_adaptive_binning(
 
     draw_stack_plots(plotter, mc, data, include_data, score_range.lo,
                      score_range.hi);
+    const std::string adaptive_signal_sel =
+        (signal_sel == "is_signal" && !rdf.HasColumn("is_signal"))
+            ? "is_signal_label"
+            : signal_sel;
     const std::vector<double> adaptive_edges = make_adaptive_score_bins(
-        e_mc.selection.nominal.node, signal_sel, n_fine_bins, nmin_signal,
-        nmin_background, max_bins, score_range.lo, score_range.hi);
+        e_mc.selection.nominal.node, e_ext.selection.nominal.node,
+        adaptive_signal_sel, n_fine_bins, nmin_signal, nmin_background,
+        max_bins, score_range.lo, score_range.hi);
     std::cout << "[plot_model_logit_adaptive_binning] adaptive edges:";
     for (double e : adaptive_edges)
         std::cout << " " << e;

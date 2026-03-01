@@ -16,6 +16,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -103,7 +104,8 @@ int plot_asimov_significance_distribution(
                                       }
                                       return scores[0];
                                   },
-                                  {"inf_scores"});
+                                  {"inf_scores"})
+                              .Define("__plot_var__", "static_cast<double>(" + variable_expr + ")");
 
     auto mask_mc = build_truth_mc_mask(event_list);
     auto mask_ext = event_list.mask_for_ext();
@@ -125,15 +127,55 @@ int plot_asimov_significance_distribution(
     const std::string signal_selected = "(" + signal_sel + ") && " + selected;
     const std::string background_selected = "!(" + signal_sel + ") && " + selected;
 
-    const auto model = ROOT::RDF::TH1DModel("h_tmp", ";;", nbins, xmin, xmax);
+    ROOT::RDF::RNode node_mc_selected = node_mc.Filter(selected);
+    ROOT::RDF::RNode node_ext_selected = node_ext.Filter(selected);
 
-    auto h_signal_mc = node_mc.Filter(signal_selected).Histo1D(model, variable_expr, "__w__");
-    auto h_background_mc = node_mc.Filter(background_selected).Histo1D(model, variable_expr, "__w__");
-    auto h_background_ext = node_ext.Filter(selected).Histo1D(model, variable_expr, "__w__");
+    auto n_mc = node_mc_selected.Count();
+    auto n_ext = node_ext_selected.Count();
 
-    TH1D h_asimov("h_asimov", ("Asimov significance;" + variable_expr + ";Z_{A} per bin").c_str(), nbins, xmin, xmax);
+    auto min_mc = node_mc_selected.Min<double>("__plot_var__");
+    auto max_mc = node_mc_selected.Max<double>("__plot_var__");
+    auto min_ext = node_ext_selected.Min<double>("__plot_var__");
+    auto max_ext = node_ext_selected.Max<double>("__plot_var__");
+
+    double xlow = std::numeric_limits<double>::infinity();
+    double xhigh = -std::numeric_limits<double>::infinity();
+
+    if (*n_mc > 0) {
+        xlow = std::min(xlow, *min_mc);
+        xhigh = std::max(xhigh, *max_mc);
+    }
+
+    if (*n_ext > 0) {
+        xlow = std::min(xlow, *min_ext);
+        xhigh = std::max(xhigh, *max_ext);
+    }
+
+    if (*n_mc == 0 && *n_ext == 0) {
+        std::cerr << "[plot_asimov_significance_distribution] no selected events available for plotting\n";
+        return 1;
+    }
+
+    if (!std::isfinite(xlow) || !std::isfinite(xhigh)) {
+        xlow = xmin;
+        xhigh = xmax;
+    }
+
+    if (!(xlow < xhigh)) {
+        xlow -= 0.5;
+        xhigh += 0.5;
+    }
+
+    const auto model = ROOT::RDF::TH1DModel("h_tmp", ";;", nbins, xlow, xhigh);
+
+    auto h_signal_mc = node_mc.Filter(signal_selected).Histo1D(model, "__plot_var__", "__w__");
+    auto h_background_mc = node_mc.Filter(background_selected).Histo1D(model, "__plot_var__", "__w__");
+    auto h_background_ext = node_ext_selected.Histo1D(model, "__plot_var__", "__w__");
+
+    TH1D h_asimov("h_asimov", ("Asimov significance;" + variable_expr + ";Z_{A} per bin").c_str(), nbins, xlow, xhigh);
 
     std::cout << "\n[plot_asimov_significance_distribution] Variable: " << variable_expr << "\n";
+    std::cout << "[plot_asimov_significance_distribution] Range: [" << xlow << ", " << xhigh << "]\n";
     std::cout << "bin\txlow\txhigh\tS\tB\tZ_A\n";
 
     for (int i = 1; i <= nbins; ++i) {

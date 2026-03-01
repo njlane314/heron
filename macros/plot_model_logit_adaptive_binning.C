@@ -281,7 +281,7 @@ int plot_model_logit_adaptive_binning(
     const std::string &mc_weight = "w_nominal",
     double raw_threshold_min = -15.0, double raw_threshold_max = 15.0,
     int n_fine_bins = 200, double nmin_signal = 3.0,
-    double nmin_background = 30.0, int max_bins = 15) {
+    double nmin_background = 0.0, int max_bins = 0) {
     (void)samples_tsv;
     (void)mc_weight;
     const std::string list_path =

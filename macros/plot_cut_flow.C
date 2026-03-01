@@ -148,7 +148,7 @@ int plot_cut_flow(const std::string &event_list_path = "",
     ROOT::RDF::RNode rdf = SelectionService::decorate(el.rdf())
                               .Define("sel_final_score",
                                       [](const ROOT::RVec<float> &scores) {
-                                          return !scores.empty() && scores[0] > 5.0f;
+                                          return !scores.empty() && scores[0] > 4.0f;
                                       },
                                       {"inf_scores"});
 

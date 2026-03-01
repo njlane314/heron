@@ -1,6 +1,6 @@
 /* -- C++ -- */
 /**
- * @file plot/macro/plot_legend.C
+ * @file macros/plot_legend.C
  *
  * @brief Draw only the stacked-category legend (no statistics box).
  *

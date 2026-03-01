@@ -5,7 +5,7 @@ R__ADD_INCLUDE_PATH(framework/modules/io/include)
 R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #endif
 
-// plot/macro/plotInclusiveMuCCCutFlow.C
+// plot/macro/plot_cut_flow.C
 //
 // Build a selection cut-flow plot for the inclusive νμ CC analysis.
 //
@@ -15,6 +15,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 //   Stage 2: sel_slice
 //   Stage 3: sel_fiducial
 //   Stage 4: sel_muon
+//   Stage 5: inf_scores[0] > 6.9
 //
 // The macro reports and plots:
 //   - efficiency   = selected signal / total signal
@@ -22,9 +23,9 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 //   - MC purity    = selected signal / selected MC
 //
 // Run with:
-//   ./heron macro plotInclusiveMuCCCutFlow.C
-//   ./heron macro plotInclusiveMuCCCutFlow.C \
-//     'plotInclusiveMuCCCutFlow("./scratch/out/event_list_myana.root")'
+//   ./heron macro plot_cut_flow.C
+//   ./heron macro plot_cut_flow.C \
+//     'plot_cut_flow("./scratch/out/event_list_myana.root")'
 
 #include <algorithm>
 #include <cmath>
@@ -112,7 +113,7 @@ std::string cumulative_expr(const std::vector<std::string> &flags, std::size_t u
 
 } // namespace
 
-int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
+int plot_cut_flow(const std::string &event_list_path = "",
                              const std::string &signal_sel = "is_signal",
                              const std::string &mc_weight = "w_nominal",
                              const std::string &output_stem = "inclusive_mucc_cutflow")
@@ -122,7 +123,7 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
     const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
     if (!looks_like_event_list_root(input_path))
     {
-        std::cerr << "[plotInclusiveMuCCCutFlow] input is not an event-list root file: " << input_path << "\n";
+        std::cerr << "[plot_cut_flow] input is not an event-list root file: " << input_path << "\n";
         return 1;
     }
 
@@ -130,17 +131,24 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
         "sel_trigger",
         "sel_slice",
         "sel_fiducial",
-        "sel_muon"};
+        "sel_muon",
+        "sel_final_score"};
 
     const std::vector<std::string> cut_labels = {
         "no cuts",
         "trigger",
         "slice",
         "fiducial",
-        "inclusive #nu_{#mu} CC"};
+        "inclusive #nu_{#mu} CC",
+        "final cut"};
 
     EventListIO el(input_path);
-    ROOT::RDF::RNode rdf = SelectionService::decorate(el.rdf());
+    ROOT::RDF::RNode rdf = SelectionService::decorate(el.rdf())
+                              .Define("sel_final_score",
+                                      [](const ROOT::RVec<float> &scores) {
+                                          return !scores.empty() && scores[0] > 6.9f;
+                                      },
+                                      {"inf_scores"});
 
     auto mask_mc = build_truth_mc_mask(el);
     auto mask_ext = el.mask_for_ext();
@@ -161,7 +169,7 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
     const double signal_total = *(node_mc.Filter(signal_sel).Sum<double>("__w__"));
     if (signal_total <= 0.0)
     {
-        std::cerr << "[plotInclusiveMuCCCutFlow] signal denominator is <= 0 for signal_sel='"
+        std::cerr << "[plot_cut_flow] signal denominator is <= 0 for signal_sel='"
                   << signal_sel << "'.\n";
         return 1;
     }
@@ -169,7 +177,7 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
     std::vector<CutFlowPoint> points;
     points.reserve(cut_flags.size() + 1);
 
-    std::cout << "\n[plotInclusiveMuCCCutFlow] Inclusive νμ CC selection cut-flow\n";
+    std::cout << "\n[plot_cut_flow] Inclusive νμ CC selection cut-flow\n";
     std::cout << "stage\tlabel\tefficiency\tpurity\tmc_purity\n";
 
     for (std::size_t i = 0; i <= cut_flags.size(); ++i)
@@ -259,7 +267,8 @@ int plotInclusiveMuCCCutFlow(const std::string &event_list_path = "",
     const auto out = plot_output_file(output_stem).string();
     c.SaveAs(out.c_str());
 
-    std::cout << "\n[plotInclusiveMuCCCutFlow] saved plot: " << out << "\n";
+    std::cout << "\n[plot_cut_flow] saved plot: " << out << "\n";
 
     return 0;
 }
+

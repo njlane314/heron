@@ -167,7 +167,13 @@ std::vector<double> make_adaptive_score_bins(
 
         const double neff_s = effective_count(acc_sw, acc_sw2);
         const double neff_b = effective_count(acc_bw, acc_bw2);
-        const bool pass = (neff_s >= nmin_signal && neff_b >= nmin_background);
+        (void)neff_s;
+        (void)neff_b;
+
+        // Apply adaptive thresholds to normalisation-scaled yields (sum of
+        // event weights), while retaining the effective counts for optional
+        // diagnostics and future tuning.
+        const bool pass = (acc_sw >= nmin_signal && acc_bw >= nmin_background);
 
         if (pass || i == 0) {
             edges.push_back(fine[static_cast<size_t>(i)].hi);

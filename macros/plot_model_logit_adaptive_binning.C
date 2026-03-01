@@ -58,6 +58,55 @@ struct FineBinStats {
     double b_w2 = 0.0;
 };
 
+struct ScoreRange {
+    double lo = 0.0;
+    double hi = 0.0;
+    bool valid = false;
+};
+
+double sigmoid(double x) {
+    return 1.0 / (1.0 + std::exp(-x));
+}
+
+ScoreRange find_score_range(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext) {
+    ScoreRange out;
+
+    auto min_mc = node_mc.Min<float>("inf_score_0");
+    auto max_mc = node_mc.Max<float>("inf_score_0");
+    auto min_ext = node_ext.Min<float>("inf_score_0");
+    auto max_ext = node_ext.Max<float>("inf_score_0");
+
+    const bool has_mc = (node_mc.Count().GetValue() > 0);
+    const bool has_ext = (node_ext.Count().GetValue() > 0);
+    if (!has_mc && !has_ext)
+        return out;
+
+    out.valid = true;
+    if (has_mc && has_ext) {
+        out.lo = std::min(static_cast<double>(min_mc.GetValue()),
+                          static_cast<double>(min_ext.GetValue()));
+        out.hi = std::max(static_cast<double>(max_mc.GetValue()),
+                          static_cast<double>(max_ext.GetValue()));
+    } else if (has_mc) {
+        out.lo = min_mc.GetValue();
+        out.hi = max_mc.GetValue();
+    } else {
+        out.lo = min_ext.GetValue();
+        out.hi = max_ext.GetValue();
+    }
+
+    if (!std::isfinite(out.lo) || !std::isfinite(out.hi))
+        out.valid = false;
+    if (out.valid && out.hi <= out.lo) {
+        const double span = (std::abs(out.lo) > 0.0 ? 0.05 * std::abs(out.lo)
+                                                    : 1.0);
+        out.lo -= span;
+        out.hi += span;
+    }
+
+    return out;
+}
+
 RocCurve make_roc_curve(const std::vector<float> &scores,
                         const std::vector<int> &labels) {
     RocCurve out;
@@ -234,10 +283,12 @@ void draw_metric_plot(const MetricScan &scan, const std::string &canvas_id,
 }
 
 void draw_stack_plots(Plotter &plotter, std::vector<const Entry *> &mc,
-                      std::vector<const Entry *> &data, bool include_data) {
+                      std::vector<const Entry *> &data, bool include_data,
+                      double raw_lo, double raw_hi, double sigmoid_lo,
+                      double sigmoid_hi) {
     auto &opt = plotter.options();
 
-    TH1DModel spec = make_spec("inf_score_0", 50, -15.0, 15.0, "w_nominal");
+    TH1DModel spec = make_spec("inf_score_0", 50, raw_lo, raw_hi, "w_nominal");
     spec.sel = Preset::Empty;
     opt.x_title = "Inference score [0]";
     if (include_data)
@@ -246,7 +297,7 @@ void draw_stack_plots(Plotter &plotter, std::vector<const Entry *> &mc,
         plotter.draw_stack(spec, mc);
 
     TH1DModel spec_sigmoid =
-        make_spec("inf_score_0_sigmoid", 50, 0.0, 1.0, "w_nominal");
+        make_spec("inf_score_0_sigmoid", 50, sigmoid_lo, sigmoid_hi, "w_nominal");
     spec_sigmoid.sel = Preset::Empty;
     opt.x_title = "Sigmoid(inference score [0])";
     if (include_data)
@@ -263,7 +314,8 @@ double effective_count(double sum_w, double sum_w2) {
 
 std::vector<double> make_adaptive_sigmoid_bins(
     ROOT::RDF::RNode node_mc, const std::string &signal_sel, int n_fine_bins,
-    double nmin_signal, double nmin_background, int max_bins) {
+    double nmin_signal, double nmin_background, int max_bins,
+    double sigmoid_lo, double sigmoid_hi) {
     std::vector<double> edges;
     if (n_fine_bins < 10)
         n_fine_bins = 10;
@@ -271,12 +323,14 @@ std::vector<double> make_adaptive_sigmoid_bins(
     std::vector<FineBinStats> fine;
     fine.reserve(static_cast<size_t>(n_fine_bins));
 
-    ROOT::RDF::TH1DModel model_sig_w("h_sig_w", "", n_fine_bins, 0.0, 1.0);
-    ROOT::RDF::TH1DModel model_sig_w2("h_sig_w2", "", n_fine_bins, 0.0,
-                                      1.0);
-    ROOT::RDF::TH1DModel model_bkg_w("h_bkg_w", "", n_fine_bins, 0.0, 1.0);
-    ROOT::RDF::TH1DModel model_bkg_w2("h_bkg_w2", "", n_fine_bins, 0.0,
-                                      1.0);
+    ROOT::RDF::TH1DModel model_sig_w("h_sig_w", "", n_fine_bins, sigmoid_lo,
+                                     sigmoid_hi);
+    ROOT::RDF::TH1DModel model_sig_w2("h_sig_w2", "", n_fine_bins,
+                                      sigmoid_lo, sigmoid_hi);
+    ROOT::RDF::TH1DModel model_bkg_w("h_bkg_w", "", n_fine_bins, sigmoid_lo,
+                                     sigmoid_hi);
+    ROOT::RDF::TH1DModel model_bkg_w2("h_bkg_w2", "", n_fine_bins,
+                                      sigmoid_lo, sigmoid_hi);
 
     auto h_sig_w = node_mc.Filter(signal_sel)
                        .Histo1D(model_sig_w, "inf_score_0_sigmoid", "__w__");
@@ -289,10 +343,11 @@ std::vector<double> make_adaptive_sigmoid_bins(
         node_mc.Filter("!(" + signal_sel + ")")
             .Histo1D(model_bkg_w2, "inf_score_0_sigmoid", "__w2__");
 
-    const double width = 1.0 / static_cast<double>(n_fine_bins);
+    const double width =
+        (sigmoid_hi - sigmoid_lo) / static_cast<double>(n_fine_bins);
     for (int i = 0; i < n_fine_bins; ++i) {
-        const double lo = i * width;
-        const double hi = (i + 1) * width;
+        const double lo = sigmoid_lo + i * width;
+        const double hi = sigmoid_lo + (i + 1) * width;
         const int bin = i + 1;
 
         FineBinStats stat;
@@ -305,7 +360,7 @@ std::vector<double> make_adaptive_sigmoid_bins(
         fine.push_back(stat);
     }
 
-    edges.push_back(0.0);
+    edges.push_back(sigmoid_lo);
 
     double acc_sw = 0.0;
     double acc_sw2 = 0.0;
@@ -336,10 +391,10 @@ std::vector<double> make_adaptive_sigmoid_bins(
     std::sort(edges.begin(), edges.end());
     edges.erase(std::unique(edges.begin(), edges.end()), edges.end());
 
-    if (edges.empty() || edges.front() > 0.0)
-        edges.insert(edges.begin(), 0.0);
-    if (edges.back() < 1.0)
-        edges.push_back(1.0);
+    if (edges.empty() || edges.front() > sigmoid_lo)
+        edges.insert(edges.begin(), sigmoid_lo);
+    if (edges.back() < sigmoid_hi)
+        edges.push_back(sigmoid_hi);
 
     return edges;
 }
@@ -405,10 +460,13 @@ void draw_roc_plot(ROOT::RDF::RNode auc_node) {
 void draw_effpur_plots(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
                        const std::string &signal_sel, int n_thresholds,
                        double raw_threshold_min, double raw_threshold_max,
+                       double sigmoid_threshold_min,
+                       double sigmoid_threshold_max,
                        const std::string &output_stem) {
     const MetricScan scan_sigmoid =
         scan_thresholds(node_mc, node_ext, signal_sel, n_thresholds,
-                        "inf_score_0_sigmoid", 0.0, 1.0);
+                        "inf_score_0_sigmoid", sigmoid_threshold_min,
+                        sigmoid_threshold_max);
     if (scan_sigmoid.x.empty()) {
         std::cerr
             << "[plot_model_logit] signal denominator is <= 0 for signal_sel='"
@@ -485,7 +543,7 @@ int plot_model_logit_adaptive_binning(
                    },
                    {"inf_scores"})
             .Define("inf_score_0_sigmoid",
-                    [](float x) { return 1.0f / (1.0f + std::exp(-x)); },
+                    [](float x) { return static_cast<float>(sigmoid(x)); },
                     {"inf_score_0"});
 
     if (rdf.HasColumn("analysis_channels")) {
@@ -591,18 +649,34 @@ int plot_model_logit_adaptive_binning(
     opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
     opt.beamline = el.beamline_label();
 
-    draw_stack_plots(plotter, mc, data, include_data);
+    ScoreRange score_range =
+        find_score_range(e_mc.selection.nominal.node, e_ext.selection.nominal.node);
+    if (!score_range.valid) {
+        score_range.lo = raw_threshold_min;
+        score_range.hi = raw_threshold_max;
+    }
+
+    const double sigmoid_lo = sigmoid(score_range.lo);
+    const double sigmoid_hi = sigmoid(score_range.hi);
+
+    std::cout << "[plot_model_logit_adaptive_binning] score range: ["
+              << score_range.lo << ", " << score_range.hi << "]\n";
+    std::cout << "[plot_model_logit_adaptive_binning] sigmoid range: ["
+              << sigmoid_lo << ", " << sigmoid_hi << "]\n";
+
+    draw_stack_plots(plotter, mc, data, include_data, score_range.lo,
+                     score_range.hi, sigmoid_lo, sigmoid_hi);
     const std::vector<double> adaptive_edges = make_adaptive_sigmoid_bins(
         e_mc.selection.nominal.node, signal_sel, n_fine_bins, nmin_signal,
-        nmin_background, max_bins);
+        nmin_background, max_bins, sigmoid_lo, sigmoid_hi);
     std::cout << "[plot_model_logit_adaptive_binning] adaptive edges:";
     for (double e : adaptive_edges)
         std::cout << " " << e;
     std::cout << "\n";
     draw_roc_plot(auc_node);
     draw_effpur_plots(e_mc.selection.nominal.node, e_ext.selection.nominal.node,
-                      signal_sel, n_thresholds, raw_threshold_min,
-                      raw_threshold_max, output_stem);
+                      signal_sel, n_thresholds, score_range.lo,
+                      score_range.hi, sigmoid_lo, sigmoid_hi, output_stem);
 
     std::cout << "[plot_model_logit_adaptive_binning] done\n";
     return 0;

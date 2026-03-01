@@ -46,6 +46,9 @@ TH1DModel make_spec(const std::string &expr,
                     double xmin,
                     double xmax,
                     const std::string &weight);
+TH1DModel make_spec(const std::string &expr,
+                    const std::vector<double> &bin_edges,
+                    const std::string &weight = "w_nominal");
 
 } // namespace nu
 

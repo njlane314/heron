@@ -86,10 +86,10 @@ ScoreRange find_score_range(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext)
 
 void draw_stack_plots(Plotter &plotter, std::vector<const Entry *> &mc,
                       std::vector<const Entry *> &data, bool include_data,
-                      double raw_lo, double raw_hi) {
+                      const std::vector<double> &adaptive_edges) {
     auto &opt = plotter.options();
 
-    TH1DModel spec = make_spec("inf_score_0", 50, raw_lo, raw_hi, "w_nominal");
+    TH1DModel spec = make_spec("inf_score_0", adaptive_edges, "w_nominal");
     spec.sel = Preset::Empty;
     opt.x_title = "Inference score [0]";
     if (include_data)
@@ -375,8 +375,6 @@ int plot_model_logit_adaptive_binning(
     std::cout << "[plot_model_logit_adaptive_binning] score range: ["
               << score_range.lo << ", " << score_range.hi << "]\n";
 
-    draw_stack_plots(plotter, mc, data, include_data, score_range.lo,
-                     score_range.hi);
     const std::string adaptive_signal_sel =
         (signal_sel == "is_signal" && !rdf.HasColumn("is_signal"))
             ? "is_signal_label"
@@ -385,6 +383,7 @@ int plot_model_logit_adaptive_binning(
         e_mc.selection.nominal.node, e_ext.selection.nominal.node,
         adaptive_signal_sel, n_fine_bins, nmin_signal, nmin_background,
         max_bins, score_range.lo, score_range.hi);
+    draw_stack_plots(plotter, mc, data, include_data, adaptive_edges);
     std::cout << "[plot_model_logit_adaptive_binning] adaptive edges:";
     for (double e : adaptive_edges)
         std::cout << " " << e;

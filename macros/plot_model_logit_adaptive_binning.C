@@ -201,8 +201,9 @@ int plot_model_logit_adaptive_binning(
     double raw_threshold_min = -15.0, double raw_threshold_max = 15.0,
     int n_fine_bins = 200, double nmin_signal = 10.0,
     double nmin_background = 30.0, int max_bins = 15) {
+    (void)samples_tsv;
     const std::string list_path =
-        samples_tsv.empty() ? default_event_list_root() : samples_tsv;
+        "/exp/uboone/data/users/nlane/heron/out/event/events_muon.root";
     std::cout << "[plot_model_logit_adaptive_binning] input=" << list_path
               << "\n";
 

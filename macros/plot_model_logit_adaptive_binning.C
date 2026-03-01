@@ -9,9 +9,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <ROOT/RVec.hxx>
 #include <TCanvas.h>
 #include <TFile.h>
-#include <TGraph.h>
-#include <TLegend.h>
-#include <TStyle.h>
 #include <TSystem.h>
 
 #include <algorithm>
@@ -33,15 +30,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 using namespace nu;
 
 namespace {
-struct MetricScan {
-    std::vector<double> x;
-    std::vector<double> eff;
-    std::vector<double> pur;
-    std::vector<double> effpur;
-    double best_thr = 0.0;
-    double best_effpur = -1.0;
-};
-
 struct FineBinStats {
     double lo = 0.0;
     double hi = 0.0;
@@ -94,126 +82,6 @@ ScoreRange find_score_range(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext)
     }
 
     return out;
-}
-
-MetricScan scan_thresholds(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
-                           const std::string &signal_sel, int n_thresholds,
-                           const std::string &score_expr, double thr_min,
-                           double thr_max) {
-    MetricScan out;
-    if (n_thresholds < 2)
-        n_thresholds = 2;
-    if (thr_max < thr_min)
-        std::swap(thr_min, thr_max);
-
-    const int n_bins = n_thresholds - 1;
-    ROOT::RDF::TH1DModel model_signal("h_signal_scan", "", n_bins, thr_min,
-                                      thr_max);
-    ROOT::RDF::TH1DModel model_mc("h_mc_scan", "", n_bins, thr_min, thr_max);
-    ROOT::RDF::TH1DModel model_ext("h_ext_scan", "", n_bins, thr_min,
-                                   thr_max);
-
-    auto h_signal =
-        node_mc.Filter(signal_sel).Histo1D(model_signal, score_expr, "__w__");
-    auto h_mc = node_mc.Histo1D(model_mc, score_expr, "__w__");
-    auto h_ext = node_ext.Histo1D(model_ext, score_expr, "__w__");
-
-    const TH1D &h_sig_ref = *h_signal;
-    const TH1D &h_mc_ref = *h_mc;
-    const TH1D &h_ext_ref = *h_ext;
-
-    const double signal_total = h_sig_ref.Integral(0, n_bins + 1);
-    if (signal_total <= 0.0)
-        return out;
-
-    out.x.reserve(static_cast<size_t>(n_thresholds));
-    out.eff.reserve(static_cast<size_t>(n_thresholds));
-    out.pur.reserve(static_cast<size_t>(n_thresholds));
-    out.effpur.reserve(static_cast<size_t>(n_thresholds));
-
-    for (int i = 0; i < n_thresholds; ++i) {
-        const double frac =
-            static_cast<double>(i) / static_cast<double>(n_thresholds - 1);
-        const double thr = thr_min + frac * (thr_max - thr_min);
-        const int bin = h_sig_ref.FindFixBin(thr);
-        const int first_bin = std::max(0, std::min(bin, n_bins + 1));
-
-        const double signal_pass = h_sig_ref.Integral(first_bin, n_bins + 1);
-        const double selected_mc = h_mc_ref.Integral(first_bin, n_bins + 1);
-        const double selected_ext = h_ext_ref.Integral(first_bin, n_bins + 1);
-
-        const double selected_all = selected_mc + selected_ext;
-        const double efficiency = signal_pass / signal_total;
-        const double purity =
-            (selected_all > 0.0) ? signal_pass / selected_all : 0.0;
-        const double effpur = efficiency * purity;
-
-        out.x.push_back(thr);
-        out.eff.push_back(efficiency);
-        out.pur.push_back(purity);
-        out.effpur.push_back(effpur);
-
-        if (effpur > out.best_effpur) {
-            out.best_effpur = effpur;
-            out.best_thr = thr;
-        }
-    }
-
-    return out;
-}
-
-void draw_metric_plot(const MetricScan &scan, const std::string &canvas_id,
-                      const std::string &title, const std::string &x_title,
-                      const std::string &output_stem) {
-    if (scan.x.empty())
-        return;
-
-    gStyle->SetOptStat(0);
-    TCanvas c(canvas_id.c_str(), title.c_str(), 900, 700);
-    c.SetLeftMargin(0.11);
-    c.SetRightMargin(0.07);
-    c.SetBottomMargin(0.12);
-
-    TGraph g_eff(static_cast<int>(scan.x.size()), scan.x.data(),
-                 scan.eff.data());
-    TGraph g_pur(static_cast<int>(scan.x.size()), scan.x.data(),
-                 scan.pur.data());
-    TGraph g_effpur(static_cast<int>(scan.x.size()), scan.x.data(),
-                    scan.effpur.data());
-
-    g_eff.SetTitle((";" + x_title + ";metric value").c_str());
-    g_eff.SetLineColor(kBlue + 1);
-    g_eff.SetMarkerColor(kBlue + 1);
-    g_eff.SetLineWidth(3);
-    g_eff.SetMarkerStyle(20);
-
-    g_pur.SetLineColor(kRed + 1);
-    g_pur.SetMarkerColor(kRed + 1);
-    g_pur.SetLineWidth(3);
-    g_pur.SetMarkerStyle(21);
-
-    g_effpur.SetLineColor(kGreen + 2);
-    g_effpur.SetMarkerColor(kGreen + 2);
-    g_effpur.SetLineWidth(3);
-    g_effpur.SetMarkerStyle(22);
-
-    g_eff.Draw("ALP");
-    g_pur.Draw("LP SAME");
-    g_effpur.Draw("LP SAME");
-    g_eff.GetYaxis()->SetRangeUser(0.0, 1.05);
-
-    TLegend leg(0.17, 0.70, 0.56, 0.88);
-    leg.SetBorderSize(0);
-    leg.SetFillStyle(0);
-    leg.AddEntry(&g_eff, "efficiency", "lp");
-    leg.AddEntry(&g_pur, "purity", "lp");
-    leg.AddEntry(&g_effpur, "efficiency #times purity", "lp");
-    leg.Draw();
-
-    c.RedrawAxis();
-    const auto out = plot_output_file(output_stem).string();
-    c.SaveAs(out.c_str());
-    std::cout << "[plot_model_logit] saved plot: " << out << "\n";
 }
 
 void draw_stack_plots(Plotter &plotter, std::vector<const Entry *> &mc,
@@ -323,38 +191,16 @@ std::vector<double> make_adaptive_score_bins(
     return edges;
 }
 
-void draw_effpur_plots(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
-                       const std::string &signal_sel, int n_thresholds,
-                       double raw_threshold_min, double raw_threshold_max,
-                       const std::string &output_stem) {
-    const MetricScan scan_raw =
-        scan_thresholds(node_mc, node_ext, signal_sel, n_thresholds,
-                        "inf_score_0", raw_threshold_min, raw_threshold_max);
-    if (scan_raw.x.empty()) {
-        std::cerr
-            << "[plot_model_logit] signal denominator is <= 0 for signal_sel='"
-            << signal_sel << "'.\n";
-        return;
-    }
-
-    std::cout << "[plot_model_logit] best raw threshold=" << scan_raw.best_thr
-              << " with efficiency x purity=" << scan_raw.best_effpur
-              << "\n";
-    draw_metric_plot(scan_raw, "c_first_inf_score_effpur",
-                     "First inference-score threshold scan",
-                     "Inference score [0] threshold", output_stem);
-}
 } // namespace
 
 int plot_model_logit_adaptive_binning(
     const std::string &samples_tsv = "",
     const std::string &extra_sel = "sel_muon", bool use_logy = true,
     bool include_data = false, const std::string &signal_sel = "is_signal",
-    const std::string &mc_weight = "w_nominal", int n_thresholds = 101,
+    const std::string &mc_weight = "w_nominal",
     double raw_threshold_min = -15.0, double raw_threshold_max = 15.0,
     int n_fine_bins = 200, double nmin_signal = 10.0,
-    double nmin_background = 30.0, int max_bins = 15,
-    const std::string &output_stem = "first_inference_score_eff_purity") {
+    double nmin_background = 30.0, int max_bins = 15) {
     const std::string list_path =
         samples_tsv.empty() ? default_event_list_root() : samples_tsv;
     std::cout << "[plot_model_logit_adaptive_binning] input=" << list_path
@@ -513,10 +359,6 @@ int plot_model_logit_adaptive_binning(
     for (double e : adaptive_edges)
         std::cout << " " << e;
     std::cout << "\n";
-    draw_effpur_plots(e_mc.selection.nominal.node, e_ext.selection.nominal.node,
-                      signal_sel, n_thresholds, score_range.lo,
-                      score_range.hi, output_stem);
-
     std::cout << "[plot_model_logit_adaptive_binning] done\n";
     return 0;
 }

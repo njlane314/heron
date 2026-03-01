@@ -12,6 +12,8 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <TGraph.h>
 #include <TLegend.h>
 #include <TLine.h>
+#include <TH1D.h>
+#include <THStack.h>
 #include <TStyle.h>
 #include <TSystem.h>
 
@@ -26,9 +28,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 
 #include "SampleCLI.hh"
 #include "EventListIO.hh"
-#include "PlotChannels.hh"
 #include "PlotEnv.hh"
-#include "Plotter.hh"
 #include "PlottingHelper.hh"
 
 using namespace nu;
@@ -63,10 +63,6 @@ struct ScoreRange {
     double hi = 0.0;
     bool valid = false;
 };
-
-double sigmoid(double x) {
-    return 1.0 / (1.0 + std::exp(-x));
-}
 
 ScoreRange find_score_range(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext) {
     ScoreRange out;
@@ -282,28 +278,72 @@ void draw_metric_plot(const MetricScan &scan, const std::string &canvas_id,
     std::cout << "[plot_model_logit] saved plot: " << out << "\n";
 }
 
-void draw_stack_plots(Plotter &plotter, std::vector<const Entry *> &mc,
-                      std::vector<const Entry *> &data, bool include_data,
-                      double raw_lo, double raw_hi, double sigmoid_lo,
-                      double sigmoid_hi) {
-    auto &opt = plotter.options();
+void draw_adaptive_score_plot(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
+                              ROOT::RDF::RNode node_data, bool include_data,
+                              const std::vector<double> &edges) {
+    if (edges.size() < 2)
+        return;
 
-    TH1DModel spec = make_spec("inf_score_0", 50, raw_lo, raw_hi, "w_nominal");
-    spec.sel = Preset::Empty;
-    opt.x_title = "Inference score [0]";
-    if (include_data)
-        plotter.draw_stack(spec, mc, data);
-    else
-        plotter.draw_stack(spec, mc);
+    const int nbins = static_cast<int>(edges.size()) - 1;
+    ROOT::RDF::TH1DModel model_mc("h_score_mc", ";Inference score [0];Events", nbins,
+                                  edges.data());
+    ROOT::RDF::TH1DModel model_ext("h_score_ext", ";Inference score [0];Events", nbins,
+                                   edges.data());
+    ROOT::RDF::TH1DModel model_data("h_score_data", ";Inference score [0];Events", nbins,
+                                    edges.data());
 
-    TH1DModel spec_sigmoid =
-        make_spec("inf_score_0_sigmoid", 50, sigmoid_lo, sigmoid_hi, "w_nominal");
-    spec_sigmoid.sel = Preset::Empty;
-    opt.x_title = "Sigmoid(inference score [0])";
+    auto h_mc = node_mc.Histo1D(model_mc, "inf_score_0", "__w__");
+    auto h_ext = node_ext.Histo1D(model_ext, "inf_score_0", "__w__");
+
+    std::unique_ptr<ROOT::RDF::RResultPtr<TH1D>> h_data;
     if (include_data)
-        plotter.draw_stack(spec_sigmoid, mc, data);
-    else
-        plotter.draw_stack(spec_sigmoid, mc);
+        h_data = std::make_unique<ROOT::RDF::RResultPtr<TH1D>>(
+            node_data.Histo1D(model_data, "inf_score_0"));
+
+    gStyle->SetOptStat(0);
+    TCanvas c("c_infscore_adaptive", "c_infscore_adaptive", 900, 700);
+    c.SetLeftMargin(0.11);
+    c.SetRightMargin(0.07);
+    c.SetBottomMargin(0.12);
+
+    TH1D *p_mc = h_mc.GetPtr();
+    TH1D *p_ext = h_ext.GetPtr();
+    p_mc->SetFillColor(kAzure + 1);
+    p_mc->SetLineColor(kAzure + 3);
+    p_ext->SetFillColor(kOrange + 7);
+    p_ext->SetLineColor(kOrange + 3);
+
+    THStack stack("hs_infscore_adaptive", ";Inference score [0];Events");
+    stack.Add(p_ext);
+    stack.Add(p_mc);
+    stack.Draw("HIST");
+
+    TH1D *p_data = nullptr;
+    if (include_data) {
+        p_data = (*h_data).GetPtr();
+        p_data->SetLineColor(kBlack);
+        p_data->SetMarkerColor(kBlack);
+        p_data->SetMarkerStyle(20);
+        p_data->Draw("E1 SAME");
+    }
+
+    TLegend leg(0.62, 0.68, 0.89, 0.88);
+    leg.SetBorderSize(0);
+    leg.SetFillStyle(0);
+    leg.AddEntry(p_mc, "MC", "f");
+    leg.AddEntry(p_ext, "EXT", "f");
+    if (p_data != nullptr)
+        leg.AddEntry(p_data, "Data", "ep");
+    leg.Draw();
+
+    c.RedrawAxis();
+    const std::string out_dir = env_or("HERON_PLOT_OUT_DIR", "./scratch/out");
+    const std::string out_fmt = env_or("HERON_PLOT_OUT_FMT", "pdf");
+    gSystem->mkdir(out_dir.c_str(), true);
+    const std::string out_path =
+        out_dir + "/first_inference_score_adaptive_binning." + out_fmt;
+    c.SaveAs(out_path.c_str());
+    std::cout << "[plot_model_logit] wrote " << out_path << "\n";
 }
 
 double effective_count(double sum_w, double sum_w2) {
@@ -312,10 +352,10 @@ double effective_count(double sum_w, double sum_w2) {
     return (sum_w * sum_w) / sum_w2;
 }
 
-std::vector<double> make_adaptive_sigmoid_bins(
+std::vector<double> make_adaptive_score_bins(
     ROOT::RDF::RNode node_mc, const std::string &signal_sel, int n_fine_bins,
     double nmin_signal, double nmin_background, int max_bins,
-    double sigmoid_lo, double sigmoid_hi) {
+    double score_lo, double score_hi) {
     std::vector<double> edges;
     if (n_fine_bins < 10)
         n_fine_bins = 10;
@@ -323,31 +363,31 @@ std::vector<double> make_adaptive_sigmoid_bins(
     std::vector<FineBinStats> fine;
     fine.reserve(static_cast<size_t>(n_fine_bins));
 
-    ROOT::RDF::TH1DModel model_sig_w("h_sig_w", "", n_fine_bins, sigmoid_lo,
-                                     sigmoid_hi);
+    ROOT::RDF::TH1DModel model_sig_w("h_sig_w", "", n_fine_bins, score_lo,
+                                     score_hi);
     ROOT::RDF::TH1DModel model_sig_w2("h_sig_w2", "", n_fine_bins,
-                                      sigmoid_lo, sigmoid_hi);
-    ROOT::RDF::TH1DModel model_bkg_w("h_bkg_w", "", n_fine_bins, sigmoid_lo,
-                                     sigmoid_hi);
+                                      score_lo, score_hi);
+    ROOT::RDF::TH1DModel model_bkg_w("h_bkg_w", "", n_fine_bins, score_lo,
+                                     score_hi);
     ROOT::RDF::TH1DModel model_bkg_w2("h_bkg_w2", "", n_fine_bins,
-                                      sigmoid_lo, sigmoid_hi);
+                                      score_lo, score_hi);
 
     auto h_sig_w = node_mc.Filter(signal_sel)
-                       .Histo1D(model_sig_w, "inf_score_0_sigmoid", "__w__");
+                       .Histo1D(model_sig_w, "inf_score_0", "__w__");
     auto h_sig_w2 = node_mc.Filter(signal_sel)
-                        .Histo1D(model_sig_w2, "inf_score_0_sigmoid", "__w2__");
+                        .Histo1D(model_sig_w2, "inf_score_0", "__w2__");
     auto h_bkg_w =
         node_mc.Filter("!(" + signal_sel + ")")
-            .Histo1D(model_bkg_w, "inf_score_0_sigmoid", "__w__");
+            .Histo1D(model_bkg_w, "inf_score_0", "__w__");
     auto h_bkg_w2 =
         node_mc.Filter("!(" + signal_sel + ")")
-            .Histo1D(model_bkg_w2, "inf_score_0_sigmoid", "__w2__");
+            .Histo1D(model_bkg_w2, "inf_score_0", "__w2__");
 
     const double width =
-        (sigmoid_hi - sigmoid_lo) / static_cast<double>(n_fine_bins);
+        (score_hi - score_lo) / static_cast<double>(n_fine_bins);
     for (int i = 0; i < n_fine_bins; ++i) {
-        const double lo = sigmoid_lo + i * width;
-        const double hi = sigmoid_lo + (i + 1) * width;
+        const double lo = score_lo + i * width;
+        const double hi = score_lo + (i + 1) * width;
         const int bin = i + 1;
 
         FineBinStats stat;
@@ -360,7 +400,7 @@ std::vector<double> make_adaptive_sigmoid_bins(
         fine.push_back(stat);
     }
 
-    edges.push_back(sigmoid_lo);
+    edges.push_back(score_lo);
 
     double acc_sw = 0.0;
     double acc_sw2 = 0.0;
@@ -391,23 +431,21 @@ std::vector<double> make_adaptive_sigmoid_bins(
     std::sort(edges.begin(), edges.end());
     edges.erase(std::unique(edges.begin(), edges.end()), edges.end());
 
-    if (edges.empty() || edges.front() > sigmoid_lo)
-        edges.insert(edges.begin(), sigmoid_lo);
-    if (edges.back() < sigmoid_hi)
-        edges.push_back(sigmoid_hi);
+    if (edges.empty() || edges.front() > score_lo)
+        edges.insert(edges.begin(), score_lo);
+    if (edges.back() < score_hi)
+        edges.push_back(score_hi);
 
     return edges;
 }
 
 void draw_roc_plot(ROOT::RDF::RNode auc_node) {
     auto v_logit = auc_node.Take<float>("inf_score_0");
-    auto v_sigmoid = auc_node.Take<float>("inf_score_0_sigmoid");
     auto v_label = auc_node.Take<int>("is_signal_label");
 
     const RocCurve roc_logit = make_roc_curve(*v_logit, *v_label);
-    const RocCurve roc_sigmoid = make_roc_curve(*v_sigmoid, *v_label);
 
-    if (roc_logit.fpr.empty() || roc_sigmoid.fpr.empty()) {
+    if (roc_logit.fpr.empty()) {
         std::cerr << "[plot_model_logit] unable to compute ROC/AUC (missing "
                      "signal/background entries).\n";
         return;
@@ -423,13 +461,6 @@ void draw_roc_plot(ROOT::RDF::RNode auc_node) {
     g_logit.SetLineWidth(3);
     g_logit.Draw("AL");
 
-    TGraph g_sigmoid(static_cast<int>(roc_sigmoid.fpr.size()),
-                     roc_sigmoid.fpr.data(), roc_sigmoid.tpr.data());
-    g_sigmoid.SetLineColor(kRed + 1);
-    g_sigmoid.SetLineStyle(2);
-    g_sigmoid.SetLineWidth(3);
-    g_sigmoid.Draw("L SAME");
-
     TLine diagonal(0.0, 0.0, 1.0, 1.0);
     diagonal.SetLineStyle(3);
     diagonal.SetLineColor(kGray + 2);
@@ -439,13 +470,9 @@ void draw_roc_plot(ROOT::RDF::RNode auc_node) {
     leg.SetBorderSize(0);
     leg.SetFillStyle(0);
     char label_logit[64];
-    char label_sigmoid[64];
     std::snprintf(label_logit, sizeof(label_logit), "Raw logit (AUC = %.4f)",
                   roc_logit.auc);
-    std::snprintf(label_sigmoid, sizeof(label_sigmoid),
-                  "Sigmoid(logit) (AUC = %.4f)", roc_sigmoid.auc);
     leg.AddEntry(&g_logit, label_logit, "l");
-    leg.AddEntry(&g_sigmoid, label_sigmoid, "l");
     leg.Draw();
 
     const std::string out_dir = env_or("HERON_PLOT_OUT_DIR", "./scratch/out");
@@ -457,39 +484,25 @@ void draw_roc_plot(ROOT::RDF::RNode auc_node) {
     std::cout << "[plot_model_logit] wrote " << out_path << "\n";
 }
 
-void draw_effpur_plots(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
-                       const std::string &signal_sel, int n_thresholds,
-                       double raw_threshold_min, double raw_threshold_max,
-                       double sigmoid_threshold_min,
-                       double sigmoid_threshold_max,
-                       const std::string &output_stem) {
-    const MetricScan scan_sigmoid =
+void draw_effpur_plot(ROOT::RDF::RNode node_mc, ROOT::RDF::RNode node_ext,
+                      const std::string &signal_sel, int n_thresholds,
+                      double raw_threshold_min, double raw_threshold_max,
+                      const std::string &output_stem) {
+    const MetricScan scan_raw =
         scan_thresholds(node_mc, node_ext, signal_sel, n_thresholds,
-                        "inf_score_0_sigmoid", sigmoid_threshold_min,
-                        sigmoid_threshold_max);
-    if (scan_sigmoid.x.empty()) {
+                        "inf_score_0", raw_threshold_min, raw_threshold_max);
+    if (scan_raw.x.empty()) {
         std::cerr
             << "[plot_model_logit] signal denominator is <= 0 for signal_sel='"
             << signal_sel << "'.\n";
         return;
     }
 
-    std::cout << "[plot_model_logit] best sigmoid threshold="
-              << scan_sigmoid.best_thr
-              << " with efficiency x purity=" << scan_sigmoid.best_effpur
-              << "\n";
-    draw_metric_plot(scan_sigmoid, "c_first_inf_score_effpur",
-                     "First inference-score threshold scan",
-                     "Sigmoid(inference score [0]) threshold", output_stem);
-
-    const MetricScan scan_raw =
-        scan_thresholds(node_mc, node_ext, signal_sel, n_thresholds,
-                        "inf_score_0", raw_threshold_min, raw_threshold_max);
     std::cout << "[plot_model_logit] best raw threshold=" << scan_raw.best_thr
               << " with efficiency x purity=" << scan_raw.best_effpur << "\n";
     draw_metric_plot(scan_raw, "c_first_inf_score_effpur_raw",
-                     "First inference-score raw-threshold scan",
-                     "Inference score [0] threshold", output_stem + "_raw");
+                     "First inference-score threshold scan",
+                     "Inference score [0] threshold", output_stem);
 }
 } // namespace
 
@@ -542,9 +555,7 @@ int plot_model_logit_adaptive_binning(
                        return scores[0];
                    },
                    {"inf_scores"})
-            .Define("inf_score_0_sigmoid",
-                    [](float x) { return static_cast<float>(sigmoid(x)); },
-                    {"inf_score_0"});
+            ;
 
     if (rdf.HasColumn("analysis_channels")) {
         base = base.Define(
@@ -576,107 +587,51 @@ int plot_model_logit_adaptive_binning(
             .Define("__w2__", "__w__*__w__");
     ROOT::RDF::RNode node_data = filter_by_mask(base, mask_data);
 
-    std::vector<Entry> entries;
-    entries.reserve(include_data ? 3 : 2);
-
-    std::vector<const Entry *> mc;
-    std::vector<const Entry *> data;
-
-    ProcessorEntry rec_mc;
-    rec_mc.source = Type::kMC;
-    entries.emplace_back(make_entry(std::move(node_mc), rec_mc));
-    Entry &e_mc = entries.back();
-    mc.push_back(&e_mc);
-
-    ProcessorEntry rec_ext;
-    rec_ext.source = Type::kExt;
-    entries.emplace_back(make_entry(std::move(node_ext), rec_ext));
-    Entry &e_ext = entries.back();
-    mc.push_back(&e_ext);
-
-    Entry *p_data = nullptr;
-    if (include_data) {
-        ProcessorEntry rec_data;
-        rec_data.source = Type::kData;
-        entries.emplace_back(make_entry(std::move(node_data), rec_data));
-        p_data = &entries.back();
-        data.push_back(p_data);
-    }
-
     ROOT::RDF::RNode auc_node = filter_by_mask(base, mask_mc);
 
     if (!extra_sel.empty()) {
         const bool named_column = rdf.HasColumn(extra_sel);
 
         if (named_column) {
-            e_mc.selection.nominal.node = e_mc.selection.nominal.node.Filter(
-                [](bool pass) { return pass; }, {extra_sel});
-            e_ext.selection.nominal.node = e_ext.selection.nominal.node.Filter(
-                [](bool pass) { return pass; }, {extra_sel});
+            node_mc = node_mc.Filter([](bool pass) { return pass; }, {extra_sel});
+            node_ext = node_ext.Filter([](bool pass) { return pass; }, {extra_sel});
             auc_node =
                 auc_node.Filter([](bool pass) { return pass; }, {extra_sel});
-            if (p_data != nullptr)
-                p_data->selection.nominal.node =
-                    p_data->selection.nominal.node.Filter(
-                        [](bool pass) { return pass; }, {extra_sel});
+            if (include_data)
+                node_data =
+                    node_data.Filter([](bool pass) { return pass; }, {extra_sel});
         } else {
-            e_mc.selection.nominal.node =
-                e_mc.selection.nominal.node.Filter(extra_sel);
-            e_ext.selection.nominal.node =
-                e_ext.selection.nominal.node.Filter(extra_sel);
+            node_mc = node_mc.Filter(extra_sel);
+            node_ext = node_ext.Filter(extra_sel);
             auc_node = auc_node.Filter(extra_sel);
-            if (p_data != nullptr)
-                p_data->selection.nominal.node =
-                    p_data->selection.nominal.node.Filter(extra_sel);
+            if (include_data)
+                node_data = node_data.Filter(extra_sel);
         }
     }
 
-    Plotter plotter;
-    auto &opt = plotter.options();
-    opt.use_log_y = use_logy;
-    opt.legend_on_top = true;
-    opt.annotate_numbers = true;
-    opt.overlay_signal = true;
-    opt.show_ratio = include_data;
-    opt.show_ratio_band = include_data;
-    opt.signal_channels = Channels::signal_keys();
-    opt.y_title = "Events";
-    opt.run_numbers = {"1"};
-    opt.image_format = "pdf";
+    (void)use_logy;
 
-    const double pot_data = el.total_pot_data();
-    const double pot_mc = el.total_pot_mc();
-    opt.total_protons_on_target = (pot_data > 0.0 ? pot_data : pot_mc);
-    opt.beamline = el.beamline_label();
-
-    ScoreRange score_range =
-        find_score_range(e_mc.selection.nominal.node, e_ext.selection.nominal.node);
+    ScoreRange score_range = find_score_range(node_mc, node_ext);
     if (!score_range.valid) {
         score_range.lo = raw_threshold_min;
         score_range.hi = raw_threshold_max;
     }
 
-    const double sigmoid_lo = sigmoid(score_range.lo);
-    const double sigmoid_hi = sigmoid(score_range.hi);
-
     std::cout << "[plot_model_logit_adaptive_binning] score range: ["
               << score_range.lo << ", " << score_range.hi << "]\n";
-    std::cout << "[plot_model_logit_adaptive_binning] sigmoid range: ["
-              << sigmoid_lo << ", " << sigmoid_hi << "]\n";
 
-    draw_stack_plots(plotter, mc, data, include_data, score_range.lo,
-                     score_range.hi, sigmoid_lo, sigmoid_hi);
-    const std::vector<double> adaptive_edges = make_adaptive_sigmoid_bins(
-        e_mc.selection.nominal.node, signal_sel, n_fine_bins, nmin_signal,
-        nmin_background, max_bins, sigmoid_lo, sigmoid_hi);
+    const std::vector<double> adaptive_edges = make_adaptive_score_bins(
+        node_mc, signal_sel, n_fine_bins, nmin_signal, nmin_background,
+        max_bins, score_range.lo, score_range.hi);
     std::cout << "[plot_model_logit_adaptive_binning] adaptive edges:";
     for (double e : adaptive_edges)
         std::cout << " " << e;
     std::cout << "\n";
+    draw_adaptive_score_plot(node_mc, node_ext, node_data, include_data,
+                             adaptive_edges);
     draw_roc_plot(auc_node);
-    draw_effpur_plots(e_mc.selection.nominal.node, e_ext.selection.nominal.node,
-                      signal_sel, n_thresholds, score_range.lo,
-                      score_range.hi, sigmoid_lo, sigmoid_hi, output_stem);
+    draw_effpur_plot(node_mc, node_ext, signal_sel, n_thresholds,
+                     score_range.lo, score_range.hi, output_stem);
 
     std::cout << "[plot_model_logit_adaptive_binning] done\n";
     return 0;

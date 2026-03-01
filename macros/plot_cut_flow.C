@@ -40,8 +40,10 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 
 #include <TCanvas.h>
 #include <TFile.h>
+#include <TGaxis.h>
 #include <TGraph.h>
 #include <TLegend.h>
+#include <TPad.h>
 #include <TH1D.h>
 #include <TStyle.h>
 
@@ -216,13 +218,40 @@ int plot_cut_flow(const std::string &event_list_path = "",
         y_mc_pur[i] = points[static_cast<std::size_t>(i)].mc_purity;
     }
 
-    TH1D h_axis("h_axis", ";selection stage;efficiency or purity", n, 0.5, n + 0.5);
+    double purity_min_positive = std::numeric_limits<double>::infinity();
+    double purity_max = 0.0;
+    for (int i = 0; i < n; ++i)
+    {
+        if (y_pur[i] > 0.0)
+            purity_min_positive = std::min(purity_min_positive, y_pur[i]);
+        if (y_mc_pur[i] > 0.0)
+            purity_min_positive = std::min(purity_min_positive, y_mc_pur[i]);
+
+        purity_max = std::max(purity_max, std::max(y_pur[i], y_mc_pur[i]));
+    }
+
+    if (!std::isfinite(purity_min_positive))
+        purity_min_positive = 1.0e-4;
+
+    const double purity_log_min = std::pow(10.0, std::floor(std::log10(std::max(1.0e-8, purity_min_positive))));
+    const double purity_log_max = std::pow(10.0, std::ceil(std::log10(std::max(purity_log_min * 10.0, purity_max))));
+
+    TH1D h_axis("h_axis", ";selection stage;efficiency", n, 0.5, n + 0.5);
     for (int i = 0; i < n; ++i)
         h_axis.GetXaxis()->SetBinLabel(i + 1, points[static_cast<std::size_t>(i)].label.c_str());
 
     TGraph g_eff(n, x.data(), y_eff.data());
-    TGraph g_pur(n, x.data(), y_pur.data());
-    TGraph g_mc_pur(n, x.data(), y_mc_pur.data());
+
+    std::vector<double> y_pur_plot = y_pur;
+    std::vector<double> y_mc_pur_plot = y_mc_pur;
+    for (int i = 0; i < n; ++i)
+    {
+        y_pur_plot[i] = std::max(y_pur_plot[i], purity_log_min);
+        y_mc_pur_plot[i] = std::max(y_mc_pur_plot[i], purity_log_min);
+    }
+
+    TGraph g_pur(n, x.data(), y_pur_plot.data());
+    TGraph g_mc_pur(n, x.data(), y_mc_pur_plot.data());
 
     g_eff.SetLineColor(kBlue + 1);
     g_eff.SetMarkerColor(kBlue + 1);
@@ -243,16 +272,49 @@ int plot_cut_flow(const std::string &event_list_path = "",
     gStyle->SetOptStat(0);
     c.SetBottomMargin(0.22);
     c.SetLeftMargin(0.11);
-    c.SetRightMargin(0.07);
+    c.SetRightMargin(0.12);
 
-    h_axis.SetMinimum(0.0);
-    h_axis.SetMaximum(1.05);
+    const double y_left_min = 0.0;
+    const double y_left_max = 1.05;
+    h_axis.SetMinimum(y_left_min);
+    h_axis.SetMaximum(y_left_max);
     h_axis.GetXaxis()->LabelsOption("v");
     h_axis.Draw("AXIS");
 
     g_eff.Draw("LP SAME");
+
+    TPad purity_pad("purity_pad", "", 0.0, 0.0, 1.0, 1.0);
+    purity_pad.SetFillStyle(4000);
+    purity_pad.SetFrameFillStyle(0);
+    purity_pad.SetLeftMargin(c.GetLeftMargin());
+    purity_pad.SetRightMargin(c.GetRightMargin());
+    purity_pad.SetBottomMargin(c.GetBottomMargin());
+    purity_pad.SetTopMargin(c.GetTopMargin());
+    purity_pad.SetLogy();
+    purity_pad.Draw();
+    purity_pad.cd();
+
+    TH1D h_purity_axis("h_purity_axis", ";selection stage;", n, 0.5, n + 0.5);
+    h_purity_axis.SetMinimum(purity_log_min);
+    h_purity_axis.SetMaximum(purity_log_max);
+    h_purity_axis.GetXaxis()->SetLabelSize(0.0);
+    h_purity_axis.GetXaxis()->SetTickLength(0.0);
+    h_purity_axis.GetYaxis()->SetLabelSize(0.0);
+    h_purity_axis.GetYaxis()->SetTickLength(0.0);
+    h_purity_axis.Draw("AXIS");
+
     g_pur.Draw("LP SAME");
     g_mc_pur.Draw("LP SAME");
+
+    c.cd();
+
+    TGaxis right_axis(n + 0.5, y_left_min, n + 0.5, y_left_max,
+                      purity_log_min, purity_log_max, 510, "+LG");
+    right_axis.SetTitle("purity");
+    right_axis.SetTitleOffset(1.1);
+    right_axis.SetLabelSize(0.03);
+    right_axis.SetTitleSize(0.035);
+    right_axis.Draw();
 
     TLegend leg(0.62, 0.18, 0.88, 0.34);
     leg.SetBorderSize(0);
@@ -271,4 +333,3 @@ int plot_cut_flow(const std::string &event_list_path = "",
 
     return 0;
 }
-

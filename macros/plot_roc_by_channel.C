@@ -370,7 +370,7 @@ int plot_roc_by_channel(const std::string &event_list_path = "",
         }
 
         // Per-channel.
-        for (const auto &b : booked)
+        for (auto &b : booked)
         {
             const ULong64_t Nbkg = b.n_total_raw.GetValue();
             if (Nbkg == 0)
@@ -450,7 +450,7 @@ int plot_roc_by_channel(const std::string &event_list_path = "",
             {
                 // Find the matching booked entry to get N.
                 ULong64_t N = 0;
-                for (const auto &b : booked)
+                for (auto &b : booked)
                 {
                     if (b.style.id == roc_styles[i].id)
                     {

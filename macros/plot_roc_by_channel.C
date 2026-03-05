@@ -357,7 +357,7 @@ int plot_roc_by_channel(const std::string &event_list_path = "",
         std::vector<ChannelStyle> roc_styles;
 
         // All backgrounds first (for axes).
-        const ULong64_t NbkgAll = *n_bkg_all_total;
+        const ULong64_t NbkgAll = n_bkg_all_total.GetValue();
         if (NbkgAll > 0)
         {
             ChannelStyle all_style;
@@ -365,21 +365,21 @@ int plot_roc_by_channel(const std::string &event_list_path = "",
             all_style.label = "All backgrounds";
             all_style.color = kBlack;
             all_style.marker = 20;
-            rocs.push_back(make_roc(*h_bkg_all_raw, NbkgAll, all_style, 3));
+            rocs.push_back(make_roc(h_bkg_all_raw.GetValue(), NbkgAll, all_style, 3));
             roc_styles.push_back(all_style);
         }
 
         // Per-channel.
         for (const auto &b : booked)
         {
-            const ULong64_t Nbkg = *b.n_total_raw;
+            const ULong64_t Nbkg = b.n_total_raw.GetValue();
             if (Nbkg == 0)
                 continue;
             // Skip the signal channel explicitly (defensive).
             if (b.style.id == static_cast<int>(AnalysisChannels::AnalysisChannel::SignalLambda))
                 continue;
 
-            rocs.push_back(make_roc(*b.h_raw, Nbkg, b.style, 2));
+            rocs.push_back(make_roc(b.h_raw.GetValue(), Nbkg, b.style, 2));
             roc_styles.push_back(b.style);
         }
 
@@ -454,7 +454,7 @@ int plot_roc_by_channel(const std::string &event_list_path = "",
                 {
                     if (b.style.id == roc_styles[i].id)
                     {
-                        N = *b.n_total_raw;
+                        N = b.n_total_raw.GetValue();
                         break;
                     }
                 }

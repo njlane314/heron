@@ -27,6 +27,12 @@
 //   - An additional raw-threshold plot is produced using weighted central values
 //     instead of raw counts. No CP bars are drawn there because weighted sums
 //     are not binomial quantities.
+//
+// Approximate weighted intervals:
+//   - For the weighted raw-threshold plot below, we optionally draw an
+//     approximate "effective-entry CP" interval by replacing the weighted sums
+//     with N_eff = (sum w)^2 / sum w^2 and applying Clopper-Pearson to the
+//     rounded effective entries. This is not exact; it is only a visual guide.
 //   - effpur:     interval obtained by multiplying the above CP intervals:
 //                 [eff_lo*pur_lo, eff_hi*pur_hi]
 //
@@ -143,6 +149,13 @@ double pass_fraction_hi_cp(ULong64_t n_total, ULong64_t n_pass, double cl)
                                        true);
 }
 
+double effective_entries(double sumw, double sumw2)
+{
+    if (sumw2 <= 0.0)
+        return 0.0;
+    return (sumw * sumw) / sumw2;
+}
+
 void set_graph_style(TGraphAsymmErrors &g, const MetricStyle &s)
 {
     g.SetLineColor(s.color);
@@ -175,6 +188,14 @@ struct ScanCurves
     std::vector<double> pur_w;
     std::vector<double> effpur_w;
 
+    // Approximate CP-style intervals for weighted curves using effective entries.
+    std::vector<double> eff_w_eyl;
+    std::vector<double> eff_w_eyh;
+    std::vector<double> pur_w_eyl;
+    std::vector<double> pur_w_eyh;
+    std::vector<double> effpur_w_eyl;
+    std::vector<double> effpur_w_eyh;
+
     double best_x_raw = 0.0;
     double best_effpur_raw = -1.0;
     double best_x_w = 0.0;
@@ -189,6 +210,8 @@ ScanCurves compute_scan(const std::vector<double> &thresholds,
                         const TH1D &h_all_raw,
                         const TH1D &h_sig_w,
                         const TH1D &h_all_w,
+                        const TH1D &h_sig_w2,
+                        const TH1D &h_all_w2,
                         double cl)
 {
     const int n = static_cast<int>(thresholds.size());
@@ -209,12 +232,20 @@ ScanCurves compute_scan(const std::vector<double> &thresholds,
     out.pur_w.resize(static_cast<std::size_t>(n), 0.0);
     out.effpur_w.resize(static_cast<std::size_t>(n), 0.0);
 
+    out.eff_w_eyl.resize(static_cast<std::size_t>(n), 0.0);
+    out.eff_w_eyh.resize(static_cast<std::size_t>(n), 0.0);
+    out.pur_w_eyl.resize(static_cast<std::size_t>(n), 0.0);
+    out.pur_w_eyh.resize(static_cast<std::size_t>(n), 0.0);
+    out.effpur_w_eyl.resize(static_cast<std::size_t>(n), 0.0);
+    out.effpur_w_eyh.resize(static_cast<std::size_t>(n), 0.0);
+
     // Totals are the histogram integrals including underflow + overflow.
     // (Events outside the plotted score range must still count in the
     //  efficiency denominator; they simply never pass the threshold grid.)
     const ULong64_t n_sig_total_raw =
         static_cast<ULong64_t>(std::llround(cumulative_hist_sum(h_sig_raw, 0)));
     const double w_sig_total = cumulative_hist_sum(h_sig_w, 0);
+    const double w2_sig_total = cumulative_hist_sum(h_sig_w2, 0);
     out.n_sig_total_raw = n_sig_total_raw;
     out.w_sig_total = w_sig_total;
 
@@ -227,6 +258,8 @@ ScanCurves compute_scan(const std::vector<double> &thresholds,
 
         const double w_sig_pass = cumulative_hist_sum(h_sig_w, first_bin);
         const double w_all_pass = cumulative_hist_sum(h_all_w, first_bin);
+        const double w2_sig_pass = cumulative_hist_sum(h_sig_w2, first_bin);
+        const double w2_all_pass = cumulative_hist_sum(h_all_w2, first_bin);
 
         // Raw central values.
         const double eff = (n_sig_total_raw > 0) ? (static_cast<double>(n_sig_pass_raw) / static_cast<double>(n_sig_total_raw)) : 0.0;
@@ -264,6 +297,34 @@ ScanCurves compute_scan(const std::vector<double> &thresholds,
         out.eff_w[static_cast<std::size_t>(i)] = eff_w;
         out.pur_w[static_cast<std::size_t>(i)] = pur_w;
         out.effpur_w[static_cast<std::size_t>(i)] = effpur_w;
+
+        const ULong64_t neff_sig_tot = static_cast<ULong64_t>(std::llround(effective_entries(w_sig_total, w2_sig_total)));
+        const ULong64_t neff_sig_pass = static_cast<ULong64_t>(std::llround(effective_entries(w_sig_pass, w2_sig_pass)));
+        const ULong64_t neff_all_pass = static_cast<ULong64_t>(std::llround(effective_entries(w_all_pass, w2_all_pass)));
+
+        const double eff_w_lo = (neff_sig_tot > 0 && neff_sig_pass <= neff_sig_tot)
+                                    ? pass_fraction_lo_cp(neff_sig_tot, neff_sig_pass, cl)
+                                    : 0.0;
+        const double eff_w_hi = (neff_sig_tot > 0 && neff_sig_pass <= neff_sig_tot)
+                                    ? pass_fraction_hi_cp(neff_sig_tot, neff_sig_pass, cl)
+                                    : 0.0;
+
+        const double pur_w_lo = (neff_all_pass > 0 && neff_sig_pass <= neff_all_pass)
+                                    ? pass_fraction_lo_cp(neff_all_pass, neff_sig_pass, cl)
+                                    : 0.0;
+        const double pur_w_hi = (neff_all_pass > 0 && neff_sig_pass <= neff_all_pass)
+                                    ? pass_fraction_hi_cp(neff_all_pass, neff_sig_pass, cl)
+                                    : 0.0;
+
+        out.eff_w_eyl[static_cast<std::size_t>(i)] = std::max(0.0, eff_w - eff_w_lo);
+        out.eff_w_eyh[static_cast<std::size_t>(i)] = std::max(0.0, eff_w_hi - eff_w);
+        out.pur_w_eyl[static_cast<std::size_t>(i)] = std::max(0.0, pur_w - pur_w_lo);
+        out.pur_w_eyh[static_cast<std::size_t>(i)] = std::max(0.0, pur_w_hi - pur_w);
+
+        const double effpur_w_lo = eff_w_lo * pur_w_lo;
+        const double effpur_w_hi = eff_w_hi * pur_w_hi;
+        out.effpur_w_eyl[static_cast<std::size_t>(i)] = std::max(0.0, effpur_w - effpur_w_lo);
+        out.effpur_w_eyh[static_cast<std::size_t>(i)] = std::max(0.0, effpur_w_hi - effpur_w);
 
         // Track best thresholds.
         if (effpur > out.best_effpur_raw)
@@ -397,39 +458,63 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         ROOT::RDF::TH1DModel h_sig_sigmoid_raw_model("h_sig_sigmoid_raw", "", n_thresholds, edges_sig.data());
         ROOT::RDF::TH1DModel h_all_sigmoid_raw_model("h_all_sigmoid_raw", "", n_thresholds, edges_sig.data());
         ROOT::RDF::TH1DModel h_sig_sigmoid_w_model("h_sig_sigmoid_w", "", n_thresholds, edges_sig.data());
+        ROOT::RDF::TH1DModel h_sig_sigmoid_w2_model("h_sig_sigmoid_w2", "", n_thresholds, edges_sig.data());
         ROOT::RDF::TH1DModel h_all_sigmoid_w_model("h_all_sigmoid_w", "", n_thresholds, edges_sig.data());
+        ROOT::RDF::TH1DModel h_all_sigmoid_w2_model("h_all_sigmoid_w2", "", n_thresholds, edges_sig.data());
 
         auto h_sig_sigmoid_raw = node_sig.Histo1D(h_sig_sigmoid_raw_model, "inf_score_0_sigmoid");
         auto h_all_sigmoid_raw = node_all.Histo1D(h_all_sigmoid_raw_model, "inf_score_0_sigmoid");
 
         auto h_sig_sigmoid_w = node_sig.Histo1D(h_sig_sigmoid_w_model, "inf_score_0_sigmoid", "__w__");
+        auto h_sig_sigmoid_w2 = node_sig.Define("__w2__", "__w__ * __w__")
+                                      .Histo1D(h_sig_sigmoid_w2_model, "inf_score_0_sigmoid", "__w2__");
         auto h_all_sigmoid_w = node_all.Histo1D(h_all_sigmoid_w_model, "inf_score_0_sigmoid", "__w__");
+        auto h_all_sigmoid_w2 = node_all.Define("__w2__", "__w__ * __w__")
+                                      .Histo1D(h_all_sigmoid_w2_model, "inf_score_0_sigmoid", "__w2__");
 
         ROOT::RDF::TH1DModel h_sig_raw_raw_model("h_sig_raw_raw", "", n_thresholds, edges_raw.data());
         ROOT::RDF::TH1DModel h_all_raw_raw_model("h_all_raw_raw", "", n_thresholds, edges_raw.data());
         ROOT::RDF::TH1DModel h_sig_raw_w_model("h_sig_raw_w", "", n_thresholds, edges_raw.data());
+        ROOT::RDF::TH1DModel h_sig_raw_w2_model("h_sig_raw_w2", "", n_thresholds, edges_raw.data());
         ROOT::RDF::TH1DModel h_all_raw_w_model("h_all_raw_w", "", n_thresholds, edges_raw.data());
+        ROOT::RDF::TH1DModel h_all_raw_w2_model("h_all_raw_w2", "", n_thresholds, edges_raw.data());
 
         auto h_sig_raw_raw = node_sig.Histo1D(h_sig_raw_raw_model, "inf_score_0");
         auto h_all_raw_raw = node_all.Histo1D(h_all_raw_raw_model, "inf_score_0");
 
         auto h_sig_raw_w = node_sig.Histo1D(h_sig_raw_w_model, "inf_score_0", "__w__");
+        auto h_sig_raw_w2 = node_sig.Define("__w2__", "__w__ * __w__")
+                                  .Histo1D(h_sig_raw_w2_model, "inf_score_0", "__w2__");
         auto h_all_raw_w = node_all.Histo1D(h_all_raw_w_model, "inf_score_0", "__w__");
+        auto h_all_raw_w2 = node_all.Define("__w2__", "__w__ * __w__")
+                                  .Histo1D(h_all_raw_w2_model, "inf_score_0", "__w2__");
 
         // Force evaluation now.
         const TH1D &hs_sigmoid_raw = *h_sig_sigmoid_raw;
         const TH1D &ha_sigmoid_raw = *h_all_sigmoid_raw;
         const TH1D &hs_sigmoid_w = *h_sig_sigmoid_w;
+        const TH1D &hs_sigmoid_w2 = *h_sig_sigmoid_w2;
         const TH1D &ha_sigmoid_w = *h_all_sigmoid_w;
+        const TH1D &ha_sigmoid_w2 = *h_all_sigmoid_w2;
 
         const TH1D &hs_raw_raw = *h_sig_raw_raw;
         const TH1D &ha_raw_raw = *h_all_raw_raw;
         const TH1D &hs_raw_w = *h_sig_raw_w;
+        const TH1D &hs_raw_w2 = *h_sig_raw_w2;
         const TH1D &ha_raw_w = *h_all_raw_w;
+        const TH1D &ha_raw_w2 = *h_all_raw_w2;
 
         // --- Compute curves ---
-        const ScanCurves scan_sig = compute_scan(thr_sig, hs_sigmoid_raw, ha_sigmoid_raw, hs_sigmoid_w, ha_sigmoid_w, cl);
-        const ScanCurves scan_raw = compute_scan(thr_raw, hs_raw_raw, ha_raw_raw, hs_raw_w, ha_raw_w, cl);
+        const ScanCurves scan_sig = compute_scan(thr_sig,
+                                                 hs_sigmoid_raw, ha_sigmoid_raw,
+                                                 hs_sigmoid_w, ha_sigmoid_w,
+                                                 hs_sigmoid_w2, ha_sigmoid_w2,
+                                                 cl);
+        const ScanCurves scan_raw = compute_scan(thr_raw,
+                                                 hs_raw_raw, ha_raw_raw,
+                                                 hs_raw_w, ha_raw_w,
+                                                 hs_raw_w2, ha_raw_w2,
+                                                 cl);
 
         std::cout << "[plot_inference_score_effpur_scan] sigmoid scan best (raw eff*pur) thr="
                   << scan_sig.best_x_raw << " value=" << scan_sig.best_effpur_raw
@@ -623,8 +708,8 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         //   purity_w(t)     = (sum_S,pass w) / (sum_all,pass w)
         //   effpur_w(t)     = efficiency_w(t) * purity_w(t)
         //
-        // These are central values only. Exact CP intervals do not apply to
-        // weighted sums, so we intentionally do not draw binomial error bars.
+        // The bars drawn here are approximate effective-entry CP intervals,
+        // not exact CP intervals for weighted sums.
         {
             Plotter plotter;
             plotter.set_global_style();
@@ -647,31 +732,44 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
             h_frame.SetMaximum(1.05);
             h_frame.Draw("AXIS");
 
-            TGraph g_eff_w(static_cast<int>(scan_raw.x.size()), scan_raw.x.data(), scan_raw.eff_w.data());
-            TGraph g_pur_w(static_cast<int>(scan_raw.x.size()), scan_raw.x.data(), scan_raw.pur_w.data());
-            TGraph g_effpur_w(static_cast<int>(scan_raw.x.size()), scan_raw.x.data(), scan_raw.effpur_w.data());
+            std::vector<double> ex0(scan_raw.x.size(), 0.0);
 
-            g_eff_w.SetLineColor(kBlue + 1);
-            g_eff_w.SetMarkerColor(kBlue + 1);
-            g_eff_w.SetLineWidth(2);
-            g_eff_w.SetMarkerStyle(20);
-            g_eff_w.SetMarkerSize(1.0);
+            TGraphAsymmErrors g_eff_w(static_cast<int>(scan_raw.x.size()),
+                                      scan_raw.x.data(),
+                                      scan_raw.eff_w.data(),
+                                      ex0.data(),
+                                      ex0.data(),
+                                      scan_raw.eff_w_eyl.data(),
+                                      scan_raw.eff_w_eyh.data());
+            TGraphAsymmErrors g_pur_w(static_cast<int>(scan_raw.x.size()),
+                                      scan_raw.x.data(),
+                                      scan_raw.pur_w.data(),
+                                      ex0.data(),
+                                      ex0.data(),
+                                      scan_raw.pur_w_eyl.data(),
+                                      scan_raw.pur_w_eyh.data());
+            TGraphAsymmErrors g_effpur_w(static_cast<int>(scan_raw.x.size()),
+                                         scan_raw.x.data(),
+                                         scan_raw.effpur_w.data(),
+                                         ex0.data(),
+                                         ex0.data(),
+                                         scan_raw.effpur_w_eyl.data(),
+                                         scan_raw.effpur_w_eyh.data());
 
-            g_pur_w.SetLineColor(kRed + 1);
-            g_pur_w.SetMarkerColor(kRed + 1);
-            g_pur_w.SetLineWidth(2);
-            g_pur_w.SetMarkerStyle(21);
-            g_pur_w.SetMarkerSize(1.0);
+            const MetricStyle s_eff{"weighted efficiency", kBlue + 1, 20};
+            const MetricStyle s_pur{"weighted purity", kRed + 1, 21};
+            const MetricStyle s_effpur{"weighted efficiency #times purity", kGreen + 2, 22};
 
-            g_effpur_w.SetLineColor(kGreen + 2);
-            g_effpur_w.SetMarkerColor(kGreen + 2);
-            g_effpur_w.SetLineWidth(2);
-            g_effpur_w.SetMarkerStyle(22);
-            g_effpur_w.SetMarkerSize(1.0);
+            set_graph_style(g_eff_w, s_eff);
+            set_graph_style(g_pur_w, s_pur);
+            set_graph_style(g_effpur_w, s_effpur);
 
-            g_eff_w.Draw("LP SAME");
-            g_pur_w.Draw("LP SAME");
-            g_effpur_w.Draw("LP SAME");
+            g_eff_w.Draw("PZ SAME");
+            g_eff_w.Draw("L SAME");
+            g_pur_w.Draw("PZ SAME");
+            g_pur_w.Draw("L SAME");
+            g_effpur_w.Draw("PZ SAME");
+            g_effpur_w.Draw("L SAME");
 
             TLine best_line(scan_raw.best_x_w, 0.0, scan_raw.best_x_w, 1.05);
             best_line.SetLineStyle(2);
@@ -681,8 +779,8 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
             TLegend leg(0.14, 0.70, 0.58, 0.88);
             leg.SetBorderSize(0);
             leg.SetFillStyle(0);
-            leg.AddEntry(&g_eff_w, "weighted efficiency", "lp");
-            leg.AddEntry(&g_pur_w, "weighted purity", "lp");
+            leg.AddEntry(&g_eff_w, "weighted efficiency (approx. N_{eff}-CP)", "lp");
+            leg.AddEntry(&g_pur_w, "weighted purity (approx. N_{eff}-CP)", "lp");
             leg.AddEntry(&g_effpur_w, "weighted efficiency #times purity", "lp");
 
             std::ostringstream best_lbl;
@@ -695,8 +793,7 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
 
             const auto out = plot_output_file(output_stem + "_raw_weighted").string();
             c.SaveAs(out.c_str());
-            std::cout << "[plot_inference_score_effpur_scan] saved weighted raw-threshold plot: "
-                      << out << "\n";
+            std::cout << "[plot_inference_score_effpur_scan] saved weighted raw-threshold plot: " << out << "\n";
         }
 
         // --- Report some totals for context ---
@@ -704,6 +801,7 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         std::cout << "  signal_sel='" << signal_sel << "'\n";
         std::cout << "  signal total raw  = " << scan_raw.n_sig_total_raw << "\n";
         std::cout << "  signal total w    = " << std::fixed << std::setprecision(3) << scan_raw.w_sig_total << "\n";
+        std::cout << "  weighted-plot bars use approximate effective-entry CP intervals\n";
         std::cout << "  cl (CP intervals) = " << cl << "\n";
         std::cout << "[plot_inference_score_effpur_scan] done\n";
 

@@ -22,6 +22,11 @@
 // Uncertainties:
 //   - efficiency: Clopper-Pearson on (N_S,pass | N_S,tot)
 //   - purity:     Clopper-Pearson on (N_S,pass | N_all,pass)
+//
+// Weighted companion plot:
+//   - An additional raw-threshold plot is produced using weighted central values
+//     instead of raw counts. No CP bars are drawn there because weighted sums
+//     are not binomial quantities.
 //   - effpur:     interval obtained by multiplying the above CP intervals:
 //                 [eff_lo*pur_lo, eff_hi*pur_hi]
 //
@@ -53,6 +58,7 @@
 #include <TEfficiency.h>
 #include <TCanvas.h>
 #include <TFile.h>
+#include <TGraph.h>
 #include <TGraphAsymmErrors.h>
 #include <TH1.h>
 #include <TH1D.h>
@@ -608,6 +614,89 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
             const auto out = plot_output_file(output_stem + "_raw").string();
             c.SaveAs(out.c_str());
             std::cout << "[plot_inference_score_effpur_scan] saved raw-threshold plot: " << out << "\n";
+        }
+
+        // --- Plot: raw-threshold scan using weighted yields ---
+        //
+        // Definitions:
+        //   efficiency_w(t) = (sum_S,pass w) / (sum_S,tot w)
+        //   purity_w(t)     = (sum_S,pass w) / (sum_all,pass w)
+        //   effpur_w(t)     = efficiency_w(t) * purity_w(t)
+        //
+        // These are central values only. Exact CP intervals do not apply to
+        // weighted sums, so we intentionally do not draw binomial error bars.
+        {
+            Plotter plotter;
+            plotter.set_global_style();
+            gStyle->SetOptStat(0);
+
+            TCanvas c("c_inf_score_effpur_raw_weighted",
+                      "Inference-score raw-threshold scan (weighted)",
+                      1150,
+                      800);
+            c.SetLeftMargin(0.11);
+            c.SetRightMargin(0.04);
+            c.SetBottomMargin(0.12);
+
+            TH1D h_frame("h_frame_effpur_raw_weighted",
+                         ";Inference score [0] threshold;metric value",
+                         100,
+                         raw_threshold_min,
+                         raw_threshold_max);
+            h_frame.SetMinimum(0.0);
+            h_frame.SetMaximum(1.05);
+            h_frame.Draw("AXIS");
+
+            TGraph g_eff_w(static_cast<int>(scan_raw.x.size()), scan_raw.x.data(), scan_raw.eff_w.data());
+            TGraph g_pur_w(static_cast<int>(scan_raw.x.size()), scan_raw.x.data(), scan_raw.pur_w.data());
+            TGraph g_effpur_w(static_cast<int>(scan_raw.x.size()), scan_raw.x.data(), scan_raw.effpur_w.data());
+
+            g_eff_w.SetLineColor(kBlue + 1);
+            g_eff_w.SetMarkerColor(kBlue + 1);
+            g_eff_w.SetLineWidth(2);
+            g_eff_w.SetMarkerStyle(20);
+            g_eff_w.SetMarkerSize(1.0);
+
+            g_pur_w.SetLineColor(kRed + 1);
+            g_pur_w.SetMarkerColor(kRed + 1);
+            g_pur_w.SetLineWidth(2);
+            g_pur_w.SetMarkerStyle(21);
+            g_pur_w.SetMarkerSize(1.0);
+
+            g_effpur_w.SetLineColor(kGreen + 2);
+            g_effpur_w.SetMarkerColor(kGreen + 2);
+            g_effpur_w.SetLineWidth(2);
+            g_effpur_w.SetMarkerStyle(22);
+            g_effpur_w.SetMarkerSize(1.0);
+
+            g_eff_w.Draw("LP SAME");
+            g_pur_w.Draw("LP SAME");
+            g_effpur_w.Draw("LP SAME");
+
+            TLine best_line(scan_raw.best_x_w, 0.0, scan_raw.best_x_w, 1.05);
+            best_line.SetLineStyle(2);
+            best_line.SetLineWidth(2);
+            best_line.Draw();
+
+            TLegend leg(0.14, 0.70, 0.58, 0.88);
+            leg.SetBorderSize(0);
+            leg.SetFillStyle(0);
+            leg.AddEntry(&g_eff_w, "weighted efficiency", "lp");
+            leg.AddEntry(&g_pur_w, "weighted purity", "lp");
+            leg.AddEntry(&g_effpur_w, "weighted efficiency #times purity", "lp");
+
+            std::ostringstream best_lbl;
+            best_lbl << "best weighted eff#timespur @ t=" << std::fixed << std::setprecision(3)
+                     << scan_raw.best_x_w;
+            leg.AddEntry(&best_line, best_lbl.str().c_str(), "l");
+            leg.Draw();
+
+            c.RedrawAxis();
+
+            const auto out = plot_output_file(output_stem + "_raw_weighted").string();
+            c.SaveAs(out.c_str());
+            std::cout << "[plot_inference_score_effpur_scan] saved weighted raw-threshold plot: "
+                      << out << "\n";
         }
 
         // --- Report some totals for context ---

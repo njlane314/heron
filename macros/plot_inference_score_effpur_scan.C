@@ -25,14 +25,15 @@
 //
 // Weighted companion plot:
 //   - An additional raw-threshold plot is produced using weighted central values
-//     instead of raw counts. No CP bars are drawn there because weighted sums
-//     are not binomial quantities.
+//     instead of raw counts.
+//   - For that weighted plot, uncertainties are computed with a delta-method
+//     propagation using the sumw2 variances of the weighted sums:
 //
-// Approximate weighted intervals:
-//   - For the weighted raw-threshold plot below, we optionally draw an
-//     approximate "effective-entry CP" interval by replacing the weighted sums
-//     with N_eff = (sum w)^2 / sum w^2 and applying Clopper-Pearson to the
-//     rounded effective entries. This is not exact; it is only a visual guide.
+//         Var(sum w) ~= sum w^2 .
+//
+//     This is more principled than forcing a binomial/CP construction onto
+//     weighted quantities. The bars on the weighted plot are therefore
+//     sumw2/delta-method uncertainties, not Clopper-Pearson intervals.
 //   - effpur:     interval obtained by multiplying the above CP intervals:
 //                 [eff_lo*pur_lo, eff_hi*pur_hi]
 //
@@ -149,11 +150,72 @@ double pass_fraction_hi_cp(ULong64_t n_total, ULong64_t n_pass, double cl)
                                        true);
 }
 
-double effective_entries(double sumw, double sumw2)
+// Delta-method variance for a weighted fraction p = A / B where A is a subset of B.
+//
+// Here:
+//   A      = sum_pass w
+//   B      = sum_total w
+//   Var(A) = sum_pass w^2
+//   Var(B) = sum_total w^2
+//   Cov(A,B)=Var(A), since the passing sample is a subset of the total sample.
+//
+// This reduces to the usual p(1-p)/N when all weights are equal.
+double weighted_subset_fraction_variance(double sumw_pass,
+                                         double sumw_total,
+                                         double sumw2_pass,
+                                         double sumw2_total)
 {
-    if (sumw2 <= 0.0)
+    if (!(sumw_total > 0.0))
         return 0.0;
-    return (sumw * sumw) / sumw2;
+
+    const double p = sumw_pass / sumw_total;
+    const double sumw2_fail = std::max(0.0, sumw2_total - sumw2_pass);
+
+    const double var =
+        ((1.0 - p) * (1.0 - p) * sumw2_pass + p * p * sumw2_fail) /
+        (sumw_total * sumw_total);
+
+    return std::max(0.0, var);
+}
+
+// Delta-method variance for
+//
+//   g = eff_w * pur_w = (A/B) * (A/C) = A^2 / (B C)
+//
+// with:
+//   A = weighted signal passing yield
+//   B = weighted total signal yield
+//   C = weighted total selected yield
+//
+// and the overlap covariances induced by subset relations:
+//   Cov(A,B) = Var(A)
+//   Cov(A,C) = Var(A)
+//   Cov(B,C) = Var(A)
+//
+// because A is the common overlap between B and C.
+double weighted_effpur_variance(double A,
+                                double B,
+                                double C,
+                                double varA,
+                                double varB,
+                                double varC)
+{
+    if (!(B > 0.0) || !(C > 0.0))
+        return 0.0;
+
+    const double dA = 2.0 * A / (B * C);
+    const double dB = -A * A / (B * B * C);
+    const double dC = -A * A / (B * C * C);
+
+    const double covAB = varA;
+    const double covAC = varA;
+    const double covBC = varA;
+
+    const double var =
+        dA * dA * varA + dB * dB * varB + dC * dC * varC +
+        2.0 * dA * dB * covAB + 2.0 * dA * dC * covAC + 2.0 * dB * dC * covBC;
+
+    return std::max(0.0, var);
 }
 
 void set_graph_style(TGraphAsymmErrors &g, const MetricStyle &s)
@@ -188,7 +250,7 @@ struct ScanCurves
     std::vector<double> pur_w;
     std::vector<double> effpur_w;
 
-    // Approximate CP-style intervals for weighted curves using effective entries.
+    // Delta-method uncertainties for the weighted curves.
     std::vector<double> eff_w_eyl;
     std::vector<double> eff_w_eyh;
     std::vector<double> pur_w_eyl;
@@ -298,33 +360,37 @@ ScanCurves compute_scan(const std::vector<double> &thresholds,
         out.pur_w[static_cast<std::size_t>(i)] = pur_w;
         out.effpur_w[static_cast<std::size_t>(i)] = effpur_w;
 
-        const ULong64_t neff_sig_tot = static_cast<ULong64_t>(std::llround(effective_entries(w_sig_total, w2_sig_total)));
-        const ULong64_t neff_sig_pass = static_cast<ULong64_t>(std::llround(effective_entries(w_sig_pass, w2_sig_pass)));
-        const ULong64_t neff_all_pass = static_cast<ULong64_t>(std::llround(effective_entries(w_all_pass, w2_all_pass)));
+        // Weighted uncertainty bars from delta-method propagation of sumw2.
+        const double var_eff_w =
+            weighted_subset_fraction_variance(w_sig_pass,
+                                              w_sig_total,
+                                              w2_sig_pass,
+                                              w2_sig_total);
 
-        const double eff_w_lo = (neff_sig_tot > 0 && neff_sig_pass <= neff_sig_tot)
-                                    ? pass_fraction_lo_cp(neff_sig_tot, neff_sig_pass, cl)
-                                    : 0.0;
-        const double eff_w_hi = (neff_sig_tot > 0 && neff_sig_pass <= neff_sig_tot)
-                                    ? pass_fraction_hi_cp(neff_sig_tot, neff_sig_pass, cl)
-                                    : 0.0;
+        const double var_pur_w =
+            weighted_subset_fraction_variance(w_sig_pass,
+                                              w_all_pass,
+                                              w2_sig_pass,
+                                              w2_all_pass);
 
-        const double pur_w_lo = (neff_all_pass > 0 && neff_sig_pass <= neff_all_pass)
-                                    ? pass_fraction_lo_cp(neff_all_pass, neff_sig_pass, cl)
-                                    : 0.0;
-        const double pur_w_hi = (neff_all_pass > 0 && neff_sig_pass <= neff_all_pass)
-                                    ? pass_fraction_hi_cp(neff_all_pass, neff_sig_pass, cl)
-                                    : 0.0;
+        const double var_effpur_w =
+            weighted_effpur_variance(w_sig_pass,
+                                     w_sig_total,
+                                     w_all_pass,
+                                     w2_sig_pass,
+                                     w2_sig_total,
+                                     w2_all_pass);
 
-        out.eff_w_eyl[static_cast<std::size_t>(i)] = std::max(0.0, eff_w - eff_w_lo);
-        out.eff_w_eyh[static_cast<std::size_t>(i)] = std::max(0.0, eff_w_hi - eff_w);
-        out.pur_w_eyl[static_cast<std::size_t>(i)] = std::max(0.0, pur_w - pur_w_lo);
-        out.pur_w_eyh[static_cast<std::size_t>(i)] = std::max(0.0, pur_w_hi - pur_w);
+        const double sig_eff_w = std::sqrt(std::max(0.0, var_eff_w));
+        const double sig_pur_w = std::sqrt(std::max(0.0, var_pur_w));
+        const double sig_effpur_w = std::sqrt(std::max(0.0, var_effpur_w));
 
-        const double effpur_w_lo = eff_w_lo * pur_w_lo;
-        const double effpur_w_hi = eff_w_hi * pur_w_hi;
-        out.effpur_w_eyl[static_cast<std::size_t>(i)] = std::max(0.0, effpur_w - effpur_w_lo);
-        out.effpur_w_eyh[static_cast<std::size_t>(i)] = std::max(0.0, effpur_w_hi - effpur_w);
+        out.eff_w_eyl[static_cast<std::size_t>(i)] = std::min(eff_w, sig_eff_w);
+        out.eff_w_eyh[static_cast<std::size_t>(i)] = std::min(1.0 - eff_w, sig_eff_w);
+        out.pur_w_eyl[static_cast<std::size_t>(i)] = std::min(pur_w, sig_pur_w);
+        out.pur_w_eyh[static_cast<std::size_t>(i)] = std::min(1.0 - pur_w, sig_pur_w);
+        out.effpur_w_eyl[static_cast<std::size_t>(i)] = std::min(effpur_w, sig_effpur_w);
+        out.effpur_w_eyh[static_cast<std::size_t>(i)] = std::min(1.0 - effpur_w, sig_effpur_w);
 
         // Track best thresholds.
         if (effpur > out.best_effpur_raw)
@@ -421,7 +487,8 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
 
         // Node with ALL non-data (MC + EXT). This is the purity denominator.
         ROOT::RDF::RNode node_all = filter_by_sample_mask(base, mask_mc_like, "sample_id")
-                                        .Define("__w__", mc_weight);
+                                        .Define("__w__", mc_weight)
+                                        .Define("__w2__", "__w__ * __w__");
 
         // MC-only (exclude EXT). This is used for signal efficiency.
         ROOT::RDF::RNode node_mc = filter_not_sample_mask(node_all, mask_ext, "sample_id");
@@ -466,11 +533,9 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         auto h_all_sigmoid_raw = node_all.Histo1D(h_all_sigmoid_raw_model, "inf_score_0_sigmoid");
 
         auto h_sig_sigmoid_w = node_sig.Histo1D(h_sig_sigmoid_w_model, "inf_score_0_sigmoid", "__w__");
-        auto h_sig_sigmoid_w2 = node_sig.Define("__w2__", "__w__ * __w__")
-                                      .Histo1D(h_sig_sigmoid_w2_model, "inf_score_0_sigmoid", "__w2__");
+        auto h_sig_sigmoid_w2 = node_sig.Histo1D(h_sig_sigmoid_w2_model, "inf_score_0_sigmoid", "__w2__");
         auto h_all_sigmoid_w = node_all.Histo1D(h_all_sigmoid_w_model, "inf_score_0_sigmoid", "__w__");
-        auto h_all_sigmoid_w2 = node_all.Define("__w2__", "__w__ * __w__")
-                                      .Histo1D(h_all_sigmoid_w2_model, "inf_score_0_sigmoid", "__w2__");
+        auto h_all_sigmoid_w2 = node_all.Histo1D(h_all_sigmoid_w2_model, "inf_score_0_sigmoid", "__w2__");
 
         ROOT::RDF::TH1DModel h_sig_raw_raw_model("h_sig_raw_raw", "", n_thresholds, edges_raw.data());
         ROOT::RDF::TH1DModel h_all_raw_raw_model("h_all_raw_raw", "", n_thresholds, edges_raw.data());
@@ -483,11 +548,9 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         auto h_all_raw_raw = node_all.Histo1D(h_all_raw_raw_model, "inf_score_0");
 
         auto h_sig_raw_w = node_sig.Histo1D(h_sig_raw_w_model, "inf_score_0", "__w__");
-        auto h_sig_raw_w2 = node_sig.Define("__w2__", "__w__ * __w__")
-                                  .Histo1D(h_sig_raw_w2_model, "inf_score_0", "__w2__");
+        auto h_sig_raw_w2 = node_sig.Histo1D(h_sig_raw_w2_model, "inf_score_0", "__w2__");
         auto h_all_raw_w = node_all.Histo1D(h_all_raw_w_model, "inf_score_0", "__w__");
-        auto h_all_raw_w2 = node_all.Define("__w2__", "__w__ * __w__")
-                                  .Histo1D(h_all_raw_w2_model, "inf_score_0", "__w2__");
+        auto h_all_raw_w2 = node_all.Histo1D(h_all_raw_w2_model, "inf_score_0", "__w2__");
 
         // Force evaluation now.
         const TH1D &hs_sigmoid_raw = *h_sig_sigmoid_raw;
@@ -708,8 +771,8 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         //   purity_w(t)     = (sum_S,pass w) / (sum_all,pass w)
         //   effpur_w(t)     = efficiency_w(t) * purity_w(t)
         //
-        // The bars drawn here are approximate effective-entry CP intervals,
-        // not exact CP intervals for weighted sums.
+        // The error bars are delta-method / sumw2 uncertainties on these
+        // weighted ratios, not Clopper-Pearson intervals.
         {
             Plotter plotter;
             plotter.set_global_style();
@@ -779,9 +842,9 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
             TLegend leg(0.14, 0.70, 0.58, 0.88);
             leg.SetBorderSize(0);
             leg.SetFillStyle(0);
-            leg.AddEntry(&g_eff_w, "weighted efficiency (approx. N_{eff}-CP)", "lp");
-            leg.AddEntry(&g_pur_w, "weighted purity (approx. N_{eff}-CP)", "lp");
-            leg.AddEntry(&g_effpur_w, "weighted efficiency #times purity", "lp");
+            leg.AddEntry(&g_eff_w, "weighted efficiency (sumw2)", "lp");
+            leg.AddEntry(&g_pur_w, "weighted purity (sumw2)", "lp");
+            leg.AddEntry(&g_effpur_w, "weighted efficiency #times purity (sumw2)", "lp");
 
             std::ostringstream best_lbl;
             best_lbl << "best weighted eff#timespur @ t=" << std::fixed << std::setprecision(3)
@@ -801,7 +864,7 @@ int plot_inference_score_effpur_scan(const std::string &event_list_path = "",
         std::cout << "  signal_sel='" << signal_sel << "'\n";
         std::cout << "  signal total raw  = " << scan_raw.n_sig_total_raw << "\n";
         std::cout << "  signal total w    = " << std::fixed << std::setprecision(3) << scan_raw.w_sig_total << "\n";
-        std::cout << "  weighted-plot bars use approximate effective-entry CP intervals\n";
+        std::cout << "  weighted-plot bars use delta-method sumw2 propagation\n";
         std::cout << "  cl (CP intervals) = " << cl << "\n";
         std::cout << "[plot_inference_score_effpur_scan] done\n";
 

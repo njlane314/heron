@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -61,6 +62,21 @@ bool has_column(ROOT::RDF::RNode node, const std::string &name)
 {
     const auto cols = node.GetColumnNames();
     return std::find(cols.begin(), cols.end(), name) != cols.end();
+}
+
+double percentile_inplace(std::vector<double> &values, double q)
+{
+    if (values.empty())
+        return std::numeric_limits<double>::quiet_NaN();
+
+    if (q <= 0.0)
+        return *std::min_element(values.begin(), values.end());
+    if (q >= 1.0)
+        return *std::max_element(values.begin(), values.end());
+
+    const size_t idx = static_cast<size_t>(q * static_cast<double>(values.size() - 1));
+    std::nth_element(values.begin(), values.begin() + idx, values.end());
+    return values[idx];
 }
 
 void set_hist_style(TH1D &h, int color, int marker)
@@ -153,8 +169,10 @@ int plot_nominal_weight_signal_bkg_unstacked(
             return 1;
         }
 
+        const bool auto_range = !(xmax > xmin);
+
         // Auto-range if no valid [xmin, xmax] was supplied.
-        if (!(xmax > xmin))
+        if (auto_range)
         {
             double lo = std::numeric_limits<double>::infinity();
             double hi = -std::numeric_limits<double>::infinity();
@@ -225,14 +243,59 @@ int plot_nominal_weight_signal_bkg_unstacked(
                     use_logx = false;
                 }
             }
+
+            if (use_logx && auto_range && (n_sig_pos + n_bkg_pos) > 200)
+            {
+                auto sig_vals_ptr = node_sig_pos.Take<double>("__plot_x__");
+                auto bkg_vals_ptr = node_bkg_pos.Take<double>("__plot_x__");
+
+                std::vector<double> vals;
+                vals.reserve(sig_vals_ptr->size() + bkg_vals_ptr->size());
+                vals.insert(vals.end(), sig_vals_ptr->begin(), sig_vals_ptr->end());
+                vals.insert(vals.end(), bkg_vals_ptr->begin(), bkg_vals_ptr->end());
+
+                if (vals.size() > 200)
+                {
+                    std::vector<double> qvals = vals;
+                    const double q001 = percentile_inplace(qvals, 0.001);
+
+                    if (std::isfinite(q001) && q001 > xmin)
+                        xmin = q001;
+                }
+            }
+
+            if (!(xmax > xmin))
+            {
+                std::cerr << "[plot_nominal_weight_signal_bkg_unstacked] invalid x-range for log-x after range adjustments.\n";
+                return 1;
+            }
         }
 
-        ROOT::RDF::TH1DModel h_sig_model("h_nominal_weight_sig_raw", "", nbins, xmin, xmax);
-        ROOT::RDF::TH1DModel h_bkg_model("h_nominal_weight_bkg_raw", "", nbins, xmin, xmax);
+        std::unique_ptr<ROOT::RDF::TH1DModel> h_sig_model;
+        std::unique_ptr<ROOT::RDF::TH1DModel> h_bkg_model;
+        std::vector<double> xbins;
+
+        if (use_logx)
+        {
+            xbins.resize(nbins + 1);
+            const double log_min = std::log10(xmin);
+            const double log_max = std::log10(xmax);
+            const double dlog = (log_max - log_min) / static_cast<double>(nbins);
+            for (int i = 0; i <= nbins; ++i)
+                xbins[i] = std::pow(10.0, log_min + dlog * static_cast<double>(i));
+
+            h_sig_model = std::make_unique<ROOT::RDF::TH1DModel>("h_nominal_weight_sig_raw", "", nbins, xbins.data());
+            h_bkg_model = std::make_unique<ROOT::RDF::TH1DModel>("h_nominal_weight_bkg_raw", "", nbins, xbins.data());
+        }
+        else
+        {
+            h_sig_model = std::make_unique<ROOT::RDF::TH1DModel>("h_nominal_weight_sig_raw", "", nbins, xmin, xmax);
+            h_bkg_model = std::make_unique<ROOT::RDF::TH1DModel>("h_nominal_weight_bkg_raw", "", nbins, xmin, xmax);
+        }
 
         // Unweighted fills: x-axis is weight_col itself.
-        auto h_sig = node_sig.Histo1D(h_sig_model, "__plot_x__");
-        auto h_bkg = node_bkg.Histo1D(h_bkg_model, "__plot_x__");
+        auto h_sig = node_sig.Histo1D(*h_sig_model, "__plot_x__");
+        auto h_bkg = node_bkg.Histo1D(*h_bkg_model, "__plot_x__");
 
         TH1D &hs = *h_sig;
         TH1D &hb = *h_bkg;

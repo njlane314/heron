@@ -316,7 +316,7 @@ UniverseBandSummary build_universe_summary(const TH1D &h_nom_mc,
 
         for (int u = first_universe; u <= last_universe; ++u)
         {
-            const TH1D &h_mc_u = *booked_universe_hists[static_cast<std::size_t>(u)];
+            const TH1D &h_mc_u = booked_universe_hists[static_cast<std::size_t>(u)].GetValue();
             double val = h_mc_u.GetBinContent(b);
             if (h_nom_ext != nullptr)
                 val += h_nom_ext->GetBinContent(b);
@@ -365,7 +365,7 @@ UniverseBandSummary build_universe_summary(const TH1D &h_nom_mc,
     out.overlay_ratio.reserve(overlay_indices.size());
     for (int u : overlay_indices)
     {
-        auto htot = clone_hist(*booked_universe_hists[static_cast<std::size_t>(u)],
+        auto htot = clone_hist(booked_universe_hists[static_cast<std::size_t>(u)].GetValue(),
                                "h_overlay_total_" + safe_label + "_u" + std::to_string(u));
         if (h_nom_ext != nullptr)
             htot->Add(h_nom_ext);
@@ -706,21 +706,13 @@ int plot_inference_score_multisim_branch(const std::string &event_list_path = ""
             {
                 node_u = node_u.Define(
                     w_name,
-                    [u](double w_nom, const auto &ws)
-                    {
-                        return w_nom * universe_weight_from_vec(ws, u);
-                    },
-                    {"__w_nom__", weight_branch});
+                    "__w_nom__ * universe_weight_from_vec(" + weight_branch + ", " + std::to_string(u) + ")");
             }
             else
             {
                 node_u = node_u.Define(
                     w_name,
-                    [u, map_key](double w_nom, const std::map<std::string, std::vector<double>> &wmap)
-                    {
-                        return w_nom * universe_weight_from_map(wmap, map_key, u);
-                    },
-                    {"__w_nom__", "weights"});
+                    "__w_nom__ * universe_weight_from_map(weights, \"" + map_key + "\", " + std::to_string(u) + ")");
             }
 
             ROOT::RDF::TH1DModel h_model(("h_mc_" + safe_u).c_str(), "", nbins, xmin, xmax);

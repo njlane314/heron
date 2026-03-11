@@ -450,10 +450,19 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
     auto limited = filtered;
     if (n_to_render < n_rows)
     {
-        const auto max_entries = static_cast<ULong64_t>(n_to_render);
-        limited = filtered.Filter(
-            [max_entries](ULong64_t entry) { return entry < max_entries; },
-            {"rdfentry_"});
+        if (ROOT::IsImplicitMTEnabled())
+        {
+            const auto max_entries = static_cast<ULong64_t>(n_to_render);
+            std::clog << "[EventDisplay] Implicit MT is enabled; limiting rows with rdfentry_ "
+                      << "does not guarantee original tree order." << '\n';
+            limited = filtered.Filter(
+                [max_entries](ULong64_t entry) { return entry < max_entries; },
+                {"rdfentry_"});
+        }
+        else
+        {
+            limited = filtered.Range(static_cast<ULong64_t>(n_to_render));
+        }
     }
 
     const bool use_combined_pdf =
@@ -465,19 +474,11 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
         combined_path = std::filesystem::path(opt.out_dir) / opt.combined_pdf;
         total_pages = n_to_render * opt.planes.size();
 
-#if defined(R__HAS_IMPLICITMT)
         if (ROOT::IsImplicitMTEnabled())
         {
             std::clog << "[EventDisplay] Implicit MT is enabled while rendering a combined PDF; "
                       << "continuing without toggling MT after RDataFrame construction." << '\n';
         }
-#else
-        if (ROOT::IsImplicitMTEnabled())
-        {
-            std::clog << "[EventDisplay] ROOT built without R__HAS_IMPLICITMT and implicit MT is enabled; "
-                      << "continuing without toggling MT after RDataFrame construction." << '\n';
-        }
-#endif
     }
 
     using nlohmann::json;

@@ -103,6 +103,7 @@ bool require_columns(ROOT::RDF::RNode node,
 struct Candidate
 {
     ULong64_t entry = 0;
+    int sample_id = -1;
     int run = 0;
     int sub = 0;
     int evt = 0;
@@ -112,13 +113,14 @@ struct Candidate
 
 struct EventKey
 {
+    int sample_id = -1;
     int run = 0;
     int sub = 0;
     int evt = 0;
 
     bool operator==(const EventKey &other) const
     {
-        return std::tie(run, sub, evt) == std::tie(other.run, other.sub, other.evt);
+        return std::tie(sample_id, run, sub, evt) == std::tie(other.sample_id, other.run, other.sub, other.evt);
     }
 };
 
@@ -127,6 +129,7 @@ struct EventKeyHash
     std::size_t operator()(const EventKey &key) const
     {
         std::size_t seed = 0u;
+        seed ^= static_cast<std::size_t>(key.sample_id) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
         seed ^= static_cast<std::size_t>(key.run) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
         seed ^= static_cast<std::size_t>(key.sub) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
         seed ^= static_cast<std::size_t>(key.evt) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
@@ -207,13 +210,14 @@ void write_selected_tsv(const std::string &path,
                         const std::string &mode)
 {
     std::ofstream ofs(path);
-    ofs << "rank\tmode\tentry\trun\tsub\tevt\tinf_score_0\t" << weight_col << "\n";
+    ofs << "rank\tmode\tentry\tsample_id\trun\tsub\tevt\tinf_score_0\t" << weight_col << "\n";
 
     for (std::size_t rank = 0; rank < chosen.size(); ++rank)
     {
         const auto &c = cand[chosen[rank]];
         ofs << (rank + 1) << "\t" << mode << "\t"
             << c.entry << "\t"
+            << c.sample_id << "\t"
             << c.run << "\t"
             << c.sub << "\t"
             << c.evt << "\t"
@@ -238,8 +242,6 @@ int render_weighted_background_event_displays(
     unsigned long long rng_seed = 12345ULL)
 {
     return heron::macro::run_with_guard("render_weighted_background_event_displays", [&]() -> int {
-        ROOT::EnableImplicitMT();
-
         const std::string input_path =
             event_list_path.empty() ? default_event_list_root() : event_list_path;
 
@@ -259,9 +261,16 @@ int render_weighted_background_event_displays(
             return 1;
         }
 
-        EventListIO el(input_path);
+        std::vector<Candidate> cand;
+        std::vector<std::size_t> chosen;
+        const auto mode_enum = heron::evd::EventDisplay::parse_mode(display_mode);
 
-        ROOT::RDF::RNode base = SelectionService::decorate(el.rdf())
+        {
+            ROOT::EnableImplicitMT();
+
+            EventListIO el(input_path);
+
+            ROOT::RDF::RNode base = SelectionService::decorate(el.rdf())
                                     .Define("__entry__",
                                             [](ULong64_t e) { return e; },
                                             {"rdfentry_"})
@@ -279,11 +288,10 @@ int render_weighted_background_event_displays(
         }
 
         if (!require_columns(base,
-                             {"run", "sub", "evt"},
+                             {"sample_id", "run", "sub", "evt"},
                              "event id"))
             return 1;
 
-        const auto mode_enum = heron::evd::EventDisplay::parse_mode(display_mode);
         if (mode_enum == heron::evd::EventDisplay::Mode::Detector)
         {
             if (!require_columns(base,
@@ -334,6 +342,7 @@ int render_weighted_background_event_displays(
         auto n_cand_ptr = node.Count();
         auto sumw_ptr = node.Sum<double>("__w__");
         auto entries_ptr = node.Take<ULong64_t>("__entry__");
+        auto sample_ids_ptr = node.Take<int>("sample_id");
         auto runs_ptr = node.Take<int>("run");
         auto subs_ptr = node.Take<int>("sub");
         auto evts_ptr = node.Take<int>("evt");
@@ -358,16 +367,18 @@ int render_weighted_background_event_displays(
                   << sumw << "\n";
 
         const std::vector<ULong64_t> entries = *entries_ptr;
+        const std::vector<int> sample_ids = *sample_ids_ptr;
         const std::vector<int> runs = *runs_ptr;
         const std::vector<int> subs = *subs_ptr;
         const std::vector<int> evts = *evts_ptr;
         const std::vector<double> scores = *scores_ptr;
         const std::vector<double> weights = *weights_ptr;
 
-        std::vector<Candidate> cand(entries.size());
+        cand.resize(entries.size());
         for (std::size_t i = 0; i < cand.size(); ++i)
         {
             cand[i].entry = entries[i];
+            cand[i].sample_id = sample_ids[i];
             cand[i].run = runs[i];
             cand[i].sub = subs[i];
             cand[i].evt = evts[i];
@@ -378,7 +389,6 @@ int render_weighted_background_event_displays(
         if (n_events > cand.size())
             n_events = cand.size();
 
-        std::vector<std::size_t> chosen;
         if (mode == "sample" || mode == "weighted_sample")
         {
             chosen = pick_weighted_sample(cand, static_cast<std::size_t>(n_events), rng_seed);
@@ -437,19 +447,24 @@ int render_weighted_background_event_displays(
                       << "\n";
         }
 
+        }
+
+        if (ROOT::IsImplicitMTEnabled())
+            ROOT::DisableImplicitMT();
+
         auto chosen_events = std::make_shared<std::unordered_set<EventKey, EventKeyHash>>();
         for (const auto idx : chosen)
         {
-            chosen_events->insert(EventKey{cand[idx].run, cand[idx].sub, cand[idx].evt});
+            chosen_events->insert(EventKey{cand[idx].sample_id, cand[idx].run, cand[idx].sub, cand[idx].evt});
         }
 
+        EventListIO el_render(input_path);
         ROOT::RDF::RNode node_chosen =
-            node.Define("__pick_for_evd__",
-                        [chosen_events](int run, int sub, int evt) {
-                            return chosen_events->count(EventKey{run, sub, evt}) != 0u;
+            SelectionService::decorate(el_render.rdf())
+                .Filter([chosen_events](int sample_id, int run, int sub, int evt) {
+                            return chosen_events->count(EventKey{sample_id, run, sub, evt}) != 0u;
                         },
-                        {"run", "sub", "evt"})
-                .Filter([](bool keep) { return keep; }, {"__pick_for_evd__"});
+                        {"sample_id", "run", "sub", "evt"});
 
         heron::evd::EventDisplay::BatchOptions opt;
         opt.selection_expr = "";

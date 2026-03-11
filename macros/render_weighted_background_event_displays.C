@@ -61,7 +61,7 @@ R__ADD_INCLUDE_PATH(framework/core/include)
 R__ADD_INCLUDE_PATH(framework/modules/ana/include)
 R__ADD_INCLUDE_PATH(framework/modules/io/include)
 R__ADD_INCLUDE_PATH(framework/modules/plot/include)
-R__ADD_INCLUDE_PATH(framework/evd/include)
+R__ADD_INCLUDE_PATH(framework/modules/evd/include)
 #endif
 
 #include "EventDisplay.hh"

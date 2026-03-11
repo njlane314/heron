@@ -450,13 +450,10 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
     auto limited = filtered;
     if (n_to_render < n_rows)
     {
-        if (ROOT::IsImplicitMTEnabled())
-        {
-            ROOT::DisableImplicitMT();
-            std::clog << "[EventDisplay] Implicit MT disabled: RDataFrame::Range is not supported with MT." << '\n';
-        }
-
-        limited = filtered.Range(static_cast<ULong64_t>(n_to_render));
+        const auto max_entries = static_cast<ULong64_t>(n_to_render);
+        limited = filtered.Filter(
+            [max_entries](ULong64_t entry) { return entry < max_entries; },
+            {"rdfentry_"});
     }
 
     const bool use_combined_pdf =

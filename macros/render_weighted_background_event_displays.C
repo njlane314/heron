@@ -66,6 +66,7 @@ R__ADD_INCLUDE_PATH(framework/modules/evd/include)
 
 #include "EventDisplay.hh"
 #include "EventListIO.hh"
+#include "PlottingHelper.hh"
 #include "SelectionService.hh"
 #include "include/MacroGuard.hh"
 #include "include/MacroIO.hh"

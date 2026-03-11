@@ -49,6 +49,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -107,6 +108,30 @@ struct Candidate
     int evt = 0;
     double score = 0.0;
     double weight = 0.0;
+};
+
+struct EventKey
+{
+    int run = 0;
+    int sub = 0;
+    int evt = 0;
+
+    bool operator==(const EventKey &other) const
+    {
+        return std::tie(run, sub, evt) == std::tie(other.run, other.sub, other.evt);
+    }
+};
+
+struct EventKeyHash
+{
+    std::size_t operator()(const EventKey &key) const
+    {
+        std::size_t seed = 0u;
+        seed ^= static_cast<std::size_t>(key.run) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
+        seed ^= static_cast<std::size_t>(key.sub) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
+        seed ^= static_cast<std::size_t>(key.evt) + 0x9e3779b9u + (seed << 6) + (seed >> 2);
+        return seed;
+    }
 };
 
 std::vector<std::size_t> pick_top_weight(const std::vector<Candidate> &cand,
@@ -412,21 +437,23 @@ int render_weighted_background_event_displays(
                       << "\n";
         }
 
-        auto chosen_entries = std::make_shared<std::unordered_set<ULong64_t>>();
+        auto chosen_events = std::make_shared<std::unordered_set<EventKey, EventKeyHash>>();
         for (const auto idx : chosen)
-            chosen_entries->insert(cand[idx].entry);
+        {
+            chosen_events->insert(EventKey{cand[idx].run, cand[idx].sub, cand[idx].evt});
+        }
 
         ROOT::RDF::RNode node_chosen =
             node.Define("__pick_for_evd__",
-                        [chosen_entries](ULong64_t e) {
-                            return chosen_entries->count(e) != 0u;
+                        [chosen_events](int run, int sub, int evt) {
+                            return chosen_events->count(EventKey{run, sub, evt}) != 0u;
                         },
-                        {"__entry__"})
+                        {"run", "sub", "evt"})
                 .Filter([](bool keep) { return keep; }, {"__pick_for_evd__"});
 
         heron::evd::EventDisplay::BatchOptions opt;
         opt.selection_expr = "";
-        opt.n_events = chosen_entries->size();
+        opt.n_events = chosen_events->size();
         opt.out_dir = out_dir;
         opt.image_format = "pdf";
         opt.combined_pdf = combined_pdf;

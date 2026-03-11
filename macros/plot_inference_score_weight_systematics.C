@@ -8,6 +8,8 @@
 //   - nuisance variations are applied to MC only:
 //         w_up = w_nominal * knob...up
 //         w_dn = w_nominal * knob...dn
+//   - if the scalar knob columns are absent but the weights map exists, the
+//     macro falls back to the corresponding named weights-map entry
 //   - EXT stays at nominal weight
 //   - weightSpline, weightTune, ppfx_cv, and RootinoFix are NOT multiplied
 //     again because they are already part of w_nominal
@@ -25,6 +27,7 @@
 #include <cctype>
 #include <cmath>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -64,6 +67,7 @@ struct VariationSpec
     std::string tag;
     std::string up_col;
     std::string dn_col;
+    std::string map_key;
 };
 
 struct BookedVariation
@@ -104,6 +108,22 @@ double sanitise_variation_weight(double w)
     if (!std::isfinite(w) || w <= 0.0)
         return 1.0;
     return w;
+}
+
+double map_weight_component(const std::map<std::string, std::vector<double>> &wmap,
+                            const std::string &key,
+                            int index)
+{
+    auto it = wmap.find(key);
+    if (it == wmap.end() || index < 0)
+        return 1.0;
+
+    const auto &vals = it->second;
+    const int n = static_cast<int>(vals.size());
+    if (index >= n)
+        return 1.0;
+
+    return sanitise_variation_weight(vals[static_cast<std::size_t>(index)]);
 }
 
 ROOT::RDF::RNode apply_selection(ROOT::RDF::RNode node, const std::string &sel)
@@ -403,17 +423,17 @@ int plot_inference_score_weight_systematics(const std::string &event_list_path =
             node_ext = filter_by_sample_mask(node_all, mask_ext, "sample_id").Define("__w_nom__", mc_weight);
 
         const std::vector<VariationSpec> all_specs = {
-            {"RPA_CCQE", "knobRPAup", "knobRPAdn"},
-            {"XSecShape_CCMEC", "knobCCMECup", "knobCCMECdn"},
-            {"AxFFCCQEshape", "knobAxFFCCQEup", "knobAxFFCCQEdn"},
-            {"VecFFCCQEshape", "knobVecFFCCQEup", "knobVecFFCCQEdn"},
-            {"DecayAngMEC", "knobDecayAngMECup", "knobDecayAngMECdn"},
-            {"Theta_Delta2Npi", "knobThetaDelta2Npiup", "knobThetaDelta2Npidn"},
-            {"ThetaDelta2NRad", "knobThetaDelta2NRadup", "knobThetaDelta2NRaddn"},
-            {"NormCCCOH", "knobNormCCCOHup", "knobNormCCCOHdn"},
-            {"NormNCCOH", "knobNormNCCOHup", "knobNormNCCOHdn"},
-            {"xsr_scc_Fv3", "knobxsr_scc_Fv3up", "knobxsr_scc_Fv3dn"},
-            {"xsr_scc_Fa3", "knobxsr_scc_Fa3up", "knobxsr_scc_Fa3dn"},
+            {"RPA_CCQE", "knobRPAup", "knobRPAdn", "RPA_CCQE_UBGenie"},
+            {"XSecShape_CCMEC", "knobCCMECup", "knobCCMECdn", "XSecShape_CCMEC_UBGenie"},
+            {"AxFFCCQEshape", "knobAxFFCCQEup", "knobAxFFCCQEdn", "AxFFCCQEshape_UBGenie"},
+            {"VecFFCCQEshape", "knobVecFFCCQEup", "knobVecFFCCQEdn", "VecFFCCQEshape_UBGenie"},
+            {"DecayAngMEC", "knobDecayAngMECup", "knobDecayAngMECdn", "DecayAngMEC_UBGenie"},
+            {"Theta_Delta2Npi", "knobThetaDelta2Npiup", "knobThetaDelta2Npidn", "Theta_Delta2Npi_UBGenie"},
+            {"ThetaDelta2NRad", "knobThetaDelta2NRadup", "knobThetaDelta2NRaddn", "ThetaDelta2NRad_UBGenie"},
+            {"NormCCCOH", "knobNormCCCOHup", "knobNormCCCOHdn", "NormCCCOH_UBGenie"},
+            {"NormNCCOH", "knobNormNCCOHup", "knobNormNCCOHdn", "NormNCCOH_UBGenie"},
+            {"xsr_scc_Fv3", "knobxsr_scc_Fv3up", "knobxsr_scc_Fv3dn", "xsr_scc_Fv3_SCC"},
+            {"xsr_scc_Fa3", "knobxsr_scc_Fa3up", "knobxsr_scc_Fa3dn", "xsr_scc_Fa3_SCC"},
         };
 
         ROOT::RDF::TH1DModel h_nom_mc_model("h_nom_mc_total", "", nbins, xmin, xmax);
@@ -426,6 +446,8 @@ int plot_inference_score_weight_systematics(const std::string &event_list_path =
             h_nom_ext = node_ext.Histo1D(h_nom_ext_model, "score0_for_plot", "__w_nom__");
         }
 
+        const bool has_weights_map = has_column(node_mc, "weights");
+
         std::vector<BookedVariation> booked;
         booked.reserve(all_specs.size());
 
@@ -434,11 +456,14 @@ int plot_inference_score_weight_systematics(const std::string &event_list_path =
             if (!matches_filter(spec, only_nuisance))
                 continue;
 
-            if (!has_column(node_mc, spec.up_col) || !has_column(node_mc, spec.dn_col))
+            const bool has_scalar_pair = has_column(node_mc, spec.up_col) && has_column(node_mc, spec.dn_col);
+            const bool has_map_source = has_weights_map && !spec.map_key.empty();
+
+            if (!has_scalar_pair && !has_map_source)
             {
                 std::cout << "[plot_inference_score_weight_systematics] skipping " << spec.tag
-                          << " because one or both columns are missing: "
-                          << spec.up_col << ", " << spec.dn_col << "\n";
+                          << " because neither scalar columns nor map key are available: "
+                          << spec.up_col << ", " << spec.dn_col << ", key='" << spec.map_key << "'\n";
                 continue;
             }
 
@@ -446,19 +471,45 @@ int plot_inference_score_weight_systematics(const std::string &event_list_path =
             const std::string w_up_name = "__w_up_" + safe;
             const std::string w_dn_name = "__w_dn_" + safe;
 
-            ROOT::RDF::RNode node_var = node_mc
-                                            .Define(w_up_name,
-                                                    [](double w_nom, double w_var)
-                                                    {
-                                                        return w_nom * sanitise_variation_weight(w_var);
-                                                    },
-                                                    {"__w_nom__", spec.up_col})
-                                            .Define(w_dn_name,
-                                                    [](double w_nom, double w_var)
-                                                    {
-                                                        return w_nom * sanitise_variation_weight(w_var);
-                                                    },
-                                                    {"__w_nom__", spec.dn_col});
+            ROOT::RDF::RNode node_var = node_mc;
+            if (has_scalar_pair)
+            {
+                node_var = node_var
+                               .Define(w_up_name,
+                                       [](double w_nom, double w_var)
+                                       {
+                                           return w_nom * sanitise_variation_weight(w_var);
+                                       },
+                                       {"__w_nom__", spec.up_col})
+                               .Define(w_dn_name,
+                                       [](double w_nom, double w_var)
+                                       {
+                                           return w_nom * sanitise_variation_weight(w_var);
+                                       },
+                                       {"__w_nom__", spec.dn_col});
+
+                std::cout << "[plot_inference_score_weight_systematics] booking " << spec.tag
+                          << " from scalar columns " << spec.up_col << ", " << spec.dn_col << "\n";
+            }
+            else
+            {
+                node_var = node_var
+                               .Define(w_up_name,
+                                       [key = spec.map_key](double w_nom, const std::map<std::string, std::vector<double>> &wmap)
+                                       {
+                                           return w_nom * map_weight_component(wmap, key, 0);
+                                       },
+                                       {"__w_nom__", "weights"})
+                               .Define(w_dn_name,
+                                       [key = spec.map_key](double w_nom, const std::map<std::string, std::vector<double>> &wmap)
+                                       {
+                                           return w_nom * map_weight_component(wmap, key, 1);
+                                       },
+                                       {"__w_nom__", "weights"});
+
+                std::cout << "[plot_inference_score_weight_systematics] booking " << spec.tag
+                          << " from weights map key '" << spec.map_key << "'\n";
+            }
 
             ROOT::RDF::TH1DModel h_up_model(("h_up_mc_" + safe).c_str(), "", nbins, xmin, xmax);
             ROOT::RDF::TH1DModel h_dn_model(("h_dn_mc_" + safe).c_str(), "", nbins, xmin, xmax);
@@ -478,7 +529,7 @@ int plot_inference_score_weight_systematics(const std::string &event_list_path =
         const TH1D &nom_mc = *h_nom_mc;
         const TH1D *nom_ext = include_ext ? &(*h_nom_ext) : nullptr;
 
-        for (auto &entry : booked)
+        for (const auto &entry : booked)
         {
             draw_one_variation(entry.spec,
                                nom_mc,

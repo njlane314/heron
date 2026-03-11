@@ -54,7 +54,7 @@ std::map<std::string, std::string> branch_schema(const TTree *tree)
     if (!tree)
         return schema;
 
-    TObjArray *branches = const_cast<TTree *>(tree)->GetListOfBranches();
+    const TObjArray *branches = tree->GetListOfBranches();
     if (!branches)
         return schema;
 

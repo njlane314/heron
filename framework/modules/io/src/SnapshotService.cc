@@ -13,7 +13,9 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <system_error>
 #include <unistd.h>
@@ -23,7 +25,9 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RSnapshotOptions.hxx>
 
+#include <TBranch.h>
 #include <TFile.h>
+#include <TObjArray.h>
 #include <TFileMerger.h>
 #include <TObject.h>
 #include <TTree.h>
@@ -44,6 +48,66 @@ std::string SnapshotService::sanitise_root_key(std::string s)
 
 namespace
 {
+std::map<std::string, std::string> branch_schema(const TTree *tree)
+{
+    std::map<std::string, std::string> schema;
+    if (!tree)
+        return schema;
+
+    const TObjArray *branches = tree->GetListOfBranches();
+    if (!branches)
+        return schema;
+
+    for (int i = 0; i < branches->GetEntriesFast(); ++i)
+    {
+        const TBranch *branch = dynamic_cast<const TBranch *>(branches->At(i));
+        if (!branch)
+            continue;
+
+        std::string type = branch->GetClassName();
+        if (type.empty())
+            type = branch->GetTitle();
+        schema.emplace(branch->GetName(), type);
+    }
+
+    return schema;
+}
+
+void validate_matching_schema(const TTree *existing, const TTree *incoming)
+{
+    const auto existing_schema = branch_schema(existing);
+    const auto incoming_schema = branch_schema(incoming);
+    if (existing_schema == incoming_schema)
+        return;
+
+    std::ostringstream message;
+    message << "SnapshotService: existing output tree schema does not match incoming snapshot tree. "
+            << "Use a fresh output file when changing event columns.";
+
+    auto describe_missing = [&](const auto &left, const auto &right, const std::string &prefix) {
+        for (const auto &entry : left)
+        {
+            auto it = right.find(entry.first);
+            if (it == right.end())
+            {
+                message << " " << prefix << " missing branch='" << entry.first << "'";
+                continue;
+            }
+            if (it->second != entry.second)
+            {
+                message << " " << prefix << " type_mismatch branch='" << entry.first
+                        << "' existing='" << entry.second
+                        << "' incoming='" << it->second << "'";
+            }
+        }
+    };
+
+    describe_missing(existing_schema, incoming_schema, "existing_tree");
+    describe_missing(incoming_schema, existing_schema, "incoming_tree");
+
+    throw std::runtime_error(message.str());
+}
+
 void append_tree_fast(const std::string &out_path,
                       const std::string &scratch_file,
                       const std::string &tree_name)
@@ -71,6 +135,7 @@ void append_tree_fast(const std::string &out_path,
     }
     else
     {
+        validate_matching_schema(tout, tin);
         tout->SetDirectory(fout.get());
         const Long64_t n = tout->CopyEntries(tin, -1, "fast");
         (void)n;

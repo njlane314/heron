@@ -195,8 +195,8 @@ int plot_nominal_weight_signal_bkg_unstacked(
 
         if (use_logx)
         {
-            const auto node_sig_pos = node_sig.Filter("__plot_x__ > 0.0");
-            const auto node_bkg_pos = node_bkg.Filter("__plot_x__ > 0.0");
+            auto node_sig_pos = node_sig.Filter("__plot_x__ > 0.0");
+            auto node_bkg_pos = node_bkg.Filter("__plot_x__ > 0.0");
 
             const ULong64_t n_sig_pos = *node_sig_pos.Count();
             const ULong64_t n_bkg_pos = *node_bkg_pos.Count();

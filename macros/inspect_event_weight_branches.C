@@ -41,13 +41,7 @@ void print_first_vector_size(ROOT::RDF::RNode node, const std::string &branch)
         return;
 
     const std::string size_col = "__size_" + branch;
-    auto with_size = node.Define(
-        size_col,
-        [](const auto &v)
-        {
-            return static_cast<int>(v.size());
-        },
-        {branch});
+    auto with_size = node.Define(size_col, "static_cast<int>(" + branch + ".size())");
 
     auto vals = with_size.Range(1).Take<int>(size_col);
     if (!vals || vals->empty())

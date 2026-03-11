@@ -468,14 +468,14 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions &opt)
 #if defined(R__HAS_IMPLICITMT)
         if (ROOT::IsImplicitMTEnabled())
         {
-            ROOT::DisableImplicitMT();
-            std::clog << "[EventDisplay] Implicit MT disabled for stable combined PDF output." << '\n';
+            std::clog << "[EventDisplay] Implicit MT is enabled while rendering a combined PDF; "
+                      << "continuing without toggling MT after RDataFrame construction." << '\n';
         }
 #else
         if (ROOT::IsImplicitMTEnabled())
         {
-            ROOT::DisableImplicitMT();
-            std::clog << "[EventDisplay] ROOT built without R__HAS_IMPLICITMT; disabling MT for combined PDF." << '\n';
+            std::clog << "[EventDisplay] ROOT built without R__HAS_IMPLICITMT and implicit MT is enabled; "
+                      << "continuing without toggling MT after RDataFrame construction." << '\n';
         }
 #endif
     }

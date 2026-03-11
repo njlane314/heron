@@ -103,6 +103,135 @@ struct Point
     double ey = 0.0;
 };
 
+struct CalibCurve
+{
+    std::vector<double> x;
+    std::vector<double> y;
+};
+
+CalibCurve isotonic_curve(const std::vector<Point> &pts)
+{
+    struct Block
+    {
+        int first = 0;
+        int last = 0;
+        double w = 1.0;
+        double mean = 0.0;
+    };
+
+    std::vector<Block> blocks;
+    blocks.reserve(pts.size());
+
+    for (int i = 0; i < static_cast<int>(pts.size()); ++i)
+    {
+        double w = 1.0;
+        if (pts[i].ey > 0.0 && std::isfinite(pts[i].ey))
+            w = 1.0 / (pts[i].ey * pts[i].ey);
+
+        blocks.push_back(Block{i, i, w, pts[i].y});
+
+        while (blocks.size() >= 2)
+        {
+            auto &a = blocks[blocks.size() - 2];
+            auto &b = blocks[blocks.size() - 1];
+
+            if (a.mean <= b.mean)
+                break;
+
+            const double wtot = a.w + b.w;
+            const double mtot = (a.w * a.mean + b.w * b.mean) / wtot;
+            a = Block{a.first, b.last, wtot, mtot};
+            blocks.pop_back();
+        }
+    }
+
+    CalibCurve out;
+    out.x.reserve(pts.size());
+    out.y.reserve(pts.size());
+
+    for (const auto &blk : blocks)
+    {
+        for (int i = blk.first; i <= blk.last; ++i)
+        {
+            out.x.push_back(pts[i].x);
+            out.y.push_back(blk.mean);
+        }
+    }
+
+    return out;
+}
+
+double eval_piecewise_linear(const std::vector<double> &x,
+                             const std::vector<double> &y,
+                             double s)
+{
+    if (x.empty())
+        return s;
+
+    if (s <= x.front())
+        return y.front();
+    if (s >= x.back())
+        return y.back();
+
+    auto it = std::upper_bound(x.begin(), x.end(), s);
+    const std::size_t i1 = static_cast<std::size_t>(it - x.begin());
+    const std::size_t i0 = i1 - 1;
+
+    const double dx = x[i1] - x[i0];
+    if (!(dx > 0.0))
+        return y[i0];
+
+    const double t = (s - x[i0]) / dx;
+    return y[i0] + t * (y[i1] - y[i0]);
+}
+
+std::vector<Point> build_ratio_points(const TH1D &hs,
+                                      const TH1D &hb,
+                                      double tot_sig,
+                                      double tot_bkg,
+                                      bool posterior)
+{
+    std::vector<Point> pts;
+    const int nbins = hs.GetNbinsX();
+    pts.reserve(static_cast<std::size_t>(nbins));
+
+    for (int b = 1; b <= nbins; ++b)
+    {
+        const double ns = hs.GetBinContent(b);
+        const double nb = hb.GetBinContent(b);
+        const double ens = hs.GetBinError(b);
+        const double enb = hb.GetBinError(b);
+
+        if (!(ns > 0.0) || !(nb > 0.0))
+            continue;
+
+        const double width = hs.GetBinWidth(b);
+        if (!(width > 0.0))
+            continue;
+
+        const double x = hs.GetBinCenter(b);
+        const double ex = 0.5 * width;
+
+        double y = 0.0;
+        if (posterior)
+            y = safe_log(ns) - safe_log(nb);
+        else
+            y = safe_log(ns / (tot_sig * width)) - safe_log(nb / (tot_bkg * width));
+
+        double ey = 0.0;
+        if (ens > 0.0 && enb > 0.0)
+        {
+            const double rs = ens / ns;
+            const double rb = enb / nb;
+            ey = std::sqrt(rs * rs + rb * rb);
+        }
+
+        pts.push_back(Point{x, ex, y, ey});
+    }
+
+    return pts;
+}
+
 } // namespace
 
 int plotFirstInferenceScoreLLRCalibration(const std::string &event_list_path = "",
@@ -173,8 +302,11 @@ int plotFirstInferenceScoreLLRCalibration(const std::string &event_list_path = "
             },
             {"inf_score_0"});
 
-        ROOT::RDF::RNode node_sig = node.Filter(signal_sel);
-        ROOT::RDF::RNode node_bkg = node.Filter("!(" + signal_sel + ")");
+        ROOT::RDF::RNode node_calib = node.Filter("rdfentry_ % 2 == 0");
+        ROOT::RDF::RNode node_valid = node.Filter("rdfentry_ % 2 == 1");
+
+        ROOT::RDF::RNode node_sig = node_calib.Filter(signal_sel);
+        ROOT::RDF::RNode node_bkg = node_calib.Filter("!(" + signal_sel + ")");
 
         ROOT::RDF::TH1DModel hmodel_sig("h_sig", "", nbins, xmin, xmax);
         ROOT::RDF::TH1DModel hmodel_bkg("h_bkg", "", nbins, xmin, xmax);
@@ -208,70 +340,62 @@ int plotFirstInferenceScoreLLRCalibration(const std::string &event_list_path = "
         std::cout << "[plotFirstInferenceScoreLLRCalibration] log(prior odds) ~ log(tot_sig/tot_bkg) = "
                   << prior_offset << "\n";
 
-        std::vector<Point> pts_llr;
-        std::vector<Point> pts_post;
-        pts_llr.reserve(static_cast<std::size_t>(nbins));
-        pts_post.reserve(static_cast<std::size_t>(nbins));
-
-        double y_llr_min = std::numeric_limits<double>::infinity();
-        double y_llr_max = -std::numeric_limits<double>::infinity();
-        double y_post_min = std::numeric_limits<double>::infinity();
-        double y_post_max = -std::numeric_limits<double>::infinity();
-
-        for (int b = 1; b <= nbins; ++b)
-        {
-            const double ns = hs.GetBinContent(b);
-            const double nb = hb.GetBinContent(b);
-            const double ens = hs.GetBinError(b);
-            const double enb = hb.GetBinError(b);
-
-            if (!(ns > 0.0) || !(nb > 0.0))
-                continue;
-
-            const double width = hs.GetBinWidth(b);
-            if (!(width > 0.0))
-                continue;
-
-            const double x = hs.GetBinCenter(b);
-            const double ex = 0.5 * width;
-
-            const double ps = ns / (tot_sig * width);
-            const double pb = nb / (tot_bkg * width);
-            if (!(ps > 0.0) || !(pb > 0.0))
-                continue;
-
-            const double y_llr = safe_log(ps) - safe_log(pb);
-
-            double ey_llr = 0.0;
-            if (ens > 0.0 && enb > 0.0)
-            {
-                const double rs = ens / ns;
-                const double rb = enb / nb;
-                ey_llr = std::sqrt(rs * rs + rb * rb);
-            }
-
-            pts_llr.push_back(Point{x, ex, y_llr, ey_llr});
-            y_llr_min = std::min(y_llr_min, y_llr);
-            y_llr_max = std::max(y_llr_max, y_llr);
-
-            const double y_post = safe_log(ns) - safe_log(nb);
-            double ey_post = 0.0;
-            if (ens > 0.0 && enb > 0.0)
-            {
-                const double rs = ens / ns;
-                const double rb = enb / nb;
-                ey_post = std::sqrt(rs * rs + rb * rb);
-            }
-            pts_post.push_back(Point{x, ex, y_post, ey_post});
-            y_post_min = std::min(y_post_min, y_post);
-            y_post_max = std::max(y_post_max, y_post);
-        }
+        std::vector<Point> pts_llr = build_ratio_points(hs, hb, tot_sig, tot_bkg, false);
+        std::vector<Point> pts_post = build_ratio_points(hs, hb, tot_sig, tot_bkg, true);
 
         if (pts_llr.size() < 2)
         {
             std::cerr << "[plotFirstInferenceScoreLLRCalibration] not enough populated bins with both signal and background to build the LLR check graph.\n";
             std::cerr << "  Try fewer/wider bins or a wider [xmin,xmax] range.\n";
             return 1;
+        }
+
+        const auto curve = isotonic_curve(pts_llr);
+        const auto xcal = curve.x;
+        const auto ycal = curve.y;
+
+        ROOT::RDF::RNode node_valid_cal = node_valid.Define(
+            "inf_score_0_cal",
+            [xcal, ycal](double s) { return eval_piecewise_linear(xcal, ycal, s); },
+            {"inf_score_0"});
+
+        ROOT::RDF::RNode node_valid_sig = node_valid_cal.Filter(signal_sel);
+        ROOT::RDF::RNode node_valid_bkg = node_valid_cal.Filter("!(" + signal_sel + ")");
+
+        ROOT::RDF::TH1DModel hmodel_sig_cal("h_sig_cal", "", nbins, xmin, xmax);
+        ROOT::RDF::TH1DModel hmodel_bkg_cal("h_bkg_cal", "", nbins, xmin, xmax);
+
+        ROOT::RDF::RResultPtr<TH1D> h_sig_cal = use_weights
+                                                    ? node_valid_sig.Histo1D(hmodel_sig_cal, "inf_score_0_cal", "__w__")
+                                                    : node_valid_sig.Histo1D(hmodel_sig_cal, "inf_score_0_cal");
+
+        ROOT::RDF::RResultPtr<TH1D> h_bkg_cal = use_weights
+                                                    ? node_valid_bkg.Histo1D(hmodel_bkg_cal, "inf_score_0_cal", "__w__")
+                                                    : node_valid_bkg.Histo1D(hmodel_bkg_cal, "inf_score_0_cal");
+
+        const TH1D &hs_cal = *h_sig_cal;
+        const TH1D &hb_cal = *h_bkg_cal;
+        const double tot_sig_cal = hs_cal.Integral(1, nbins);
+        const double tot_bkg_cal = hb_cal.Integral(1, nbins);
+
+        std::vector<Point> pts_llr_cal;
+        if (tot_sig_cal > 0.0 && tot_bkg_cal > 0.0)
+            pts_llr_cal = build_ratio_points(hs_cal, hb_cal, tot_sig_cal, tot_bkg_cal, false);
+
+        double y_llr_min = std::numeric_limits<double>::infinity();
+        double y_llr_max = -std::numeric_limits<double>::infinity();
+        double y_post_min = std::numeric_limits<double>::infinity();
+        double y_post_max = -std::numeric_limits<double>::infinity();
+
+        for (const auto &p : pts_llr)
+        {
+            y_llr_min = std::min(y_llr_min, p.y);
+            y_llr_max = std::max(y_llr_max, p.y);
+        }
+        for (const auto &p : pts_post)
+        {
+            y_post_min = std::min(y_post_min, p.y);
+            y_post_max = std::max(y_post_max, p.y);
         }
 
         auto make_graph = [](const std::vector<Point> &pts, const char *name) {
@@ -297,6 +421,9 @@ int plotFirstInferenceScoreLLRCalibration(const std::string &event_list_path = "
 
         auto g_llr = make_graph(pts_llr, "g_llr_score_space");
         auto g_post = make_graph(pts_post, "g_post_logodds");
+        std::unique_ptr<TGraphErrors> g_llr_cal;
+        if (pts_llr_cal.size() >= 2)
+            g_llr_cal = make_graph(pts_llr_cal, "g_llr_score_space_calibrated");
 
         Plotter plotter;
         plotter.set_global_style();
@@ -356,6 +483,73 @@ int plotFirstInferenceScoreLLRCalibration(const std::string &event_list_path = "
             const auto out = plot_output_file(output_stem + "_score_space_llr").string();
             c.SaveAs(out.c_str());
             std::cout << "[plotFirstInferenceScoreLLRCalibration] saved: " << out << "\n";
+        }
+
+        if (g_llr_cal)
+        {
+            TCanvas c("c_score_llr_check_calibrated", "Calibrated inf_scores[0] LLR check", 1100, 800);
+            c.SetLeftMargin(0.11);
+            c.SetRightMargin(0.04);
+            c.SetBottomMargin(0.12);
+
+            double ycal_min = std::numeric_limits<double>::infinity();
+            double ycal_max = -std::numeric_limits<double>::infinity();
+            for (const auto &p : pts_llr_cal)
+            {
+                ycal_min = std::min(ycal_min, p.y);
+                ycal_max = std::max(ycal_max, p.y);
+            }
+            if (!std::isfinite(ycal_min) || !std::isfinite(ycal_max))
+            {
+                ycal_min = xmin;
+                ycal_max = xmax;
+            }
+
+            const double ypad = 0.10 * std::max(1.0, ycal_max - ycal_min);
+            TH1D hframe("hframe_llr_cal",
+                        ";Calibrated inference score [0];log p(score|signal) - log p(score|background)",
+                        100,
+                        xmin,
+                        xmax);
+            hframe.SetMinimum(ycal_min - ypad);
+            hframe.SetMaximum(ycal_max + ypad);
+            hframe.Draw("AXIS");
+
+            g_llr_cal->SetMarkerStyle(22);
+            g_llr_cal->Draw("P SAME");
+            g_llr_cal->Draw("L SAME");
+
+            TF1 f_id("f_id_cal", "x", xmin, xmax);
+            f_id.SetLineStyle(2);
+            f_id.SetLineWidth(2);
+            f_id.Draw("SAME");
+
+            TF1 f_fit("f_fit_cal", "[0] + [1]*x", xmin, xmax);
+            f_fit.SetLineStyle(1);
+            f_fit.SetLineWidth(2);
+            g_llr_cal->Fit(&f_fit, "Q");
+
+            std::cout << "[plotFirstInferenceScoreLLRCalibration] calibrated score-space LLR fit (validation): y = p0 + p1*x\n";
+            std::cout << "  p0 = " << f_fit.GetParameter(0) << " +- " << f_fit.GetParError(0) << "\n";
+            std::cout << "  p1 = " << f_fit.GetParameter(1) << " +- " << f_fit.GetParError(1) << "\n";
+
+            TLegend leg(0.13, 0.73, 0.69, 0.89);
+            leg.SetBorderSize(0);
+            leg.SetFillStyle(0);
+            leg.AddEntry(g_llr_cal.get(), "validation: binned log p(s_{cal}|S) - log p(s_{cal}|B)", "lp");
+            leg.AddEntry(&f_id, "y = x (ideal closure)", "l");
+            leg.AddEntry(&f_fit, "linear fit", "l");
+            leg.Draw();
+
+            c.RedrawAxis();
+
+            const auto out = plot_output_file(output_stem + "_score_space_llr_calibrated").string();
+            c.SaveAs(out.c_str());
+            std::cout << "[plotFirstInferenceScoreLLRCalibration] saved: " << out << "\n";
+        }
+        else
+        {
+            std::cout << "[plotFirstInferenceScoreLLRCalibration] skipped calibrated closure plot: not enough validation bins with both classes.\n";
         }
 
         {

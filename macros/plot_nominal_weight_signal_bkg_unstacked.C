@@ -85,6 +85,7 @@ int plot_nominal_weight_signal_bkg_unstacked(
     double xmax = -1.0,
     bool include_ext_in_background = true,
     bool use_logy = true,
+    bool use_logx = true,
     const std::string &output_stem = "nominal_weight_signal_bkg_unstacked")
 {
     return heron::macro::run_with_guard("plot_nominal_weight_signal_bkg_unstacked", [&]() -> int {
@@ -192,6 +193,40 @@ int plot_nominal_weight_signal_bkg_unstacked(
             xmax = hi + pad;
         }
 
+        if (use_logx)
+        {
+            const auto node_sig_pos = node_sig.Filter("__plot_x__ > 0.0");
+            const auto node_bkg_pos = node_bkg.Filter("__plot_x__ > 0.0");
+
+            const ULong64_t n_sig_pos = *node_sig_pos.Count();
+            const ULong64_t n_bkg_pos = *node_bkg_pos.Count();
+
+            if (n_sig_pos == 0 && n_bkg_pos == 0)
+            {
+                std::cerr << "[plot_nominal_weight_signal_bkg_unstacked] cannot enable log-x: no positive x values after selection.\n";
+                use_logx = false;
+            }
+            else if (xmin <= 0.0)
+            {
+                double lo_pos = std::numeric_limits<double>::infinity();
+
+                if (n_sig_pos > 0)
+                    lo_pos = std::min(lo_pos, *node_sig_pos.Min<double>("__plot_x__"));
+                if (n_bkg_pos > 0)
+                    lo_pos = std::min(lo_pos, *node_bkg_pos.Min<double>("__plot_x__"));
+
+                if (std::isfinite(lo_pos) && lo_pos > 0.0)
+                {
+                    xmin = 0.8 * lo_pos;
+                }
+                else
+                {
+                    std::cerr << "[plot_nominal_weight_signal_bkg_unstacked] cannot determine positive xmin for log-x; disabling log-x.\n";
+                    use_logx = false;
+                }
+            }
+        }
+
         ROOT::RDF::TH1DModel h_sig_model("h_nominal_weight_sig_raw", "", nbins, xmin, xmax);
         ROOT::RDF::TH1DModel h_bkg_model("h_nominal_weight_bkg_raw", "", nbins, xmin, xmax);
 
@@ -218,6 +253,8 @@ int plot_nominal_weight_signal_bkg_unstacked(
         c.SetBottomMargin(0.12);
         if (use_logy)
             c.SetLogy();
+        if (use_logx)
+            c.SetLogx();
 
         const double ymax = std::max(hs.GetMaximum(), hb.GetMaximum());
         const double frame_max = use_logy

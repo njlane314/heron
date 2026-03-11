@@ -529,7 +529,7 @@ int plot_inference_score_weight_systematics(const std::string &event_list_path =
         const TH1D &nom_mc = *h_nom_mc;
         const TH1D *nom_ext = include_ext ? &(*h_nom_ext) : nullptr;
 
-        for (const auto &entry : booked)
+        for (auto &entry : booked)
         {
             draw_one_variation(entry.spec,
                                nom_mc,

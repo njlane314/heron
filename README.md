@@ -107,6 +107,7 @@ wrapper script:
 - `HERON_PLOT_BASE` overrides the plot base directory (default: `<repo>/scratch/plot`).
 - `HERON_OUTPUT_DIR` is required by `heron art`; outputs are written to `$HERON_OUTPUT_DIR/art`.
 - `HERON_SAMPLE_DIR` and `HERON_EVENT_DIR` override per-stage output directories for `sample` and `event`.
+- `HERON_EVENT_LIST` overrides the default event-level ROOT file used by macros when no event-list path is passed explicitly.
 - `HERON_PLOT_DIR` and `HERON_PLOT_FORMAT` control plot output location and file extension.
 - `HERON_MACRO_LIBRARY_DIR` sets the in-repo macro library directory (default: `<repo>/macros/library`).
 - `HERON_MACRO_PATH` sets additional colon-separated macro search paths (searched after `HERON_MACRO_LIBRARY_DIR`).
@@ -191,6 +192,8 @@ heron --set train macro plotTrainingQA.C
 ```
 
 Use `heron paths` to print resolved locations or `eval "$(heron env train)"` to switch a shell.
+
+For macros, the default event-list input now follows the active workspace (`$HERON_OUT_BASE/$HERON_SET/event/events.root`) unless you override it with `HERON_EVENT_LIST` for a temporary one-off dataset.
 
 3) **Samples → event-level output (compiled analysis)**
 

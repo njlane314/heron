@@ -271,7 +271,7 @@ struct UniverseBandSummary
 UniverseBandSummary build_universe_summary(const TH1D &h_nom_mc,
                                            const TH1D *h_nom_ext,
                                            const std::vector<int> &overlay_indices,
-                                           const std::vector<ROOT::RDF::RResultPtr<TH1D>> &booked_universe_hists,
+                                           std::vector<ROOT::RDF::RResultPtr<TH1D>> &booked_universe_hists,
                                            int first_universe,
                                            int last_universe,
                                            const std::string &safe_label)

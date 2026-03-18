@@ -4,6 +4,39 @@ int	sub
 int	evt
 auto	analysis_channels
 double	w_nominal
+float	weightSpline
+float	weightTune
+float	weightSplineTimesTune
+float	ppfx_cv
+double	knobRPAup
+double	knobRPAdn
+double	knobCCMECup
+double	knobCCMECdn
+double	knobAxFFCCQEup
+double	knobAxFFCCQEdn
+double	knobVecFFCCQEup
+double	knobVecFFCCQEdn
+double	knobDecayAngMECup
+double	knobDecayAngMECdn
+double	knobThetaDelta2Npiup
+double	knobThetaDelta2Npidn
+double	knobThetaDelta2NRadup
+double	knobThetaDelta2NRaddn
+double	knobNormCCCOHup
+double	knobNormCCCOHdn
+double	knobNormNCCOHup
+double	knobNormNCCOHdn
+double	knobxsr_scc_Fv3up
+double	knobxsr_scc_Fv3dn
+double	knobxsr_scc_Fa3up
+double	knobxsr_scc_Fa3dn
+double	RootinoFix
+ROOT::VecOps::RVec<unsigned short>	weightsFlux
+ROOT::VecOps::RVec<unsigned short>	weightsGenie
+ROOT::VecOps::RVec<unsigned short>	weightsReint
+ROOT::VecOps::RVec<unsigned short>	weightsPPFX
+ROOT::VecOps::RVec<unsigned short>	weightsGenieUp
+ROOT::VecOps::RVec<unsigned short>	weightsGenieDn
 auto	sel_trigger
 auto	sel_slice
 auto	sel_fiducial

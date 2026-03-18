@@ -5,6 +5,7 @@
  *  @brief Event-level output builder (invoked by the unified heron CLI).
  */
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <sstream>
@@ -12,6 +13,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <ROOT/RVec.hxx>
 
 #include "AnalysisConfigService.hh"
 #include "AppUtils.hh"
@@ -23,6 +26,71 @@
 #include "EventSampleFilterService.hh"
 #include "RDataFrameService.hh"
 #include "StatusMonitor.hh"
+
+namespace
+{
+
+bool has_column(ROOT::RDF::RNode node, const std::string &name)
+{
+    const auto names = node.GetColumnNames();
+    return std::find(names.begin(), names.end(), name) != names.end();
+}
+
+template <class T>
+ROOT::RDF::RNode define_if_missing(ROOT::RDF::RNode node,
+                                   const std::string &name,
+                                   const T &value)
+{
+    if (has_column(node, name))
+    {
+        return node;
+    }
+
+    return node.Define(name, [value]() { return value; });
+}
+
+ROOT::RDF::RNode add_event_weight_defaults(ROOT::RDF::RNode node)
+{
+    using UShortVec = ROOT::VecOps::RVec<unsigned short>;
+    constexpr unsigned short kPackedUnity = 1000;
+
+    // Neutral defaults for samples with no event-weight branches (e.g. EXT/data).
+    node = define_if_missing(node, "weightSpline", 1.f);
+    node = define_if_missing(node, "weightTune", 1.f);
+    node = define_if_missing(node, "weightSplineTimesTune", 1.f);
+    node = define_if_missing(node, "ppfx_cv", 1.f);
+
+    for (const char *name : {
+             "knobRPAup", "knobRPAdn",
+             "knobCCMECup", "knobCCMECdn",
+             "knobAxFFCCQEup", "knobAxFFCCQEdn",
+             "knobVecFFCCQEup", "knobVecFFCCQEdn",
+             "knobDecayAngMECup", "knobDecayAngMECdn",
+             "knobThetaDelta2Npiup", "knobThetaDelta2Npidn",
+             "knobThetaDelta2NRadup", "knobThetaDelta2NRaddn",
+             "knobNormCCCOHup", "knobNormCCCOHdn",
+             "knobNormNCCOHup", "knobNormNCCOHdn",
+             "knobxsr_scc_Fv3up", "knobxsr_scc_Fv3dn",
+             "knobxsr_scc_Fa3up", "knobxsr_scc_Fa3dn",
+             "RootinoFix"})
+    {
+        node = define_if_missing(node, name, 1.0);
+    }
+
+    // Packed vectors store weight * 1000 in unsigned short.
+    node = define_if_missing(node, "weightsGenie", UShortVec(500, kPackedUnity));
+    node = define_if_missing(node, "weightsPPFX", UShortVec(600, kPackedUnity));
+
+    // These sizes are production-dependent, so empty is the safest default.
+    node = define_if_missing(node, "weightsFlux", UShortVec{});
+    node = define_if_missing(node, "weightsReint", UShortVec{});
+    node = define_if_missing(node, "weightsGenieUp", UShortVec{});
+    node = define_if_missing(node, "weightsGenieDn", UShortVec{});
+
+    return node;
+}
+
+} // namespace
 
 int run(const EventArgs &event_args, const std::string &log_prefix)
 {
@@ -112,6 +180,7 @@ int run(const EventArgs &event_args, const std::string &log_prefix)
             "sample=" + sample.sample_name);
 
         ROOT::RDF::RNode node = processor.define(rdf, proc_entry);
+        node = add_event_weight_defaults(node);
 
         const char *filter_stage = EventSampleFilterService::filter_stage(sample.origin);
         if (filter_stage != nullptr)

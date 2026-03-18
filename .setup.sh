@@ -21,3 +21,5 @@ export ROOT_INCLUDE_PATH="${HERON_ROOT}/build/framework:${ROOT_INCLUDE_PATH}"
 
 export HERON_SCRATCH_DIR="${HERON_OUTPUT_DIR}/scratch"
 mkdir -p "${HERON_SCRATCH_DIR}"
+
+export HERON_EVENT_LIST=/exp/uboone/data/users/nlane/heron/out/event/events_new.root

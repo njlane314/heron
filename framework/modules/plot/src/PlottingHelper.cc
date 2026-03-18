@@ -40,7 +40,19 @@ std::string default_samples_tsv()
 
 std::string default_event_list_root()
 {
-    return "/exp/uboone/data/users/nlane/heron/out/event/events.root";
+    if (const char *path = gSystem->Getenv("HERON_EVENT_LIST"))
+    {
+        if (*path)
+        {
+            return std::string(path);
+        }
+    }
+
+    const std::string repo_root = env_or("HERON_REPO_ROOT", ".");
+    const std::string set_name = env_or("HERON_SET", "out");
+    const std::string out_base = env_or("HERON_OUT_BASE", repo_root + "/scratch/out");
+    const std::string event_dir = env_or("HERON_EVENT_DIR", out_base + "/" + set_name + "/event");
+    return event_dir + "/events.root";
 }
 
 bool looks_like_event_list_root(const std::string &path)

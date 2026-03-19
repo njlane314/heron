@@ -80,6 +80,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 
 #include "EventListIO.hh"
 #include "PlotEnv.hh"
+#include "PlottingHelper.hh"
 #include "SelectionService.hh"
 #include "include/MacroGuard.hh"
 #include "include/MacroIO.hh"

@@ -23,6 +23,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <ROOT/RDataFrame.hxx>
@@ -142,6 +143,33 @@ double max_content(const std::vector<std::vector<double>> &all_bins)
         for (double x : bins)
             out = std::max(out, x);
     return out;
+}
+
+std::pair<double, double> ratio_limits(const std::vector<double> &nom_bins,
+                                       const std::vector<std::vector<double>> &univ_bins,
+                                       const std::vector<std::size_t> &draw_ids)
+{
+    double max_dev = 0.0;
+    bool found = false;
+
+    for (const auto u : draw_ids)
+    {
+        for (std::size_t b = 0; b < nom_bins.size(); ++b)
+        {
+            const double nom = nom_bins[b];
+            if (!(nom > 0.0))
+                continue;
+
+            const double r = univ_bins[u][b] / nom;
+            if (!std::isfinite(r))
+                continue;
+
+            max_dev = std::max(max_dev, std::abs(r - 1.0));
+            found = true;
+        }
+    }
+
+    return found ? std::make_pair(std::max(0.0, 1.0 - 1.10 * std::max(0.10, max_dev)), 1.0 + 1.10 * std::max(0.10, max_dev)) : std::make_pair(0.8, 1.2);
 }
 
 } // namespace
@@ -393,7 +421,13 @@ int plot_inf_score0_multisim_variations(
         hframe.SetMaximum(ymax > 0.0 ? ymax : 1.0);
         hframe.GetXaxis()->SetTitle(draw_ratio ? "" : "Inference score [0]");
         hframe.GetYaxis()->SetTitle(normalise ? "Arbitrary units" : "Events");
-        hframe.Draw("AXIS");
+        if (draw_ratio)
+        {
+            hframe.GetXaxis()->SetLabelSize(0.0);
+            hframe.GetXaxis()->SetTitleSize(0.0);
+            hframe.GetXaxis()->SetTickLength(0.0);
+        }
+        hframe.Draw();
 
         for (const auto &h : h_vars)
             h->Draw("HIST SAME");
@@ -413,10 +447,13 @@ int plot_inf_score0_multisim_variations(
         {
             c.cd();
             pad_bot->cd();
+            pad_bot->SetGridy();
+
+            const auto [ratio_min, ratio_max] = ratio_limits(nom_bins, univ_bins, draw_ids);
 
             TH1D hframe_ratio("hframe_ratio", "", 100, xmin, xmax);
-            hframe_ratio.SetMinimum(0.5);
-            hframe_ratio.SetMaximum(1.5);
+            hframe_ratio.SetMinimum(ratio_min);
+            hframe_ratio.SetMaximum(ratio_max);
             hframe_ratio.GetXaxis()->SetTitle("Inference score [0]");
             hframe_ratio.GetYaxis()->SetTitle("Var./CV");
             hframe_ratio.GetXaxis()->SetTitleSize(0.11);
@@ -425,7 +462,7 @@ int plot_inf_score0_multisim_variations(
             hframe_ratio.GetYaxis()->SetLabelSize(0.08);
             hframe_ratio.GetYaxis()->SetTitleOffset(0.50);
             hframe_ratio.GetYaxis()->SetNdivisions(505);
-            hframe_ratio.Draw("AXIS");
+            hframe_ratio.Draw();
 
             for (std::size_t k = 0; k < draw_ids.size(); ++k)
             {
@@ -440,7 +477,7 @@ int plot_inf_score0_multisim_variations(
                 {
                     const double nom = nom_bins[static_cast<std::size_t>(b - 1)];
                     const double var = univ_bins[u][static_cast<std::size_t>(b - 1)];
-                    h_ratio.SetBinContent(b, nom > 0.0 ? var / nom : 0.0);
+                    h_ratio.SetBinContent(b, nom > 0.0 ? var / nom : 1.0);
                 }
 
                 h_ratio.Draw("HIST SAME");

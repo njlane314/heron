@@ -66,7 +66,6 @@
 #include <TH1.h>
 #include <TH1D.h>
 #include <TLegend.h>
-#include <TLatex.h>
 #include <TLine.h>
 #include <TPad.h>
 #include <TStyle.h>
@@ -373,6 +372,7 @@ struct EnvelopeSummary
     std::size_t nuniv = 0;
 
     std::vector<double> cv;
+    std::vector<std::vector<double>> universes;
     std::vector<double> mean_ratio;
     std::vector<double> rms_ratio;
     std::vector<double> min_ratio;
@@ -395,6 +395,7 @@ EnvelopeSummary summarise_envelope(const std::vector<double> &cv,
     out.xmax = xmax;
     out.nuniv = universes.size();
     out.cv = cv;
+    out.universes = universes;
     out.mean_ratio.assign(cv.size(), std::numeric_limits<double>::quiet_NaN());
     out.rms_ratio.assign(cv.size(), std::numeric_limits<double>::quiet_NaN());
     out.min_ratio.assign(cv.size(), std::numeric_limits<double>::quiet_NaN());
@@ -408,6 +409,20 @@ EnvelopeSummary summarise_envelope(const std::vector<double> &cv,
         out.cv_max = std::max(out.cv_max, cv_bin);
         if (cv_bin > 0.0)
             out.cv_min_positive = std::min(out.cv_min_positive, cv_bin);
+
+        for (const auto &u : universes)
+        {
+            if (ib >= u.size())
+                continue;
+
+            const double u_bin = u[ib];
+            if (std::isfinite(u_bin))
+            {
+                out.cv_max = std::max(out.cv_max, u_bin);
+                if (u_bin > 0.0)
+                    out.cv_min_positive = std::min(out.cv_min_positive, u_bin);
+            }
+        }
 
         if (!(cv_bin > 0.0) || universes.empty())
             continue;
@@ -423,7 +438,8 @@ EnvelopeSummary summarise_envelope(const std::vector<double> &cv,
             if (ib >= u.size())
                 continue;
 
-            const double r = u[ib] / cv_bin;
+            const double u_bin = u[ib];
+            const double r = u_bin / cv_bin;
             if (!std::isfinite(r))
                 continue;
 
@@ -474,6 +490,51 @@ std::unique_ptr<TH1D> make_histogram(const std::string &name,
             h->SetBinContent(b, contents[ib]);
     }
     return h;
+}
+
+std::vector<std::unique_ptr<TGraph>> make_universe_curves(const EnvelopeSummary &s,
+                                                          int color,
+                                                          bool logy)
+{
+    const double bw = (s.xmax - s.xmin) / static_cast<double>(s.nbins);
+    std::vector<std::unique_ptr<TGraph>> out;
+    out.reserve(s.universes.size());
+
+    for (std::size_t iu = 0; iu < s.universes.size(); ++iu)
+    {
+        const auto &u = s.universes[iu];
+
+        std::vector<double> x, y;
+        x.reserve(static_cast<std::size_t>(s.nbins));
+        y.reserve(static_cast<std::size_t>(s.nbins));
+
+        for (int b = 0; b < s.nbins; ++b)
+        {
+            const std::size_t ib = static_cast<std::size_t>(b);
+            if (ib >= u.size())
+                continue;
+
+            const double yval = u[ib];
+            if (!std::isfinite(yval))
+                continue;
+            if (logy && !(yval > 0.0))
+                continue;
+
+            x.push_back(s.xmin + (static_cast<double>(b) + 0.5) * bw);
+            y.push_back(yval);
+        }
+
+        if (x.empty())
+            continue;
+
+        auto g = std::make_unique<TGraph>(static_cast<int>(x.size()), x.data(), y.data());
+        g->SetLineColorAlpha(color, 0.12);
+        g->SetLineWidth(1);
+        g->SetMarkerSize(0.0);
+        out.push_back(std::move(g));
+    }
+
+    return out;
 }
 
 std::unique_ptr<TGraphAsymmErrors> make_rms_band(const EnvelopeSummary &s, int color)
@@ -589,7 +650,6 @@ double sum_contents(const std::vector<double> &v)
 
 void draw_single_envelope_plot(const EnvelopeSummary &s,
                                const std::string &canvas_name,
-                               const std::string &title_text,
                                const std::string &x_title,
                                const std::string &y_title_top,
                                const std::string &output_stem,
@@ -616,6 +676,7 @@ void draw_single_envelope_plot(const EnvelopeSummary &s,
     auto g_mean = make_ratio_curve(s, s.mean_ratio, line_color, 1, 3);
     auto g_min = make_ratio_curve(s, s.min_ratio, line_color, 2, 2);
     auto g_max = make_ratio_curve(s, s.max_ratio, line_color, 2, 2);
+    auto g_univ = make_universe_curves(s, line_color, logy_top);
 
     TCanvas c(canvas_name.c_str(), canvas_name.c_str(), 980, 900);
     c.SetTopMargin(0.04);
@@ -666,12 +727,19 @@ void draw_single_envelope_plot(const EnvelopeSummary &s,
 
     hcv->Draw("HIST");
 
-    TLegend leg(0.14, 0.72, 0.72, 0.89);
+    for (auto &g : g_univ)
+        g->Draw("L SAME");
+
+    hcv->Draw("HIST SAME");
+
+    TLegend leg(0.14, 0.68, 0.72, 0.89);
     leg.SetBorderSize(0);
     leg.SetFillStyle(0);
     std::ostringstream cv_ss;
     cv_ss << "CV (" << s.nuniv << " universes)";
     leg.AddEntry(hcv.get(), cv_ss.str().c_str(), "l");
+    if (!g_univ.empty())
+        leg.AddEntry(g_univ.front().get(), "Individual universes", "l");
     if (envelope_mode == "rms")
         leg.AddEntry(g_rms.get(), "Universe/CV RMS band", "f");
     else if (envelope_mode == "minmax")
@@ -683,10 +751,6 @@ void draw_single_envelope_plot(const EnvelopeSummary &s,
     }
     leg.Draw();
 
-    TLatex latex;
-    latex.SetNDC(true);
-    latex.SetTextSize(0.045);
-    latex.DrawLatex(0.12, 0.93, title_text.c_str());
 
     pad_bot.cd();
 
@@ -968,18 +1032,8 @@ int plotFirstInferenceScoreSystematicEnvelopes(
             const auto sig_tail_summary = summarise_envelope(sig_tail_cv, sig_tail_univ, xmin, xmax);
             const auto bkg_tail_summary = summarise_envelope(bkg_tail_cv, bkg_tail_univ, xmin, xmax);
 
-            const std::string sig_title = fam.title + " envelope: signal score histogram";
-            const std::string bkg_title = include_ext_in_total_bkg
-                                              ? fam.title + " envelope: total background score histogram (MC varied, EXT fixed)"
-                                              : fam.title + " envelope: total background score histogram";
-            const std::string sig_tail_title = fam.title + " envelope: signal cumulative tail N(score > t)";
-            const std::string bkg_tail_title = include_ext_in_total_bkg
-                                                   ? fam.title + " envelope: total background cumulative tail N(score > t) (MC varied, EXT fixed)"
-                                                   : fam.title + " envelope: total background cumulative tail N(score > t)";
-
             draw_single_envelope_plot(sig_score_summary,
                                       "c_" + fam.key + "_score_signal",
-                                      sig_title,
                                       "Inference score [0]",
                                       "Weighted events / bin",
                                       output_stem + "_" + fam.key + "_score_signal",
@@ -989,7 +1043,6 @@ int plotFirstInferenceScoreSystematicEnvelopes(
 
             draw_single_envelope_plot(bkg_score_summary,
                                       "c_" + fam.key + "_score_total_bkg",
-                                      bkg_title,
                                       "Inference score [0]",
                                       "Weighted events / bin",
                                       output_stem + "_" + fam.key + "_score_total_bkg",
@@ -999,7 +1052,6 @@ int plotFirstInferenceScoreSystematicEnvelopes(
 
             draw_single_envelope_plot(sig_tail_summary,
                                       "c_" + fam.key + "_tail_signal",
-                                      sig_tail_title,
                                       "Inference score threshold t",
                                       "Weighted events with score > t",
                                       output_stem + "_" + fam.key + "_tail_signal",
@@ -1009,7 +1061,6 @@ int plotFirstInferenceScoreSystematicEnvelopes(
 
             draw_single_envelope_plot(bkg_tail_summary,
                                       "c_" + fam.key + "_tail_total_bkg",
-                                      bkg_tail_title,
                                       "Inference score threshold t",
                                       "Weighted events with score > t",
                                       output_stem + "_" + fam.key + "_tail_total_bkg",

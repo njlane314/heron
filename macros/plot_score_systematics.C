@@ -581,7 +581,8 @@ int plot_score_systematics(const std::string &event_list_path = "",
         if (xmax == xmin)
             xmax = xmin + 1.0;
 
-        ROOT::DisableImplicitMT();
+        if (ROOT::IsImplicitMTEnabled())
+            ROOT::DisableImplicitMT();
         TH1::SetDefaultSumw2();
 
         const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;

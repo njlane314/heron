@@ -407,7 +407,7 @@ std::vector<NamedKnob> make_named_knobs(int nbins,
 void ensure_scalar_column(ROOT::RDF::RNode &node, const std::string &name)
 {
     if (!has_column(node, name))
-        node = node.Define(name, [] { return 1.0; });
+        node = node.Define(name, [] { return 1.0f; });
 }
 
 void ensure_vector_u16_column(ROOT::RDF::RNode &node, const std::string &name)
@@ -627,9 +627,10 @@ int plot_score_systematics(const std::string &event_list_path = "",
         ensure_scalar_column(node, "ppfx_cv");
         node = node.Define(
             "__w_nominal_nofluxcv__",
-            [](double w_nom, double ppfx_cv) {
-                const double cv = sanitise_multiplier(ppfx_cv);
-                return (cv > 0.0) ? (w_nom / cv) : w_nom;
+            [](double w_nom, float ppfx_cv) {
+                const double cv = sanitise_multiplier(static_cast<double>(ppfx_cv));
+                const double w_nom_d = static_cast<double>(w_nom);
+                return (cv > 0.0) ? (w_nom_d / cv) : w_nom_d;
             },
             {"w_nominal", "ppfx_cv"});
 

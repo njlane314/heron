@@ -657,17 +657,24 @@ int plot_inf_score0_uncertainty_summary(
         const std::vector<double> num_targets_bins = constant_bins(nbins, std::max(0.0, num_targets_frac));
         const std::vector<double> dirt_bins = constant_bins(nbins, std::max(0.0, dirt_frac));
 
-        std::vector<std::vector<double>> total_parts;
-        total_parts.push_back(xsec_total_bins);
-        total_parts.push_back(ppfx_multisim.frac_bins);
-        total_parts.push_back(flux_multisim.frac_bins);
-        total_parts.push_back(reint_multisim.frac_bins);
+        std::vector<std::vector<double>> sys_parts;
+        sys_parts.push_back(xsec_total_bins);
+        sys_parts.push_back(ppfx_multisim.frac_bins);
+        sys_parts.push_back(flux_multisim.frac_bins);
+        sys_parts.push_back(reint_multisim.frac_bins);
         if (pot_frac > 0.0)
-            total_parts.push_back(pot_bins);
+            sys_parts.push_back(pot_bins);
         if (num_targets_frac > 0.0)
-            total_parts.push_back(num_targets_bins);
+            sys_parts.push_back(num_targets_bins);
         if (dirt_frac > 0.0)
-            total_parts.push_back(dirt_bins);
+            sys_parts.push_back(dirt_bins);
+
+        std::vector<double> sys_total_bins = quadrature_sum(sys_parts);
+        if (sys_total_bins.empty())
+            sys_total_bins = constant_bins(nbins, 0.0);
+
+        std::vector<std::vector<double>> total_parts = sys_parts;
+        total_parts.push_back(mc_stat_bins);
 
         std::vector<double> total_bins = quadrature_sum(total_parts);
         if (total_bins.empty())
@@ -677,6 +684,7 @@ int plot_inf_score0_uncertainty_summary(
         std::cout << "[plot_inf_score0_uncertainty_summary] selected events = " << n_evt << "\n";
         std::cout << "  MC Stat        max = " << max_in_bins(mc_stat_bins) << "\n";
         std::cout << "  X-Sec Total    max = " << max_in_bins(xsec_total_bins) << "\n";
+        std::cout << "  Sys Total      max = " << max_in_bins(sys_total_bins) << "\n";
         std::cout << "  Flux Hadronic  max = " << max_in_bins(ppfx_multisim.frac_bins)
                   << "  active = " << ppfx_multisim.n_active << "/" << ppfx_multisim.n_total << "\n";
         std::cout << "  Flux Beamline  max = " << max_in_bins(flux_multisim.frac_bins)
@@ -716,6 +724,16 @@ int plot_inf_score0_uncertainty_summary(
                                          2,
                                          3));
         legend_entries.emplace_back(curves.back().get(), "MC Stat");
+
+        curves.push_back(make_curve_hist("h_sys_total",
+                                         sys_total_bins,
+                                         nbins,
+                                         xmin,
+                                         xmax,
+                                         kGray + 2,
+                                         7,
+                                         3));
+        legend_entries.emplace_back(curves.back().get(), "Sys Total");
 
         curves.push_back(make_curve_hist("h_xsec_total",
                                          xsec_total_bins,

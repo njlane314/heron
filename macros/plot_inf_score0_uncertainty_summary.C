@@ -4,7 +4,7 @@
 // histogram of inf_scores[0].
 //
 // Categories:
-//   * Total            : quadrature sum of the systematic categories below
+//   * Total            : quadrature sum of Sys Total and MC Stat
 //   * MC Stat          : sqrt(sum w_nominal^2) / sum w_nominal in each bin
 //   * X-Sec Total      : GENIE multisim + available dedicated GENIE unisims,
 //                        combined in quadrature
@@ -32,6 +32,8 @@
 //   * The current XML you showed only enables fcl_evtw_00 for the main beam
 //     stages, so the active-universe counts for weightsGenie and weightsPPFX
 //     may be partial rather than the full configured 500 / 600.
+//   * Missing packed-vector entries fall back to identity weights (1.0) rather
+//     than zero weight when an event has fewer stored universes than n_total.
 //
 // Run with:
 //   ./heron macro macros/plot_inf_score0_uncertainty_summary.C
@@ -284,13 +286,16 @@ std::vector<double> compute_multisim_frac_bins(const std::vector<double> &scores
         const std::size_t ib = static_cast<std::size_t>(b);
         const double w = nom_w[i];
         const auto &packed = packed_vecs[i];
-        const std::size_t nu = std::min(n_total, static_cast<std::size_t>(packed.size()));
 
-        for (std::size_t u = 0; u < nu; ++u)
+        for (std::size_t u = 0; u < n_total; ++u)
         {
-            if (packed[u] != 1000)
+            const double wu =
+                (u < packed.size()) ? unpack_packed_weight(packed[u]) : 1.0;
+
+            if (u < packed.size() && packed[u] != 1000)
                 active[u] = 1;
-            univ_bins[u][ib] += w * unpack_packed_weight(packed[u]);
+
+            univ_bins[u][ib] += w * wu;
         }
     }
 

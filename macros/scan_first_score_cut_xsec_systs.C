@@ -380,11 +380,11 @@ double compute_mcstat_variance_nominal(const EvaluatedYields &cv,
     return std::max(0.0, var) / (exposure_scale * exposure_scale);
 }
 
-std::vector<double> sum_curves(const std::vector<std::vector<double>> &curves)
+std::vector<double> sum_curves(const std::vector<std::vector<double>> &curves, std::size_t npoints = 0)
 {
     std::vector<double> out;
     if (curves.empty())
-        return out;
+        return std::vector<double>(npoints, 0.0);
 
     out.assign(curves.front().size(), 0.0);
     for (const auto &c : curves)
@@ -474,24 +474,24 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
         // ------------------------------------------------------------------
         // Edit this configuration block to match your MCC9 event-list setup.
         // ------------------------------------------------------------------
-        const std::string kFluxCvComponent = "ppfx_cv";
+        const std::string kFluxCvComponent = "ppfx_cv_weight";
         const std::string kGenieCvComponent = ""; // e.g. "tuned_cv_weight" if you need replacement rather than multiplication
 
         const std::vector<WeightSystematic> weight_systs = {
-            {"flux", "flux_all", kFluxCvComponent, true, TruthDenomMode::kUseCVTruthDenom},
-            {"reint", "reint_all", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_multi", "All_UBGenie", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_AxFFCCQEshape", "AxFFCCQEshape_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_DecayAngMEC", "DecayAngMEC_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_NormCCCOH", "NormCCCOH_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_NormNCCOH", "NormNCCOH_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_RPA_CCQE", "RPA_CCQE_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_ThetaDelta2NRad", "ThetaDelta2NRad_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_Theta_Delta2Npi", "Theta_Delta2Npi_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_VecFFCCQEshape", "VecFFCCQEshape_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_XSecShape_CCMEC", "XSecShape_CCMEC_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_xsr_scc_Fa3_SCC", "xsr_scc_Fa3_SCC", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
-            {"xsec_xsr_scc_Fv3_SCC", "xsr_scc_Fv3_SCC", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
+            {"flux", "weight_flux_all", kFluxCvComponent, true, TruthDenomMode::kUseCVTruthDenom},
+            {"reint", "weight_reint_all", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_multi", "weight_All_UBGenie", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_AxFFCCQEshape", "weight_AxFFCCQEshape_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_DecayAngMEC", "weight_DecayAngMEC_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_NormCCCOH", "weight_NormCCCOH_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_NormNCCOH", "weight_NormNCCOH_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_RPA_CCQE", "weight_RPA_CCQE_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_ThetaDelta2NRad", "weight_ThetaDelta2NRad_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_Theta_Delta2Npi", "weight_Theta_Delta2Npi_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_VecFFCCQEshape", "weight_VecFFCCQEshape_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_XSecShape_CCMEC", "weight_XSecShape_CCMEC_UBGenie", kGenieCvComponent, false, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_xsr_scc_Fa3_SCC", "weight_xsr_scc_Fa3_SCC", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
+            {"xsec_xsr_scc_Fv3_SCC", "weight_xsr_scc_Fv3_SCC", kGenieCvComponent, true, TruthDenomMode::kUseVariedTruthDenom},
         };
 
         const std::vector<DetVarSystematic> detvar_systs = {
@@ -756,7 +756,7 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
             return curves;
         };
 
-        abs_var_map["xsec_unisim"] = sum_curves(collect_existing(xsec_unisim_names));
+        abs_var_map["xsec_unisim"] = sum_curves(collect_existing(xsec_unisim_names), cuts.size());
         abs_var_map["xsec_total"] = sum_curves({
             abs_var_map.count("xsec_multi") ? abs_var_map.at("xsec_multi") : std::vector<double>(cuts.size(), 0.0),
             abs_var_map.count("xsec_unisim") ? abs_var_map.at("xsec_unisim") : std::vector<double>(cuts.size(), 0.0),
@@ -764,7 +764,7 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
             abs_var_map.count("xsec_xsr_scc_Fv3_SCC") ? abs_var_map.at("xsec_xsr_scc_Fv3_SCC") : std::vector<double>(cuts.size(), 0.0),
             abs_var_map.count("NuWroGenie") ? abs_var_map.at("NuWroGenie") : std::vector<double>(cuts.size(), 0.0),
         });
-        abs_var_map["detVar_total"] = sum_curves(collect_existing(detvar_names));
+        abs_var_map["detVar_total"] = sum_curves(collect_existing(detvar_names), cuts.size());
         abs_var_map["PredTotal"] = sum_curves({
             abs_var_map.count("detVar_total") ? abs_var_map.at("detVar_total") : std::vector<double>(cuts.size(), 0.0),
             abs_var_map.count("flux") ? abs_var_map.at("flux") : std::vector<double>(cuts.size(), 0.0),
@@ -796,18 +796,24 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
             }
         }
 
+        if (best_idx >= cuts.size())
+            best_idx = 0;
+
         std::cout << std::fixed << std::setprecision(6);
-        std::cout << "[scan_first_score_cut_xsec_systs] best cut = " << cuts[best_idx]
-                  << (keep_greater_than ? "  for score >= cut\n" : "  for score < cut\n");
-        std::cout << "  eff(CV)    = " << eff_cv[best_idx] << "\n";
-        std::cout << "  purity(CV) = " << purity_cv[best_idx] << "\n";
-        if (it_total != rel_map.end())
+        if (best_idx < cuts.size())
+            std::cout << "[scan_first_score_cut_xsec_systs] best cut = " << cuts[best_idx]
+                      << (keep_greater_than ? "  for score >= cut\n" : "  for score < cut\n");
+        if (best_idx < eff_cv.size())
+            std::cout << "  eff(CV)    = " << eff_cv[best_idx] << "\n";
+        if (best_idx < purity_cv.size())
+            std::cout << "  purity(CV) = " << purity_cv[best_idx] << "\n";
+        if (it_total != rel_map.end() && best_idx < it_total->second.size())
             std::cout << "  rel total  = " << it_total->second[best_idx] << "\n";
 
         for (const auto &name : {std::string("flux"), std::string("reint"), std::string("xsec_total"), std::string("detVar_total"), std::string("MCstats"), std::string("POT"), std::string("numTargets")})
         {
             auto it = rel_map.find(name);
-            if (it != rel_map.end())
+            if (it != rel_map.end() && best_idx < it->second.size())
                 std::cout << "  rel " << std::setw(12) << std::left << name << " = " << it->second[best_idx] << "\n";
         }
 

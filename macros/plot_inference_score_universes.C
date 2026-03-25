@@ -187,11 +187,81 @@ std::vector<std::vector<double>> build_universe_hists_from_unisim(
   return out;
 }
 
+struct HistBand {
+  std::vector<double> lo;
+  std::vector<double> hi;
+};
+
+double quantile_from_sorted(const std::vector<double>& sorted, double q) {
+  if (sorted.empty()) return 0.0;
+  if (q <= 0.0) return sorted.front();
+  if (q >= 1.0) return sorted.back();
+
+  const double pos = q * static_cast<double>(sorted.size() - 1);
+  const size_t i = static_cast<size_t>(std::floor(pos));
+  const double frac = pos - static_cast<double>(i);
+  if (i + 1 >= sorted.size()) return sorted.back();
+  return (1.0 - frac) * sorted[i] + frac * sorted[i + 1];
+}
+
+HistBand build_quantile_band(const std::vector<std::vector<double>>& univ_hists,
+                             int nbins, double q_lo, double q_hi) {
+  HistBand band;
+  band.lo.assign(static_cast<size_t>(nbins), 0.0);
+  band.hi.assign(static_cast<size_t>(nbins), 0.0);
+
+  std::vector<double> vals;
+  vals.reserve(univ_hists.size());
+
+  for (int b = 0; b < nbins; ++b) {
+    vals.clear();
+    for (const auto& hu : univ_hists) {
+      if (static_cast<size_t>(b) >= hu.size()) continue;
+      const double v = hu[static_cast<size_t>(b)];
+      if (std::isfinite(v)) vals.push_back(v);
+    }
+    if (vals.empty()) continue;
+
+    std::sort(vals.begin(), vals.end());
+    band.lo[static_cast<size_t>(b)] = quantile_from_sorted(vals, q_lo);
+    band.hi[static_cast<size_t>(b)] = quantile_from_sorted(vals, q_hi);
+  }
+
+  return band;
+}
+
+HistBand build_central_band(const std::vector<std::vector<double>>& univ_hists,
+                            int nbins, double coverage) {
+  const double cov = std::max(0.0, std::min(1.0, coverage));
+  const double tail = 0.5 * (1.0 - cov);
+  return build_quantile_band(univ_hists, nbins, tail, 1.0 - tail);
+}
+
+double max_band_value(const HistBand& band) {
+  if (band.hi.empty()) return 0.0;
+  return *std::max_element(band.hi.begin(), band.hi.end());
+}
+
 TH1D* make_hist1d(const std::vector<double>& bins, const std::string& name,
                   int nbins, double xmin, double xmax) {
   auto* h = new TH1D(name.c_str(), "", nbins, xmin, xmax);
   h->SetDirectory(nullptr);
   for (int i = 0; i < nbins; ++i) h->SetBinContent(i + 1, bins[static_cast<size_t>(i)]);
+  return h;
+}
+
+TH1D* make_band_hist(const HistBand& band, const std::string& name,
+                     int nbins, double xmin, double xmax) {
+  auto* h = new TH1D(name.c_str(), "", nbins, xmin, xmax);
+  h->SetDirectory(nullptr);
+  for (int i = 0; i < nbins; ++i) {
+    const double lo = band.lo[static_cast<size_t>(i)];
+    const double hi = band.hi[static_cast<size_t>(i)];
+    const double mid = 0.5 * (lo + hi);
+    const double err = 0.5 * std::max(0.0, hi - lo);
+    h->SetBinContent(i + 1, mid);
+    h->SetBinError(i + 1, err);
+  }
   return h;
 }
 
@@ -203,6 +273,7 @@ void apply_plot_style() {
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
   gStyle->SetEndErrorSize(0);
+  gStyle->SetErrorX(0.5);
   gStyle->SetTitleSize(0.060, "XY");
   gStyle->SetLabelSize(0.050, "XY");
   gStyle->SetTitleOffset(0.85, "X");
@@ -217,46 +288,50 @@ void style_cv_hist(TH1D* h, const std::string& x_title, const std::string& y_tit
   h->SetTitle((";" + x_title + ";Events").c_str());
   h->GetYaxis()->SetTitle(y_title.c_str());
   h->SetLineColor(kBlack);
-  h->SetLineWidth(4);
+  h->SetLineWidth(2);
   h->SetMarkerColor(kBlack);
   h->SetMarkerStyle(20);
   h->SetMarkerSize(0.0);
   h->SetFillStyle(0);
 }
 
-void style_universe_hist(TH1D* h) {
-  static int bright_green = TColor::GetColor("#00ff00");
-  h->SetLineColor(bright_green);
-  h->SetLineWidth(2);
+void style_band_hist(TH1D* h, int color, float alpha) {
+  h->SetLineColor(color);
+  h->SetLineWidth(1);
+  h->SetFillColorAlpha(color, alpha);
+  h->SetFillStyle(1001);
+  h->SetMarkerSize(0.0);
+}
+
+void style_band_edge(TH1D* h, int color, int line_width = 1) {
+  h->SetLineColor(color);
+  h->SetLineWidth(line_width);
   h->SetLineStyle(1);
   h->SetMarkerSize(0.0);
   h->SetFillStyle(0);
 }
 
-void draw_microboone_label(double x_left = 0.56, double y_top = 0.93) {
-  TLatex latex;
-  latex.SetNDC();
-  latex.SetTextFont(62);
-  latex.SetTextSize(0.052);
-  latex.DrawLatex(x_left, y_top, "MicroBooNE Simulation, Preliminary");
-}
-
-void draw_header_legend(TH1D* h_cv, TH1D* h_univ,
-                        double x1 = 0.03, double y1 = 0.93,
-                        double x2 = 0.78, double y2 = 0.995) {
-  TLegend leg(x1, y1, x2, y2);
-  leg.SetNColumns(2);
-  leg.SetTextSize(0.055);
-  leg.AddEntry(h_cv, "Central Value", "l");
-  leg.AddEntry(h_univ, "Variations", "l");
-  leg.Draw();
+TLegend* make_band_legend(TH1D* h68, TH1D* h95, TH1D* h100, TH1D* h_cv,
+                          TH1D* h_data = nullptr,
+                          double x1 = 0.58, double y1 = 0.63,
+                          double x2 = 0.92, double y2 = 0.89) {
+  auto* leg = new TLegend(x1, y1, x2, y2);
+  leg->SetNColumns(1);
+  leg->SetTextSize(0.040);
+  leg->AddEntry(h68, "Universe (68%)", "lf");
+  leg->AddEntry(h95, "Universe (95%)", "lf");
+  leg->AddEntry(h100, "Universe (100%)", "lf");
+  leg->AddEntry(h_cv, "Central Value", "l");
+  if (h_data != nullptr) leg->AddEntry(h_data, "Data", "ep");
+  return leg;
 }
 
 } // namespace
 
 /*
-  Draw the central-value inference-score distribution in black and every enabled
-  universe variation in bright green.
+  Draw the central-value inference-score distribution in black and summarize the
+  enabled universe variations as bin-by-bin 68%, 95%, and 100% central
+  quantile bands.
 
   Supported sources:
     source = "genie"       -> weightsGenie
@@ -448,19 +523,38 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
     }
   }
 
+  const HistBand band68 = build_central_band(univ_hists, nbins, 0.68);
+  const HistBand band95 = build_central_band(univ_hists, nbins, 0.95);
+  const HistBand band100 = build_central_band(univ_hists, nbins, 1.00);
+
   TH1D* h_cv = make_hist1d(cv_total, "h_cv", nbins, xmin, xmax);
   style_cv_hist(h_cv, "Inference score[" + std::to_string(score_index) + "]");
 
-  std::vector<TH1D*> h_univ;
-  h_univ.reserve(univ_hists.size());
-  double ymax = h_cv->GetMaximum();
+  const int color68 = TColor::GetColor("#EAD94C");
+  const int color95 = TColor::GetColor("#67B7B0");
+  const int color100 = TColor::GetColor("#7A4F8A");
 
-  for (size_t u = 0; u < univ_hists.size(); ++u) {
-    TH1D* h = make_hist1d(univ_hists[u], "h_univ_" + std::to_string(static_cast<unsigned long long>(u)), nbins, xmin, xmax);
-    style_universe_hist(h);
-    ymax = std::max(ymax, h->GetMaximum());
-    h_univ.push_back(h);
-  }
+  TH1D* h_band68 = make_band_hist(band68, "h_band_68", nbins, xmin, xmax);
+  TH1D* h_band95 = make_band_hist(band95, "h_band_95", nbins, xmin, xmax);
+  TH1D* h_band100 = make_band_hist(band100, "h_band_100", nbins, xmin, xmax);
+  style_band_hist(h_band68, color68, 0.50f);
+  style_band_hist(h_band95, color95, 0.30f);
+  style_band_hist(h_band100, color100, 0.18f);
+
+  TH1D* h_band68_lo = make_hist1d(band68.lo, "h_band_68_lo", nbins, xmin, xmax);
+  TH1D* h_band68_hi = make_hist1d(band68.hi, "h_band_68_hi", nbins, xmin, xmax);
+  TH1D* h_band95_lo = make_hist1d(band95.lo, "h_band_95_lo", nbins, xmin, xmax);
+  TH1D* h_band95_hi = make_hist1d(band95.hi, "h_band_95_hi", nbins, xmin, xmax);
+  TH1D* h_band100_lo = make_hist1d(band100.lo, "h_band_100_lo", nbins, xmin, xmax);
+  TH1D* h_band100_hi = make_hist1d(band100.hi, "h_band_100_hi", nbins, xmin, xmax);
+  style_band_edge(h_band68_lo, color68);
+  style_band_edge(h_band68_hi, color68);
+  style_band_edge(h_band95_lo, color95);
+  style_band_edge(h_band95_hi, color95);
+  style_band_edge(h_band100_lo, color100);
+  style_band_edge(h_band100_hi, color100);
+
+  double ymax = std::max(h_cv->GetMaximum(), max_band_value(band100));
 
   TH1D* h_data = nullptr;
   if (include_data) {
@@ -494,32 +588,33 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
   c.SetLeftMargin(0.11);
   c.SetRightMargin(0.03);
   c.SetBottomMargin(0.12);
-  c.SetTopMargin(0.13);
+  c.SetTopMargin(0.08);
 
   style_cv_hist(h_cv, "Inference score[" + std::to_string(score_index) + "]");
-  h_cv->GetYaxis()->SetRangeUser(0.0, 1.32 * ymax);
+  h_cv->GetYaxis()->SetRangeUser(0.0, 1.18 * ymax);
   h_cv->Draw("HIST");
 
-  for (TH1D* h : h_univ) h->Draw("HIST SAME");
+  h_band100->Draw("E2 SAME");
+  h_band95->Draw("E2 SAME");
+  h_band68->Draw("E2 SAME");
+  h_band100_lo->Draw("HIST SAME");
+  h_band100_hi->Draw("HIST SAME");
+  h_band95_lo->Draw("HIST SAME");
+  h_band95_hi->Draw("HIST SAME");
+  h_band68_lo->Draw("HIST SAME");
+  h_band68_hi->Draw("HIST SAME");
   h_cv->Draw("HIST SAME");
   if (h_data != nullptr) h_data->Draw("E1 SAME");
 
-  draw_header_legend(h_cv, h_univ.front());
-  draw_microboone_label(0.38, 0.84);
+  TLegend* leg = make_band_legend(h_band68, h_band95, h_band100, h_cv, h_data);
+  leg->Draw();
 
   if (include_ext && h_ext != nullptr) {
     TLatex latex;
     latex.SetNDC();
     latex.SetTextFont(42);
     latex.SetTextSize(0.032);
-    latex.DrawLatex(0.62, 0.78, "EXT included in all templates");
-  }
-
-  if (h_data != nullptr) {
-    TLegend leg_data(0.78, 0.78, 0.94, 0.88);
-    leg_data.SetTextSize(0.040);
-    leg_data.AddEntry(h_data, "Data", "ep");
-    leg_data.Draw();
+    latex.DrawLatex(0.14, 0.84, "EXT included in all templates");
   }
 
   c.RedrawAxis();
@@ -528,21 +623,45 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
   TFile fout(root_path.c_str(), "RECREATE");
   h_cv->Write("h_cv");
   if (h_ext != nullptr) h_ext->Write("h_ext");
+  h_band68->Write("h_band_68");
+  h_band95->Write("h_band_95");
+  h_band100->Write("h_band_100");
+  h_band68_lo->Write("h_band_68_lo");
+  h_band68_hi->Write("h_band_68_hi");
+  h_band95_lo->Write("h_band_95_lo");
+  h_band95_hi->Write("h_band_95_hi");
+  h_band100_lo->Write("h_band_100_lo");
+  h_band100_hi->Write("h_band_100_hi");
   if (h_data != nullptr) h_data->Write("h_data");
-  for (size_t u = 0; u < h_univ.size(); ++u) {
-    fout.WriteObject(h_univ[u], ("h_universe_" + std::to_string(static_cast<unsigned long long>(u))).c_str());
+  for (size_t u = 0; u < univ_hists.size(); ++u) {
+    std::unique_ptr<TH1D> h_universe(
+        make_hist1d(univ_hists[u],
+                    "h_universe_tmp_" + std::to_string(static_cast<unsigned long long>(u)),
+                    nbins, xmin, xmax));
+    fout.WriteObject(
+        h_universe.get(),
+        ("h_universe_" + std::to_string(static_cast<unsigned long long>(u))).c_str());
   }
   fout.Close();
 
   std::cout << "[plot_inference_score_universes] source = " << source_label << "\n";
-  std::cout << "[plot_inference_score_universes] universes drawn = " << h_univ.size() << "\n";
+  std::cout << "[plot_inference_score_universes] universes summarized = " << univ_hists.size() << "\n";
   std::cout << "[plot_inference_score_universes] wrote " << out_path << "\n";
   std::cout << "[plot_inference_score_universes] wrote " << root_path << "\n";
 
   delete h_cv;
   delete h_ext;
   delete h_data;
-  for (TH1D* h : h_univ) delete h;
+  delete h_band68;
+  delete h_band95;
+  delete h_band100;
+  delete h_band68_lo;
+  delete h_band68_hi;
+  delete h_band95_lo;
+  delete h_band95_hi;
+  delete h_band100_lo;
+  delete h_band100_hi;
+  delete leg;
 
   return 0;
 }

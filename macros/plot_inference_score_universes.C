@@ -11,7 +11,9 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <TCanvas.h>
+#include <TColor.h>
 #include <TFile.h>
+#include <TLatex.h>
 #include <TH1D.h>
 #include <TLegend.h>
 #include <TStyle.h>
@@ -92,6 +94,19 @@ std::vector<double> build_cv_hist(const std::vector<float>& x,
     const int b = find_bin(x[i], nbins, xmin, xmax, fold_overflow);
     if (b < 0) continue;
     out[static_cast<size_t>(b)] += w_nom[i];
+  }
+  return out;
+}
+
+std::vector<double> divide_weights_by_cv_source(const std::vector<double>& w_nom,
+                                                const std::vector<float>& w_cv_src) {
+  std::vector<double> out = w_nom;
+  const size_t n = std::min(out.size(), w_cv_src.size());
+  for (size_t i = 0; i < n; ++i) {
+    const double cv = static_cast<double>(w_cv_src[i]);
+    if (std::isfinite(cv) && cv > 0.0) {
+      out[i] /= cv;
+    }
   }
   return out;
 }
@@ -180,20 +195,61 @@ TH1D* make_hist1d(const std::vector<double>& bins, const std::string& name,
   return h;
 }
 
-void style_cv_hist(TH1D* h, const std::string& x_title) {
+void apply_plot_style() {
+  gStyle->SetOptStat(0);
+  gStyle->SetTitleBorderSize(0);
+  gStyle->SetFrameLineWidth(2);
+  gStyle->SetLineWidth(2);
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
+  gStyle->SetEndErrorSize(0);
+  gStyle->SetTitleSize(0.060, "XY");
+  gStyle->SetLabelSize(0.050, "XY");
+  gStyle->SetTitleOffset(0.85, "X");
+  gStyle->SetTitleOffset(0.72, "Y");
+  gStyle->SetNdivisions(506, "XY");
+  gStyle->SetLegendBorderSize(0);
+  gStyle->SetLegendFillColor(0);
+  gStyle->SetLegendFont(42);
+}
+
+void style_cv_hist(TH1D* h, const std::string& x_title, const std::string& y_title = "Events") {
   h->SetTitle((";" + x_title + ";Events").c_str());
+  h->GetYaxis()->SetTitle(y_title.c_str());
   h->SetLineColor(kBlack);
   h->SetLineWidth(4);
   h->SetMarkerColor(kBlack);
   h->SetMarkerStyle(20);
   h->SetMarkerSize(0.0);
+  h->SetFillStyle(0);
 }
 
 void style_universe_hist(TH1D* h) {
-  h->SetLineColor(kGreen + 1);
+  static int bright_green = TColor::GetColor("#00ff00");
+  h->SetLineColor(bright_green);
   h->SetLineWidth(2);
   h->SetLineStyle(1);
   h->SetMarkerSize(0.0);
+  h->SetFillStyle(0);
+}
+
+void draw_microboone_label(double x_left = 0.56, double y_top = 0.93) {
+  TLatex latex;
+  latex.SetNDC();
+  latex.SetTextFont(62);
+  latex.SetTextSize(0.052);
+  latex.DrawLatex(x_left, y_top, "MicroBooNE Simulation, Preliminary");
+}
+
+void draw_header_legend(TH1D* h_cv, TH1D* h_univ,
+                        double x1 = 0.03, double y1 = 0.93,
+                        double x2 = 0.78, double y2 = 0.995) {
+  TLegend leg(x1, y1, x2, y2);
+  leg.SetNColumns(2);
+  leg.SetTextSize(0.055);
+  leg.AddEntry(h_cv, "Central Value", "l");
+  leg.AddEntry(h_univ, "Variations", "l");
+  leg.Draw();
 }
 
 } // namespace
@@ -207,6 +263,12 @@ void style_universe_hist(TH1D* h) {
     source = "reint"       -> weightsReint
     source = "ppfx"        -> weightsPPFX (optionally divided by ppfx_cv)
     source = "flux"        -> weightsFlux
+
+  Important:
+    For GENIE, w_nominal already contains weightTune. The GENIE multisim
+    universes therefore need to be applied relative to weightTune, not on top
+    of it. The same holds for the GENIE up/down knob vectors.
+
     source = "genie_up"    -> weightsGenieUp
     source = "genie_dn"    -> weightsGenieDn
 
@@ -288,12 +350,19 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsGenie\n";
       return 1;
     }
+
     auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsGenie");
-    univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins, xmin, xmax, fold_overflow);
+    if (has_column(node_mc, "weightTune")) {
+      auto tune_h = node_mc.Take<float>("weightTune");
+      univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, &(*tune_h),
+                                                      nbins, xmin, xmax, fold_overflow);
+    } else {
+      univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, nullptr,
+                                                      nbins, xmin, xmax, fold_overflow);
+    }
     source_label = "GENIE multisim";
   } else if (source == "reint") {
     if (!has_column(node_mc, "weightsReint")) {
-      std::cerr << "[plot_inference_score_universes] missing branch weightsReint\n";
       return 1;
     }
     auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsReint");
@@ -327,7 +396,15 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
     }
     auto up_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsGenieUp");
     std::vector<ROOT::RVec<unsigned short>> dummy;
-    univ_hists = build_universe_hists_from_unisim(*x_mc_h, *w_mc_h, *up_h, dummy, nbins, xmin, xmax, fold_overflow, true);
+    if (has_column(node_mc, "weightTune")) {
+      auto tune_h = node_mc.Take<float>("weightTune");
+      const auto w_notune = divide_weights_by_cv_source(*w_mc_h, *tune_h);
+      univ_hists = build_universe_hists_from_unisim(*x_mc_h, w_notune, *up_h, dummy,
+                                                    nbins, xmin, xmax, fold_overflow, true);
+    } else {
+      univ_hists = build_universe_hists_from_unisim(*x_mc_h, *w_mc_h, *up_h, dummy,
+                                                    nbins, xmin, xmax, fold_overflow, true);
+    }
     source_label = "GENIE up unisims";
   } else if (source == "genie_dn") {
     if (!has_column(node_mc, "weightsGenieDn")) {
@@ -336,7 +413,15 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
     }
     auto dn_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsGenieDn");
     std::vector<ROOT::RVec<unsigned short>> dummy;
-    univ_hists = build_universe_hists_from_unisim(*x_mc_h, *w_mc_h, dummy, *dn_h, nbins, xmin, xmax, fold_overflow, false);
+    if (has_column(node_mc, "weightTune")) {
+      auto tune_h = node_mc.Take<float>("weightTune");
+      const auto w_notune = divide_weights_by_cv_source(*w_mc_h, *tune_h);
+      univ_hists = build_universe_hists_from_unisim(*x_mc_h, w_notune, dummy, *dn_h,
+                                                    nbins, xmin, xmax, fold_overflow, false);
+    } else {
+      univ_hists = build_universe_hists_from_unisim(*x_mc_h, *w_mc_h, dummy, *dn_h,
+                                                    nbins, xmin, xmax, fold_overflow, false);
+    }
     source_label = "GENIE down unisims";
   } else {
     std::cerr << "[plot_inference_score_universes] unsupported source '" << source
@@ -389,13 +474,14 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
     h_data->SetLineColor(kBlack);
     h_data->SetMarkerColor(kBlack);
     h_data->SetMarkerStyle(20);
+    h_data->SetMarkerSize(1.1);
     h_data->SetLineWidth(2);
     ymax = std::max(ymax, h_data->GetMaximum());
   }
 
   if (ymax <= 0.0) ymax = 1.0;
 
-  gStyle->SetOptStat(0);
+  apply_plot_style();
   const std::string out_dir = env_or("HERON_PLOT_OUT_DIR", "./scratch/out");
   const std::string out_fmt = env_or("HERON_PLOT_OUT_FMT", "pdf");
   gSystem->mkdir(out_dir.c_str(), true);
@@ -405,25 +491,36 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
   const std::string root_path = out_dir + "/" + stem + "_" + source + ".root";
 
   TCanvas c("c_score_universes", "c_score_universes", 980, 760);
-  c.SetLeftMargin(0.12);
-  c.SetRightMargin(0.05);
+  c.SetLeftMargin(0.11);
+  c.SetRightMargin(0.03);
   c.SetBottomMargin(0.12);
+  c.SetTopMargin(0.13);
 
-  h_cv->GetYaxis()->SetRangeUser(0.0, 1.30 * ymax);
+  style_cv_hist(h_cv, "Inference score[" + std::to_string(score_index) + "]");
+  h_cv->GetYaxis()->SetRangeUser(0.0, 1.32 * ymax);
   h_cv->Draw("HIST");
 
   for (TH1D* h : h_univ) h->Draw("HIST SAME");
   h_cv->Draw("HIST SAME");
   if (h_data != nullptr) h_data->Draw("E1 SAME");
 
-  TLegend leg(0.54, 0.68, 0.90, 0.88);
-  leg.SetBorderSize(0);
-  leg.SetFillStyle(0);
-  leg.AddEntry(h_cv, "CV", "l");
-  leg.AddEntry(h_univ.front(), (source_label + " universes").c_str(), "l");
-  if (include_ext && h_ext != nullptr) leg.AddEntry((TObject*)nullptr, "EXT included in all templates", "");
-  if (h_data != nullptr) leg.AddEntry(h_data, "Data", "ep");
-  leg.Draw();
+  draw_header_legend(h_cv, h_univ.front());
+  draw_microboone_label(0.38, 0.84);
+
+  if (include_ext && h_ext != nullptr) {
+    TLatex latex;
+    latex.SetNDC();
+    latex.SetTextFont(42);
+    latex.SetTextSize(0.032);
+    latex.DrawLatex(0.62, 0.78, "EXT included in all templates");
+  }
+
+  if (h_data != nullptr) {
+    TLegend leg_data(0.78, 0.78, 0.94, 0.88);
+    leg_data.SetTextSize(0.040);
+    leg_data.AddEntry(h_data, "Data", "ep");
+    leg_data.Draw();
+  }
 
   c.RedrawAxis();
   c.SaveAs(out_path.c_str());

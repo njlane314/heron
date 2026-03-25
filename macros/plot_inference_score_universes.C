@@ -99,7 +99,7 @@ std::vector<double> build_cv_hist(const std::vector<float>& x,
 std::vector<std::vector<double>> build_universe_hists_from_multisim(
     const std::vector<float>& x,
     const std::vector<double>& w_nom,
-    const std::vector<std::vector<unsigned short>>& w_univ_ushort,
+    const std::vector<ROOT::RVec<unsigned short>>& w_univ_ushort,
     const std::vector<float>* w_cv_src,
     int nbins, double xmin, double xmax,
     bool fold_overflow) {
@@ -116,7 +116,7 @@ std::vector<std::vector<double>> build_universe_hists_from_multisim(
     const int b = find_bin(x[i], nbins, xmin, xmax, fold_overflow);
     if (b < 0) continue;
 
-    static const std::vector<unsigned short> empty;
+    static const ROOT::RVec<unsigned short> empty;
     const auto& wu = (i < w_univ_ushort.size()) ? w_univ_ushort[i] : empty;
     const double cv_src = (w_cv_src != nullptr && i < w_cv_src->size()) ? static_cast<double>((*w_cv_src)[i]) : 1.0;
 
@@ -134,8 +134,8 @@ std::vector<std::vector<double>> build_universe_hists_from_multisim(
 std::vector<std::vector<double>> build_universe_hists_from_unisim(
     const std::vector<float>& x,
     const std::vector<double>& w_nom,
-    const std::vector<std::vector<unsigned short>>& w_up_ushort,
-    const std::vector<std::vector<unsigned short>>& w_dn_ushort,
+    const std::vector<ROOT::RVec<unsigned short>>& w_up_ushort,
+    const std::vector<ROOT::RVec<unsigned short>>& w_dn_ushort,
     int nbins, double xmin, double xmax,
     bool fold_overflow,
     bool use_up_variations) {
@@ -154,7 +154,7 @@ std::vector<std::vector<double>> build_universe_hists_from_unisim(
     const int b = find_bin(x[i], nbins, xmin, xmax, fold_overflow);
     if (b < 0) continue;
 
-    static const std::vector<unsigned short> empty;
+    static const ROOT::RVec<unsigned short> empty;
     const auto& wup = (i < w_up_ushort.size()) ? w_up_ushort[i] : empty;
     const auto& wdn = (i < w_dn_ushort.size()) ? w_dn_ushort[i] : empty;
 
@@ -288,7 +288,7 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsGenie\n";
       return 1;
     }
-    auto u_h = node_mc.Take<std::vector<unsigned short>>("weightsGenie");
+    auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsGenie");
     univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins, xmin, xmax, fold_overflow);
     source_label = "GENIE multisim";
   } else if (source == "reint") {
@@ -296,7 +296,7 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsReint\n";
       return 1;
     }
-    auto u_h = node_mc.Take<std::vector<unsigned short>>("weightsReint");
+    auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsReint");
     univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins, xmin, xmax, fold_overflow);
     source_label = "Reinteraction multisim";
   } else if (source == "ppfx") {
@@ -304,7 +304,7 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsPPFX\n";
       return 1;
     }
-    auto u_h = node_mc.Take<std::vector<unsigned short>>("weightsPPFX");
+    auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsPPFX");
     if (ppfx_is_already_in_nominal && has_column(node_mc, "ppfx_cv")) {
       auto cv_h = node_mc.Take<float>("ppfx_cv");
       univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, &(*cv_h), nbins, xmin, xmax, fold_overflow);
@@ -317,7 +317,7 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsFlux\n";
       return 1;
     }
-    auto u_h = node_mc.Take<std::vector<unsigned short>>("weightsFlux");
+    auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsFlux");
     univ_hists = build_universe_hists_from_multisim(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins, xmin, xmax, fold_overflow);
     source_label = "Flux multisim";
   } else if (source == "genie_up") {
@@ -325,8 +325,8 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsGenieUp\n";
       return 1;
     }
-    auto up_h = node_mc.Take<std::vector<unsigned short>>("weightsGenieUp");
-    std::vector<std::vector<unsigned short>> dummy;
+    auto up_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsGenieUp");
+    std::vector<ROOT::RVec<unsigned short>> dummy;
     univ_hists = build_universe_hists_from_unisim(*x_mc_h, *w_mc_h, *up_h, dummy, nbins, xmin, xmax, fold_overflow, true);
     source_label = "GENIE up unisims";
   } else if (source == "genie_dn") {
@@ -334,8 +334,8 @@ int plot_inference_score_universes(const std::string& samples_tsv = "",
       std::cerr << "[plot_inference_score_universes] missing branch weightsGenieDn\n";
       return 1;
     }
-    auto dn_h = node_mc.Take<std::vector<unsigned short>>("weightsGenieDn");
-    std::vector<std::vector<unsigned short>> dummy;
+    auto dn_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsGenieDn");
+    std::vector<ROOT::RVec<unsigned short>> dummy;
     univ_hists = build_universe_hists_from_unisim(*x_mc_h, *w_mc_h, dummy, *dn_h, nbins, xmin, xmax, fold_overflow, false);
     source_label = "GENIE down unisims";
   } else {

@@ -331,7 +331,7 @@ double integral_err2_hard_cut(const TH1D &h, double cut, bool keep_greater_than)
     return out;
 }
 
-EvaluatedYields evaluate_yields(const BookedYields &booked, double cut, bool keep_greater_than)
+EvaluatedYields evaluate_yields(BookedYields booked, double cut, bool keep_greater_than)
 {
     const TH1D &hs = booked.h_sig.GetValue();
     const TH1D &hb = booked.h_bkg.GetValue();

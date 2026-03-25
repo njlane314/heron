@@ -45,6 +45,8 @@ struct HistSummary {
   std::vector<double> sumw2;
 };
 
+using UShortRVec = ROOT::RVec<unsigned short>;
+
 struct SplitComponent {
   std::string name;
   TMatrixD total;
@@ -246,7 +248,7 @@ TMatrixD make_fullcorr_covariance(const HistSummary& h, double frac) {
 }
 
 TMatrixD build_multisim_covariance_from_vectors(const std::vector<float>& x, const std::vector<double>& w_nom,
-                                                const std::vector<std::vector<unsigned short>>& w_univ_ushort,
+                                                const std::vector<UShortRVec>& w_univ_ushort,
                                                 const std::vector<float>* w_cv_src, int nbins, double xmin,
                                                 double xmax, bool fold_overflow, bool average_universes,
                                                 std::size_t* n_universes_out) {
@@ -273,7 +275,7 @@ TMatrixD build_multisim_covariance_from_vectors(const std::vector<float>& x, con
     const double w0 = w_nom[i];
     cv_bin[static_cast<size_t>(bin)] += w0;
 
-    static const std::vector<unsigned short> empty;
+    static const UShortRVec empty;
     const auto& wu = (i < w_univ_ushort.size()) ? w_univ_ushort[i] : empty;
     const double cv_src = (w_cv_src != nullptr && i < w_cv_src->size()) ? static_cast<double>((*w_cv_src)[i]) : 1.0;
 
@@ -300,8 +302,8 @@ TMatrixD build_multisim_covariance_from_vectors(const std::vector<float>& x, con
 }
 
 TMatrixD build_unisim_covariance_from_vectors(const std::vector<float>& x, const std::vector<double>& w_nom,
-                                              const std::vector<std::vector<unsigned short>>& w_up_ushort,
-                                              const std::vector<std::vector<unsigned short>>& w_dn_ushort,
+                                              const std::vector<UShortRVec>& w_up_ushort,
+                                              const std::vector<UShortRVec>& w_dn_ushort,
                                               int nbins, double xmin, double xmax, bool fold_overflow,
                                               std::size_t* n_knobs_out) {
   const size_t n_evt = std::min(x.size(), w_nom.size());
@@ -323,7 +325,7 @@ TMatrixD build_unisim_covariance_from_vectors(const std::vector<float>& x, const
     const int bin = find_bin(x[i], nbins, xmin, xmax, fold_overflow);
     if (bin < 0) continue;
 
-    static const std::vector<unsigned short> empty;
+    static const UShortRVec empty;
     const auto& wup = (i < w_up_ushort.size()) ? w_up_ushort[i] : empty;
     const auto& wdn = (i < w_dn_ushort.size()) ? w_dn_ushort[i] : empty;
 
@@ -354,7 +356,7 @@ TMatrixD build_multisim_covariance(ROOT::RDF::RNode node, const std::string& sco
                                    std::size_t* n_universes_out) {
   auto x_h = node.Take<float>(score_col);
   auto w_h = node.Take<double>(weight_col);
-  auto u_h = node.Take<std::vector<unsigned short>>(univ_branch);
+  auto u_h = node.Take<UShortRVec>(univ_branch);
 
   if (divide_by_cv && !cv_branch.empty()) {
     auto cv_h = node.Take<float>(cv_branch);
@@ -371,8 +373,8 @@ TMatrixD build_unisim_covariance(ROOT::RDF::RNode node, const std::string& score
                                  double xmax, bool fold_overflow, std::size_t* n_knobs_out) {
   auto x_h = node.Take<float>(score_col);
   auto w_h = node.Take<double>(weight_col);
-  auto up_h = node.Take<std::vector<unsigned short>>(up_branch);
-  auto dn_h = node.Take<std::vector<unsigned short>>(dn_branch);
+  auto up_h = node.Take<UShortRVec>(up_branch);
+  auto dn_h = node.Take<UShortRVec>(dn_branch);
 
   return build_unisim_covariance_from_vectors(*x_h, *w_h, *up_h, *dn_h, nbins, xmin, xmax, fold_overflow,
                                               n_knobs_out);

@@ -623,7 +623,8 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
         if (score_index < 0 || score_index >= static_cast<int>(scores.size())) return -9999.0f;
         return scores[static_cast<size_t>(score_index)];
       },
-      {"inf_scores"});
+      {"inf_scores"})
+                              .Define("__score_cut_bin__", [] { return 0.5f; });
 
   ROOT::RDF::RNode node_ext = filter_by_mask(base, mask_ext).Define("__w__", nominal_weight);
   ROOT::RDF::RNode node_mc = filter_by_mask(base, mask_mc)
@@ -640,6 +641,20 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
   node_ext = apply_optional_filter(node_ext, extra_sel_expr, "extra selection");
   node_data = apply_optional_filter(node_data, extra_sel_expr, "extra selection");
 
+  constexpr double score_cut = 6.9;
+  auto pass_score_cut = [](float s) { return s > score_cut; };
+
+  node_mc = node_mc.Filter(pass_score_cut, {"score0"});
+  node_ext = node_ext.Filter(pass_score_cut, {"score0"});
+  node_data = node_data.Filter(pass_score_cut, {"score0"});
+
+  nbins = 1;
+  xmin = 0.0;
+  xmax = 1.0;
+  fold_overflow = false;
+
+  const std::string hist_col = "__score_cut_bin__";
+
   if (signal_sel.empty()) {
     std::cerr << "[plot_inference_score_systematics_split] signal_sel must not be empty.\n";
     return 1;
@@ -654,11 +669,11 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
   ROOT::RDF::RNode node_sig = apply_optional_filter(node_mc, signal_sel, "signal selection");
   ROOT::RDF::RNode node_bkg = apply_negated_filter(node_mc, signal_sel, "signal selection");
 
-  auto x_mc_h = node_mc.Take<float>("score0");
+  auto x_mc_h = node_mc.Take<float>(hist_col);
   auto w_mc_h = node_mc.Take<double>("__w__");
-  auto x_sig_h = node_sig.Take<float>("score0");
+  auto x_sig_h = node_sig.Take<float>(hist_col);
   auto w_sig_h = node_sig.Take<double>("__w__");
-  auto x_bkg_h = node_bkg.Take<float>("score0");
+  auto x_bkg_h = node_bkg.Take<float>(hist_col);
   auto w_bkg_h = node_bkg.Take<double>("__w__");
 
   const HistSummary h_mc = build_hist_summary(*x_mc_h, *w_mc_h, nbins, xmin, xmax, fold_overflow);
@@ -666,7 +681,7 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
   const HistSummary h_bkg = build_hist_summary(*x_bkg_h, *w_bkg_h, nbins, xmin, xmax, fold_overflow);
 
   HistSummary h_ext = make_empty_hist(nbins);
-  auto x_ext_h = node_ext.Take<float>("score0");
+  auto x_ext_h = node_ext.Take<float>(hist_col);
   auto w_ext_h = node_ext.Take<double>("__w__");
   h_ext = build_hist_summary(*x_ext_h, *w_ext_h, nbins, xmin, xmax, fold_overflow);
 
@@ -692,11 +707,11 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
     std::size_t nuniv_bkg = 0;
 
     SplitComponent comp{label, make_zero_matrix(nbins), make_zero_matrix(nbins), make_zero_matrix(nbins), 0, true};
-    comp.total = build_multisim_covariance(node_mc, "score0", "__w__", weight_branch, cv_branch, divide_by_cv,
+    comp.total = build_multisim_covariance(node_mc, hist_col, "__w__", weight_branch, cv_branch, divide_by_cv,
                                            nbins, xmin, xmax, fold_overflow, average_universes, &nuniv_total);
-    comp.signal = build_multisim_covariance(node_sig, "score0", "__w__", weight_branch, cv_branch, divide_by_cv,
+    comp.signal = build_multisim_covariance(node_sig, hist_col, "__w__", weight_branch, cv_branch, divide_by_cv,
                                             nbins, xmin, xmax, fold_overflow, average_universes, &nuniv_sig);
-    comp.background = build_multisim_covariance(node_bkg, "score0", "__w__", weight_branch, cv_branch, divide_by_cv,
+    comp.background = build_multisim_covariance(node_bkg, hist_col, "__w__", weight_branch, cv_branch, divide_by_cv,
                                                 nbins, xmin, xmax, fold_overflow, average_universes, &nuniv_bkg);
     comp.n_universes = std::max(nuniv_total, std::max(nuniv_sig, nuniv_bkg));
     std::cout << "[plot_inference_score_systematics_split] " << label << " universes: " << comp.n_universes
@@ -713,11 +728,11 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
     std::size_t nknob_bkg = 0;
 
     SplitComponent comp{label, make_zero_matrix(nbins), make_zero_matrix(nbins), make_zero_matrix(nbins), 0, true};
-    comp.total = build_unisim_covariance(node_mc, "score0", "__w__", up_branch, dn_branch, nbins, xmin, xmax,
+    comp.total = build_unisim_covariance(node_mc, hist_col, "__w__", up_branch, dn_branch, nbins, xmin, xmax,
                                          fold_overflow, &nknob_total);
-    comp.signal = build_unisim_covariance(node_sig, "score0", "__w__", up_branch, dn_branch, nbins, xmin, xmax,
+    comp.signal = build_unisim_covariance(node_sig, hist_col, "__w__", up_branch, dn_branch, nbins, xmin, xmax,
                                           fold_overflow, &nknob_sig);
-    comp.background = build_unisim_covariance(node_bkg, "score0", "__w__", up_branch, dn_branch, nbins, xmin, xmax,
+    comp.background = build_unisim_covariance(node_bkg, hist_col, "__w__", up_branch, dn_branch, nbins, xmin, xmax,
                                               fold_overflow, &nknob_bkg);
     comp.n_universes = std::max(nknob_total, std::max(nknob_sig, nknob_bkg));
     std::cout << "[plot_inference_score_systematics_split] " << label << " knobs: " << comp.n_universes << "\n";
@@ -757,11 +772,11 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
     ROOT::RDF::RNode node_cat_sig = apply_optional_filter(node_sig, category_sel, "category selection");
     ROOT::RDF::RNode node_cat_bkg = apply_optional_filter(node_bkg, category_sel, "category selection");
 
-    auto x_cat_tot_h = node_cat_total.Take<float>("score0");
+    auto x_cat_tot_h = node_cat_total.Take<float>(hist_col);
     auto w_cat_tot_h = node_cat_total.Take<double>("__w__");
-    auto x_cat_sig_h = node_cat_sig.Take<float>("score0");
+    auto x_cat_sig_h = node_cat_sig.Take<float>(hist_col);
     auto w_cat_sig_h = node_cat_sig.Take<double>("__w__");
-    auto x_cat_bkg_h = node_cat_bkg.Take<float>("score0");
+    auto x_cat_bkg_h = node_cat_bkg.Take<float>(hist_col);
     auto w_cat_bkg_h = node_cat_bkg.Take<double>("__w__");
 
     const HistSummary h_cat_total = build_hist_summary(*x_cat_tot_h, *w_cat_tot_h, nbins, xmin, xmax, fold_overflow);
@@ -815,44 +830,38 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
 
   TH1D* h_data_hist = nullptr;
   if (include_data) {
-    auto x_data_h = node_data.Take<float>("score0");
+    auto x_data_h = node_data.Take<float>(hist_col);
     const HistSummary h_data = build_count_hist_summary(*x_data_h, nbins, xmin, xmax, fold_overflow);
     h_data_hist = make_hist1d(h_data, "h_score_data", "Data", nbins, xmin, xmax);
   }
 
-  std::vector<TH1D*> frac_sources;
-  std::vector<std::string> frac_source_labels;
-  for (size_t i = 0; i < components.size(); ++i) {
-    TH1D* hfrac = make_fractional_hist(
-        h_pred, components[i].total,
-        "h_frac_component_" + std::to_string(static_cast<unsigned long long>(i)),
-        components[i].name, nbins, xmin, xmax);
-    frac_sources.push_back(hfrac);
-    frac_source_labels.push_back(components[i].name);
+  const std::string cut_label = "score[0] > 6.9";
+  for (TH1D* h : {h_total_hist, h_sig_hist, h_bkg_hist, h_ext_hist, h_band_hist, h_frac_total, h_frac_sig, h_frac_bkg,
+                  h_data_hist}) {
+    if (h != nullptr) h->GetXaxis()->SetBinLabel(1, cut_label.c_str());
   }
-  frac_sources.push_back(h_frac_total);
-  frac_source_labels.push_back("Total");
 
-  std::vector<TH1D*> frac_split{h_frac_total, h_frac_sig, h_frac_bkg};
-  std::vector<std::string> frac_split_labels{"Total", "Signal", "Background"};
+  const double y = h_pred.sumw[0];
+  const double sigma = std::sqrt(std::max(0.0, cov_total(0, 0)));
+  const double frac = (y > 0.0) ? sigma / y : 0.0;
+  std::cout << "[plot_inference_score_systematics_split] selected yield = " << y << ", abs unc = " << sigma
+            << ", frac unc = " << frac << "\n";
 
   const std::string out_dir = env_or("HERON_PLOT_OUT_DIR", "./scratch/out");
   const std::string out_fmt = env_or("HERON_PLOT_OUT_FMT", "pdf");
   gSystem->mkdir(out_dir.c_str(), true);
 
   const std::string stem = output_stem.empty() ? "rareproc_score0_systematics_split" : output_stem;
-  const std::string score_title = "Inference score[" + std::to_string(score_index) + "]";
+  const std::string score_title = cut_label;
   const std::string pred_path = out_dir + "/" + stem + "_prediction." + out_fmt;
   const std::string frac_path = out_dir + "/" + stem + "_fractional_by_source." + out_fmt;
-  const std::string split_path = out_dir + "/" + stem + "_fractional_sigbkg." + out_fmt;
   const std::string cov_path = out_dir + "/" + stem + "_covariance." + out_fmt;
   const std::string corr_path = out_dir + "/" + stem + "_correlation." + out_fmt;
   const std::string root_path = out_dir + "/" + stem + ".root";
 
   draw_prediction_breakdown(h_total_hist, h_band_hist, h_sig_hist, h_bkg_hist, h_ext_hist, h_data_hist, score_title,
                             pred_path);
-  draw_fractional_uncertainties(frac_sources, frac_source_labels, score_title, frac_path);
-  draw_fractional_uncertainties(frac_split, frac_split_labels, score_title, split_path);
+  draw_fractional_uncertainties({h_frac_total}, {"Total"}, score_title, frac_path);
   draw_matrix(h_cov_total, cov_path, false);
   draw_matrix(h_corr_total, corr_path, true);
 
@@ -893,7 +902,6 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
 
   std::cout << "[plot_inference_score_systematics_split] wrote " << pred_path << "\n";
   std::cout << "[plot_inference_score_systematics_split] wrote " << frac_path << "\n";
-  std::cout << "[plot_inference_score_systematics_split] wrote " << split_path << "\n";
   std::cout << "[plot_inference_score_systematics_split] wrote " << cov_path << "\n";
   std::cout << "[plot_inference_score_systematics_split] wrote " << corr_path << "\n";
   std::cout << "[plot_inference_score_systematics_split] wrote " << root_path << "\n";
@@ -915,9 +923,6 @@ int plot_inference_score_systematics(const std::string& samples_tsv = "",
   delete h_corr_sig;
   delete h_corr_bkg;
   delete h_data_hist;
-  for (auto* h : frac_sources) {
-    if (h != h_frac_total) delete h;
-  }
 
   return 0;
 }

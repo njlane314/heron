@@ -333,16 +333,16 @@ double integral_err2_hard_cut(const TH1D &h, double cut, bool keep_greater_than)
 
 EvaluatedYields evaluate_yields(const BookedYields &booked, double cut, bool keep_greater_than)
 {
-    const TH1D &hs = *booked.h_sig;
-    const TH1D &hb = *booked.h_bkg;
+    const TH1D &hs = booked.h_sig.GetValue();
+    const TH1D &hb = booked.h_bkg.GetValue();
 
     EvaluatedYields out;
     out.s_sel = integral_hard_cut(hs, cut, keep_greater_than);
     out.b_sel = integral_hard_cut(hb, cut, keep_greater_than);
     out.var_s_sel = integral_err2_hard_cut(hs, cut, keep_greater_than);
     out.var_b_sel = integral_err2_hard_cut(hb, cut, keep_greater_than);
-    out.t_sig = *booked.sum_truth_sig;
-    out.var_t_sig = *booked.sumw2_truth_sig;
+    out.t_sig = booked.sum_truth_sig.GetValue();
+    out.var_t_sig = booked.sumw2_truth_sig.GetValue();
     return out;
 }
 
@@ -624,8 +624,8 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
         }
 
         // Force evaluation of the nominal result first. RDataFrame lazy actions will then execute.
-        const TH1D &h_sig_cv = *cv_booked.h_sig;
-        const TH1D &h_bkg_cv = *cv_booked.h_bkg;
+        const TH1D &h_sig_cv = cv_booked.h_sig.GetValue();
+        const TH1D &h_bkg_cv = cv_booked.h_bkg.GetValue();
         (void)h_sig_cv;
         (void)h_bkg_cv;
 

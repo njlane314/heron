@@ -1,6 +1,6 @@
 // scan_first_score_cut_xsec_systs.C
 //
-// Cut-based expected systematic uncertainty study for a cross-section measurement
+// Single-cut expected systematic uncertainty study for a cross-section measurement
 // using inf_scores[0] as the selection statistic.
 //
 // The macro treats the measured cross section as
@@ -45,7 +45,7 @@
 // Example:
 //   ./heron macro scan_first_score_cut_xsec_systs.C
 //   ./heron macro scan_first_score_cut_xsec_systs.C \
-//     'scan_first_score_cut_xsec_systs("./scratch/out/event_list_myana.root", "sel_muon", "is_signal", "is_signal", "w_nominal", 60, -15, 15, true, true, 1.0, 1.0, "score0_cut_xsec")'
+//     'scan_first_score_cut_xsec_systs("./scratch/out/event_list_myana.root", "sel_muon", "is_signal", "is_signal", "w_nominal", 7.0, true, true, 1.0, 1.0, "score0_cut7_xsec")'
 
 #include <algorithm>
 #include <cmath>
@@ -65,14 +65,6 @@
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 
-#include <TCanvas.h>
-#include <TGraph.h>
-#include <TH1.h>
-#include <TH1D.h>
-#include <TLegend.h>
-#include <TLine.h>
-#include <TStyle.h>
-
 #if defined(__CLING__)
 R__ADD_INCLUDE_PATH(framework/core/include)
 R__ADD_INCLUDE_PATH(framework/modules/ana/include)
@@ -82,7 +74,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 
 #include "EventListIO.hh"
 #include "PlotEnv.hh"
-#include "Plotter.hh"
 #include "PlottingHelper.hh"
 #include "SelectionService.hh"
 #include "include/MacroGuard.hh"
@@ -118,6 +109,20 @@ double safe_div(double num, double den, double fallback = 0.0)
     if (!(den != 0.0) || !std::isfinite(num) || !std::isfinite(den))
         return fallback;
     return num / den;
+}
+
+double abs_unc_from_var(double abs_var)
+{
+    if (!(abs_var >= 0.0) || !std::isfinite(abs_var))
+        return std::numeric_limits<double>::quiet_NaN();
+    return std::sqrt(abs_var);
+}
+
+double rel_from_abs_var(double abs_var, double sigma_cv)
+{
+    if (!(abs_var >= 0.0) || !std::isfinite(abs_var) || !(std::abs(sigma_cv) > 0.0))
+        return std::numeric_limits<double>::quiet_NaN();
+    return std::sqrt(abs_var) / std::abs(sigma_cv);
 }
 
 enum class TruthDenomMode
@@ -159,9 +164,11 @@ struct FullCorrSystematic
 
 struct BookedYields
 {
-    ROOT::RDF::RResultPtr<TH1D> h_sig;
-    ROOT::RDF::RResultPtr<TH1D> h_bkg;
+    ROOT::RDF::RResultPtr<double> sum_sig;
+    ROOT::RDF::RResultPtr<double> sum_bkg;
     ROOT::RDF::RResultPtr<double> sum_truth_sig;
+    ROOT::RDF::RResultPtr<double> sumw2_sig;
+    ROOT::RDF::RResultPtr<double> sumw2_bkg;
     ROOT::RDF::RResultPtr<double> sumw2_truth_sig;
 };
 
@@ -198,16 +205,6 @@ struct BookedAltFileSystematic
     std::vector<BookedYields> universes;
 };
 
-struct ScanRow
-{
-    double cut = 0.0;
-    double sigma_cv = std::numeric_limits<double>::quiet_NaN();
-    double eff_cv = std::numeric_limits<double>::quiet_NaN();
-    double purity_cv = std::numeric_limits<double>::quiet_NaN();
-    std::map<std::string, double> abs_var;
-    std::map<std::string, double> rel_unc;
-};
-
 ROOT::RDF::RNode prepare_mc_node(EventListIO &el, const std::string &mc_weight)
 {
     ROOT::RDF::RNode node = SelectionService::decorate(el.rdf())
@@ -231,21 +228,35 @@ BookedYields book_yields(ROOT::RDF::RNode node,
                          const std::string &signal_sel,
                          const std::string &truth_denom_sel,
                          const std::string &weight_col,
-                         const ROOT::RDF::TH1DModel &hmodel_sig,
-                         const ROOT::RDF::TH1DModel &hmodel_bkg)
+                         double cut_value,
+                         bool keep_greater_than)
 {
-    ROOT::RDF::RNode node_sel = base_sel.empty() ? node : node.Filter(base_sel);
-    ROOT::RDF::RNode node_sig = node_sel.Filter(signal_sel);
-    ROOT::RDF::RNode node_bkg = node_sel.Filter("!(" + signal_sel + ")");
+    ROOT::RDF::RNode node_base = base_sel.empty() ? node : node.Filter(base_sel);
+
+    const std::string pass_col = unique_name("__pass_cut");
+    ROOT::RDF::RNode node_pass = node_base
+                                     .Define(pass_col,
+                                             [cut_value, keep_greater_than](double score) {
+                                                 return keep_greater_than ? score >= cut_value : score < cut_value;
+                                             },
+                                             {"inf_score_0"})
+                                     .Filter(pass_col);
+
+    ROOT::RDF::RNode node_sig = node_pass.Filter(signal_sel);
+    ROOT::RDF::RNode node_bkg = node_pass.Filter("!(" + signal_sel + ")");
     ROOT::RDF::RNode node_truth_sig = node.Filter(truth_denom_sel);
 
-    const std::string w2_col = unique_name("__w2_truth_sig");
+    const std::string w2_sig_col = unique_name("__w2_sig");
+    const std::string w2_bkg_col = unique_name("__w2_bkg");
+    const std::string w2_truth_col = unique_name("__w2_truth_sig");
 
     BookedYields out;
-    out.h_sig = node_sig.Histo1D(hmodel_sig, "inf_score_0", weight_col);
-    out.h_bkg = node_bkg.Histo1D(hmodel_bkg, "inf_score_0", weight_col);
+    out.sum_sig = node_sig.Sum<double>(weight_col);
+    out.sum_bkg = node_bkg.Sum<double>(weight_col);
     out.sum_truth_sig = node_truth_sig.Sum<double>(weight_col);
-    out.sumw2_truth_sig = node_truth_sig.Define(w2_col, weight_col + " * " + weight_col).Sum<double>(w2_col);
+    out.sumw2_sig = node_sig.Define(w2_sig_col, weight_col + " * " + weight_col).Sum<double>(w2_sig_col);
+    out.sumw2_bkg = node_bkg.Define(w2_bkg_col, weight_col + " * " + weight_col).Sum<double>(w2_bkg_col);
+    out.sumw2_truth_sig = node_truth_sig.Define(w2_truth_col, weight_col + " * " + weight_col).Sum<double>(w2_truth_col);
     return out;
 }
 
@@ -283,64 +294,13 @@ int get_num_universes(ROOT::RDF::RNode node, const std::string &branch)
     return *nuni;
 }
 
-int cut_to_first_selected_bin(const TH1D &h, double cut)
+EvaluatedYields evaluate_yields(const BookedYields &booked)
 {
-    const auto *ax = h.GetXaxis();
-    if (cut <= ax->GetXmin())
-        return 1;
-    if (cut > ax->GetXmax())
-        return h.GetNbinsX() + 1;
-
-    int b = ax->FindFixBin(cut);
-    if (b < 1)
-        b = 1;
-    if (b > h.GetNbinsX() + 1)
-        b = h.GetNbinsX() + 1;
-    return b;
-}
-
-double integral_hard_cut(const TH1D &h, double cut, bool keep_greater_than)
-{
-    const int nb = h.GetNbinsX();
-    const int b0 = cut_to_first_selected_bin(h, cut);
-    if (keep_greater_than)
-        return h.Integral(b0, nb + 1);
-    return h.Integral(0, b0 - 1);
-}
-
-double integral_err2_hard_cut(const TH1D &h, double cut, bool keep_greater_than)
-{
-    const int nb = h.GetNbinsX();
-    const int b0 = cut_to_first_selected_bin(h, cut);
-    double out = 0.0;
-    if (keep_greater_than)
-    {
-        for (int b = b0; b <= nb + 1; ++b)
-        {
-            const double e = h.GetBinError(b);
-            out += e * e;
-        }
-        return out;
-    }
-
-    for (int b = 0; b <= b0 - 1; ++b)
-    {
-        const double e = h.GetBinError(b);
-        out += e * e;
-    }
-    return out;
-}
-
-EvaluatedYields evaluate_yields(BookedYields booked, double cut, bool keep_greater_than)
-{
-    const TH1D &hs = booked.h_sig.GetValue();
-    const TH1D &hb = booked.h_bkg.GetValue();
-
     EvaluatedYields out;
-    out.s_sel = integral_hard_cut(hs, cut, keep_greater_than);
-    out.b_sel = integral_hard_cut(hb, cut, keep_greater_than);
-    out.var_s_sel = integral_err2_hard_cut(hs, cut, keep_greater_than);
-    out.var_b_sel = integral_err2_hard_cut(hb, cut, keep_greater_than);
+    out.s_sel = booked.sum_sig.GetValue();
+    out.b_sel = booked.sum_bkg.GetValue();
+    out.var_s_sel = booked.sumw2_sig.GetValue();
+    out.var_b_sel = booked.sumw2_bkg.GetValue();
     out.t_sig = booked.sum_truth_sig.GetValue();
     out.var_t_sig = booked.sumw2_truth_sig.GetValue();
     return out;
@@ -380,56 +340,17 @@ double compute_mcstat_variance_nominal(const EvaluatedYields &cv,
     return std::max(0.0, var) / (exposure_scale * exposure_scale);
 }
 
-std::vector<double> sum_curves(const std::vector<std::vector<double>> &curves, std::size_t npoints = 0)
+double sum_existing_variances(const std::map<std::string, double> &abs_var_map,
+                              const std::vector<std::string> &names)
 {
-    std::vector<double> out;
-    if (curves.empty())
-        return std::vector<double>(npoints, 0.0);
-
-    out.assign(curves.front().size(), 0.0);
-    for (const auto &c : curves)
+    double out = 0.0;
+    for (const auto &n : names)
     {
-        if (c.size() != out.size())
-            continue;
-        for (std::size_t i = 0; i < c.size(); ++i)
-            out[i] += c[i];
+        auto it = abs_var_map.find(n);
+        if (it != abs_var_map.end())
+            out += it->second;
     }
     return out;
-}
-
-std::vector<double> rel_from_abs_var(const std::vector<double> &abs_var, const std::vector<double> &sigma_cv)
-{
-    std::vector<double> out(abs_var.size(), std::numeric_limits<double>::quiet_NaN());
-    for (std::size_t i = 0; i < abs_var.size() && i < sigma_cv.size(); ++i)
-    {
-        if (!(abs_var[i] >= 0.0) || !std::isfinite(abs_var[i]) || !(std::abs(sigma_cv[i]) > 0.0))
-            continue;
-        out[i] = std::sqrt(abs_var[i]) / std::abs(sigma_cv[i]);
-    }
-    return out;
-}
-
-std::unique_ptr<TGraph> make_graph(const std::vector<double> &x,
-                                   const std::vector<double> &y,
-                                   const std::string &name)
-{
-    std::vector<double> xx;
-    std::vector<double> yy;
-    xx.reserve(x.size());
-    yy.reserve(y.size());
-
-    for (std::size_t i = 0; i < x.size() && i < y.size(); ++i)
-    {
-        if (!std::isfinite(x[i]) || !std::isfinite(y[i]))
-            continue;
-        xx.push_back(x[i]);
-        yy.push_back(y[i]);
-    }
-
-    auto g = std::make_unique<TGraph>(static_cast<int>(xx.size()), xx.data(), yy.data());
-    g->SetName(name.c_str());
-    g->SetLineWidth(2);
-    return g;
 }
 
 } // namespace
@@ -439,30 +360,21 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
                                     const std::string &signal_sel = "is_signal",
                                     const std::string &truth_denom_sel = "is_signal",
                                     const std::string &mc_weight = "w_nominal",
-                                    int nbins = 60,
-                                    double xmin = -15.0,
-                                    double xmax = 15.0,
+                                    double cut_value = 7.0,
                                     bool keep_greater_than = true,
                                     bool fixed_cv_asimov = true,
                                     double flux_times_targets_cv = 1.0,
                                     double flux_times_targets_var_default = 1.0,
-                                    const std::string &output_stem = "scan_first_score_cut_xsec_systs")
+                                    const std::string &output_stem = "first_score_cut_xsec_systs_eval")
 {
     return heron::macro::run_with_guard("scan_first_score_cut_xsec_systs", [&]() -> int {
-        if (nbins < 1)
-            nbins = 1;
-        if (xmax < xmin)
-            std::swap(xmin, xmax);
-        if (xmax == xmin)
-            xmax = xmin + 1.0;
-
         if (implicit_mt_enabled())
             ROOT::EnableImplicitMT();
 
-        TH1::SetDefaultSumw2();
-
         const std::string input_path = event_list_path.empty() ? default_event_list_root() : event_list_path;
         std::cout << "[scan_first_score_cut_xsec_systs] input=" << input_path << "\n";
+        std::cout << "[scan_first_score_cut_xsec_systs] cut=" << cut_value
+                  << (keep_greater_than ? "  (keep score >= cut)\n" : "  (keep score < cut)\n");
 
         if (!looks_like_event_list_root(input_path))
         {
@@ -520,16 +432,19 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
         EventListIO el_cv(input_path);
         ROOT::RDF::RNode node_cv = prepare_mc_node(el_cv, mc_weight);
 
-        const ROOT::RDF::TH1DModel hmodel_sig("h_sig_cv", ";inf_scores[0];events", nbins, xmin, xmax);
-        const ROOT::RDF::TH1DModel hmodel_bkg("h_bkg_cv", ";inf_scores[0];events", nbins, xmin, xmax);
-
         if (!has_column(node_cv, "inf_scores"))
         {
             std::cerr << "[scan_first_score_cut_xsec_systs] missing inf_scores branch.\n";
             return 1;
         }
 
-        BookedYields cv_booked = book_yields(node_cv, base_sel, signal_sel, truth_denom_sel, "__w_cv__", hmodel_sig, hmodel_bkg);
+        BookedYields cv_booked = book_yields(node_cv,
+                                             base_sel,
+                                             signal_sel,
+                                             truth_denom_sel,
+                                             "__w_cv__",
+                                             cut_value,
+                                             keep_greater_than);
 
         std::vector<BookedWeightSystematic> booked_weight_systs;
         booked_weight_systs.reserve(weight_systs.size());
@@ -561,7 +476,13 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
                 const std::string wcol = unique_name("__w_" + cfg.label);
                 const std::string expr = make_universe_weight_expr("__w_cv__", cfg.universe_branch, iu, cfg.cv_component_branch);
                 ROOT::RDF::RNode node_u = node_cv.Define(wcol, expr).Filter("std::isfinite((double)" + wcol + ")");
-                booked.universes.push_back(book_yields(node_u, base_sel, signal_sel, truth_denom_sel, wcol, hmodel_sig, hmodel_bkg));
+                booked.universes.push_back(book_yields(node_u,
+                                                       base_sel,
+                                                       signal_sel,
+                                                       truth_denom_sel,
+                                                       wcol,
+                                                       cut_value,
+                                                       keep_greater_than));
             }
 
             booked_weight_systs.push_back(std::move(booked));
@@ -584,13 +505,25 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
             booked.cfg = cfg;
             booked.alt_io = std::make_unique<EventListIO>(cfg.alt_event_list_path);
             ROOT::RDF::RNode node_alt = prepare_mc_node(*booked.alt_io, mc_weight);
-            booked.alt = book_yields(node_alt, base_sel, signal_sel, truth_denom_sel, "__w_cv__", hmodel_sig, hmodel_bkg);
+            booked.alt = book_yields(node_alt,
+                                     base_sel,
+                                     signal_sel,
+                                     truth_denom_sel,
+                                     "__w_cv__",
+                                     cut_value,
+                                     keep_greater_than);
 
             if (!cfg.cv_reference_event_list_path.empty() && looks_like_event_list_root(cfg.cv_reference_event_list_path))
             {
                 booked.cv_ref_io = std::make_unique<EventListIO>(cfg.cv_reference_event_list_path);
                 ROOT::RDF::RNode node_ref = prepare_mc_node(*booked.cv_ref_io, mc_weight);
-                booked.cv_ref = book_yields(node_ref, base_sel, signal_sel, truth_denom_sel, "__w_cv__", hmodel_sig, hmodel_bkg);
+                booked.cv_ref = book_yields(node_ref,
+                                            base_sel,
+                                            signal_sel,
+                                            truth_denom_sel,
+                                            "__w_cv__",
+                                            cut_value,
+                                            keep_greater_than);
                 booked.has_cv_ref_override = true;
             }
 
@@ -616,107 +549,84 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
 
                 booked.ios.push_back(std::make_unique<EventListIO>(path));
                 ROOT::RDF::RNode node_u = prepare_mc_node(*booked.ios.back(), mc_weight);
-                booked.universes.push_back(book_yields(node_u, base_sel, signal_sel, truth_denom_sel, "__w_cv__", hmodel_sig, hmodel_bkg));
+                booked.universes.push_back(book_yields(node_u,
+                                                       base_sel,
+                                                       signal_sel,
+                                                       truth_denom_sel,
+                                                       "__w_cv__",
+                                                       cut_value,
+                                                       keep_greater_than));
             }
 
             if (!booked.universes.empty())
                 booked_altfile_systs.push_back(std::move(booked));
         }
 
-        // Force evaluation of the nominal result first. RDataFrame lazy actions will then execute.
-        const TH1D &h_sig_cv = cv_booked.h_sig.GetValue();
-        const TH1D &h_bkg_cv = cv_booked.h_bkg.GetValue();
-        (void)h_sig_cv;
-        (void)h_bkg_cv;
+        const EvaluatedYields ycv = evaluate_yields(cv_booked);
+        const double sigma_cv = compute_sigma_hat(ycv, ycv, true, TruthDenomMode::kUseCVTruthDenom, flux_times_targets_cv);
+        const double eff_cv = safe_div(ycv.s_sel, ycv.t_sig, std::numeric_limits<double>::quiet_NaN());
+        const double purity_cv = safe_div(ycv.s_sel, ycv.s_sel + ycv.b_sel, std::numeric_limits<double>::quiet_NaN());
 
-        std::vector<double> cuts;
-        cuts.reserve(static_cast<std::size_t>(nbins + 1));
-        for (int b = 1; b <= nbins + 1; ++b)
-            cuts.push_back(h_sig_cv.GetXaxis()->GetBinLowEdge(b));
+        std::map<std::string, double> abs_var_map;
+        abs_var_map["MCstats"] = compute_mcstat_variance_nominal(ycv, fixed_cv_asimov, flux_times_targets_cv);
 
-        std::vector<double> sigma_cv(cuts.size(), std::numeric_limits<double>::quiet_NaN());
-        std::vector<double> eff_cv(cuts.size(), std::numeric_limits<double>::quiet_NaN());
-        std::vector<double> purity_cv(cuts.size(), std::numeric_limits<double>::quiet_NaN());
-        std::map<std::string, std::vector<double>> abs_var_map;
+        for (const auto &cfg : fullcorr_systs)
+            abs_var_map[cfg.label] = (cfg.frac * sigma_cv) * (cfg.frac * sigma_cv);
 
-        auto ensure_curve = [&](const std::string &name) -> std::vector<double> & {
-            auto it = abs_var_map.find(name);
-            if (it == abs_var_map.end())
-                it = abs_var_map.emplace(name, std::vector<double>(cuts.size(), 0.0)).first;
-            return it->second;
-        };
-
-        for (std::size_t ic = 0; ic < cuts.size(); ++ic)
+        for (const auto &booked : booked_weight_systs)
         {
-            const double cut = cuts[ic];
-            const EvaluatedYields ycv = evaluate_yields(cv_booked, cut, keep_greater_than);
-            const double sig_cv = compute_sigma_hat(ycv, ycv, true, TruthDenomMode::kUseCVTruthDenom, flux_times_targets_cv);
-            sigma_cv[ic] = sig_cv;
-            eff_cv[ic] = safe_div(ycv.s_sel, ycv.t_sig, std::numeric_limits<double>::quiet_NaN());
-            purity_cv[ic] = safe_div(ycv.s_sel, ycv.s_sel + ycv.b_sel, std::numeric_limits<double>::quiet_NaN());
-
-            ensure_curve("MCstats")[ic] = compute_mcstat_variance_nominal(ycv, fixed_cv_asimov, flux_times_targets_cv);
-
-            for (const auto &cfg : fullcorr_systs)
-                ensure_curve(cfg.label)[ic] = (cfg.frac * sig_cv) * (cfg.frac * sig_cv);
-
-            for (const auto &booked : booked_weight_systs)
+            double var = 0.0;
+            int nused = 0;
+            for (const auto &u : booked.universes)
             {
-                double var = 0.0;
-                int nused = 0;
-                for (const auto &u : booked.universes)
-                {
-                    const EvaluatedYields yu = evaluate_yields(u, cut, keep_greater_than);
-                    const double sig_u = compute_sigma_hat(ycv, yu, fixed_cv_asimov,
-                                                           booked.cfg.truth_denom_mode,
-                                                           flux_times_targets_var_default);
-                    if (!std::isfinite(sig_u) || !std::isfinite(sig_cv))
-                        continue;
-                    const double d = sig_cv - sig_u;
-                    var += d * d;
-                    ++nused;
-                }
-                if (booked.cfg.average_over_universes && nused > 0)
-                    var /= static_cast<double>(nused);
-                ensure_curve(booked.cfg.label)[ic] = var;
+                const EvaluatedYields yu = evaluate_yields(u);
+                const double sig_u = compute_sigma_hat(ycv, yu, fixed_cv_asimov,
+                                                       booked.cfg.truth_denom_mode,
+                                                       flux_times_targets_var_default);
+                if (!std::isfinite(sig_u) || !std::isfinite(sigma_cv))
+                    continue;
+                const double d = sigma_cv - sig_u;
+                var += d * d;
+                ++nused;
             }
+            if (booked.cfg.average_over_universes && nused > 0)
+                var /= static_cast<double>(nused);
+            abs_var_map[booked.cfg.label] = var;
+        }
 
-            for (const auto &booked : booked_detvars)
-            {
-                const EvaluatedYields yref = booked.has_cv_ref_override
-                                                 ? evaluate_yields(booked.cv_ref, cut, keep_greater_than)
-                                                 : ycv;
-                const EvaluatedYields yalt = evaluate_yields(booked.alt, cut, keep_greater_than);
-                const double sig_ref = booked.has_cv_ref_override
-                                           ? compute_sigma_hat(yref, yref, true, TruthDenomMode::kUseCVTruthDenom, flux_times_targets_cv)
-                                           : sig_cv;
-                const double sig_alt = compute_sigma_hat(yref, yalt, fixed_cv_asimov,
-                                                         booked.cfg.truth_denom_mode,
-                                                         flux_times_targets_var_default);
-                const double d = sig_ref - sig_alt;
-                ensure_curve(booked.cfg.label)[ic] = (std::isfinite(d) ? d * d : 0.0);
-            }
+        for (const auto &booked : booked_detvars)
+        {
+            const EvaluatedYields yref = booked.has_cv_ref_override ? evaluate_yields(booked.cv_ref) : ycv;
+            const EvaluatedYields yalt = evaluate_yields(booked.alt);
+            const double sig_ref = booked.has_cv_ref_override
+                                       ? compute_sigma_hat(yref, yref, true, TruthDenomMode::kUseCVTruthDenom, flux_times_targets_cv)
+                                       : sigma_cv;
+            const double sig_alt = compute_sigma_hat(yref, yalt, fixed_cv_asimov,
+                                                     booked.cfg.truth_denom_mode,
+                                                     flux_times_targets_var_default);
+            const double d = sig_ref - sig_alt;
+            abs_var_map[booked.cfg.label] = (std::isfinite(d) ? d * d : 0.0);
+        }
 
-            for (const auto &booked : booked_altfile_systs)
+        for (const auto &booked : booked_altfile_systs)
+        {
+            double var = 0.0;
+            int nused = 0;
+            for (const auto &u : booked.universes)
             {
-                double var = 0.0;
-                int nused = 0;
-                for (const auto &u : booked.universes)
-                {
-                    const EvaluatedYields yu = evaluate_yields(u, cut, keep_greater_than);
-                    const double sig_u = compute_sigma_hat(ycv, yu, fixed_cv_asimov,
-                                                           booked.cfg.truth_denom_mode,
-                                                           flux_times_targets_var_default);
-                    if (!std::isfinite(sig_u) || !std::isfinite(sig_cv))
-                        continue;
-                    const double d = sig_cv - sig_u;
-                    var += d * d;
-                    ++nused;
-                }
-                if (booked.cfg.average_over_universes && nused > 0)
-                    var /= static_cast<double>(nused);
-                ensure_curve(booked.cfg.label)[ic] = var;
+                const EvaluatedYields yu = evaluate_yields(u);
+                const double sig_u = compute_sigma_hat(ycv, yu, fixed_cv_asimov,
+                                                       booked.cfg.truth_denom_mode,
+                                                       flux_times_targets_var_default);
+                if (!std::isfinite(sig_u) || !std::isfinite(sigma_cv))
+                    continue;
+                const double d = sigma_cv - sig_u;
+                var += d * d;
+                ++nused;
             }
+            if (booked.cfg.average_over_universes && nused > 0)
+                var /= static_cast<double>(nused);
+            abs_var_map[booked.cfg.label] = var;
         }
 
         const std::vector<std::string> xsec_unisim_names = {
@@ -744,236 +654,87 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
             "detVarWMYZ",
         };
 
-        auto collect_existing = [&](const std::vector<std::string> &names) {
-            std::vector<std::vector<double>> curves;
-            curves.reserve(names.size());
-            for (const auto &n : names)
-            {
-                auto it = abs_var_map.find(n);
-                if (it != abs_var_map.end())
-                    curves.push_back(it->second);
-            }
-            return curves;
-        };
-
-        abs_var_map["xsec_unisim"] = sum_curves(collect_existing(xsec_unisim_names), cuts.size());
-        abs_var_map["xsec_total"] = sum_curves({
-            abs_var_map.count("xsec_multi") ? abs_var_map.at("xsec_multi") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("xsec_unisim") ? abs_var_map.at("xsec_unisim") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("xsec_xsr_scc_Fa3_SCC") ? abs_var_map.at("xsec_xsr_scc_Fa3_SCC") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("xsec_xsr_scc_Fv3_SCC") ? abs_var_map.at("xsec_xsr_scc_Fv3_SCC") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("NuWroGenie") ? abs_var_map.at("NuWroGenie") : std::vector<double>(cuts.size(), 0.0),
+        abs_var_map["xsec_unisim"] = sum_existing_variances(abs_var_map, xsec_unisim_names);
+        abs_var_map["xsec_total"] = sum_existing_variances(abs_var_map, {
+            "xsec_multi",
+            "xsec_unisim",
+            "xsec_xsr_scc_Fa3_SCC",
+            "xsec_xsr_scc_Fv3_SCC",
+            "NuWroGenie",
         });
-        abs_var_map["detVar_total"] = sum_curves(collect_existing(detvar_names), cuts.size());
-        abs_var_map["PredTotal"] = sum_curves({
-            abs_var_map.count("detVar_total") ? abs_var_map.at("detVar_total") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("flux") ? abs_var_map.at("flux") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("reint") ? abs_var_map.at("reint") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("xsec_total") ? abs_var_map.at("xsec_total") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("POT") ? abs_var_map.at("POT") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("numTargets") ? abs_var_map.at("numTargets") : std::vector<double>(cuts.size(), 0.0),
-            abs_var_map.count("MCstats") ? abs_var_map.at("MCstats") : std::vector<double>(cuts.size(), 0.0),
+        abs_var_map["detVar_total"] = sum_existing_variances(abs_var_map, detvar_names);
+        abs_var_map["PredTotal"] = sum_existing_variances(abs_var_map, {
+            "detVar_total",
+            "flux",
+            "reint",
+            "xsec_total",
+            "POT",
+            "numTargets",
+            "MCstats",
         });
         abs_var_map["total"] = abs_var_map["PredTotal"];
 
-        std::map<std::string, std::vector<double>> rel_map;
+        std::map<std::string, double> abs_unc_map;
+        std::map<std::string, double> rel_map;
         for (const auto &kv : abs_var_map)
-            rel_map[kv.first] = rel_from_abs_var(kv.second, sigma_cv);
-
-        std::size_t best_idx = 0;
-        double best_rel = std::numeric_limits<double>::infinity();
-        auto it_total = rel_map.find("total");
-        if (it_total != rel_map.end())
         {
-            for (std::size_t i = 0; i < it_total->second.size(); ++i)
-            {
-                const double v = it_total->second[i];
-                if (std::isfinite(v) && v < best_rel)
-                {
-                    best_rel = v;
-                    best_idx = i;
-                }
-            }
+            abs_unc_map[kv.first] = abs_unc_from_var(kv.second);
+            rel_map[kv.first] = rel_from_abs_var(kv.second, sigma_cv);
         }
-
-        if (best_idx >= cuts.size())
-            best_idx = 0;
 
         std::cout << std::fixed << std::setprecision(6);
-        if (best_idx < cuts.size())
-            std::cout << "[scan_first_score_cut_xsec_systs] best cut = " << cuts[best_idx]
-                      << (keep_greater_than ? "  for score >= cut\n" : "  for score < cut\n");
-        if (best_idx < eff_cv.size())
-            std::cout << "  eff(CV)    = " << eff_cv[best_idx] << "\n";
-        if (best_idx < purity_cv.size())
-            std::cout << "  purity(CV) = " << purity_cv[best_idx] << "\n";
-        if (it_total != rel_map.end() && best_idx < it_total->second.size())
-            std::cout << "  rel total  = " << it_total->second[best_idx] << "\n";
+        std::cout << "  S_sel(CV)     = " << ycv.s_sel << "\n";
+        std::cout << "  B_sel(CV)     = " << ycv.b_sel << "\n";
+        std::cout << "  T_sig(CV)     = " << ycv.t_sig << "\n";
+        std::cout << "  sigma_hat(CV) = " << sigma_cv << "\n";
+        std::cout << "  eff(CV)       = " << eff_cv << "\n";
+        std::cout << "  purity(CV)    = " << purity_cv << "\n";
 
-        for (const auto &name : {std::string("flux"), std::string("reint"), std::string("xsec_total"), std::string("detVar_total"), std::string("MCstats"), std::string("POT"), std::string("numTargets")})
+        for (const auto &name : {std::string("flux"),
+                                 std::string("reint"),
+                                 std::string("xsec_total"),
+                                 std::string("detVar_total"),
+                                 std::string("MCstats"),
+                                 std::string("POT"),
+                                 std::string("numTargets"),
+                                 std::string("total")})
         {
-            auto it = rel_map.find(name);
-            if (it != rel_map.end() && best_idx < it->second.size())
-                std::cout << "  rel " << std::setw(12) << std::left << name << " = " << it->second[best_idx] << "\n";
+            auto it_abs = abs_unc_map.find(name);
+            auto it_rel = rel_map.find(name);
+            if (it_abs == abs_unc_map.end() || it_rel == rel_map.end())
+                continue;
+
+            std::cout << "  abs " << std::setw(12) << std::left << name << " = " << it_abs->second << "\n";
+            std::cout << "  rel " << std::setw(12) << std::left << name << " = " << it_rel->second << "\n";
         }
 
-        const auto csv_path = plot_output_file(output_stem + "_scan").replace_extension(".csv");
+        const auto csv_path = plot_output_file(output_stem + "_cut_eval").replace_extension(".csv");
         {
             std::ofstream csv(csv_path);
-            csv << "cut,sigma_cv,eff_cv,purity_cv";
+            csv << "cut,keep_greater_than,s_sel_cv,b_sel_cv,t_sig_cv,sigma_cv,eff_cv,purity_cv";
+            for (const auto &kv : abs_unc_map)
+                csv << ",abs_" << kv.first;
             for (const auto &kv : rel_map)
                 csv << ",rel_" << kv.first;
             csv << "\n";
 
-            for (std::size_t i = 0; i < cuts.size(); ++i)
-            {
-                csv << std::setprecision(12)
-                    << cuts[i] << "," << sigma_cv[i] << "," << eff_cv[i] << "," << purity_cv[i];
-                for (const auto &kv : rel_map)
-                {
-                    double v = std::numeric_limits<double>::quiet_NaN();
-                    if (i < kv.second.size())
-                        v = kv.second[i];
-                    csv << "," << v;
-                }
-                csv << "\n";
-            }
+            csv << std::setprecision(12)
+                << cut_value << ","
+                << (keep_greater_than ? 1 : 0) << ","
+                << ycv.s_sel << ","
+                << ycv.b_sel << ","
+                << ycv.t_sig << ","
+                << sigma_cv << ","
+                << eff_cv << ","
+                << purity_cv;
+
+            for (const auto &kv : abs_unc_map)
+                csv << "," << kv.second;
+            for (const auto &kv : rel_map)
+                csv << "," << kv.second;
+            csv << "\n";
         }
         std::cout << "[scan_first_score_cut_xsec_systs] wrote: " << csv_path << "\n";
-
-        Plotter plotter;
-        plotter.set_global_style();
-        gStyle->SetOptStat(0);
-
-        {
-            TCanvas c("c_cut_syst_total", "Cut scan total/systematic groups", 1200, 850);
-            c.SetLeftMargin(0.11);
-            c.SetRightMargin(0.04);
-            c.SetBottomMargin(0.12);
-
-            double ymax = 0.0;
-            for (const auto &name : {std::string("total"), std::string("flux"), std::string("reint"), std::string("xsec_total"), std::string("detVar_total"), std::string("MCstats")})
-            {
-                auto it = rel_map.find(name);
-                if (it == rel_map.end())
-                    continue;
-                for (double v : it->second)
-                    if (std::isfinite(v))
-                        ymax = std::max(ymax, v);
-            }
-            if (!(ymax > 0.0))
-                ymax = 1.0;
-
-            TH1D frame("hframe_cut_syst_total",
-                       keep_greater_than ? ";cut on inf_scores[0]  (keep score #geq cut);relative uncertainty on #hat{#sigma}"
-                                         : ";cut on inf_scores[0]  (keep score < cut);relative uncertainty on #hat{#sigma}",
-                       100, xmin, xmax);
-            frame.SetMinimum(0.0);
-            frame.SetMaximum(1.15 * ymax);
-            frame.Draw("AXIS");
-
-            auto g_total = make_graph(cuts, rel_map["total"], "g_total");
-            auto g_flux = rel_map.count("flux") ? make_graph(cuts, rel_map["flux"], "g_flux") : nullptr;
-            auto g_reint = rel_map.count("reint") ? make_graph(cuts, rel_map["reint"], "g_reint") : nullptr;
-            auto g_xsec = rel_map.count("xsec_total") ? make_graph(cuts, rel_map["xsec_total"], "g_xsec") : nullptr;
-            auto g_det = rel_map.count("detVar_total") ? make_graph(cuts, rel_map["detVar_total"], "g_det") : nullptr;
-            auto g_mc = rel_map.count("MCstats") ? make_graph(cuts, rel_map["MCstats"], "g_mc") : nullptr;
-
-            g_total->SetLineWidth(3);
-            g_total->Draw("L SAME");
-            if (g_flux)
-            {
-                g_flux->SetLineStyle(2);
-                g_flux->Draw("L SAME");
-            }
-            if (g_reint)
-            {
-                g_reint->SetLineStyle(3);
-                g_reint->Draw("L SAME");
-            }
-            if (g_xsec)
-            {
-                g_xsec->SetLineStyle(4);
-                g_xsec->Draw("L SAME");
-            }
-            if (g_det)
-            {
-                g_det->SetLineStyle(5);
-                g_det->Draw("L SAME");
-            }
-            if (g_mc)
-            {
-                g_mc->SetLineStyle(6);
-                g_mc->Draw("L SAME");
-            }
-
-            TLine lbest(cuts[best_idx], 0.0, cuts[best_idx], 1.15 * ymax);
-            lbest.SetLineStyle(7);
-            lbest.SetLineWidth(2);
-            lbest.Draw("SAME");
-
-            TLegend leg(0.12, 0.62, 0.54, 0.90);
-            leg.SetBorderSize(0);
-            leg.SetFillStyle(0);
-            leg.AddEntry(g_total.get(), "total", "l");
-            if (g_flux)
-                leg.AddEntry(g_flux.get(), "flux", "l");
-            if (g_reint)
-                leg.AddEntry(g_reint.get(), "reint", "l");
-            if (g_xsec)
-                leg.AddEntry(g_xsec.get(), "xsec_total", "l");
-            if (g_det)
-                leg.AddEntry(g_det.get(), "detVar_total", "l");
-            if (g_mc)
-                leg.AddEntry(g_mc.get(), "MCstats", "l");
-            leg.AddEntry(&lbest, "best cut", "l");
-            leg.Draw();
-
-            c.RedrawAxis();
-            const auto out = plot_output_file(output_stem + "_rel_unc_groups").string();
-            c.SaveAs(out.c_str());
-            std::cout << "[scan_first_score_cut_xsec_systs] saved: " << out << "\n";
-        }
-
-        {
-            TCanvas c("c_cut_eff_purity", "Cut scan efficiency/purity", 1200, 850);
-            c.SetLeftMargin(0.11);
-            c.SetRightMargin(0.04);
-            c.SetBottomMargin(0.12);
-
-            TH1D frame("hframe_cut_perf",
-                       keep_greater_than ? ";cut on inf_scores[0]  (keep score #geq cut);CV efficiency / purity"
-                                         : ";cut on inf_scores[0]  (keep score < cut);CV efficiency / purity",
-                       100, xmin, xmax);
-            frame.SetMinimum(0.0);
-            frame.SetMaximum(1.05);
-            frame.Draw("AXIS");
-
-            auto g_eff = make_graph(cuts, eff_cv, "g_eff");
-            auto g_pur = make_graph(cuts, purity_cv, "g_pur");
-            g_eff->SetLineWidth(3);
-            g_pur->SetLineStyle(2);
-            g_eff->Draw("L SAME");
-            g_pur->Draw("L SAME");
-
-            TLine lbest(cuts[best_idx], 0.0, cuts[best_idx], 1.05);
-            lbest.SetLineStyle(7);
-            lbest.SetLineWidth(2);
-            lbest.Draw("SAME");
-
-            TLegend leg(0.12, 0.75, 0.42, 0.90);
-            leg.SetBorderSize(0);
-            leg.SetFillStyle(0);
-            leg.AddEntry(g_eff.get(), "efficiency (CV)", "l");
-            leg.AddEntry(g_pur.get(), "purity (CV)", "l");
-            leg.AddEntry(&lbest, "best cut", "l");
-            leg.Draw();
-
-            c.RedrawAxis();
-            const auto out = plot_output_file(output_stem + "_eff_purity").string();
-            c.SaveAs(out.c_str());
-            std::cout << "[scan_first_score_cut_xsec_systs] saved: " << out << "\n";
-        }
 
         std::cout << "[scan_first_score_cut_xsec_systs] done\n";
         return 0;
@@ -985,23 +746,19 @@ int scan_score_cut_xsec_systs(const std::string &event_list_path = "",
                               const std::string &signal_sel = "is_signal",
                               const std::string &truth_denom_sel = "is_signal",
                               const std::string &mc_weight = "w_nominal",
-                              int nbins = 60,
-                              double xmin = -15.0,
-                              double xmax = 15.0,
+                              double cut_value = 7.0,
                               bool keep_greater_than = true,
                               bool fixed_cv_asimov = true,
                               double flux_times_targets_cv = 1.0,
                               double flux_times_targets_var_default = 1.0,
-                              const std::string &output_stem = "scan_score_cut_xsec_systs")
+                              const std::string &output_stem = "score_cut_xsec_systs_eval")
 {
     return scan_first_score_cut_xsec_systs(event_list_path,
                                            base_sel,
                                            signal_sel,
                                            truth_denom_sel,
                                            mc_weight,
-                                           nbins,
-                                           xmin,
-                                           xmax,
+                                           cut_value,
                                            keep_greater_than,
                                            fixed_cv_asimov,
                                            flux_times_targets_cv,

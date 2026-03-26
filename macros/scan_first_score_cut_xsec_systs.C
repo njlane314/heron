@@ -294,7 +294,7 @@ int get_num_universes(ROOT::RDF::RNode node, const std::string &branch)
     return *nuni;
 }
 
-EvaluatedYields evaluate_yields(const BookedYields &booked)
+EvaluatedYields evaluate_yields(BookedYields booked)
 {
     EvaluatedYields out;
     out.s_sel = booked.sum_sig.GetValue();

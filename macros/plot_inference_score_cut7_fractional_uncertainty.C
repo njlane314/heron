@@ -246,12 +246,10 @@ int plot_inference_score_cut7_fractional_uncertainty() {
   const bool have_genie = cut7_has_column(node_mc, "weightsGenie");
   const bool have_reint = cut7_has_column(node_mc, "weightsReint");
   const bool have_ppfx = cut7_has_column(node_mc, "weightsPPFX");
-  const bool have_ppfx_cv = cut7_has_column(node_mc, "ppfx_cv");
 
   std::unique_ptr<Cut7Result<std::vector<Cut7UShortRVec>>> genie_h;
   std::unique_ptr<Cut7Result<std::vector<Cut7UShortRVec>>> reint_h;
   std::unique_ptr<Cut7Result<std::vector<Cut7UShortRVec>>> ppfx_h;
-  std::unique_ptr<Cut7Result<std::vector<float>>> ppfx_cv_h;
 
   if (have_genie) {
     genie_h.reset(new Cut7Result<std::vector<Cut7UShortRVec>>(
@@ -264,10 +262,6 @@ int plot_inference_score_cut7_fractional_uncertainty() {
   if (have_ppfx) {
     ppfx_h.reset(new Cut7Result<std::vector<Cut7UShortRVec>>(
         node_mc.Take<Cut7UShortRVec>("weightsPPFX")));
-  }
-  if (have_ppfx && have_ppfx_cv) {
-    ppfx_cv_h.reset(new Cut7Result<std::vector<float>>(
-        node_mc.Take<float>("ppfx_cv")));
   }
 
   const auto& w_mc = *w_mc_h;
@@ -291,8 +285,8 @@ int plot_inference_score_cut7_fractional_uncertainty() {
     var_reint = cut7_multisim_variance_1bin(w_mc, **reint_h, nullptr, kAverageUniverses);
   }
   if (ppfx_h) {
-    const std::vector<float>* ppfx_cv = ppfx_cv_h ? &(**ppfx_cv_h) : nullptr;
-    var_ppfx = cut7_multisim_variance_1bin(w_mc, **ppfx_h, ppfx_cv, kAverageUniverses);
+    // Do not apply PPFX central-value normalisation for now; use raw weightsPPFX universes.
+    var_ppfx = cut7_multisim_variance_1bin(w_mc, **ppfx_h, nullptr, kAverageUniverses);
   }
 
   const double var_total = var_mcstat + var_genie + var_reint + var_ppfx;
@@ -332,9 +326,6 @@ int plot_inference_score_cut7_fractional_uncertainty() {
         std::remove_if(components.begin(), components.end(),
                        [](const Cut7Component& c) { return c.label == "PPFX"; }),
         components.end());
-  } else if (!have_ppfx_cv) {
-    std::cout << "[plot_inference_score_cut7_fractional_uncertainty] "
-              << "ppfx_cv missing; using raw weightsPPFX.\n";
   }
 
   const std::string out_dir = "./scratch/out";

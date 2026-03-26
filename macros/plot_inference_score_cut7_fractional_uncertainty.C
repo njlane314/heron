@@ -8,9 +8,9 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <TCanvas.h>
+#include <TBox.h>
 #include <TH1D.h>
 #include <TLegend.h>
-#include <TLine.h>
 #include <TStyle.h>
 #include <TSystem.h>
 
@@ -110,39 +110,47 @@ void draw_cut7_single_bin_fractional_uncertainty(const std::vector<Cut7Component
   frame.SetLineWidth(1);
   frame.Draw();
 
-  const double xlo = 0.08;
-  const double xhi = 0.92;
+  std::vector<Cut7Component> visible_components;
+  for (const auto& comp : components) {
+    if (comp.frac > 0.0) visible_components.push_back(comp);
+  }
 
-  std::vector<std::unique_ptr<TLine>> lines;
-  lines.reserve(components.size());
+  const double x_centre = 0.5;
+  const double max_total_width = 0.76;
+  const std::size_t n_bars = visible_components.size() + 1;  // +1 for total
+  const double bar_gap = 0.02;
+  const double total_gap = (n_bars > 1) ? bar_gap * static_cast<double>(n_bars - 1) : 0.0;
+  const double bar_width = std::max(0.06, (max_total_width - total_gap) / static_cast<double>(n_bars));
+  const double used_width = bar_width * static_cast<double>(n_bars) + total_gap;
+  const double x_start = x_centre - 0.5 * used_width;
+
+  std::vector<std::unique_ptr<TBox>> bars;
+  bars.reserve(n_bars);
 
   TLegend leg(0.14, 0.82, 0.94, 0.93);
   leg.SetBorderSize(0);
   leg.SetFillStyle(0);
-  leg.SetNColumns(4);
+  leg.SetNColumns(5);
   leg.SetTextSize(0.032);
 
-  double qsum = 0.0;
-  for (const auto& comp : components) {
-    if (comp.frac <= 0.0) continue;
+  auto draw_bar = [&](const std::string& label, double value, int color, std::size_t idx) {
+    const double x1 = x_start + static_cast<double>(idx) * (bar_width + bar_gap);
+    const double x2 = x1 + bar_width;
 
-    qsum += comp.frac * comp.frac;
-    const double y1 = std::sqrt(qsum);
+    bars.emplace_back(std::make_unique<TBox>(x1, 0.0, x2, value));
+    bars.back()->SetFillColorAlpha(color, 0.65);
+    bars.back()->SetLineColor(color);
+    bars.back()->SetLineWidth(2);
+    bars.back()->Draw("same");
 
-    lines.emplace_back(std::make_unique<TLine>(xlo, y1, xhi, y1));
-    lines.back()->SetLineColor(comp.color);
-    lines.back()->SetLineWidth(4);
-    lines.back()->Draw();
+    leg.AddEntry(bars.back().get(), label.c_str(), "f");
+  };
 
-    leg.AddEntry(lines.back().get(), comp.label.c_str(), "l");
+  for (std::size_t i = 0; i < visible_components.size(); ++i) {
+    draw_bar(visible_components[i].label, visible_components[i].frac, visible_components[i].color, i);
   }
 
-  TLine total_line(xlo, total_frac, xhi, total_frac);
-  total_line.SetLineColor(kBlack);
-  total_line.SetLineWidth(3);
-  total_line.Draw();
-
-  leg.AddEntry(&total_line, "Total", "l");
+  draw_bar("Total", total_frac, kBlack, visible_components.size());
   leg.Draw();
 
   frame.Draw("AXIS SAME");

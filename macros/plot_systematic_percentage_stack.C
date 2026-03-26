@@ -269,12 +269,12 @@ void apply_plot_style() {
 }
 
 TH1D* make_percent_hist(const std::vector<double>& var, const std::vector<double>& denom, const std::string& name,
-                        const std::string& title, int color, int nbins) {
-  auto* h = new TH1D(name.c_str(), title.c_str(), nbins, 0.0, static_cast<double>(nbins));
+                        const std::string& title, int color, int nbins, double xmin, double xmax) {
+  auto* h = new TH1D(name.c_str(), title.c_str(), nbins, xmin, xmax);
   h->SetDirectory(nullptr);
   h->SetFillColor(color);
-  h->SetLineColor(kBlack);
-  h->SetLineWidth(2);
+  h->SetLineColor(color);
+  h->SetLineWidth(1);
 
   for (int i = 0; i < nbins; ++i) {
     const double d = (i < static_cast<int>(denom.size())) ? denom[static_cast<size_t>(i)] : 0.0;
@@ -472,13 +472,13 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   auto boundaries = parse_csv_ints(boundary_csv);
 
-  auto* h_flux = make_percent_hist(var_flux, total_var, "h_pct_flux", "Flux", TColor::GetColor("#f0301a"), nbins);
-  auto* h_xs = make_percent_hist(var_xs, total_var, "h_pct_xs", "Xs", TColor::GetColor("#1010f0"), nbins);
-  auto* h_det = make_percent_hist(var_detector, total_var, "h_pct_detector", "Detector", TColor::GetColor("#d933e6"), nbins);
-  auto* h_mcstat = make_percent_hist(var_mcstat, total_var, "h_pct_mcstat", "MC stat", TColor::GetColor("#61d23f"), nbins);
-  auto* h_dirt = make_percent_hist(var_dirt, total_var, "h_pct_dirt", "Dirt", TColor::GetColor("#f0a33a"), nbins);
+  auto* h_flux = make_percent_hist(var_flux, total_var, "h_pct_flux", "Flux", TColor::GetColor("#f0301a"), nbins, xmin, xmax);
+  auto* h_xs = make_percent_hist(var_xs, total_var, "h_pct_xs", "Xs", TColor::GetColor("#1010f0"), nbins, xmin, xmax);
+  auto* h_det = make_percent_hist(var_detector, total_var, "h_pct_detector", "Detector", TColor::GetColor("#d933e6"), nbins, xmin, xmax);
+  auto* h_mcstat = make_percent_hist(var_mcstat, total_var, "h_pct_mcstat", "MC stat", TColor::GetColor("#61d23f"), nbins, xmin, xmax);
+  auto* h_dirt = make_percent_hist(var_dirt, total_var, "h_pct_dirt", "Dirt", TColor::GetColor("#f0a33a"), nbins, xmin, xmax);
 
-  THStack hs("hs_pct", ";Bin index;Syst. percentage");
+  THStack hs("hs_pct", ";Inference score [0];Systematic contribution [%]");
   hs.Add(h_flux);
   hs.Add(h_xs);
   hs.Add(h_det);
@@ -491,31 +491,34 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   TCanvas c("c_pct_stack", "c_pct_stack", 1320, 760);
   c.SetLeftMargin(0.10);
-  c.SetRightMargin(0.24);
+  c.SetRightMargin(0.06);
   c.SetBottomMargin(0.14);
-  c.SetTopMargin(0.06);
+  c.SetTopMargin(0.10);
 
   hs.Draw("HIST");
   hs.SetMinimum(0.0);
   hs.SetMaximum(105.0);
-  hs.GetXaxis()->SetLimits(0.0, static_cast<double>(nbins));
-  hs.GetXaxis()->SetTitle("Bin index");
-  hs.GetYaxis()->SetTitle("Syst. percentage");
+  hs.GetXaxis()->SetLimits(xmin, xmax);
+  hs.GetXaxis()->SetTitle("Inference score [0]");
+  hs.GetYaxis()->SetTitle("Systematic contribution [%]");
   hs.GetXaxis()->CenterTitle(false);
   hs.GetYaxis()->CenterTitle(false);
 
+  const double binw = (xmax - xmin) / static_cast<double>(nbins);
   for (int b : boundaries) {
-    TLine line(static_cast<double>(b), 0.0, static_cast<double>(b), 105.0);
+    const double x_boundary = xmin + static_cast<double>(b) * binw;
+    TLine line(x_boundary, 0.0, x_boundary, 105.0);
     line.SetLineStyle(2);
     line.SetLineWidth(2);
     line.SetLineColor(kGray + 2);
     line.Draw("SAME");
   }
 
-  TLegend leg(0.76, 0.58, 0.97, 0.96);
+  TLegend leg(0.14, 0.90, 0.94, 0.99);
   leg.SetBorderSize(1);
   leg.SetFillStyle(0);
   leg.SetTextSize(0.045);
+  leg.SetNColumns(5);
   leg.AddEntry(h_flux, "Flux", "f");
   leg.AddEntry(h_xs, "Xs", "f");
   leg.AddEntry(h_det, "Detector", "f");

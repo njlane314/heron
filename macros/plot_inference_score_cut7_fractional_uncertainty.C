@@ -8,6 +8,7 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <TCanvas.h>
+#include <TColor.h>
 #include <TBox.h>
 #include <TH1D.h>
 #include <TLegend.h>
@@ -91,18 +92,27 @@ double cut7_multisim_variance_1bin(const std::vector<double>& w_nom,
 void draw_cut7_single_bin_fractional_uncertainty(const std::vector<Cut7Component>& components,
                                                  double total_frac,
                                                  const std::string& out_path) {
+  static const int kColMcStat = TColor::GetColor("#4D4D4D");  // dark gray
+  static const int kColGenie  = TColor::GetColor("#D55E00");  // vermillion
+  static const int kColReint  = TColor::GetColor("#009E73");  // bluish green
+  static const int kColPpfx   = TColor::GetColor("#0072B2");  // blue
+
   gStyle->SetOptStat(0);
 
   TCanvas c("c_score0_cut7_frac", "c_score0_cut7_frac", 800, 650);
   c.SetLeftMargin(0.12);
   c.SetRightMargin(0.05);
   c.SetBottomMargin(0.16);
+  c.SetTopMargin(0.10);
+
+  gStyle->SetLegendBorderSize(0);
+  gStyle->SetLegendFillColor(0);
 
   TH1D frame("h_score0_cut7_frac", ";Selection;Fractional uncertainty", 1, 0.0, 1.0);
   frame.SetDirectory(nullptr);
   frame.GetXaxis()->SetBinLabel(1, "score[0] >= 7");
   frame.SetMinimum(0.0);
-  frame.SetMaximum(std::max(0.05, 1.35 * total_frac));
+  frame.SetMaximum(std::max(0.05, 1.60 * total_frac));
   frame.SetLineColor(kBlack);
   frame.SetLineWidth(1);
   frame.Draw();
@@ -113,9 +123,19 @@ void draw_cut7_single_bin_fractional_uncertainty(const std::vector<Cut7Component
   std::vector<std::unique_ptr<TBox>> boxes;
   boxes.reserve(components.size());
 
-  TLegend leg(0.58, 0.60, 0.90, 0.88);
+  TLegend leg(0.16, 0.82, 0.94, 0.94);
   leg.SetBorderSize(0);
   leg.SetFillStyle(0);
+  leg.SetNColumns(3);
+  leg.SetTextSize(0.032);
+
+  auto color_for = [&](const std::string& label) -> int {
+    if (label == "MC stat")       return kColMcStat;
+    if (label == "GENIE")         return kColGenie;
+    if (label == "Reinteraction") return kColReint;
+    if (label == "PPFX")          return kColPpfx;
+    return kBlack;
+  };
 
   double qsum = 0.0;
   for (const auto& comp : components) {
@@ -125,9 +145,10 @@ void draw_cut7_single_bin_fractional_uncertainty(const std::vector<Cut7Component
     qsum += comp.frac * comp.frac;
     const double y1 = std::sqrt(qsum);
 
+    const int color = color_for(comp.label);
     boxes.emplace_back(std::make_unique<TBox>(xlo, y0, xhi, y1));
-    boxes.back()->SetFillColorAlpha(comp.color, 0.55);
-    boxes.back()->SetLineColor(comp.color);
+    boxes.back()->SetFillColorAlpha(color, 0.70);
+    boxes.back()->SetLineColor(color);
     boxes.back()->SetLineWidth(2);
     boxes.back()->Draw();
 
@@ -293,10 +314,10 @@ int plot_inference_score_cut7_fractional_uncertainty() {
   const double frac_ppfx   = (y_pred > 0.0) ? (std::sqrt(std::max(0.0, var_ppfx  )) / y_pred) : 0.0;
 
   std::vector<Cut7Component> components;
-  components.push_back({"MC stat",        frac_mcstat, kGray + 2});
-  components.push_back({"GENIE",          frac_genie,  kRed + 1});
-  components.push_back({"Reinteraction",  frac_reint,  kGreen + 2});
-  components.push_back({"PPFX",           frac_ppfx,   kBlue + 1});
+  components.push_back({"MC stat",        frac_mcstat, kBlack});
+  components.push_back({"GENIE",          frac_genie,  kBlack});
+  components.push_back({"Reinteraction",  frac_reint,  kBlack});
+  components.push_back({"PPFX",           frac_ppfx,   kBlack});
 
   if (!have_genie) {
     std::cout << "[plot_inference_score_cut7_fractional_uncertainty] "

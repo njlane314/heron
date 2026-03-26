@@ -303,7 +303,7 @@ TH1D* make_percent_hist(const std::vector<double>& var, const std::vector<double
     Xs       <- GENIE multisim + reinteraction multisim + GENIE unisims + MC full corr
     Detector <- category full corr
     MC stat  <- diagonal MC statistical variance
-    Dirt     <- diagonal EXT statistical variance
+    EXT      <- diagonal EXT statistical variance
 */
 int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
                                      const char* extra_sel = "sel_muon",
@@ -476,7 +476,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
   auto* h_xs = make_percent_hist(var_xs, total_var, "h_pct_xs", "Xs", TColor::GetColor("#1010f0"), nbins, xmin, xmax);
   auto* h_det = make_percent_hist(var_detector, total_var, "h_pct_detector", "Detector", TColor::GetColor("#d933e6"), nbins, xmin, xmax);
   auto* h_mcstat = make_percent_hist(var_mcstat, total_var, "h_pct_mcstat", "MC stat", TColor::GetColor("#61d23f"), nbins, xmin, xmax);
-  auto* h_dirt = make_percent_hist(var_dirt, total_var, "h_pct_dirt", "Dirt", TColor::GetColor("#f0a33a"), nbins, xmin, xmax);
+  auto* h_dirt = make_percent_hist(var_dirt, total_var, "h_pct_dirt", "EXT", TColor::GetColor("#f0a33a"), nbins, xmin, xmax);
 
   THStack hs("hs_pct", ";Inference score [0];Systematic contribution [%]");
   hs.Add(h_flux);
@@ -523,7 +523,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
   leg.AddEntry(h_xs, "Xs", "f");
   leg.AddEntry(h_det, "Detector", "f");
   leg.AddEntry(h_mcstat, "MC stat", "f");
-  leg.AddEntry(h_dirt, "Dirt", "f");
+  leg.AddEntry(h_dirt, "EXT", "f");
   leg.Draw();
 
   c.RedrawAxis();

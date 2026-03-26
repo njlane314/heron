@@ -8,7 +8,10 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <TCanvas.h>
+#include <TBox.h>
 #include <TH1D.h>
+#include <TLegend.h>
+#include <TLine.h>
 #include <TStyle.h>
 #include <TSystem.h>
 
@@ -31,6 +34,12 @@ using namespace nu;
 namespace {
 
 using Cut7UShortRVec = ROOT::RVec<unsigned short>;
+
+struct Cut7Component {
+  std::string label;
+  double frac = 0.0;  // sigma_i / total_prediction
+  int color = kBlack;
+};
 
 template <class T>
 using Cut7Result = ROOT::RDF::RResultPtr<T>;
@@ -79,7 +88,9 @@ double cut7_multisim_variance_1bin(const std::vector<double>& w_nom,
   return var;
 }
 
-void draw_cut7_single_bin_fractional_uncertainty(double frac, const std::string& out_path) {
+void draw_cut7_single_bin_fractional_uncertainty(const std::vector<Cut7Component>& components,
+                                                 double total_frac,
+                                                 const std::string& out_path) {
   gStyle->SetOptStat(0);
 
   TCanvas c("c_score0_cut7_frac", "c_score0_cut7_frac", 800, 650);
@@ -87,17 +98,51 @@ void draw_cut7_single_bin_fractional_uncertainty(double frac, const std::string&
   c.SetRightMargin(0.05);
   c.SetBottomMargin(0.16);
 
-  TH1D h("h_score0_cut7_frac", ";Selection;Fractional uncertainty", 1, 0.0, 1.0);
-  h.SetDirectory(nullptr);
-  h.GetXaxis()->SetBinLabel(1, "score[0] >= 7");
-  h.SetBinContent(1, frac);
-  h.SetBinError(1, 0.0);
-  h.SetLineColor(kBlue + 1);
-  h.SetFillColorAlpha(kBlue + 1, 0.35);
-  h.SetLineWidth(3);
-  h.GetYaxis()->SetRangeUser(0.0, std::max(0.05, 1.35 * frac));
+  TH1D frame("h_score0_cut7_frac", ";Selection;Fractional uncertainty", 1, 0.0, 1.0);
+  frame.SetDirectory(nullptr);
+  frame.GetXaxis()->SetBinLabel(1, "score[0] >= 7");
+  frame.SetMinimum(0.0);
+  frame.SetMaximum(std::max(0.05, 1.35 * total_frac));
+  frame.SetLineColor(kBlack);
+  frame.SetLineWidth(1);
+  frame.Draw();
 
-  h.Draw("HIST");
+  const double xlo = 0.08;
+  const double xhi = 0.92;
+
+  std::vector<std::unique_ptr<TBox>> boxes;
+  boxes.reserve(components.size());
+
+  TLegend leg(0.58, 0.60, 0.90, 0.88);
+  leg.SetBorderSize(0);
+  leg.SetFillStyle(0);
+
+  double qsum = 0.0;
+  for (const auto& comp : components) {
+    if (comp.frac <= 0.0) continue;
+
+    const double y0 = std::sqrt(qsum);
+    qsum += comp.frac * comp.frac;
+    const double y1 = std::sqrt(qsum);
+
+    boxes.emplace_back(std::make_unique<TBox>(xlo, y0, xhi, y1));
+    boxes.back()->SetFillColorAlpha(comp.color, 0.55);
+    boxes.back()->SetLineColor(comp.color);
+    boxes.back()->SetLineWidth(2);
+    boxes.back()->Draw();
+
+    leg.AddEntry(boxes.back().get(), comp.label.c_str(), "f");
+  }
+
+  TLine total_line(xlo, total_frac, xhi, total_frac);
+  total_line.SetLineColor(kBlack);
+  total_line.SetLineWidth(3);
+  total_line.Draw();
+
+  leg.AddEntry(&total_line, "Total", "l");
+  leg.Draw();
+
+  frame.Draw("AXIS SAME");
   c.RedrawAxis();
   c.SaveAs(out_path.c_str());
 }
@@ -242,18 +287,40 @@ int plot_inference_score_cut7_fractional_uncertainty() {
   const double var_total = var_mcstat + var_genie + var_reint + var_ppfx;
   const double sigma = std::sqrt(std::max(0.0, var_total));
   const double frac = (y_pred > 0.0) ? (sigma / y_pred) : 0.0;
+  const double frac_mcstat = (y_pred > 0.0) ? (std::sqrt(std::max(0.0, var_mcstat)) / y_pred) : 0.0;
+  const double frac_genie  = (y_pred > 0.0) ? (std::sqrt(std::max(0.0, var_genie )) / y_pred) : 0.0;
+  const double frac_reint  = (y_pred > 0.0) ? (std::sqrt(std::max(0.0, var_reint )) / y_pred) : 0.0;
+  const double frac_ppfx   = (y_pred > 0.0) ? (std::sqrt(std::max(0.0, var_ppfx  )) / y_pred) : 0.0;
+
+  std::vector<Cut7Component> components;
+  components.push_back({"MC stat",        frac_mcstat, kGray + 2});
+  components.push_back({"GENIE",          frac_genie,  kRed + 1});
+  components.push_back({"Reinteraction",  frac_reint,  kGreen + 2});
+  components.push_back({"PPFX",           frac_ppfx,   kBlue + 1});
 
   if (!have_genie) {
     std::cout << "[plot_inference_score_cut7_fractional_uncertainty] "
               << "weightsGenie missing; skipping GENIE.\n";
+    components.erase(
+        std::remove_if(components.begin(), components.end(),
+                       [](const Cut7Component& c) { return c.label == "GENIE"; }),
+        components.end());
   }
   if (!have_reint) {
     std::cout << "[plot_inference_score_cut7_fractional_uncertainty] "
               << "weightsReint missing; skipping reinteraction.\n";
+    components.erase(
+        std::remove_if(components.begin(), components.end(),
+                       [](const Cut7Component& c) { return c.label == "Reinteraction"; }),
+        components.end());
   }
   if (!have_ppfx) {
     std::cout << "[plot_inference_score_cut7_fractional_uncertainty] "
               << "weightsPPFX missing; skipping PPFX.\n";
+    components.erase(
+        std::remove_if(components.begin(), components.end(),
+                       [](const Cut7Component& c) { return c.label == "PPFX"; }),
+        components.end());
   } else if (!have_ppfx_cv) {
     std::cout << "[plot_inference_score_cut7_fractional_uncertainty] "
               << "ppfx_cv missing; using raw weightsPPFX.\n";
@@ -262,12 +329,16 @@ int plot_inference_score_cut7_fractional_uncertainty() {
   const std::string out_dir = "./scratch/out";
   const std::string out_path = out_dir + "/score0_geq7_fractional_uncertainty.pdf";
   gSystem->mkdir(out_dir.c_str(), true);
-  draw_cut7_single_bin_fractional_uncertainty(frac, out_path);
+  draw_cut7_single_bin_fractional_uncertainty(components, frac, out_path);
 
   std::cout << "[plot_inference_score_cut7_fractional_uncertainty] selected MC yield    = " << y_mc << "\n";
   std::cout << "[plot_inference_score_cut7_fractional_uncertainty] selected EXT yield   = " << y_ext << "\n";
   std::cout << "[plot_inference_score_cut7_fractional_uncertainty] total prediction     = " << y_pred << "\n";
   std::cout << "[plot_inference_score_cut7_fractional_uncertainty] absolute uncertainty = " << sigma << "\n";
+  std::cout << "[plot_inference_score_cut7_fractional_uncertainty] MC stat frac         = " << frac_mcstat << "\n";
+  std::cout << "[plot_inference_score_cut7_fractional_uncertainty] GENIE frac           = " << frac_genie << "\n";
+  std::cout << "[plot_inference_score_cut7_fractional_uncertainty] Reinteraction frac   = " << frac_reint << "\n";
+  std::cout << "[plot_inference_score_cut7_fractional_uncertainty] PPFX frac            = " << frac_ppfx << "\n";
   std::cout << "[plot_inference_score_cut7_fractional_uncertainty] fractional unc.      = " << frac << "\n";
   std::cout << "[plot_inference_score_cut7_fractional_uncertainty] wrote " << out_path << "\n";
 

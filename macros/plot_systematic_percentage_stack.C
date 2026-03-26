@@ -300,7 +300,8 @@ TH1D* make_percent_hist(const std::vector<double>& var, const std::vector<double
 
   Categories in this implementation:
     Flux     <- PPFX multisim + Flux multisim
-    Xs       <- GENIE multisim + reinteraction multisim + GENIE unisims + MC full corr
+    Xs       <- GENIE multisim + GENIE unisims + MC full corr
+    Reint    <- reinteraction multisim
     Detector <- category full corr
     MC stat  <- diagonal MC statistical variance
     EXT      <- diagonal EXT statistical variance
@@ -383,6 +384,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   std::vector<double> var_flux = make_zero_vector(nbins);
   std::vector<double> var_xs = make_zero_vector(nbins);
+  std::vector<double> var_reint = make_zero_vector(nbins);
   std::vector<double> var_detector = make_zero_vector(nbins);
   std::vector<double> var_mcstat = make_zero_vector(nbins);
   std::vector<double> var_dirt = make_zero_vector(nbins);
@@ -401,8 +403,8 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   if (use_reint && has_column(node_mc, "weightsReint")) {
     auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsReint");
-    add_in_place(var_xs, build_diag_multisim_variance_from_vectors(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins,
-                                                                   xmin, xmax, fold_overflow, average_universes));
+    add_in_place(var_reint, build_diag_multisim_variance_from_vectors(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins,
+                                                                      xmin, xmax, fold_overflow, average_universes));
   }
 
   if (use_ppfx && has_column(node_mc, "weightsPPFX")) {
@@ -458,6 +460,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
   for (int i = 0; i < nbins; ++i) {
     total_var[static_cast<size_t>(i)] = var_flux[static_cast<size_t>(i)] +
                                         var_xs[static_cast<size_t>(i)] +
+                                        var_reint[static_cast<size_t>(i)] +
                                         var_detector[static_cast<size_t>(i)] +
                                         var_mcstat[static_cast<size_t>(i)] +
                                         var_dirt[static_cast<size_t>(i)];
@@ -474,6 +477,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   auto* h_flux = make_percent_hist(var_flux, total_var, "h_pct_flux", "Flux", TColor::GetColor("#f0301a"), nbins, xmin, xmax);
   auto* h_xs = make_percent_hist(var_xs, total_var, "h_pct_xs", "Xs", TColor::GetColor("#1010f0"), nbins, xmin, xmax);
+  auto* h_reint = make_percent_hist(var_reint, total_var, "h_pct_reint", "Reint", TColor::GetColor("#10c5f0"), nbins, xmin, xmax);
   auto* h_det = make_percent_hist(var_detector, total_var, "h_pct_detector", "Detector", TColor::GetColor("#d933e6"), nbins, xmin, xmax);
   auto* h_mcstat = make_percent_hist(var_mcstat, total_var, "h_pct_mcstat", "MC stat", TColor::GetColor("#61d23f"), nbins, xmin, xmax);
   auto* h_dirt = make_percent_hist(var_dirt, total_var, "h_pct_dirt", "EXT", TColor::GetColor("#f0a33a"), nbins, xmin, xmax);
@@ -481,6 +485,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
   THStack hs("hs_pct", ";Inference score [0];Systematic contribution [%]");
   hs.Add(h_flux);
   hs.Add(h_xs);
+  hs.Add(h_reint);
   hs.Add(h_det);
   hs.Add(h_mcstat);
   hs.Add(h_dirt);
@@ -518,9 +523,10 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
   leg.SetBorderSize(1);
   leg.SetFillStyle(0);
   leg.SetTextSize(0.045);
-  leg.SetNColumns(5);
+  leg.SetNColumns(6);
   leg.AddEntry(h_flux, "Flux", "f");
   leg.AddEntry(h_xs, "Xs", "f");
+  leg.AddEntry(h_reint, "Reint", "f");
   leg.AddEntry(h_det, "Detector", "f");
   leg.AddEntry(h_mcstat, "MC stat", "f");
   leg.AddEntry(h_dirt, "EXT", "f");
@@ -535,6 +541,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
   TFile fout(root_path.c_str(), "RECREATE");
   h_flux->Write();
   h_xs->Write();
+  h_reint->Write();
   h_det->Write();
   h_mcstat->Write();
   h_dirt->Write();
@@ -545,6 +552,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   delete h_flux;
   delete h_xs;
+  delete h_reint;
   delete h_det;
   delete h_mcstat;
   delete h_dirt;

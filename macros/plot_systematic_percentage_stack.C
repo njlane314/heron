@@ -328,6 +328,7 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
                                      bool use_genie_unisims = false,
                                      const std::string& boundary_csv = "",
                                      const std::string& output_stem = "rareproc_score0_syst_percentage_stack") {
+  (void)ppfx_is_already_in_nominal;
   apply_plot_style();
 
   const std::string list_path = samples_tsv.empty() ? default_event_list_root() : samples_tsv;
@@ -409,14 +410,8 @@ int plot_systematic_percentage_stack(const std::string& samples_tsv = "",
 
   if (use_ppfx && has_column(node_mc, "weightsPPFX")) {
     auto u_h = node_mc.Take<ROOT::RVec<unsigned short>>("weightsPPFX");
-    if (ppfx_is_already_in_nominal && has_column(node_mc, "ppfx_cv")) {
-      auto cv_h = node_mc.Take<float>("ppfx_cv");
-      add_in_place(var_flux, build_diag_multisim_variance_from_vectors(*x_mc_h, *w_mc_h, *u_h, &(*cv_h), nbins,
-                                                                       xmin, xmax, fold_overflow, average_universes));
-    } else {
-      add_in_place(var_flux, build_diag_multisim_variance_from_vectors(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins,
-                                                                       xmin, xmax, fold_overflow, average_universes));
-    }
+    add_in_place(var_flux, build_diag_multisim_variance_from_vectors(*x_mc_h, *w_mc_h, *u_h, nullptr, nbins,
+                                                                     xmin, xmax, fold_overflow, average_universes));
   }
 
   if (use_flux && has_column(node_mc, "weightsFlux")) {

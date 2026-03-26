@@ -45,7 +45,7 @@
 // Example:
 //   ./heron macro scan_first_score_cut_xsec_systs.C
 //   ./heron macro scan_first_score_cut_xsec_systs.C \
-//     'scan_first_score_cut_xsec_systs("./scratch/out/event_list_myana.root", "sel_muon", "is_signal", "is_signal", "w_nominal", 7.0, true, true, 1.0, 1.0, "score0_cut7_xsec")'
+//     'scan_first_score_cut_xsec_systs("./scratch/out/event_list_myana.root", "sel_muon", "is_signal", "is_signal", "w_nominal", 7.0, true, true, kDefaultFluxTimesTargets, kDefaultFluxTimesTargets, "score0_cut7_xsec")'
 
 #include <algorithm>
 #include <cmath>
@@ -124,6 +124,25 @@ double rel_from_abs_var(double abs_var, double sigma_cv)
         return std::numeric_limits<double>::quiet_NaN();
     return std::sqrt(abs_var) / std::abs(sigma_cv);
 }
+
+// --------------------------------------------------------------------------
+// Nominal cross-section normalisation defaults.
+//
+// Flux input:
+//   Table 4 / Sec. 3.2.1 muon-flavour integrated flux entering Eq. (3.1):
+//     Phi_mu^tot(E_nu in [0.25, 10] GeV) = 10.994712 x 10^8 nu / cm^2
+//
+// Target input:
+//   N_T = (M_fid / m_Ar) * N_A
+//   Use a realistic MicroBooNE-scale fiducial-mass placeholder until the
+//   exact nominal M_fid(\bar{eta}) from Sec. 3.1 is finalised in the note.
+// --------------------------------------------------------------------------
+constexpr double kAvogadro_per_mol = 6.02214076e23;
+constexpr double kArgonMolarMass_g_per_mol = 39.95;
+constexpr double kNominalFiducialMass_g = 5.85e7; // ~58.5 t; replace if your nominal fiducial mass differs
+constexpr double kNominalNumTargets = (kNominalFiducialMass_g / kArgonMolarMass_g_per_mol) * kAvogadro_per_mol;
+constexpr double kNominalIntegratedMuonFlavorFlux_per_cm2 = 10.994712e8;
+constexpr double kDefaultFluxTimesTargets = kNominalIntegratedMuonFlavorFlux_per_cm2 * kNominalNumTargets;
 
 enum class TruthDenomMode
 {
@@ -363,8 +382,8 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
                                     double cut_value = 7.0,
                                     bool keep_greater_than = true,
                                     bool fixed_cv_asimov = true,
-                                    double flux_times_targets_cv = 1.0,
-                                    double flux_times_targets_var_default = 1.0,
+                                    double flux_times_targets_cv = kDefaultFluxTimesTargets,
+                                    double flux_times_targets_var_default = kDefaultFluxTimesTargets,
                                     const std::string &output_stem = "first_score_cut_xsec_systs_eval")
 {
     return heron::macro::run_with_guard("scan_first_score_cut_xsec_systs", [&]() -> int {
@@ -375,6 +394,17 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
         std::cout << "[scan_first_score_cut_xsec_systs] input=" << input_path << "\n";
         std::cout << "[scan_first_score_cut_xsec_systs] cut=" << cut_value
                   << (keep_greater_than ? "  (keep score >= cut)\n" : "  (keep score < cut)\n");
+        std::cout << std::scientific << std::setprecision(6);
+        std::cout << "[scan_first_score_cut_xsec_systs] nominal Phi_mu(E=[0.25,10] GeV)="
+                  << kNominalIntegratedMuonFlavorFlux_per_cm2 << " /cm^2\n";
+        std::cout << "[scan_first_score_cut_xsec_systs] nominal N_targets="
+                  << kNominalNumTargets
+                  << " argon nuclei (from M_fid=" << kNominalFiducialMass_g << " g)\n";
+        std::cout << "[scan_first_score_cut_xsec_systs] Phi*N_targets(CV)="
+                  << flux_times_targets_cv << "\n";
+        std::cout << "[scan_first_score_cut_xsec_systs] Phi*N_targets(var default)="
+                  << flux_times_targets_var_default << "\n";
+        std::cout << std::fixed << std::setprecision(6);
 
         if (!looks_like_event_list_root(input_path))
         {
@@ -686,7 +716,9 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
         std::cout << "  S_sel(CV)     = " << ycv.s_sel << "\n";
         std::cout << "  B_sel(CV)     = " << ycv.b_sel << "\n";
         std::cout << "  T_sig(CV)     = " << ycv.t_sig << "\n";
+        std::cout << std::scientific << std::setprecision(6);
         std::cout << "  sigma_hat(CV) = " << sigma_cv << "\n";
+        std::cout << std::fixed << std::setprecision(6);
         std::cout << "  eff(CV)       = " << eff_cv << "\n";
         std::cout << "  purity(CV)    = " << purity_cv << "\n";
 
@@ -704,7 +736,9 @@ int scan_first_score_cut_xsec_systs(const std::string &event_list_path = "",
             if (it_abs == abs_unc_map.end() || it_rel == rel_map.end())
                 continue;
 
+            std::cout << std::scientific << std::setprecision(6);
             std::cout << "  abs " << std::setw(12) << std::left << name << " = " << it_abs->second << "\n";
+            std::cout << std::fixed << std::setprecision(6);
             std::cout << "  rel " << std::setw(12) << std::left << name << " = " << it_rel->second << "\n";
         }
 
@@ -749,8 +783,8 @@ int scan_score_cut_xsec_systs(const std::string &event_list_path = "",
                               double cut_value = 7.0,
                               bool keep_greater_than = true,
                               bool fixed_cv_asimov = true,
-                              double flux_times_targets_cv = 1.0,
-                              double flux_times_targets_var_default = 1.0,
+                              double flux_times_targets_cv = kDefaultFluxTimesTargets,
+                              double flux_times_targets_var_default = kDefaultFluxTimesTargets,
                               const std::string &output_stem = "score_cut_xsec_systs_eval")
 {
     return scan_first_score_cut_xsec_systs(event_list_path,

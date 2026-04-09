@@ -52,7 +52,6 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -76,7 +75,6 @@ R__ADD_INCLUDE_PATH(framework/modules/plot/include)
 #include "EventListIO.hh"
 #include "PlotEnv.hh"
 #include "Plotter.hh"
-#include "PlottingHelper.hh"
 #include "SelectionService.hh"
 #include "include/MacroGuard.hh"
 #include "include/MacroIO.hh"
